@@ -30,46 +30,46 @@ func TestRemovePath(t *testing.T) {
 						BGPPath: &BGPPath{},
 					},
 				}),
-				NewRoute(net.NewPfx(167772160, 9), []*Path{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.0.0.0/9
-				NewRoute(net.NewPfx(176160768, 9), []*Path{
+				}),
+				NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.128.0.0/9
+				}),
 			},
 			remove: []*Route{
-				NewRoute(net.NewPfx(167772160, 8), []*Path{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.0.0.0
+				}),
 			},
 			expected: []*Route{
-				NewRoute(net.NewPfx(167772160, 9), []*Path{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.0.0.0
-				NewRoute(net.NewPfx(176160768, 9), []*Path{
+				}),
+				NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.128.0.0
+				}),
 			},
 		},
 		{
 			name: "Remove a path that is one of two for a prefix",
 			routes: []*Route{
-				NewRoute(net.NewPfx(167772160, 8), []*Path{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), []*Path{
 					{
 						Type: BGPPathType,
 						BGPPath: &BGPPath{
@@ -82,51 +82,51 @@ func TestRemovePath(t *testing.T) {
 							LocalPref: 2000,
 						},
 					},
-				}), // 10.0.0.0/8
-				NewRoute(net.NewPfx(167772160, 9), []*Path{
+				}),
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.0.0.0/9
-				NewRoute(net.NewPfx(176160768, 9), []*Path{
+				}),
+				NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.128.0.0/9
+				}),
 			},
 			remove: []*Route{
-				NewRoute(net.NewPfx(167772160, 8), []*Path{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), []*Path{
 					{
 						Type: BGPPathType,
 						BGPPath: &BGPPath{
 							LocalPref: 1000,
 						},
 					},
-				}), // 10.0.0.0
+				}),
 			},
 			expected: []*Route{
-				NewRoute(net.NewPfx(167772160, 8), []*Path{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), []*Path{
 					{
 						Type: BGPPathType,
 						BGPPath: &BGPPath{
 							LocalPref: 2000,
 						},
 					},
-				}), // 10.0.0.0/8
-				NewRoute(net.NewPfx(167772160, 9), []*Path{
+				}),
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.0.0.0/9
-				NewRoute(net.NewPfx(176160768, 9), []*Path{
+				}),
+				NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), []*Path{
 					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},
-				}), // 10.128.0.0/9
+				}),
 			},
 		},
 	}

@@ -7,12 +7,11 @@ import (
 	"net"
 	"time"
 
-	"github.com/taktv6/tbgp/rt"
-
+	"github.com/bio-routing/bio-rd/config"
+	tnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/rt"
 	log "github.com/sirupsen/logrus"
-	"github.com/taktv6/tbgp/config"
-	tnet "github.com/taktv6/tbgp/net"
-	"github.com/taktv6/tbgp/packet"
 	"github.com/taktv6/tflow2/convert"
 	tomb "gopkg.in/tomb.v2"
 )

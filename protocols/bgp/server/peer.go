@@ -3,7 +3,7 @@ package server
 import (
 	"net"
 
-	"github.com/taktv6/tbgp/config"
+	"github.com/bio-routing/bio-rd/config"
 )
 
 type Peer struct {

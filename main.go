@@ -7,8 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/taktv6/tbgp/config"
-	"github.com/taktv6/tbgp/server"
+	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 )
 
 func main() {
