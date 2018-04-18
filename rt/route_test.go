@@ -367,3 +367,29 @@ func TestAddPaths(t *testing.T) {
 		assert.Equal(t, test.expected, test.route)
 	}
 }
+
+func TestGetBestProtocol(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []*Path
+		expected uint8
+	}{
+		{
+			name: "Foo",
+			input: []*Path{
+				{
+					Type: BGPPathType,
+				},
+				{
+					Type: StaticPathType,
+				},
+			},
+			expected: StaticPathType,
+		},
+	}
+
+	for _, test := range tests {
+		res := getBestProtocol(test.input)
+		assert.Equal(t, test.expected, res)
+	}
+}

@@ -116,7 +116,7 @@ func getBestProtocol(paths []*Path) uint8 {
 			continue
 		}
 
-		if p.Type > best {
+		if p.Type < best {
 			best = p.Type
 		}
 	}
