@@ -146,6 +146,79 @@ func TestRemovePath(t *testing.T) {
 	}
 }
 
+func TestRemovePfx(t *testing.T) {
+	tests := []struct {
+		name     string
+		routes   []*Route
+		remove   []*net.Prefix
+		expected []*Route
+	}{
+		{
+			name: "Remove non-existent prefix",
+			routes: []*Route{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), []*Path{
+					{
+						Type:    BGPPathType,
+						BGPPath: &BGPPath{},
+					},
+				}),
+				NewRoute(net.NewPfx(strAddr("100.0.0.0"), 8), []*Path{
+					{
+						Type:    BGPPathType,
+						BGPPath: &BGPPath{},
+					},
+				}),
+			},
+			remove: []*net.Prefix{
+				net.NewPfx(0, 0),
+			},
+			expected: []*Route{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), []*Path{
+					{
+						Type:    BGPPathType,
+						BGPPath: &BGPPath{},
+					},
+				}),
+				NewRoute(net.NewPfx(strAddr("100.0.0.0"), 8), []*Path{
+					{
+						Type:    BGPPathType,
+						BGPPath: &BGPPath{},
+					},
+				}),
+			},
+		},
+		{
+			name: "Remove final prefix",
+			routes: []*Route{
+				NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), []*Path{
+					{
+						Type:    BGPPathType,
+						BGPPath: &BGPPath{},
+					},
+				}),
+			},
+			remove: []*net.Prefix{
+				net.NewPfx(strAddr("10.0.0.0"), 8),
+			},
+			expected: []*Route{},
+		},
+	}
+
+	for _, test := range tests {
+		lpm := New()
+		for _, route := range test.routes {
+			lpm.Insert(route)
+		}
+
+		for _, pfx := range test.remove {
+			lpm.RemovePfx(pfx)
+		}
+
+		res := lpm.Dump()
+		assert.Equal(t, test.expected, res)
+	}
+}
+
 func strAddr(s string) uint32 {
 	ret, _ := net.StrToAddr(s)
 	return ret
