@@ -4,7 +4,7 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 )
 
-type LPM struct {
+type RT struct {
 	root  *node
 	nodes uint64
 }
@@ -18,8 +18,8 @@ type node struct {
 }
 
 // New creates a new empty LPM
-func New() *LPM {
-	return &LPM{}
+func New() *RT {
+	return &RT{}
 }
 
 func newNode(route *Route, skip uint8, dummy bool) *node {
@@ -32,7 +32,7 @@ func newNode(route *Route, skip uint8, dummy bool) *node {
 }
 
 // LPM performs a longest prefix match for pfx on lpm
-func (lpm *LPM) LPM(pfx *net.Prefix) (res []*Route) {
+func (lpm *RT) LPM(pfx *net.Prefix) (res []*Route) {
 	if lpm.root == nil {
 		return nil
 	}
@@ -42,16 +42,16 @@ func (lpm *LPM) LPM(pfx *net.Prefix) (res []*Route) {
 }
 
 // RemovePath removes a path from the trie
-func (lpm *LPM) RemovePath(route *Route) {
+func (lpm *RT) RemovePath(route *Route) {
 	lpm.root.removePath(route)
 }
 
-func (lpm *LPM) RemovePfx(pfx *net.Prefix) {
+func (lpm *RT) RemovePfx(pfx *net.Prefix) {
 	lpm.root.removePfx(pfx)
 }
 
 // Get get's prefix pfx from the LPM
-func (lpm *LPM) Get(pfx *net.Prefix, moreSpecifics bool) (res []*Route) {
+func (lpm *RT) Get(pfx *net.Prefix, moreSpecifics bool) (res []*Route) {
 	if lpm.root == nil {
 		return nil
 	}
@@ -71,7 +71,7 @@ func (lpm *LPM) Get(pfx *net.Prefix, moreSpecifics bool) (res []*Route) {
 }
 
 // Insert inserts a route into the LPM
-func (lpm *LPM) Insert(route *Route) {
+func (lpm *RT) Insert(route *Route) {
 	if lpm.root == nil {
 		lpm.root = newNode(route, route.Pfxlen(), false)
 		return
@@ -288,7 +288,7 @@ func (n *node) insertBefore(route *Route, parentPfxLen uint8) *node {
 	return new
 }
 
-func (lpm *LPM) Dump() []*Route {
+func (lpm *RT) Dump() []*Route {
 	res := make([]*Route, 0)
 	return lpm.root.dump(res)
 }

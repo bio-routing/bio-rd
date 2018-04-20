@@ -83,8 +83,8 @@ type FSM struct {
 	msgRecvFailCh chan msgRecvErr
 	stopMsgRecvCh chan struct{}
 
-	adjRibIn  *rt.LPM
-	adjRibOut *rt.LPM
+	adjRibIn  *rt.RT
+	adjRibOut *rt.RT
 }
 
 type msgRecvMsg struct {
