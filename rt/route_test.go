@@ -26,8 +26,7 @@ func TestNewRoute(t *testing.T) {
 				},
 			},
 			expected: &Route{
-				pfx:         net.NewPfx(158798889, 24),
-				activePaths: make([]*Path, 0),
+				pfx: net.NewPfx(158798889, 24),
 				paths: []*Path{
 					{
 						Type: 2,

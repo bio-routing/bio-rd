@@ -23,11 +23,12 @@ type Route struct {
 }
 
 func NewRoute(pfx *net.Prefix, paths []*Path) *Route {
-	return &Route{
-		pfx:         pfx,
-		activePaths: make([]*Path, 0),
-		paths:       paths,
+	r := &Route{
+		pfx:   pfx,
+		paths: paths,
 	}
+
+	return r
 }
 
 func (r *Route) Pfxlen() uint8 {
@@ -95,7 +96,7 @@ func (r *Route) AddPaths(paths []*Path) {
 }
 
 func (r *Route) bestPaths() {
-	var best []*Path
+	best := []*Path{}
 	protocol := getBestProtocol(r.paths)
 
 	switch protocol {

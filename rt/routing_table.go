@@ -4,11 +4,13 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 )
 
+// RT represents a routing table
 type RT struct {
 	root  *node
 	nodes uint64
 }
 
+// node is a node in the compressed trie that is used to implement a routing table
 type node struct {
 	skip  uint8
 	dummy bool
@@ -32,31 +34,32 @@ func newNode(route *Route, skip uint8, dummy bool) *node {
 }
 
 // LPM performs a longest prefix match for pfx on lpm
-func (lpm *RT) LPM(pfx *net.Prefix) (res []*Route) {
-	if lpm.root == nil {
+func (rt *RT) LPM(pfx *net.Prefix) (res []*Route) {
+	if rt.root == nil {
 		return nil
 	}
 
-	lpm.root.lpm(pfx, &res)
+	rt.root.lpm(pfx, &res)
 	return res
 }
 
 // RemovePath removes a path from the trie
-func (lpm *RT) RemovePath(route *Route) {
-	lpm.root.removePath(route)
+func (rt *RT) RemovePath(route *Route) {
+	rt.root.removePath(route)
 }
 
-func (lpm *RT) RemovePfx(pfx *net.Prefix) {
-	lpm.root.removePfx(pfx)
+// RemovePfx removes a prefix from the rt including all it's paths
+func (rt *RT) RemovePfx(pfx *net.Prefix) {
+	rt.root.removePfx(pfx)
 }
 
 // Get get's prefix pfx from the LPM
-func (lpm *RT) Get(pfx *net.Prefix, moreSpecifics bool) (res []*Route) {
-	if lpm.root == nil {
+func (rt *RT) Get(pfx *net.Prefix, moreSpecifics bool) (res []*Route) {
+	if rt.root == nil {
 		return nil
 	}
 
-	node := lpm.root.get(pfx)
+	node := rt.root.get(pfx)
 	if moreSpecifics {
 		return node.dumpPfxs(res)
 	}
@@ -71,13 +74,14 @@ func (lpm *RT) Get(pfx *net.Prefix, moreSpecifics bool) (res []*Route) {
 }
 
 // Insert inserts a route into the LPM
-func (lpm *RT) Insert(route *Route) {
-	if lpm.root == nil {
-		lpm.root = newNode(route, route.Pfxlen(), false)
+func (rt *RT) Insert(route *Route) {
+	if rt.root == nil {
+		route.bestPaths()
+		rt.root = newNode(route, route.Pfxlen(), false)
 		return
 	}
 
-	lpm.root = lpm.root.insert(route)
+	rt.root = rt.root.insert(route)
 }
 
 func (n *node) removePath(route *Route) {
@@ -204,6 +208,7 @@ func (n *node) insert(route *Route) *node {
 
 	// is pfx NOT a subnet of this node?
 	if !n.route.Prefix().Contains(route.Prefix()) {
+		route.bestPaths()
 		if route.Prefix().Contains(n.route.Prefix()) {
 			return n.insertBefore(route, n.route.Pfxlen()-n.skip-1)
 		}
@@ -221,6 +226,7 @@ func (n *node) insert(route *Route) *node {
 
 func (n *node) insertLow(route *Route, parentPfxLen uint8) *node {
 	if n.l == nil {
+		route.bestPaths()
 		n.l = newNode(route, route.Pfxlen()-parentPfxLen-1, false)
 		return n
 	}
@@ -230,6 +236,7 @@ func (n *node) insertLow(route *Route, parentPfxLen uint8) *node {
 
 func (n *node) insertHigh(route *Route, parentPfxLen uint8) *node {
 	if n.h == nil {
+		route.bestPaths()
 		n.h = newNode(route, route.Pfxlen()-parentPfxLen-1, false)
 		return n
 	}
@@ -288,9 +295,10 @@ func (n *node) insertBefore(route *Route, parentPfxLen uint8) *node {
 	return new
 }
 
-func (lpm *RT) Dump() []*Route {
+// Dump dumps all routes in table rt into a slice
+func (rt *RT) Dump() []*Route {
 	res := make([]*Route, 0)
-	return lpm.root.dump(res)
+	return rt.root.dump(res)
 }
 
 func (n *node) dump(res []*Route) []*Route {
