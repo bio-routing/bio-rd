@@ -58,3 +58,17 @@ func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
 	nlri.IP = addr
 	return nlri, toCopy + 1, nil
 }
+
+func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
+	addr := n.IP.([4]byte)
+	nBytes := bytesInAddr(n.Pfxlen)
+
+	buf.WriteByte(n.Pfxlen)
+	buf.Write(addr[:nBytes])
+
+	return nBytes + 1
+}
+
+func bytesInAddr(pfxlen uint8) uint8 {
+	return uint8(math.Ceil(float64(pfxlen) / 8))
+}

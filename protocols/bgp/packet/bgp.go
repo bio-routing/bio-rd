@@ -4,10 +4,11 @@ const (
 	OctetLen    = 8
 	BGP4Version = 4
 
-	MarkerLen = 16
-	HeaderLen = 19
-	MinLen    = 19
-	MaxLen    = 4096
+	MarkerLen  = 16
+	HeaderLen  = 19
+	MinLen     = 19
+	MaxLen     = 4096
+	NLRIMaxLen = 5
 
 	OpenMsg         = 1
 	UpdateMsg       = 2

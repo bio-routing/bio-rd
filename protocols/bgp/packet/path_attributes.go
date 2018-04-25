@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/taktv6/tflow2/convert"
 )
 
 func decodePathAttrs(buf *bytes.Buffer, tpal uint16) (*PathAttribute, error) {
@@ -286,4 +288,113 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 		return err
 	}
 	return nil
+}
+
+func (pa *PathAttribute) serialize(buf *bytes.Buffer) uint8 {
+	pathAttrLen := uint8(0)
+
+	switch pa.TypeCode {
+	case OriginAttr:
+		pathAttrLen = pa.serializeOrigin(buf)
+	case ASPathAttr:
+		pathAttrLen = pa.serializeASPath(buf)
+	case NextHopAttr:
+		pathAttrLen = pa.serializeNextHop(buf)
+	case MEDAttr:
+		pathAttrLen = pa.serializeMED(buf)
+	case LocalPrefAttr:
+		pathAttrLen = pa.serializeLocalpref(buf)
+	case AtomicAggrAttr:
+		pathAttrLen = pa.serializeAtomicAggregate(buf)
+	case AggregatorAttr:
+		pathAttrLen = pa.serializeAggregator(buf)
+	}
+
+	return pathAttrLen
+}
+
+func (pa *PathAttribute) serializeOrigin(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setTransitive(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(OriginAttr)
+	length := uint8(1)
+	buf.WriteByte(length)
+	buf.WriteByte(pa.Value.(uint8))
+	return 4
+}
+
+func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setTransitive(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(ASPathAttr)
+	length := uint8(2)
+	asPath := pa.Value.(ASPath)
+	for _, segment := range asPath {
+		buf.WriteByte(segment.Type)
+		buf.WriteByte(uint8(len(segment.ASNs)))
+		for _, asn := range segment.ASNs {
+			buf.Write(convert.Uint16Byte(uint16(asn)))
+		}
+		length += 2 + uint8(len(segment.ASNs))*2
+	}
+
+	return length
+}
+
+func (pa *PathAttribute) serializeNextHop(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setTransitive(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(NextHopAttr)
+	length := uint8(4)
+	buf.WriteByte(length)
+	addr := pa.Value.([4]byte)
+	buf.Write(addr[:])
+	return 7
+}
+
+func (pa *PathAttribute) serializeMED(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setOptional(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(MEDAttr)
+	length := uint8(4)
+	buf.WriteByte(length)
+	buf.Write(convert.Uint32Byte(pa.Value.(uint32)))
+	return 7
+}
+
+func (pa *PathAttribute) serializeLocalpref(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setTransitive(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(LocalPrefAttr)
+	length := uint8(4)
+	buf.WriteByte(length)
+	buf.Write(convert.Uint32Byte(pa.Value.(uint32)))
+	return 7
+}
+
+func (pa *PathAttribute) serializeAtomicAggregate(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setTransitive(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(AtomicAggrAttr)
+	length := uint8(0)
+	buf.WriteByte(length)
+	return 3
+}
+
+func (pa *PathAttribute) serializeAggregator(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setOptional(attrFlags)
+	attrFlags = setTransitive(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(AggregatorAttr)
+	length := uint8(2)
+	buf.WriteByte(length)
+	buf.Write(convert.Uint16Byte(pa.Value.(uint16)))
+	return 5
 }

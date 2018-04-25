@@ -757,3 +757,536 @@ func TestASPathString(t *testing.T) {
 		assert.Equal(t, test.expected, res)
 	}
 }
+
+func TestSetOptional(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    uint8
+		expected uint8
+	}{
+		{
+			name:     "Test #1",
+			input:    0,
+			expected: 128,
+		},
+	}
+
+	for _, test := range tests {
+		res := setOptional(test.input)
+		if res != test.expected {
+			t.Errorf("Unexpected result for test %q: %d", test.name, res)
+		}
+	}
+}
+
+func TestSetTransitive(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    uint8
+		expected uint8
+	}{
+		{
+			name:     "Test #1",
+			input:    0,
+			expected: 64,
+		},
+	}
+
+	for _, test := range tests {
+		res := setTransitive(test.input)
+		if res != test.expected {
+			t.Errorf("Unexpected result for test %q: %d", test.name, res)
+		}
+	}
+}
+
+func TestSetPartial(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    uint8
+		expected uint8
+	}{
+		{
+			name:     "Test #1",
+			input:    0,
+			expected: 32,
+		},
+	}
+
+	for _, test := range tests {
+		res := setPartial(test.input)
+		if res != test.expected {
+			t.Errorf("Unexpected result for test %q: %d", test.name, res)
+		}
+	}
+}
+
+func TestSetExtendedLength(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    uint8
+		expected uint8
+	}{
+		{
+			name:     "Test #1",
+			input:    0,
+			expected: 16,
+		},
+	}
+
+	for _, test := range tests {
+		res := setExtendedLength(test.input)
+		if res != test.expected {
+			t.Errorf("Unexpected result for test %q: %d", test.name, res)
+		}
+	}
+}
+
+func TestSerializeOrigin(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Test #1",
+			input: &PathAttribute{
+				TypeCode: OriginAttr,
+				Value:    uint8(0), // IGP
+			},
+			expectedLen: 4,
+			expected:    []byte{64, 1, 1, 0},
+		},
+		{
+			name: "Test #2",
+			input: &PathAttribute{
+				TypeCode: OriginAttr,
+				Value:    uint8(2), // INCOMPLETE
+			},
+			expectedLen: 4,
+			expected:    []byte{64, 1, 1, 2},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		n := test.input.serializeOrigin(buf)
+		if test.expectedLen != n {
+			t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			continue
+		}
+
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerializeNextHop(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Test #1",
+			input: &PathAttribute{
+				TypeCode: NextHopAttr,
+				Value:    [4]byte{100, 110, 120, 130},
+			},
+			expected:    []byte{0, 3, 4, 100, 110, 120, 130},
+			expectedLen: 7,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		n := test.input.serializeNextHop(buf)
+		if n != test.expectedLen {
+			t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			continue
+		}
+
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerializeMED(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Test #1",
+			input: &PathAttribute{
+				TypeCode: MEDAttr,
+				Value:    uint32(1000),
+			},
+			expected: []byte{
+				128,          // Attribute flags
+				4,            // Type
+				4,            // Length
+				0, 0, 3, 232, // Value = 1000
+			},
+			expectedLen: 7,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		n := test.input.serializeMED(buf)
+		if n != test.expectedLen {
+			t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			continue
+		}
+
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerializeLocalPref(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Test #1",
+			input: &PathAttribute{
+				TypeCode: LocalPrefAttr,
+				Value:    uint32(1000),
+			},
+			expected: []byte{
+				64,           // Attribute flags
+				5,            // Type
+				4,            // Length
+				0, 0, 3, 232, // Value = 1000
+			},
+			expectedLen: 7,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		n := test.input.serializeLocalpref(buf)
+		if n != test.expectedLen {
+			t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			continue
+		}
+
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerializeAtomicAggregate(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Test #1",
+			input: &PathAttribute{
+				TypeCode: AtomicAggrAttr,
+			},
+			expected: []byte{
+				64, // Attribute flags
+				6,  // Type
+				0,  // Length
+			},
+			expectedLen: 3,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		n := test.input.serializeAtomicAggregate(buf)
+		if n != test.expectedLen {
+			t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			continue
+		}
+
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerializeAggregator(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Test #1",
+			input: &PathAttribute{
+				TypeCode: AggregatorAttr,
+				Value:    uint16(174),
+			},
+			expected: []byte{
+				192,    // Attribute flags
+				7,      // Type
+				2,      // Length
+				0, 174, // Value = 174
+			},
+			expectedLen: 5,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		n := test.input.serializeAggregator(buf)
+		if n != test.expectedLen {
+			t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			continue
+		}
+
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerializeASPath(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Test #1",
+			input: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					{
+						Type: 2, // Sequence
+						ASNs: []uint32{
+							100, 200, 210,
+						},
+					},
+				},
+			},
+			expected: []byte{
+				64,     // Attribute flags
+				2,      // Type
+				2,      // AS_SEQUENCE
+				3,      // ASN count
+				0, 100, // ASN 100
+				0, 200, // ASN 200
+				0, 210, // ASN 210
+			},
+			expectedLen: 10,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		n := test.input.serializeASPath(buf)
+		if n != test.expectedLen {
+			t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			continue
+		}
+
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerialize(t *testing.T) {
+	tests := []struct {
+		name     string
+		msg      *BGPUpdate
+		expected []byte
+		wantFail bool
+	}{
+		{
+			name: "Withdraw only",
+			msg: &BGPUpdate{
+				WithdrawnRoutes: &NLRI{
+					IP:     [4]byte{100, 110, 120, 0},
+					Pfxlen: 24,
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 27, // Length
+				2,    // Msg Type
+				0, 4, // Withdrawn Routes Length
+				24, 100, 110, 120, // NLRI
+				0, 0, // Total Path Attribute Length
+			},
+		},
+		{
+			name: "NLRI only",
+			msg: &BGPUpdate{
+				NLRI: &NLRI{
+					IP:     [4]byte{100, 110, 128, 0},
+					Pfxlen: 17,
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 27, // Length
+				2,    // Msg Type
+				0, 0, // Withdrawn Routes Length
+				0, 0, // Total Path Attribute Length
+				17, 100, 110, 128, // NLRI
+			},
+		},
+		{
+			name: "Path Attributes only",
+			msg: &BGPUpdate{
+				PathAttributes: &PathAttribute{
+					Optional:   true,
+					Transitive: true,
+					TypeCode:   OriginAttr,
+					Value:      uint8(0), // IGP
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 27, // Length
+				2,    // Msg Type
+				0, 0, // Withdrawn Routes Length
+				0, 4, // Total Path Attribute Length
+				64, // Attr. Flags
+				1,  // Attr. Type Code
+				1,  // Length
+				0,  // Value
+			},
+		},
+		{
+			name: "Full test",
+			msg: &BGPUpdate{
+				WithdrawnRoutes: &NLRI{
+					IP:     [4]byte{10, 0, 0, 0},
+					Pfxlen: 8,
+					Next: &NLRI{
+						IP:     [4]byte{192, 168, 0, 0},
+						Pfxlen: 16,
+					},
+				},
+				PathAttributes: &PathAttribute{
+					TypeCode: OriginAttr,
+					Value:    uint8(0),
+					Next: &PathAttribute{
+						TypeCode: ASPathAttr,
+						Value: ASPath{
+							{
+								Type: 2,
+								ASNs: []uint32{100, 155, 200},
+							},
+							{
+								Type: 1,
+								ASNs: []uint32{10, 20},
+							},
+						},
+						Next: &PathAttribute{
+							TypeCode: NextHopAttr,
+							Value:    [4]byte{10, 20, 30, 40},
+							Next: &PathAttribute{
+								TypeCode: MEDAttr,
+								Value:    uint32(100),
+								Next: &PathAttribute{
+									TypeCode: LocalPrefAttr,
+									Value:    uint32(500),
+									Next: &PathAttribute{
+										TypeCode: AtomicAggrAttr,
+										Next: &PathAttribute{
+											TypeCode: AggregatorAttr,
+											Value:    uint16(200),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				NLRI: &NLRI{
+					IP:     [4]byte{8, 8, 8, 0},
+					Pfxlen: 24,
+					Next: &NLRI{
+						IP:     [4]byte{185, 65, 240, 0},
+						Pfxlen: 22,
+					},
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 85, // Length
+				2, // Msg Type
+
+				// Withdraws
+				0, 5, // Withdrawn Routes Length
+				8, 10, // Withdraw 10/8
+				16, 192, 168, // Withdraw 192.168/16
+
+				0, 49, // Total Path Attribute Length
+
+				// ORIGIN
+				64, // Attr. Flags
+				1,  // Attr. Type Code
+				1,  // Length
+				0,  // Value
+				// ASPath
+				64,                     // Attr. Flags
+				2,                      // Attr. Type Code
+				2,                      // Path Segment Type = AS_SEQUENCE
+				3,                      // Path Segment Length
+				0, 100, 0, 155, 0, 200, // ASNs
+				1,            // Path Segment Type = AS_SET
+				2,            // Path Segment Type = AS_SET
+				0, 10, 0, 20, // ASNs
+				// Next Hop
+				64,             // Attr. Flags
+				3,              // Attr. Type Code
+				4,              // Length
+				10, 20, 30, 40, // Next Hop Address
+				// MED
+				128,          // Attr. Flags
+				4,            // Attr Type Code
+				4,            // Length
+				0, 0, 0, 100, // MED = 100
+				// LocalPref
+				64,           // Attr. Flags
+				5,            // Attr. Type Code
+				4,            // Length
+				0, 0, 1, 244, // Localpref
+				// Atomic Aggregate
+				64, // Attr. Flags
+				6,  // Attr. Type Code
+				0,  // Length
+				// Aggregator
+				192,    // Attr. Flags
+				7,      // Attr. Type Code
+				2,      // Length
+				0, 200, // Aggregator ASN = 200
+
+				// NLRI
+				24, 8, 8, 8, // 8.8.8.0/24
+				22, 185, 65, 240, // 185.65.240.0/22
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res, err := test.msg.SerializeUpdate()
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equal(t, test.expected, res)
+	}
+}

@@ -44,3 +44,19 @@ func isExtendedLength(x uint8) bool {
 	}
 	return false
 }
+
+func setOptional(x uint8) uint8 {
+	return x | 128
+}
+
+func setTransitive(x uint8) uint8 {
+	return x | 64
+}
+
+func setPartial(x uint8) uint8 {
+	return x | 32
+}
+
+func setExtendedLength(x uint8) uint8 {
+	return x | 16
+}
