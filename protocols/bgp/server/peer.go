@@ -4,20 +4,23 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/rt"
 )
 
 type Peer struct {
 	addr     net.IP
 	asn      uint32
 	fsm      *FSM
+	vrf      *rt.RT
 	routerID uint32
 }
 
-func NewPeer(c config.Peer) (*Peer, error) {
+func NewPeer(c config.Peer, vrf *rt.RT) (*Peer, error) {
 	p := &Peer{
 		addr: c.PeerAddress,
 		asn:  c.PeerAS,
-		fsm:  NewFSM(c),
+		fsm:  NewFSM(c, vrf),
+		vrf:  vrf,
 	}
 	return p, nil
 }

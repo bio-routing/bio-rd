@@ -83,8 +83,10 @@ type FSM struct {
 	msgRecvFailCh chan msgRecvErr
 	stopMsgRecvCh chan struct{}
 
-	adjRibIn  *rt.RT
-	adjRibOut *rt.RT
+	adjRIBIn     *rt.RT
+	adjRIBOut    *rt.RT
+	vrf          *rt.RT
+	updateSender *UpdateSender
 }
 
 type msgRecvMsg struct {
@@ -97,7 +99,7 @@ type msgRecvErr struct {
 	con *net.TCPConn
 }
 
-func NewFSM(c config.Peer) *FSM {
+func NewFSM(c config.Peer, vrf *rt.RT) *FSM {
 	fsm := &FSM{
 		state:             Idle,
 		passive:           true,
@@ -121,7 +123,11 @@ func NewFSM(c config.Peer) *FSM {
 		eventCh:  make(chan int),
 		conCh:    make(chan *net.TCPConn),
 		conErrCh: make(chan error), initiateCon: make(chan struct{}),
+
+		vrf: vrf,
 	}
+
+	fsm.updateSender = newUpdateSender(fsm)
 	return fsm
 }
 
@@ -201,8 +207,12 @@ func (fsm *FSM) main() error {
 }
 
 func (fsm *FSM) idle() int {
-	fsm.adjRibIn = nil
-	fsm.adjRibOut = nil
+	if fsm.adjRIBOut != nil {
+		fsm.vrf.Unregister(fsm.adjRIBOut)
+		fsm.adjRIBOut.Unregister(fsm.updateSender)
+	}
+	fsm.adjRIBIn = nil
+	fsm.adjRIBOut = nil
 	for {
 		select {
 		case c := <-fsm.conCh:
@@ -643,12 +653,19 @@ func (fsm *FSM) openConfirmTCPFail(err error) int {
 }
 
 func (fsm *FSM) established() int {
-	fsm.adjRibIn = rt.New()
+	fsm.adjRIBIn = rt.New(false)
+	fsm.adjRIBIn.Register(fsm.vrf)
+
+	fsm.adjRIBOut = rt.New(false)
+	fsm.adjRIBOut.Register(fsm.updateSender)
+
+	fsm.vrf.Register(fsm.adjRIBOut)
+
 	go func() {
 		for {
 			time.Sleep(time.Second * 10)
 			fmt.Printf("Dumping AdjRibIn\n")
-			routes := fsm.adjRibIn.Dump()
+			routes := fsm.adjRIBIn.Dump()
 			for _, route := range routes {
 				fmt.Printf("LPM: %s\n", route.Prefix().String())
 			}
@@ -721,7 +738,7 @@ func (fsm *FSM) established() int {
 					x := r.IP.([4]byte)
 					pfx := tnet.NewPfx(convert.Uint32b(x[:]), r.Pfxlen)
 					fmt.Printf("LPM: Removing prefix %s\n", pfx.String())
-					fsm.adjRibIn.RemovePfx(pfx)
+					fsm.adjRIBIn.RemoveRoute(pfx)
 				}
 
 				for r := u.NLRI; r != nil; r = r.Next {
@@ -749,7 +766,9 @@ func (fsm *FSM) established() int {
 							path.BGPPath.ASPathLen = pa.ASPathLen()
 						}
 					}
-					fsm.adjRibIn.Insert(rt.NewRoute(pfx, []*rt.Path{path}))
+					// TO BE USED WITH BGP ADD PATH:
+					// fsm.adjRIBIn.AddPath(rt.NewRoute(pfx, []*rt.Path{path}))
+					fsm.adjRIBIn.ReplaceRoute(rt.NewRoute(pfx, []*rt.Path{path}))
 				}
 
 				continue

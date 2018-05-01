@@ -244,7 +244,7 @@ func (pa *PathAttribute) decodeUint32(buf *bytes.Buffer) (uint32, error) {
 }
 
 func (pa *PathAttribute) ASPathString() (ret string) {
-	for _, p := range *pa.Value.(*ASPath) {
+	for _, p := range pa.Value.(ASPath) {
 		if p.Type == ASSet {
 			ret += " ("
 		}
@@ -265,7 +265,7 @@ func (pa *PathAttribute) ASPathString() (ret string) {
 }
 
 func (pa *PathAttribute) ASPathLen() (ret uint16) {
-	for _, p := range *pa.Value.(*ASPath) {
+	for _, p := range pa.Value.(ASPath) {
 		if p.Type == ASSet {
 			ret++
 			continue
@@ -329,18 +329,22 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer) uint8 {
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(ASPathAttr)
-	length := uint8(2)
-	asPath := pa.Value.(ASPath)
-	for _, segment := range asPath {
-		buf.WriteByte(segment.Type)
-		buf.WriteByte(uint8(len(segment.ASNs)))
+
+	length := uint8(0)
+	segmentsBuf := bytes.NewBuffer(nil)
+	for _, segment := range pa.Value.(ASPath) {
+		segmentsBuf.WriteByte(segment.Type)
+		segmentsBuf.WriteByte(uint8(len(segment.ASNs)))
 		for _, asn := range segment.ASNs {
-			buf.Write(convert.Uint16Byte(uint16(asn)))
+			segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
 		}
 		length += 2 + uint8(len(segment.ASNs))*2
 	}
 
-	return length
+	buf.WriteByte(length)
+	buf.Write(segmentsBuf.Bytes())
+
+	return length + 2
 }
 
 func (pa *PathAttribute) serializeNextHop(buf *bytes.Buffer) uint8 {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/rt"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -83,12 +84,12 @@ func (b *BGPServer) incomingConnectionWorker() {
 	}
 }
 
-func (b *BGPServer) AddPeer(c config.Peer) error {
+func (b *BGPServer) AddPeer(c config.Peer, vrf *rt.RT) error {
 	if c.LocalAS > uint16max || c.PeerAS > uint16max {
 		return fmt.Errorf("32bit ASNs are not supported yet")
 	}
 
-	peer, err := NewPeer(c)
+	peer, err := NewPeer(c, vrf)
 	if err != nil {
 		return err
 	}

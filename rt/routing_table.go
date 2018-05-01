@@ -1,13 +1,25 @@
 package rt
 
 import (
+	"fmt"
+	"sync"
+
 	"github.com/bio-routing/bio-rd/net"
 )
 
+type RouteTableClient interface {
+	AddPath(*Route)
+	ReplaceRoute(*Route)
+	RemovePath(*Route)
+	RemoveRoute(*net.Prefix)
+}
+
 // RT represents a routing table
 type RT struct {
-	root  *node
-	nodes uint64
+	root            *node
+	selectBestPaths bool
+	mu              sync.RWMutex
+	ClientManager
 }
 
 // node is a node in the compressed trie that is used to implement a routing table
@@ -20,17 +32,121 @@ type node struct {
 }
 
 // New creates a new empty LPM
-func New() *RT {
-	return &RT{}
+func New(selectBestPaths bool) *RT {
+	rt := &RT{
+		selectBestPaths: selectBestPaths,
+	}
+
+	rt.ClientManager.routingTable = rt
+	return rt
 }
 
-func newNode(route *Route, skip uint8, dummy bool) *node {
-	n := &node{
-		route: route,
-		skip:  skip,
-		dummy: dummy,
+func (rt *RT) updateNewClient(client RouteTableClient) {
+	rt.root.updateNewClient(client)
+}
+
+func (n *node) updateNewClient(client RouteTableClient) {
+	if n == nil {
+		return
 	}
-	return n
+
+	if !n.dummy {
+		client.AddPath(n.route)
+	}
+
+	n.l.updateNewClient(client)
+	n.h.updateNewClient(client)
+}
+
+func (rt *RT) updatePathSelection(route *Route) {
+	fmt.Printf("updatePathSelection\n")
+	formerActivePaths := rt.Get(route.pfx, false)[0].activePaths
+	activePaths := rt.selectBestPath(route).route.activePaths
+
+	fmt.Printf("formerActivePaths: %v\n", formerActivePaths)
+	fmt.Printf("activePaths: %v\n", activePaths)
+	x := missingPaths(activePaths, formerActivePaths)
+	fmt.Printf("x: %v\n", x)
+
+	for _, advertisePath := range x {
+		adervtiseRoute := &Route{
+			pfx:   route.pfx,
+			paths: []*Path{advertisePath},
+		}
+		for client := range rt.clients {
+			fmt.Printf("Propagating an Update via AddPath()")
+			client.AddPath(adervtiseRoute)
+		}
+	}
+
+	for _, withdrawPath := range missingPaths(formerActivePaths, activePaths) {
+		withdrawRoute := &Route{
+			pfx:   route.pfx,
+			paths: []*Path{withdrawPath},
+		}
+		for client := range rt.clients {
+			fmt.Printf("Propagating an Update via RemovePath()")
+			client.RemovePath(withdrawRoute)
+		}
+	}
+}
+
+func (rt *RT) AddPath(route *Route) {
+	rt.addPath(route)
+	if rt.selectBestPaths {
+		rt.updatePathSelection(route)
+		return
+	}
+
+	for client := range rt.clients {
+		client.AddPath(route)
+	}
+}
+
+// RemovePath removes a path from the trie
+func (rt *RT) RemovePath(route *Route) {
+	rt.root.removePath(route)
+
+	for client := range rt.clients {
+		client.RemovePath(route)
+	}
+}
+
+// RemoveRoute removes a prefix from the rt including all it's paths
+func (rt *RT) RemoveRoute(pfx *net.Prefix) {
+	if rt.selectBestPaths {
+		return
+	}
+
+	r := rt.Get(pfx, false)
+	if len(r) == 0 {
+		return
+	}
+
+	for client := range rt.clients {
+		for _, path := range r[0].paths {
+			withdrawRoute := NewRoute(pfx, []*Path{path})
+			client.RemovePath(withdrawRoute)
+		}
+	}
+
+	rt.root.removeRoute(pfx)
+}
+
+// ReplaceRoute replaces all paths of a route. Route is added if it doesn't exist yet.
+func (rt *RT) ReplaceRoute(route *Route) {
+	fmt.Printf("Replacing a route!\n")
+	if rt.selectBestPaths {
+		fmt.Printf("Ignoring because rt.selectBestPaths is false\n")
+		return
+	}
+
+	r := rt.Get(route.pfx, false)
+	if len(r) > 0 {
+		rt.RemoveRoute(route.pfx)
+	}
+	rt.addPath(route)
+	rt.updatePathSelection(route)
 }
 
 // LPM performs a longest prefix match for pfx on lpm
@@ -41,16 +157,6 @@ func (rt *RT) LPM(pfx *net.Prefix) (res []*Route) {
 
 	rt.root.lpm(pfx, &res)
 	return res
-}
-
-// RemovePath removes a path from the trie
-func (rt *RT) RemovePath(route *Route) {
-	rt.root.removePath(route)
-}
-
-// RemovePfx removes a prefix from the rt including all it's paths
-func (rt *RT) RemovePfx(pfx *net.Prefix) {
-	rt.root.removePfx(pfx)
 }
 
 // Get get's prefix pfx from the LPM
@@ -73,15 +179,39 @@ func (rt *RT) Get(pfx *net.Prefix, moreSpecifics bool) (res []*Route) {
 	}
 }
 
-// Insert inserts a route into the LPM
-func (rt *RT) Insert(route *Route) {
+func (rt *RT) addPath(route *Route) {
 	if rt.root == nil {
-		route.bestPaths()
 		rt.root = newNode(route, route.Pfxlen(), false)
 		return
 	}
 
 	rt.root = rt.root.insert(route)
+}
+
+func (rt *RT) selectBestPath(route *Route) *node {
+	if rt.root == nil {
+		return nil
+	}
+
+	node := rt.root.get(route.pfx)
+	if !rt.selectBestPaths {
+		// If we don't select best path(s) evey path is best path
+		node.route.activePaths = make([]*Path, len(node.route.paths))
+		copy(node.route.activePaths, node.route.paths)
+		return node
+	}
+
+	node.route.bestPaths()
+	return node
+}
+
+func newNode(route *Route, skip uint8, dummy bool) *node {
+	n := &node{
+		route: route,
+		skip:  skip,
+		dummy: dummy,
+	}
+	return n
 }
 
 func (n *node) removePath(route *Route) {
@@ -111,7 +241,27 @@ func (n *node) removePath(route *Route) {
 	return
 }
 
-func (n *node) removePfx(pfx *net.Prefix) {
+func (n *node) replaceRoute(route *Route) {
+	if n == nil {
+		return
+	}
+
+	if *n.route.Prefix() == *route.Prefix() {
+		n.route = route
+		n.dummy = false
+		return
+	}
+
+	b := getBitUint32(route.Prefix().Addr(), n.route.Pfxlen()+1)
+	if !b {
+		n.l.replaceRoute(route)
+		return
+	}
+	n.h.replaceRoute(route)
+	return
+}
+
+func (n *node) removeRoute(pfx *net.Prefix) {
 	if n == nil {
 		return
 	}
@@ -121,17 +271,17 @@ func (n *node) removePfx(pfx *net.Prefix) {
 			return
 		}
 
+		// TODO: Remove node if possible
 		n.dummy = true
-
 		return
 	}
 
 	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)
 	if !b {
-		n.l.removePfx(pfx)
+		n.l.removeRoute(pfx)
 		return
 	}
-	n.h.removePfx(pfx)
+	n.h.removeRoute(pfx)
 	return
 }
 

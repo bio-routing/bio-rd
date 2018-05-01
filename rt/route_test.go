@@ -392,3 +392,82 @@ func TestGetBestProtocol(t *testing.T) {
 		assert.Equal(t, test.expected, res)
 	}
 }
+
+func TestMissingPaths(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        []*Path
+		b        []*Path
+		expected []*Path
+	}{
+		{
+			name: "None missing #2",
+			a: []*Path{
+				{
+					Type: 1,
+				},
+				{
+					Type: 2,
+				},
+			},
+			b: []*Path{
+				{
+					Type: 1,
+				},
+				{
+					Type: 2,
+				},
+				{
+					Type: 3,
+				},
+			},
+			expected: []*Path{},
+		},
+		{
+			name: "None missing",
+			a: []*Path{
+				{
+					Type: 1,
+				},
+				{
+					Type: 2,
+				},
+			},
+			b: []*Path{
+				{
+					Type: 1,
+				},
+				{
+					Type: 2,
+				},
+			},
+			expected: []*Path{},
+		},
+		{
+			name: "One missing",
+			a: []*Path{
+				{
+					Type: 1,
+				},
+				{
+					Type: 2,
+				},
+			},
+			b: []*Path{
+				{
+					Type: 1,
+				},
+			},
+			expected: []*Path{
+				{
+					Type: 2,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := missingPaths(test.a, test.b)
+		assert.Equal(t, test.expected, res)
+	}
+}

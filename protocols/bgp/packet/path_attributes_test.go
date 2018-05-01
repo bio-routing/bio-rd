@@ -1072,6 +1072,7 @@ func TestSerializeASPath(t *testing.T) {
 			expected: []byte{
 				64,     // Attribute flags
 				2,      // Type
+				8,      // Length
 				2,      // AS_SEQUENCE
 				3,      // ASN count
 				0, 100, // ASN 100

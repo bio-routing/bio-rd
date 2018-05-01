@@ -15,6 +15,7 @@ type BGPPath struct {
 	Origin         uint8
 	MED            uint32
 	EBGP           bool
+	BGPIdentifier  uint32
 	Source         uint32
 }
 
@@ -70,39 +71,39 @@ func (m *BGPPathManager) RemovePath(p BGPPath) {
 	}
 }
 
-func (r *Route) bgpPathSelection() (res []*Path) {
+func (r *Route) bgpPathSelection() (best *Path, active []*Path) {
 	// TODO: Implement next hop lookup and compare IGP metrics
-	if len(r.paths) == 1 {
-		copy(res, r.paths)
-		return res
-	}
-
 	for _, p := range r.paths {
 		if p.Type != BGPPathType {
 			continue
 		}
 
-		if len(res) == 0 {
-			res = append(res, p)
+		if len(active) == 0 {
+			active = append(active, p)
 			continue
 		}
 
-		if res[0].BGPPath.ecmp(p.BGPPath) {
-			res = append(res, p)
+		if active[0].BGPPath.ecmp(p.BGPPath) {
+			active = append(active, p)
+			if !r.bestPath.BGPPath.better(p.BGPPath) {
+				continue
+			}
+
+			best = p
 			continue
 		}
 
-		if !res[0].BGPPath.better(p.BGPPath) {
+		if !active[0].BGPPath.betterECMP(p.BGPPath) {
 			continue
 		}
 
-		res = []*Path{p}
+		active = []*Path{p}
 	}
 
-	return res
+	return best, active
 }
 
-func (b *BGPPath) better(c *BGPPath) bool {
+func (b *BGPPath) betterECMP(c *BGPPath) bool {
 	if c.LocalPref < b.LocalPref {
 		return false
 	}
@@ -132,6 +133,22 @@ func (b *BGPPath) better(c *BGPPath) bool {
 	}
 
 	if c.MED < b.MED {
+		return true
+	}
+
+	return false
+}
+
+func (b *BGPPath) better(c *BGPPath) bool {
+	if b.betterECMP(c) {
+		return true
+	}
+
+	if c.BGPIdentifier < b.BGPIdentifier {
+		return true
+	}
+
+	if c.Source < b.Source {
 		return true
 	}
 

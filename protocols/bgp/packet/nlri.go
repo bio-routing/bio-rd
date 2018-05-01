@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"net"
+
+	"github.com/taktv6/tflow2/convert"
 )
 
 func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
@@ -60,7 +62,9 @@ func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
 }
 
 func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
-	addr := n.IP.([4]byte)
+	a := convert.Uint32Byte(n.IP.(uint32))
+
+	addr := [4]byte{a[0], a[1], a[2], a[3]}
 	nBytes := bytesInAddr(n.Pfxlen)
 
 	buf.WriteByte(n.Pfxlen)

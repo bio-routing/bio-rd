@@ -18,6 +18,7 @@ type Path struct {
 
 type Route struct {
 	pfx         *net.Prefix
+	bestPath    *Path
 	activePaths []*Path
 	paths       []*Path
 }
@@ -47,6 +48,25 @@ func (r *Route) Remove(rm *Route) (final bool) {
 	return len(r.paths) == 0
 }
 
+// returns a list of Paths that are in a but not in b
+func missingPaths(a, b []*Path) []*Path {
+	ret := make([]*Path, 0)
+	for _, p := range a {
+		found := false
+		for _, q := range b {
+			if *p == *q {
+				found = true
+				break
+			}
+		}
+		if !found {
+			ret = append(ret, p)
+		}
+	}
+
+	return ret
+}
+
 func removePath(paths []*Path, remove *Path) []*Path {
 	i := -1
 	for j := range paths {
@@ -62,6 +82,10 @@ func removePath(paths []*Path, remove *Path) []*Path {
 
 	copy(paths[i:], paths[i+1:])
 	return paths[:len(paths)-1]
+}
+
+func (r *Route) removeAllPaths() {
+	r.paths = make([]*Path, 0)
 }
 
 func (p *Path) Equal(q *Path) bool {
@@ -96,17 +120,19 @@ func (r *Route) AddPaths(paths []*Path) {
 }
 
 func (r *Route) bestPaths() {
-	best := []*Path{}
+	var best *Path
+	var active []*Path
 	protocol := getBestProtocol(r.paths)
 
 	switch protocol {
 	case StaticPathType:
-		best = r.staticPathSelection()
+		best, active = r.staticPathSelection()
 	case BGPPathType:
-		best = r.bgpPathSelection()
+		best, active = r.bgpPathSelection()
 	}
 
-	r.activePaths = best
+	r.bestPath = best
+	r.activePaths = active
 }
 
 func getBestProtocol(paths []*Path) uint8 {
