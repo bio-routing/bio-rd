@@ -144,31 +144,6 @@ func (n *node) addPath(pfx net.Prefix, p *route.Path) *node {
 	return n.insertHigh(pfx, p, n.route.Pfxlen())
 }
 
-/*func (n *node) insert(route *route.Route) *node {
-	if n.route.Prefix() == route.Prefix() {
-		n.route.AddPaths(route.paths)
-		n.dummy = false
-		return n
-	}
-
-	// is pfx NOT a subnet of this node?
-	if !n.route.Prefix().Contains(route.Prefix()) {
-		route.bestPaths()
-		if route.Prefix().Contains(n.route.Prefix()) {
-			return n.insertBefore(route, n.route.Pfxlen()-n.skip-1)
-		}
-
-		return n.newSuperNode(route)
-	}
-
-	// pfx is a subnet of this node
-	b := getBitUint32(route.Prefix().Addr(), n.route.Pfxlen()+1)
-	if !b {
-		return n.insertLow(route, n.route.Prefix().Pfxlen())
-	}
-	return n.insertHigh(route, n.route.Pfxlen())
-}*/
-
 func (n *node) insertLow(pfx net.Prefix, p *route.Path, parentPfxLen uint8) *node {
 	if n.l == nil {
 		n.l = newNode(pfx, p, pfx.Pfxlen()-parentPfxLen-1, false)
