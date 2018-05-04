@@ -1,8 +1,6 @@
 package routingtable
 
 import (
-	"fmt"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 )
@@ -131,9 +129,7 @@ func (n *node) addPath(pfx net.Prefix, p *route.Path) *node {
 
 	// is pfx NOT a subnet of this node?
 	if !currentPfx.Contains(pfx) {
-		fmt.Printf("The new Prefix is not a sub pfx of this node!\n")
 		if pfx.Contains(currentPfx) {
-			fmt.Printf("The current nodes pfx is a subnet of the new one!\n")
 			return n.insertBefore(pfx, p, n.route.Pfxlen()-n.skip-1)
 		}
 
@@ -147,31 +143,6 @@ func (n *node) addPath(pfx net.Prefix, p *route.Path) *node {
 	}
 	return n.insertHigh(pfx, p, n.route.Pfxlen())
 }
-
-/*func (n *node) insert(route *route.Route) *node {
-	if n.route.Prefix() == route.Prefix() {
-		n.route.AddPaths(route.paths)
-		n.dummy = false
-		return n
-	}
-
-	// is pfx NOT a subnet of this node?
-	if !n.route.Prefix().Contains(route.Prefix()) {
-		route.bestPaths()
-		if route.Prefix().Contains(n.route.Prefix()) {
-			return n.insertBefore(route, n.route.Pfxlen()-n.skip-1)
-		}
-
-		return n.newSuperNode(route)
-	}
-
-	// pfx is a subnet of this node
-	b := getBitUint32(route.Prefix().Addr(), n.route.Pfxlen()+1)
-	if !b {
-		return n.insertLow(route, n.route.Prefix().Pfxlen())
-	}
-	return n.insertHigh(route, n.route.Pfxlen())
-}*/
 
 func (n *node) insertLow(pfx net.Prefix, p *route.Path, parentPfxLen uint8) *node {
 	if n.l == nil {
@@ -193,7 +164,6 @@ func (n *node) insertHigh(pfx net.Prefix, p *route.Path, parentPfxLen uint8) *no
 
 func (n *node) newSuperNode(pfx net.Prefix, p *route.Path) *node {
 	superNet := pfx.GetSupernet(n.route.Prefix())
-	fmt.Printf("New supernet: %s\n", superNet.String())
 
 	pfxLenDiff := n.route.Pfxlen() - superNet.Pfxlen()
 	skip := n.skip - pfxLenDiff
