@@ -16,7 +16,7 @@ func TestNewPfx(t *testing.T) {
 func TestAddr(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
+		pfx      Prefix
 		expected uint32
 	}{
 		{
@@ -37,7 +37,7 @@ func TestAddr(t *testing.T) {
 func TestPfxlen(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
+		pfx      Prefix
 		expected uint8
 	}{
 		{
@@ -58,36 +58,36 @@ func TestPfxlen(t *testing.T) {
 func TestGetSupernet(t *testing.T) {
 	tests := []struct {
 		name     string
-		a        *Prefix
-		b        *Prefix
-		expected *Prefix
+		a        Prefix
+		b        Prefix
+		expected Prefix
 	}{
 		{
 			name: "Test 1",
-			a: &Prefix{
+			a: Prefix{
 				addr:   167772160, // 10.0.0.0/8
 				pfxlen: 8,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   191134464, // 11.100.123.0/24
 				pfxlen: 24,
 			},
-			expected: &Prefix{
+			expected: Prefix{
 				addr:   167772160, // 10.0.0.0/7
 				pfxlen: 7,
 			},
 		},
 		{
 			name: "Test 2",
-			a: &Prefix{
+			a: Prefix{
 				addr:   167772160, // 10.0.0.0/8
 				pfxlen: 8,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   3232235520, // 192.168.0.0/24
 				pfxlen: 24,
 			},
-			expected: &Prefix{
+			expected: Prefix{
 				addr:   0, // 0.0.0.0/0
 				pfxlen: 0,
 			},
@@ -103,17 +103,17 @@ func TestGetSupernet(t *testing.T) {
 func TestContains(t *testing.T) {
 	tests := []struct {
 		name     string
-		a        *Prefix
-		b        *Prefix
+		a        Prefix
+		b        Prefix
 		expected bool
 	}{
 		{
 			name: "Test 1",
-			a: &Prefix{
+			a: Prefix{
 				addr:   0,
 				pfxlen: 0,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   100,
 				pfxlen: 24,
 			},
@@ -121,11 +121,11 @@ func TestContains(t *testing.T) {
 		},
 		{
 			name: "Test 2",
-			a: &Prefix{
+			a: Prefix{
 				addr:   100,
 				pfxlen: 24,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   0,
 				pfxlen: 0,
 			},
@@ -133,11 +133,11 @@ func TestContains(t *testing.T) {
 		},
 		{
 			name: "Test 3",
-			a: &Prefix{
+			a: Prefix{
 				addr:   167772160,
 				pfxlen: 8,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   167772160,
 				pfxlen: 9,
 			},
@@ -145,11 +145,11 @@ func TestContains(t *testing.T) {
 		},
 		{
 			name: "Test 4",
-			a: &Prefix{
+			a: Prefix{
 				addr:   167772160,
 				pfxlen: 8,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   174391040,
 				pfxlen: 24,
 			},
@@ -157,11 +157,11 @@ func TestContains(t *testing.T) {
 		},
 		{
 			name: "Test 5",
-			a: &Prefix{
+			a: Prefix{
 				addr:   167772160,
 				pfxlen: 8,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   184549377,
 				pfxlen: 24,
 			},
@@ -169,11 +169,11 @@ func TestContains(t *testing.T) {
 		},
 		{
 			name: "Test 6",
-			a: &Prefix{
+			a: Prefix{
 				addr:   167772160,
 				pfxlen: 8,
 			},
-			b: &Prefix{
+			b: Prefix{
 				addr:   191134464,
 				pfxlen: 24,
 			},
@@ -227,8 +227,8 @@ func TestMin(t *testing.T) {
 func TestEqual(t *testing.T) {
 	tests := []struct {
 		name     string
-		a        *Prefix
-		b        *Prefix
+		a        Prefix
+		b        Prefix
 		expected bool
 	}{
 		{
@@ -256,7 +256,7 @@ func TestEqual(t *testing.T) {
 func TestString(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
+		pfx      Prefix
 		expected string
 	}{
 		{

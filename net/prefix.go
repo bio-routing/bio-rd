@@ -17,8 +17,8 @@ type Prefix struct {
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr uint32, pfxlen uint8) *Prefix {
-	return &Prefix{
+func NewPfx(addr uint32, pfxlen uint8) Prefix {
+	return Prefix{
 		addr:   addr,
 		pfxlen: pfxlen,
 	}
@@ -49,22 +49,22 @@ func StrToAddr(x string) (uint32, error) {
 }
 
 // Addr returns the address of the prefix
-func (pfx *Prefix) Addr() uint32 {
+func (pfx Prefix) Addr() uint32 {
 	return pfx.addr
 }
 
 // Pfxlen returns the length of the prefix
-func (pfx *Prefix) Pfxlen() uint8 {
+func (pfx Prefix) Pfxlen() uint8 {
 	return pfx.pfxlen
 }
 
 // String returns a string representation of pfx
-func (pfx *Prefix) String() string {
+func (pfx Prefix) String() string {
 	return fmt.Sprintf("%s/%d", net.IP(convert.Uint32Byte(pfx.addr)), pfx.pfxlen)
 }
 
 // Contains checks if x is a subnet of or equal to pfx
-func (pfx *Prefix) Contains(x *Prefix) bool {
+func (pfx Prefix) Contains(x Prefix) bool {
 	if x.pfxlen <= pfx.pfxlen {
 		return false
 	}
@@ -74,12 +74,12 @@ func (pfx *Prefix) Contains(x *Prefix) bool {
 }
 
 // Equal checks if pfx and x are equal
-func (pfx *Prefix) Equal(x *Prefix) bool {
-	return *pfx == *x
+func (pfx Prefix) Equal(x Prefix) bool {
+	return pfx == x
 }
 
 // GetSupernet gets the next common supernet of pfx and x
-func (pfx *Prefix) GetSupernet(x *Prefix) *Prefix {
+func (pfx Prefix) GetSupernet(x Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
 	a := pfx.addr >> (32 - maxPfxLen)
 	b := x.addr >> (32 - maxPfxLen)
@@ -90,7 +90,7 @@ func (pfx *Prefix) GetSupernet(x *Prefix) *Prefix {
 		maxPfxLen--
 	}
 
-	return &Prefix{
+	return Prefix{
 		addr:   a << (32 - maxPfxLen),
 		pfxlen: maxPfxLen,
 	}
