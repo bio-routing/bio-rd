@@ -23,12 +23,13 @@ func NewBGPPathManager() *BGPPathManager {
 	return m
 }
 
-func (m *BGPPathManager) pathExists(p BGPPath) bool {
-	if _, ok := m.paths[p]; !ok {
-		return false
+func (m *BGPPathManager) lookup(p BGPPath) *BGPPath {
+	pathCounter, ok := m.paths[p]
+	if !ok {
+		return nil
 	}
 
-	return true
+	return pathCounter.path
 }
 
 // AddPath adds a path to the cache if it doesn't exist. If it exist a pointer to the cached object is returned.
@@ -36,7 +37,8 @@ func (m *BGPPathManager) AddPath(p BGPPath) *BGPPath {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if !m.pathExists(p) {
+	q := m.lookup(p)
+	if q == nil {
 		m.paths[p] = &BGPPathCounter{
 			path: &p,
 		}
@@ -51,7 +53,7 @@ func (m *BGPPathManager) RemovePath(p BGPPath) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if !m.pathExists(p) {
+	if m.lookup(p) == nil {
 		log.Fatalf("Tried to remove non-existent BGPPath: %v", p)
 		return
 	}
