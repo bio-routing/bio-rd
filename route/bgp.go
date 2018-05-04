@@ -23,6 +23,7 @@ func (r *Route) bgpPathSelection() (best *Path, active []*Path) {
 
 		if len(active) == 0 {
 			active = append(active, p)
+			best = p
 			continue
 		}
 
@@ -41,6 +42,7 @@ func (r *Route) bgpPathSelection() (best *Path, active []*Path) {
 		}
 
 		active = []*Path{p}
+		best = p
 	}
 
 	return best, active
