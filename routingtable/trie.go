@@ -37,7 +37,8 @@ func (n *node) removePath(pfx net.Prefix, p *route.Path) {
 			return
 		}
 
-		if n.route.RemovePath(p) {
+		n.route.RemovePath(p)
+		if len(n.route.Paths()) == 0 {
 			// FIXME: Can this node actually be removed from the trie entirely?
 			n.dummy = true
 		}
