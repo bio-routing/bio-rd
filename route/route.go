@@ -57,6 +57,17 @@ func (r *Route) Pfxlen() uint8 {
 	return r.pfx.Pfxlen()
 }
 
+// Paths returns a copy of the list of paths associated with route r
+func (r *Route) Paths() []*Path {
+	if r.paths == nil {
+		return nil
+	}
+
+	ret := make([]*Path, len(r.paths))
+	copy(ret, r.paths)
+	return ret
+}
+
 // AddPath adds path p to route r
 func (r *Route) AddPath(p *Path) {
 	if p == nil {
@@ -70,16 +81,16 @@ func (r *Route) AddPath(p *Path) {
 }
 
 // RemovePath removes path `rm` from route `r`. Returns true if removed path was last one. False otherwise.
-func (r *Route) RemovePath(p *Path) (final bool) {
+func (r *Route) RemovePath(p *Path) int {
 	if p == nil {
-		return false
+		return len(r.paths)
 	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.paths = removePath(r.paths, p)
-	return len(r.paths) == 0
+	return len(r.paths)
 }
 
 func removePath(paths []*Path, remove *Path) []*Path {
