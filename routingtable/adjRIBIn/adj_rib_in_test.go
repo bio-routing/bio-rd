@@ -200,12 +200,9 @@ func TestRemovePath(t *testing.T) {
 			if mc.removePathParams.pfx != test.removePfx {
 				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, mc.removePathParams.pfx.String(), test.removePfx.String())
 			}
-
-			if mc.removePathParams.path != test.removePath {
-				t.Errorf("Test %q failed: Call to RemovePath did not propagate path properly: Got: %v Want: %v", test.name, mc.removePathParams.path, test.removePath)
-			}
+			assert.Equal(t, test.removePath, mc.removePathParams.path)
 		} else {
-			if mc.removePathParams.pfx != net.NewPfx(0, 0) || mc.removePathParams.path != nil {
+			if mc.removePathParams.pfx != net.NewPfx(0, 0) {
 				t.Errorf("Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
 			}
 		}

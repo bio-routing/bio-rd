@@ -22,25 +22,30 @@ func NewAdjRIBIn() *AdjRIBIn {
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
 func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	oldPaths := a.rt.ReplacePath(pfx, p)
-
-	for _, oldPath := range oldPaths {
-		for _, client := range a.ClientManager.Clients() {
-			client.RemovePath(pfx, oldPath)
-		}
-	}
-
+	a.removePathsFromClients(pfx, oldPaths)
 	return nil
 }
 
 // RemovePath removes the path for prefix `pfx`
 func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) error {
-	if !a.rt.RemovePath(pfx, p) {
+	r := a.rt.Get(pfx)
+	if r == nil {
 		return nil
 	}
 
-	for _, client := range a.ClientManager.Clients() {
-		client.RemovePath(pfx, p)
+	oldPaths := r.Paths()
+	for _, path := range oldPaths {
+		a.rt.RemovePath(pfx, path)
 	}
 
+	a.removePathsFromClients(pfx, oldPaths)
 	return nil
+}
+
+func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
+	for _, path := range paths {
+		for _, client := range a.ClientManager.Clients() {
+			client.RemovePath(pfx, path)
+		}
+	}
 }
