@@ -1,6 +1,8 @@
 package adjRIBIn
 
 import (
+	"sync"
+
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -10,6 +12,7 @@ import (
 type AdjRIBIn struct {
 	rt *routingtable.RoutingTable
 	routingtable.ClientManager
+	mu sync.RWMutex
 }
 
 // NewAdjRIBIn creates a new Adjacency RIB In
@@ -21,6 +24,9 @@ func NewAdjRIBIn() *AdjRIBIn {
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
 func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	oldPaths := a.rt.ReplacePath(pfx, p)
 	a.removePathsFromClients(pfx, oldPaths)
 	return nil
@@ -28,6 +34,9 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 
 // RemovePath removes the path for prefix `pfx`
 func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	r := a.rt.Get(pfx)
 	if r == nil {
 		return nil
