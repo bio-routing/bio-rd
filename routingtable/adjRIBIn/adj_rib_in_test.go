@@ -1,12 +1,14 @@
 package adjRIBIn
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable"
 )
 
 type RTMockClient struct {
@@ -21,15 +23,18 @@ func NewRTMockClient() *RTMockClient {
 }
 
 func (m *RTMockClient) AddPath(pfx net.Prefix, p *route.Path) error {
-
 	return nil
 }
 
+func (m *RTMockClient) UpdateNewClient(client routingtable.RouteTableClient) error {
+	return fmt.Errorf("Not implemented")
+}
+
 // RemovePath removes the path for prefix `pfx`
-func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) error {
+func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	m.removePathParams.pfx = pfx
 	m.removePathParams.path = p
-	return nil
+	return true
 }
 
 func TestAddPath(t *testing.T) {

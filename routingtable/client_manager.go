@@ -2,8 +2,16 @@ package routingtable
 
 // ClientManager manages clients of routing tables (observer pattern)
 type ClientManager struct {
-	clients      map[RouteTableClient]struct{} // Ensures a client registers at most once
-	routingTable *RoutingTable
+	clients map[RouteTableClient]struct{} // Ensures a client registers at most once
+	rtc     RouteTableClient
+}
+
+// NewClientManager creates and initializes a new client manager
+func NewClientManager(rtc RouteTableClient) ClientManager {
+	return ClientManager{
+		clients: make(map[RouteTableClient]struct{}, 0),
+		rtc:     rtc,
+	}
 }
 
 // Register registers a client for updates
@@ -12,7 +20,7 @@ func (c *ClientManager) Register(client RouteTableClient) {
 		c.clients = make(map[RouteTableClient]struct{}, 0)
 	}
 	c.clients[client] = struct{}{}
-	//c.routingTable.updateNewClient(client)
+	c.rtc.UpdateNewClient(client)
 }
 
 // Unregister unregisters a client

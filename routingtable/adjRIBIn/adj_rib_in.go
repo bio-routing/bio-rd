@@ -1,6 +1,7 @@
 package adjRIBIn
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -17,9 +18,16 @@ type AdjRIBIn struct {
 
 // NewAdjRIBIn creates a new Adjacency RIB In
 func NewAdjRIBIn() *AdjRIBIn {
-	return &AdjRIBIn{
+	a := &AdjRIBIn{
 		rt: routingtable.NewRoutingTable(),
 	}
+	a.ClientManager = routingtable.NewClientManager(a)
+	return a
+}
+
+// UpdateNewClient sends current state to a new client
+func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
+	return fmt.Errorf("Not implemented")
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
@@ -33,13 +41,13 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) error {
+func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	r := a.rt.Get(pfx)
 	if r == nil {
-		return nil
+		return false
 	}
 
 	oldPaths := r.Paths()
@@ -48,7 +56,7 @@ func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) error {
 	}
 
 	a.removePathsFromClients(pfx, oldPaths)
-	return nil
+	return true
 }
 
 func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
