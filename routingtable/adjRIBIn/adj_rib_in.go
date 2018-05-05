@@ -1,7 +1,6 @@
 package adjRIBIn
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -27,7 +26,17 @@ func NewAdjRIBIn() *AdjRIBIn {
 
 // UpdateNewClient sends current state to a new client
 func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
-	return fmt.Errorf("Not implemented")
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	routes := a.rt.Dump()
+	for _, route := range routes {
+		paths := route.Paths()
+		for _, path := range paths {
+			client.AddPath(route.Prefix(), path)
+		}
+	}
+	return nil
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
@@ -37,6 +46,10 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 
 	oldPaths := a.rt.ReplacePath(pfx, p)
 	a.removePathsFromClients(pfx, oldPaths)
+
+	for _, client := range a.ClientManager.Clients() {
+		client.AddPath(pfx, p)
+	}
 	return nil
 }
 
