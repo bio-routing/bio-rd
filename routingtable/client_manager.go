@@ -32,7 +32,8 @@ func (c *ClientManager) Unregister(client RouteTableClient) {
 }
 
 // Clients returns a list of registered clients
-func (c *ClientManager) Clients() (ret []RouteTableClient) {
+func (c *ClientManager) Clients() []RouteTableClient {
+	ret := make([]RouteTableClient, 0)
 	for rtc := range c.clients {
 		ret = append(ret, rtc)
 	}
