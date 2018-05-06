@@ -80,7 +80,7 @@ func (r *Route) AddPath(p *Path) {
 	r.paths = append(r.paths, p)
 }
 
-// RemovePath removes path `rm` from route `r`. Returns true if removed path was last one. False otherwise.
+// RemovePath removes path `p` from route `r`. Returns length of path list after removing path `p`
 func (r *Route) RemovePath(p *Path) int {
 	if p == nil {
 		return len(r.paths)

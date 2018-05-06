@@ -7,6 +7,7 @@ import (
 
 // RouteTableClient is the interface that every type of RIB must implement
 type RouteTableClient interface {
-	AddPath(*net.Prefix, *route.Path) error
-	RemovePath(*net.Prefix, *route.Path) error
+	AddPath(net.Prefix, *route.Path) error
+	RemovePath(net.Prefix, *route.Path) bool
+	UpdateNewClient(RouteTableClient) error
 }

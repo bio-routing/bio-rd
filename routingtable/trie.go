@@ -27,9 +27,9 @@ func newNode(pfx net.Prefix, path *route.Path, skip uint8, dummy bool) *node {
 	return n
 }
 
-func (n *node) removePath(pfx net.Prefix, p *route.Path) {
+func (n *node) removePath(pfx net.Prefix, p *route.Path) (success bool) {
 	if n == nil {
-		return
+		return false
 	}
 
 	if n.route.Prefix() == pfx {
@@ -37,22 +37,21 @@ func (n *node) removePath(pfx net.Prefix, p *route.Path) {
 			return
 		}
 
-		n.route.RemovePath(p)
+		nPaths := len(n.route.Paths())
+		nPathsAfterDel := n.route.RemovePath(p)
 		if len(n.route.Paths()) == 0 {
 			// FIXME: Can this node actually be removed from the trie entirely?
 			n.dummy = true
 		}
 
-		return
+		return nPathsAfterDel < nPaths
 	}
 
 	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)
 	if !b {
-		n.l.removePath(pfx, p)
-		return
+		return n.l.removePath(pfx, p)
 	}
-	n.h.removePath(pfx, p)
-	return
+	return n.h.removePath(pfx, p)
 }
 
 func (n *node) lpm(needle net.Prefix, res *[]*route.Route) {
