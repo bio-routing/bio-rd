@@ -193,12 +193,6 @@ func getBestProtocol(paths []*Path) uint8 {
 // Print returns a prinatble representation of route `r`
 func (r *Route) Print() string {
 	ret := fmt.Sprintf("%s:\n", r.pfx.String())
-	//ret += fmt.Sprintf("Best path:\n")
-	//ret += r.bestPath.Print()
-	/*ret += fmt.Sprintf("Active Paths:\n")
-	for _, p := range r.activePaths {
-		ret += p.Print()
-	}*/
 	ret += fmt.Sprintf("All Paths:\n")
 	for _, p := range r.paths {
 		ret += p.Print()
