@@ -665,17 +665,6 @@ func (fsm *FSM) established() int {
 
 	fsm.rib.RegisterWithOptions(fsm.adjRIBOut, routingtable.ClientOptions{BestOnly: true})
 
-	/*go func() {
-		for {
-			time.Sleep(time.Second * 10)
-			fmt.Printf("Dumping AdjRibIn\n")
-			routes := fsm.adjRIBIn.RT().Dump()
-			for _, route := range routes {
-				fmt.Print(route.Print())
-			}
-		}
-	}()*/
-
 	go func() {
 		for {
 			fmt.Printf("ADJ-RIB-OUT: %s\n", fsm.remote.String())
