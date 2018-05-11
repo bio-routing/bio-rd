@@ -120,7 +120,7 @@ func (r *Route) AddPath(p *Path) {
 	r.paths = append(r.paths, p)
 }
 
-// RemovePath removes path `p` from route `r`. Returns length of path list after removing path `rm`
+// RemovePath removes path `p` from route `r`. Returns length of path list after removing path `p`
 func (r *Route) RemovePath(p *Path) int {
 	if p == nil {
 		return len(r.paths)
