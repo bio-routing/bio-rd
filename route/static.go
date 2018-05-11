@@ -5,23 +5,21 @@ type StaticPath struct {
 	NextHop uint32
 }
 
-func (r *Route) staticPathSelection() (best *Path, active []*Path) {
-	if r.paths == nil {
-		return nil, nil
-	}
-
+func (r *Route) staticPathSelection() {
 	if len(r.paths) == 0 {
-		return nil, nil
+		return
 	}
 
-	for _, p := range r.paths {
-		if p.Type != StaticPathType {
-			continue
-		}
-
-		active = append(active, p)
-		best = p
-	}
-
+	r.ecmpPaths = uint(len(r.paths))
 	return
+}
+
+// Compare returns negative if s < t, 0 if paths are equal, positive if s > t
+func (s *StaticPath) Compare(t *StaticPath) int8 {
+	return 0
+}
+
+// ECMP determines if path s and t are equal in terms of ECMP
+func (s *StaticPath) ECMP(t *StaticPath) bool {
+	return true
 }

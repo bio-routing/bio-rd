@@ -1291,3 +1291,122 @@ func TestSerialize(t *testing.T) {
 		assert.Equal(t, test.expected, res)
 	}
 }
+
+func TestParseASPathStr(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantFail bool
+		expected *PathAttribute
+	}{
+		{
+			name:     "Simple AS_SEQUENCE",
+			input:    "3320 15169",
+			wantFail: false,
+			expected: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					ASPathSegment{
+						Type: ASSequence,
+						ASNs: []uint32{3320, 15169},
+					},
+				},
+			},
+		},
+		{
+			name:     "AS_SEQUENCE with more than 255 elements",
+			input:    "123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123",
+			wantFail: false,
+			expected: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					ASPathSegment{
+						Type: ASSequence,
+						ASNs: []uint32{123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123},
+					},
+					ASPathSegment{
+						Type: ASSequence,
+						ASNs: []uint32{123, 123, 123, 123, 123},
+					},
+				},
+			},
+		},
+		{
+			name:     "AS_SET only",
+			input:    "(3320 201701 15169)",
+			wantFail: false,
+			expected: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					ASPathSegment{
+						Type: ASSet,
+						ASNs: []uint32{3320, 201701, 15169},
+					},
+				},
+			},
+		},
+		{
+			name:     "Mixed AS Path",
+			input:    "199714 51324 (3320 201701 15169)",
+			wantFail: false,
+			expected: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					ASPathSegment{
+						Type: ASSequence,
+						ASNs: []uint32{199714, 51324},
+					},
+					ASPathSegment{
+						Type: ASSet,
+						ASNs: []uint32{3320, 201701, 15169},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res, err := ParseASPathStr(test.input)
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equal(t, test.expected, res)
+	}
+}
+
+func TestFourBytesToUint32(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [4]byte
+		expected uint32
+	}{
+		{
+			name:     "Test #1",
+			input:    [4]byte{0, 0, 0, 200},
+			expected: 200,
+		},
+		{
+			name:     "Test #2",
+			input:    [4]byte{1, 0, 0, 200},
+			expected: 16777416,
+		},
+	}
+
+	for _, test := range tests {
+		res := fourBytesToUint32(test.input)
+		if res != test.expected {
+			t.Errorf("Unexpected result for test %q: Got: %d Want: %d", test.name, res, test.expected)
+		}
+	}
+}

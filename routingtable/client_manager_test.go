@@ -64,3 +64,42 @@ func TestClients(t *testing.T) {
 		assert.Equal(t, test.expected, ret)
 	}
 }
+
+func TestGetMaxPaths(t *testing.T) {
+	tests := []struct {
+		name          string
+		clientOptions ClientOptions
+		ecmpPaths     uint
+		expected      uint
+	}{
+		{
+			name: "Test #1",
+			clientOptions: ClientOptions{
+				BestOnly: true,
+			},
+			ecmpPaths: 8,
+			expected:  1,
+		},
+		{
+			name: "Test #2",
+			clientOptions: ClientOptions{
+				EcmpOnly: true,
+			},
+			ecmpPaths: 8,
+			expected:  8,
+		},
+		{
+			name: "Test #3",
+			clientOptions: ClientOptions{
+				MaxPaths: 100,
+			},
+			ecmpPaths: 10,
+			expected:  100,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.clientOptions.GetMaxPaths(test.ecmpPaths)
+		assert.Equal(t, test.expected, res)
+	}
+}

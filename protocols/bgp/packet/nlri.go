@@ -57,12 +57,12 @@ func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
 			addr[i] = 0
 		}
 	}
-	nlri.IP = addr
+	nlri.IP = fourBytesToUint32(addr)
 	return nlri, toCopy + 1, nil
 }
 
 func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
-	a := convert.Uint32Byte(n.IP.(uint32))
+	a := convert.Uint32Byte(n.IP)
 
 	addr := [4]byte{a[0], a[1], a[2], a[3]}
 	nBytes := bytesInAddr(n.Pfxlen)

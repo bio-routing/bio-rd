@@ -1,5 +1,11 @@
 package route
 
+import (
+	"fmt"
+
+	"github.com/taktv6/tflow2/convert"
+)
+
 // BGPPath represents a set of BGP path attributes
 type BGPPath struct {
 	PathIdentifier uint32
@@ -14,38 +20,62 @@ type BGPPath struct {
 	Source         uint32
 }
 
-func (r *Route) bgpPathSelection() (best *Path, active []*Path) {
-	// TODO: Implement next hop lookup and compare IGP metrics
-	for _, p := range r.paths {
-		if p.Type != BGPPathType {
-			continue
-		}
+// ECMP determines if routes b and c are euqal in terms of ECMP
+func (b *BGPPath) ECMP(c *BGPPath) bool {
+	return b.LocalPref == c.LocalPref && b.ASPathLen == c.ASPathLen && b.MED == c.MED && b.Origin == c.Origin
+}
 
-		if len(active) == 0 {
-			active = append(active, p)
-			best = p
-			continue
-		}
-
-		if active[0].BGPPath.ecmp(p.BGPPath) {
-			active = append(active, p)
-			if !r.bestPath.BGPPath.better(p.BGPPath) {
-				continue
-			}
-
-			best = p
-			continue
-		}
-
-		if !active[0].BGPPath.betterECMP(p.BGPPath) {
-			continue
-		}
-
-		active = []*Path{p}
-		best = p
+// Compare returns negative if b < c, 0 if paths are equal, positive if b > c
+func (b *BGPPath) Compare(c *BGPPath) int8 {
+	if c.LocalPref < b.LocalPref {
+		return 1
 	}
 
-	return best, active
+	if c.LocalPref > b.LocalPref {
+		return -1
+	}
+
+	if c.ASPathLen > b.ASPathLen {
+		return 1
+	}
+
+	if c.ASPathLen < b.ASPathLen {
+		return -1
+	}
+
+	if c.Origin > b.Origin {
+		return 1
+	}
+
+	if c.Origin < b.Origin {
+		return -1
+	}
+
+	if c.MED > b.MED {
+		return 1
+	}
+
+	if c.MED < b.MED {
+		return -1
+	}
+
+	if c.BGPIdentifier < b.BGPIdentifier {
+		return 1
+	}
+
+	if c.BGPIdentifier > b.BGPIdentifier {
+		return -1
+	}
+
+	if c.Source < b.Source {
+		return 1
+	}
+
+	if c.Source > b.Source {
+		return -1
+	}
+
+	return 0
 }
 
 func (b *BGPPath) betterECMP(c *BGPPath) bool {
@@ -102,4 +132,35 @@ func (b *BGPPath) better(c *BGPPath) bool {
 
 func (b *BGPPath) ecmp(c *BGPPath) bool {
 	return b.LocalPref == c.LocalPref && b.ASPathLen == c.ASPathLen && b.Origin == c.Origin && b.MED == c.MED
+}
+
+func (b *BGPPath) Print() string {
+	origin := ""
+	switch b.Origin {
+	case 0:
+		origin = "Incomplete"
+	case 1:
+		origin = "EGP"
+	case 2:
+		origin = "IGP"
+	}
+	ret := fmt.Sprintf("\t\tLocal Pref: %d\n", b.LocalPref)
+	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
+	ret += fmt.Sprintf("\t\tAS Path: %s\n", b.ASPath)
+	nh := uint32To4Byte(b.NextHop)
+	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
+	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
+
+	return ret
+}
+
+func uint32To4Byte(addr uint32) [4]byte {
+	slice := convert.Uint32Byte(addr)
+	ret := [4]byte{
+		slice[0],
+		slice[1],
+		slice[2],
+		slice[3],
+	}
+	return ret
 }

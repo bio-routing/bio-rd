@@ -262,6 +262,41 @@ func TestRouteRemovePath(t *testing.T) {
 	}
 }
 
+func TestCopy(t *testing.T) {
+	tests := []struct {
+		name     string
+		route    *Route
+		expected *Route
+	}{
+		{
+			name: "",
+			route: &Route{
+				pfx:       net.NewPfx(1000, 8),
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: 100,
+					},
+				},
+			},
+			expected: &Route{
+				pfx:       net.NewPfx(1000, 8),
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: 100,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := test.route.Copy()
+		assert.Equal(t, test.expected, res)
+	}
+}
+
 func strAddr(s string) uint32 {
 	ret, _ := net.StrToAddr(s)
 	return ret

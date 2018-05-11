@@ -7,12 +7,16 @@ import (
 	"net"
 	"time"
 
+	"github.com/bio-routing/bio-rd/routingtable"
+
 	"github.com/bio-routing/bio-rd/config"
 	tnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/rt"
+	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
-	"github.com/taktv6/tflow2/convert"
 	tomb "gopkg.in/tomb.v2"
 )
 
@@ -83,9 +87,9 @@ type FSM struct {
 	msgRecvFailCh chan msgRecvErr
 	stopMsgRecvCh chan struct{}
 
-	adjRIBIn     *rt.RT
-	adjRIBOut    *rt.RT
-	vrf          *rt.RT
+	adjRIBIn     *adjRIBIn.AdjRIBIn
+	adjRIBOut    *adjRIBOut.AdjRIBOut
+	rib          *locRIB.LocRIB
 	updateSender *UpdateSender
 }
 
@@ -99,7 +103,7 @@ type msgRecvErr struct {
 	con *net.TCPConn
 }
 
-func NewFSM(c config.Peer, vrf *rt.RT) *FSM {
+func NewFSM(c config.Peer, rib *locRIB.LocRIB) *FSM {
 	fsm := &FSM{
 		state:             Idle,
 		passive:           true,
@@ -124,7 +128,7 @@ func NewFSM(c config.Peer, vrf *rt.RT) *FSM {
 		conCh:    make(chan *net.TCPConn),
 		conErrCh: make(chan error), initiateCon: make(chan struct{}),
 
-		vrf: vrf,
+		rib: rib,
 	}
 
 	fsm.updateSender = newUpdateSender(fsm)
@@ -208,7 +212,7 @@ func (fsm *FSM) main() error {
 
 func (fsm *FSM) idle() int {
 	if fsm.adjRIBOut != nil {
-		fsm.vrf.Unregister(fsm.adjRIBOut)
+		fsm.rib.Unregister(fsm.adjRIBOut)
 		fsm.adjRIBOut.Unregister(fsm.updateSender)
 	}
 	fsm.adjRIBIn = nil
@@ -653,22 +657,30 @@ func (fsm *FSM) openConfirmTCPFail(err error) int {
 }
 
 func (fsm *FSM) established() int {
-	fsm.adjRIBIn = rt.New(false)
-	fsm.adjRIBIn.Register(fsm.vrf)
+	fsm.adjRIBIn = adjRIBIn.New()
+	fsm.adjRIBIn.Register(fsm.rib)
 
-	fsm.adjRIBOut = rt.New(false)
+	fsm.adjRIBOut = adjRIBOut.New()
 	fsm.adjRIBOut.Register(fsm.updateSender)
 
-	fsm.vrf.Register(fsm.adjRIBOut)
+	fsm.rib.RegisterWithOptions(fsm.adjRIBOut, routingtable.ClientOptions{BestOnly: true})
 
-	go func() {
+	/*go func() {
 		for {
 			time.Sleep(time.Second * 10)
 			fmt.Printf("Dumping AdjRibIn\n")
-			routes := fsm.adjRIBIn.Dump()
+			routes := fsm.adjRIBIn.RT().Dump()
 			for _, route := range routes {
-				fmt.Printf("LPM: %s\n", route.Prefix().String())
+				fmt.Print(route.Print())
 			}
+		}
+	}()*/
+
+	go func() {
+		for {
+			fmt.Printf("ADJ-RIB-OUT: %s\n", fsm.remote.String())
+			fmt.Print(fsm.adjRIBOut.Print())
+			time.Sleep(time.Second * 11)
 		}
 	}()
 
@@ -712,6 +724,7 @@ func (fsm *FSM) established() int {
 		case recvMsg := <-fsm.msgRecvCh:
 			msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
 			if err != nil {
+				fmt.Printf("Failed to decode BGP message: %v\n", recvMsg.msg)
 				switch bgperr := err.(type) {
 				case packet.BGPError:
 					sendNotification(fsm.con, bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -735,23 +748,22 @@ func (fsm *FSM) established() int {
 				u := msg.Body.(*packet.BGPUpdate)
 
 				for r := u.WithdrawnRoutes; r != nil; r = r.Next {
-					x := r.IP.([4]byte)
-					pfx := tnet.NewPfx(convert.Uint32b(x[:]), r.Pfxlen)
+					pfx := tnet.NewPfx(r.IP, r.Pfxlen)
 					fmt.Printf("LPM: Removing prefix %s\n", pfx.String())
-					fsm.adjRIBIn.RemoveRoute(pfx)
+					fsm.adjRIBIn.RemovePath(pfx, nil)
 				}
 
 				for r := u.NLRI; r != nil; r = r.Next {
-					x := r.IP.([4]byte)
-					pfx := tnet.NewPfx(convert.Uint32b(x[:]), r.Pfxlen)
+					pfx := tnet.NewPfx(r.IP, r.Pfxlen)
 					fmt.Printf("LPM: Adding prefix %s\n", pfx.String())
 
-					path := &rt.Path{
-						Type:    rt.BGPPathType,
-						BGPPath: &rt.BGPPath{},
+					path := &route.Path{
+						Type:    route.BGPPathType,
+						BGPPath: &route.BGPPath{},
 					}
 
-					for pa := u.PathAttributes; pa.Next != nil; pa = pa.Next {
+					for pa := u.PathAttributes; pa != nil; pa = pa.Next {
+						fmt.Printf("TypeCode: %d\n", pa.TypeCode)
 						switch pa.TypeCode {
 						case packet.OriginAttr:
 							path.BGPPath.Origin = pa.Value.(uint8)
@@ -760,15 +772,14 @@ func (fsm *FSM) established() int {
 						case packet.MEDAttr:
 							path.BGPPath.MED = pa.Value.(uint32)
 						case packet.NextHopAttr:
+							fmt.Printf("RECEIVED NEXT_HOP: %d\n", pa.Value.(uint32))
 							path.BGPPath.NextHop = pa.Value.(uint32)
 						case packet.ASPathAttr:
 							path.BGPPath.ASPath = pa.ASPathString()
 							path.BGPPath.ASPathLen = pa.ASPathLen()
 						}
 					}
-					// TO BE USED WITH BGP ADD PATH:
-					// fsm.adjRIBIn.AddPath(rt.NewRoute(pfx, []*rt.Path{path}))
-					fsm.adjRIBIn.ReplaceRoute(rt.NewRoute(pfx, []*rt.Path{path}))
+					fsm.adjRIBIn.AddPath(pfx, path)
 				}
 
 				continue
