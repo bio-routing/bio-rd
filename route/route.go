@@ -29,7 +29,7 @@ type Route struct {
 }
 
 // NewRoute generates a new route with paths p
-func NewRoute(pfx net.Prefix, p ...*Path) *Route {
+func NewRoute(pfx net.Prefix, p *Path) *Route {
 	r := &Route{
 		pfx: pfx,
 	}
@@ -39,7 +39,7 @@ func NewRoute(pfx net.Prefix, p ...*Path) *Route {
 		return r
 	}
 
-	r.paths = append(r.paths, p...)
+	r.paths = append(r.paths, p)
 	return r
 }
 
