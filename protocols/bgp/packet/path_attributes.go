@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/taktv6/tflow2/convert"
 )
@@ -156,7 +158,7 @@ func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
 		return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
 	}
 
-	pa.Value = addr
+	pa.Value = fourBytesToUint32(addr)
 	p += 4
 
 	return dumpNBytes(buf, pa.Length-p)
@@ -354,8 +356,8 @@ func (pa *PathAttribute) serializeNextHop(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(NextHopAttr)
 	length := uint8(4)
 	buf.WriteByte(length)
-	addr := pa.Value.([4]byte)
-	buf.Write(addr[:])
+	addr := pa.Value.(uint32)
+	buf.Write(convert.Uint32Byte(addr))
 	return 7
 }
 
@@ -401,4 +403,97 @@ func (pa *PathAttribute) serializeAggregator(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(length)
 	buf.Write(convert.Uint16Byte(pa.Value.(uint16)))
 	return 5
+}
+
+/*func (pa *PathAttribute) PrependASPath(prepend []uint32) {
+	if pa.TypeCode != ASPathAttr {
+		return
+	}
+
+	asPath := pa.Value.(ASPath)
+	asPathSegementCount := len(asPath)
+	currentSegment := asPathSegementCount - 1
+
+	newSegmentNeeded := false
+	if asPath[asPathSegementCount-1].Type == ASSequence {
+		newSegmentNeeded = true
+	} else {
+		if len(asPath[asPathSegementCount-1].ASNs) >= MaxASNsSegment {
+			newSegmentNeeded = true
+		}
+	}
+
+	for _, asn := range prepend {
+		if newSegmentNeeded {
+			segment := ASPathSegment{
+				Type: ASSequence,
+				ASNs: make([]uint32, 0),
+			},
+		}
+
+		asPath[currentSegment].ASNs = append(asPath[currentSegment].ASNs, asn)
+		if len(asPath[asPathSegementCount-1].ASNs) >= MaxASNsSegment {
+			newSegmentNeeded = true
+		}
+	}
+
+}*/
+
+// ParseASPathStr converts an AS path from string representation info an PathAttribute object
+func ParseASPathStr(asPathString string) (*PathAttribute, error) {
+	asPath := ASPath{}
+
+	currentType := ASSequence
+	newSegmentNeeded := true
+	currentSegment := -1
+	for _, asn := range strings.Split(asPathString, " ") {
+		if isBeginOfASSet(asn) {
+			currentType = ASSet
+			newSegmentNeeded = true
+			asn = strings.Replace(asn, "(", "", 1)
+		}
+
+		if newSegmentNeeded {
+			seg := ASPathSegment{
+				Type: uint8(currentType),
+				ASNs: make([]uint32, 0),
+			}
+			asPath = append(asPath, seg)
+			currentSegment++
+			newSegmentNeeded = false
+		}
+
+		if isEndOfASSset(asn) {
+			currentType = ASSequence
+			newSegmentNeeded = true
+			asn = strings.Replace(asn, ")", "", 1)
+		}
+
+		numericASN, err := strconv.Atoi(asn)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to convert ASN: %v", err)
+		}
+		asPath[currentSegment].ASNs = append(asPath[currentSegment].ASNs, uint32(numericASN))
+
+		if len(asPath[currentSegment].ASNs) == MaxASNsSegment {
+			newSegmentNeeded = true
+		}
+	}
+
+	return &PathAttribute{
+		TypeCode: ASPathAttr,
+		Value:    asPath,
+	}, nil
+}
+
+func isBeginOfASSet(asPathPart string) bool {
+	return strings.Contains(asPathPart, "(")
+}
+
+func isEndOfASSset(asPathPart string) bool {
+	return strings.Contains(asPathPart, ")")
+}
+
+func fourBytesToUint32(address [4]byte) uint32 {
+	return uint32(address[0])<<24 + uint32(address[1])<<16 + uint32(address[2])<<8 + uint32(address[3])
 }

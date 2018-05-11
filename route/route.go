@@ -1,6 +1,8 @@
 package route
 
 import (
+	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -20,15 +22,14 @@ const ISISPathType = 4
 
 // Route links a prefix to paths
 type Route struct {
-	pfx         net.Prefix
-	mu          sync.Mutex
-	bestPath    *Path
-	activePaths []*Path
-	paths       []*Path
+	pfx       net.Prefix
+	mu        sync.Mutex
+	paths     []*Path
+	ecmpPaths uint
 }
 
-// NewRoute generates a new route
-func NewRoute(pfx net.Prefix, p *Path) *Route {
+// NewRoute generates a new route with paths p
+func NewRoute(pfx net.Prefix, p ...*Path) *Route {
 	r := &Route{
 		pfx: pfx,
 	}
@@ -38,8 +39,19 @@ func NewRoute(pfx net.Prefix, p *Path) *Route {
 		return r
 	}
 
-	r.paths = []*Path{p}
+	r.paths = append(r.paths, p...)
 	return r
+}
+
+// Copy returns a copy of route r
+func (r *Route) Copy() *Route {
+	new := &Route{
+		pfx:       r.pfx,
+		ecmpPaths: r.ecmpPaths,
+	}
+	new.paths = make([]*Path, len(r.paths))
+	copy(new.paths, r.paths)
+	return new
 }
 
 // Prefix gets the prefix of route `r`
@@ -60,12 +72,40 @@ func (r *Route) Pfxlen() uint8 {
 // Paths returns a copy of the list of paths associated with route r
 func (r *Route) Paths() []*Path {
 	if r.paths == nil {
-		return nil
+		return []*Path{}
 	}
 
 	ret := make([]*Path, len(r.paths))
 	copy(ret, r.paths)
 	return ret
+}
+
+// ECMPPathCount returns the count of ecmp paths for route r
+func (r *Route) ECMPPathCount() uint {
+	return r.ecmpPaths
+}
+
+// ECMPPaths returns a copy of the list of paths associated with route r
+func (r *Route) ECMPPaths() []*Path {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if len(r.paths) == 0 {
+		return nil
+	}
+
+	ret := make([]*Path, r.ecmpPaths)
+	copy(ret, r.paths[0:r.ecmpPaths])
+	return ret
+}
+
+// BestPath returns the current best path. nil if non exists
+func (r *Route) BestPath() *Path {
+	if len(r.paths) == 0 {
+		return nil
+	}
+
+	return r.paths[0]
 }
 
 // AddPath adds path p to route r
@@ -108,4 +148,55 @@ func removePath(paths []*Path, remove *Path) []*Path {
 
 	copy(paths[i:], paths[i+1:])
 	return paths[:len(paths)-1]
+}
+
+// PathSelection recalculates the best path + active paths
+func (r *Route) PathSelection() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	sort.Slice(r.paths, func(i, j int) bool {
+		return r.paths[i].Compare(r.paths[j]) == -1
+	})
+
+	r.updateEqualPathCount()
+}
+
+func (r *Route) updateEqualPathCount() {
+	count := uint(1)
+	for i := 0; i < len(r.paths)-1; i++ {
+		if !r.paths[i].ECMP(r.paths[i+1]) {
+			break
+		}
+		count++
+	}
+
+	r.ecmpPaths = count
+}
+
+func getBestProtocol(paths []*Path) uint8 {
+	best := uint8(0)
+	for _, p := range paths {
+		if best == 0 {
+			best = p.Type
+			continue
+		}
+
+		if p.Type < best {
+			best = p.Type
+		}
+	}
+
+	return best
+}
+
+// Print returns a prinatble representation of route `r`
+func (r *Route) Print() string {
+	ret := fmt.Sprintf("%s:\n", r.pfx.String())
+	ret += fmt.Sprintf("All Paths:\n")
+	for _, p := range r.paths {
+		ret += p.Print()
+	}
+
+	return ret
 }

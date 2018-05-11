@@ -1,8 +1,9 @@
 package packet
 
 const (
-	OctetLen    = 8
-	BGP4Version = 4
+	OctetLen       = 8
+	MaxASNsSegment = 255
+	BGP4Version    = 4
 
 	MarkerLen  = 16
 	HeaderLen  = 19
@@ -130,7 +131,7 @@ type PathAttribute struct {
 }
 
 type NLRI struct {
-	IP     interface{}
+	IP     uint32
 	Pfxlen uint8
 	Next   *NLRI
 }

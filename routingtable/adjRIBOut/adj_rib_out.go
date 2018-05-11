@@ -1,6 +1,7 @@
-package adjRIBIn
+package adjRIBOut
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -8,16 +9,16 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 )
 
-// AdjRIBIn represents an Adjacency RIB In as described in RFC4271
-type AdjRIBIn struct {
-	routingtable.ClientManager
+// AdjRIBOut represents an Adjacency RIB In as described in RFC4271
+type AdjRIBOut struct {
 	rt *routingtable.RoutingTable
+	routingtable.ClientManager
 	mu sync.RWMutex
 }
 
 // New creates a new Adjacency RIB In
-func New() *AdjRIBIn {
-	a := &AdjRIBIn{
+func New() *AdjRIBOut {
+	a := &AdjRIBOut{
 		rt: routingtable.NewRoutingTable(),
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
@@ -25,22 +26,12 @@ func New() *AdjRIBIn {
 }
 
 // UpdateNewClient sends current state to a new client
-func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-
-	routes := a.rt.Dump()
-	for _, route := range routes {
-		paths := route.Paths()
-		for _, path := range paths {
-			client.AddPath(route.Prefix(), path)
-		}
-	}
-	return nil
+func (a *AdjRIBOut) UpdateNewClient(client routingtable.RouteTableClient) error {
+	return fmt.Errorf("Not supported")
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
-func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
+func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -54,7 +45,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -72,7 +63,7 @@ func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	return true
 }
 
-func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
+func (a *AdjRIBOut) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
 	for _, path := range paths {
 		for _, client := range a.ClientManager.Clients() {
 			client.RemovePath(pfx, path)
@@ -80,6 +71,15 @@ func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
 	}
 }
 
-func (a *AdjRIBIn) RT() *routingtable.RoutingTable {
-	return a.rt
+func (a *AdjRIBOut) Print() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	ret := fmt.Sprintf("DUMPING ADJ-RIB-OUT:\n")
+	routes := a.rt.Dump()
+	for _, r := range routes {
+		ret += fmt.Sprintf("%s\n", r.Prefix().String())
+	}
+
+	return ret
 }
