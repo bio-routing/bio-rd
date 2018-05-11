@@ -725,7 +725,7 @@ func TestASPathString(t *testing.T) {
 		{
 			name: "Test #1",
 			pa: &PathAttribute{
-				Value: &ASPath{
+				Value: ASPath{
 					{
 						Type: ASSequence,
 						ASNs: []uint32{10, 20, 30},
@@ -737,7 +737,7 @@ func TestASPathString(t *testing.T) {
 		{
 			name: "Test #2",
 			pa: &PathAttribute{
-				Value: &ASPath{
+				Value: ASPath{
 					{
 						Type: ASSequence,
 						ASNs: []uint32{10, 20, 30},
@@ -1106,7 +1106,7 @@ func TestSerialize(t *testing.T) {
 			name: "Withdraw only",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{100, 110, 120, 0},
+					IP:     strAddr("100.110.120.0"),
 					Pfxlen: 24,
 				},
 			},
@@ -1123,7 +1123,7 @@ func TestSerialize(t *testing.T) {
 			name: "NLRI only",
 			msg: &BGPUpdate{
 				NLRI: &NLRI{
-					IP:     [4]byte{100, 110, 128, 0},
+					IP:     strAddr("100.110.128.0"),
 					Pfxlen: 17,
 				},
 			},
@@ -1162,10 +1162,10 @@ func TestSerialize(t *testing.T) {
 			name: "Full test",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -1206,10 +1206,10 @@ func TestSerialize(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					IP:     [4]byte{8, 8, 8, 0},
+					IP:     strAddr("8.8.8.0"),
 					Pfxlen: 24,
 					Next: &NLRI{
-						IP:     [4]byte{185, 65, 240, 0},
+						IP:     strAddr("185.65.240.0"),
 						Pfxlen: 22,
 					},
 				},

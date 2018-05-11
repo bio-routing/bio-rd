@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 	"github.com/taktv6/tflow2/convert"
 )
@@ -205,10 +206,10 @@ func TestDecode(t *testing.T) {
 				Body: &BGPUpdate{
 					WithdrawnRoutesLen: 5,
 					WithdrawnRoutes: &NLRI{
-						IP:     [4]byte{10, 0, 0, 0},
+						IP:     strAddr("10.0.0.0"),
 						Pfxlen: 8,
 						Next: &NLRI{
-							IP:     [4]byte{192, 168, 0, 0},
+							IP:     strAddr("192.168.0.0"),
 							Pfxlen: 16,
 						},
 					},
@@ -405,10 +406,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -431,10 +432,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -473,10 +474,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -577,10 +578,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -655,10 +656,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -749,10 +750,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -856,10 +857,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -974,10 +975,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -1108,10 +1109,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{192, 168, 0, 0},
+						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
 				},
@@ -1200,7 +1201,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				},
 				NLRI: &NLRI{
 					Pfxlen: 8,
-					IP:     [4]byte{11, 0, 0, 0},
+					IP:     strAddr("1.0.0.0"),
 				},
 			},
 		},
@@ -1533,4 +1534,9 @@ func TestValidateOpenMessage(t *testing.T) {
 			t.Errorf("Unexpected success for test %q", test.name)
 		}
 	}
+}
+
+func strAddr(s string) uint32 {
+	ret, _ := net.StrToAddr(s)
+	return ret
 }

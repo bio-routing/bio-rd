@@ -23,13 +23,13 @@ func TestDecodeNLRIs(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     [4]byte{192, 168, 0, 0},
+				IP:     strAddr("192.168.0.0"),
 				Pfxlen: 24,
 				Next: &NLRI{
-					IP:     [4]byte{10, 0, 0, 0},
+					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     [4]byte{172, 16, 0, 0},
+						IP:     strAddr("172.16.0.0"),
 						Pfxlen: 17,
 					},
 				},
@@ -76,7 +76,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     [4]byte{192, 168, 0, 0},
+				IP:     strAddr("192.168.0.0"),
 				Pfxlen: 24,
 			},
 		},
@@ -87,7 +87,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     [4]byte{192, 168, 0, 128},
+				IP:     strAddr("192.168.0.128"),
 				Pfxlen: 25,
 			},
 		},
@@ -178,7 +178,7 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #1",
 			nlri: &NLRI{
-				IP:     [4]byte{1, 2, 3, 0},
+				IP:     strAddr("1.2.3.0"),
 				Pfxlen: 25,
 			},
 			expected: []byte{25, 1, 2, 3, 0},
@@ -186,7 +186,7 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #2",
 			nlri: &NLRI{
-				IP:     [4]byte{1, 2, 3, 0},
+				IP:     strAddr("1.2.3.0"),
 				Pfxlen: 24,
 			},
 			expected: []byte{24, 1, 2, 3},
@@ -194,7 +194,7 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #3",
 			nlri: &NLRI{
-				IP:     [4]byte{100, 200, 128, 0},
+				IP:     strAddr("100.200.128.0"),
 				Pfxlen: 17,
 			},
 			expected: []byte{17, 100, 200, 128},
