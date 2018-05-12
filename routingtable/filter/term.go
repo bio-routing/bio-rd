@@ -39,13 +39,11 @@ func (t *Term) Process(p net.Prefix, pa *route.Path) (modPath *route.Path, rejec
 }
 
 func (t *Term) processActions(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
-	var result bool
 	modPath = pa
 
 	for _, action := range t.then {
-		result, modPath = action.Do(p, modPath)
-		if !result {
-			reject = true
+		modPath, reject = action.Do(p, modPath)
+		if reject {
 			continue
 		}
 	}

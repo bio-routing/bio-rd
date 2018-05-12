@@ -12,11 +12,11 @@ import (
 type mockAction struct {
 }
 
-func (*mockAction) Do(p net.Prefix, pa *route.Path) (bool, *route.Path) {
+func (*mockAction) Do(p net.Prefix, pa *route.Path) (*route.Path, bool) {
 	cp := *pa
 	cp.Type = route.OSPFPathType
 
-	return true, &cp
+	return &cp, false
 }
 
 func TestProcess(t *testing.T) {

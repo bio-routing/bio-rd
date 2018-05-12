@@ -8,6 +8,6 @@ import (
 type AcceptAction struct {
 }
 
-func (*AcceptAction) Do(p net.Prefix, pa *route.Path) (bool, *route.Path) {
-	return true, pa
+func (*AcceptAction) Do(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
+	return pa, false
 }

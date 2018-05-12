@@ -6,5 +6,5 @@ import (
 )
 
 type Then interface {
-	Do(p net.Prefix, pa *route.Path) (bool, *route.Path)
+	Do(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool)
 }
