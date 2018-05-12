@@ -660,7 +660,11 @@ func (fsm *FSM) established() int {
 	fsm.adjRIBIn = adjRIBIn.New()
 	fsm.adjRIBIn.Register(fsm.rib)
 
-	fsm.adjRIBOut = adjRIBOut.New()
+	n := &routingtable.Neighbor{
+		Type:    route.BGPPathType,
+		Address: tnet.IPv4ToUint32(fsm.remote),
+	}
+	fsm.adjRIBOut = adjRIBOut.New(n)
 	fsm.adjRIBOut.Register(fsm.updateSender)
 
 	fsm.rib.RegisterWithOptions(fsm.adjRIBOut, routingtable.ClientOptions{BestOnly: true})
