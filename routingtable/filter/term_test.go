@@ -25,7 +25,7 @@ func TestProcess(t *testing.T) {
 		prefix         net.Prefix
 		path           *route.Path
 		from           []*From
-		then           []Then
+		then           []FilterAction
 		expectReject   bool
 		expectModified bool
 	}{
@@ -34,7 +34,7 @@ func TestProcess(t *testing.T) {
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
 			from:   []*From{},
-			then: []Then{
+			then: []FilterAction{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -53,7 +53,7 @@ func TestProcess(t *testing.T) {
 					},
 				},
 			},
-			then: []Then{
+			then: []FilterAction{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -72,7 +72,7 @@ func TestProcess(t *testing.T) {
 					},
 				},
 			},
-			then: []Then{
+			then: []FilterAction{
 				&actions.AcceptAction{},
 			},
 			expectReject:   true,
@@ -91,7 +91,7 @@ func TestProcess(t *testing.T) {
 					},
 				},
 			},
-			then: []Then{
+			then: []FilterAction{
 				&mockAction{},
 			},
 			expectReject:   false,
@@ -110,7 +110,7 @@ func TestProcess(t *testing.T) {
 					},
 				},
 			},
-			then: []Then{
+			then: []FilterAction{
 				&mockAction{},
 				&actions.AcceptAction{},
 			},
@@ -137,7 +137,7 @@ func TestProcess(t *testing.T) {
 					},
 				},
 			},
-			then: []Then{
+			then: []FilterAction{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,

@@ -5,14 +5,18 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 )
 
+type FilterAction interface {
+	Do(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool)
+}
+
 // Term matches a path against a list of conditions and performs actions if it matches
 type Term struct {
 	from []*From
-	then []Then
+	then []FilterAction
 }
 
 // NewTerm creates a new term
-func NewTerm(from []*From, then []Then) *Term {
+func NewTerm(from []*From, then []FilterAction) *Term {
 	t := &Term{
 		from: from,
 		then: then,
