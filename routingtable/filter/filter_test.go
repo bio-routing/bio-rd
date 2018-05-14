@@ -54,7 +54,7 @@ func TestAddPath(t *testing.T) {
 			prefix: net.NewPfx(0, 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Then{
+				then: []FilterAction{
 					&actions.AcceptAction{},
 				},
 			},
@@ -66,7 +66,7 @@ func TestAddPath(t *testing.T) {
 			prefix: net.NewPfx(0, 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Then{
+				then: []FilterAction{
 					&actions.RejectAction{},
 				},
 			},
@@ -78,7 +78,7 @@ func TestAddPath(t *testing.T) {
 			prefix: net.NewPfx(0, 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Then{
+				then: []FilterAction{
 					&mockAction{},
 					&actions.AcceptAction{},
 				},
@@ -127,7 +127,7 @@ func TestRemovePath(t *testing.T) {
 			prefix: net.NewPfx(0, 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Then{
+				then: []FilterAction{
 					&actions.AcceptAction{},
 				},
 			},
@@ -139,7 +139,7 @@ func TestRemovePath(t *testing.T) {
 			prefix: net.NewPfx(0, 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Then{
+				then: []FilterAction{
 					&actions.RejectAction{},
 				},
 			},
@@ -151,7 +151,7 @@ func TestRemovePath(t *testing.T) {
 			prefix: net.NewPfx(0, 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Then{
+				then: []FilterAction{
 					&mockAction{},
 					&actions.AcceptAction{},
 				},
