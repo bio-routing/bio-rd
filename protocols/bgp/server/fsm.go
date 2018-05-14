@@ -46,6 +46,8 @@ const (
 )
 
 type FSM struct {
+	peer *Peer
+
 	t           tomb.Tomb
 	stateReason string
 	state       int
@@ -103,8 +105,9 @@ type msgRecvErr struct {
 	con *net.TCPConn
 }
 
-func NewFSM(c config.Peer, rib *locRIB.LocRIB) *FSM {
+func NewFSM(peer *Peer, c config.Peer, rib *locRIB.LocRIB) *FSM {
 	fsm := &FSM{
+		peer:              peer,
 		state:             Idle,
 		passive:           true,
 		connectRetryTime:  5,
@@ -300,6 +303,8 @@ func (fsm *FSM) connect() int {
 }
 
 func (fsm *FSM) connectSendOpen() int {
+	optOpenParams := make([]packet.OptParam, 0)
+
 	err := fsm.sendOpen(fsm.con)
 	if err != nil {
 		stopTimer(fsm.connectRetryTimer)
@@ -860,7 +865,7 @@ func (fsm *FSM) sendOpen(c *net.TCPConn) error {
 		AS:            fsm.localASN,
 		HoldTime:      uint16(fsm.holdTimeConfigured),
 		BGPIdentifier: fsm.routerID,
-		OptParmLen:    0,
+		OptParams:     fsm.peer.optOpenParams,
 	})
 
 	_, err := c.Write(msg)

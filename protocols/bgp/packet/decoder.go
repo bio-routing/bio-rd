@@ -154,7 +154,90 @@ func _decodeOpenMsg(buf *bytes.Buffer) (interface{}, error) {
 		return nil, err
 	}
 
+	msg.OptParams, err = decodeOptParams(buf, msg.OptParmLen)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to decode optional parameters: %v", err)
+	}
+
 	return msg, nil
+}
+
+func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
+	optParams := make([]OptParam, 0)
+	read := uint8(0)
+	for read < optParmLen {
+		o := OptParam{}
+		fields := []interface{}{
+			&o.Type,
+			&o.Length,
+		}
+
+		err := decode(buf, fields)
+		if err != nil {
+			return nil, err
+		}
+
+		read += 2
+
+		fmt.Printf("Type: %d\n", o.Type)
+		switch o.Type {
+		case CapabilitiesParamType:
+			cap, err := decodeCapability(buf)
+			if err != nil {
+				return nil, fmt.Errorf("Unable to decode capability: %v", err)
+			}
+			o.Value = cap
+			optParams = append(optParams, o)
+			read += cap.Length + 2
+		default:
+			return nil, fmt.Errorf("Unrecognized option")
+		}
+
+	}
+
+	return optParams, nil
+}
+
+func decodeCapability(buf *bytes.Buffer) (Capability, error) {
+	cap := Capability{}
+	fields := []interface{}{
+		&cap.Code,
+		&cap.Length,
+	}
+
+	err := decode(buf, fields)
+	if err != nil {
+		return cap, err
+	}
+
+	switch cap.Code {
+	case AddPathCapabilityCode:
+		addPathCap, err := decodeAddPathCapability(buf)
+		if err != nil {
+			return cap, fmt.Errorf("Unable to decode add path capability")
+		}
+		cap.Value = addPathCap
+	default:
+		return cap, fmt.Errorf("Unknown capability: %d", cap.Code)
+	}
+
+	return cap, nil
+}
+
+func decodeAddPathCapability(buf *bytes.Buffer) (AddPathCapability, error) {
+	addPathCap := AddPathCapability{}
+	fields := []interface{}{
+		&addPathCap.AFI,
+		&addPathCap.SAFI,
+		&addPathCap.SendReceive,
+	}
+
+	err := decode(buf, fields)
+	if err != nil {
+		return addPathCap, err
+	}
+
+	return addPathCap, nil
 }
 
 func validateOpen(msg *BGPOpen) error {

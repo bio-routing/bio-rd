@@ -34,7 +34,7 @@ func TestDecodePathAttrs(t *testing.T) {
 				Next: &PathAttribute{
 					TypeCode: 3,
 					Length:   4,
-					Value:    [4]byte{10, 20, 30, 40},
+					Value:    strAddr("10.20.30.40"),
 				},
 			},
 		},
@@ -62,7 +62,7 @@ func TestDecodePathAttrs(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, res)
+		assert.Equal(t, test.expected, res, "%s", test.name)
 	}
 }
 
@@ -367,9 +367,7 @@ func TestDecodeNextHop(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 4,
-				Value: [4]byte{
-					10, 20, 30, 40,
-				},
+				Value:  strAddr("10.20.30.40"),
 			},
 		},
 		{
@@ -538,7 +536,7 @@ func TestDecodeAggregator(t *testing.T) {
 				Length: 6,
 				Value: Aggretator{
 					ASN:  222,
-					Addr: [4]byte{10, 20, 30, 40},
+					Addr: strAddr("10.20.30.40"),
 				},
 			},
 		},
@@ -892,9 +890,9 @@ func TestSerializeNextHop(t *testing.T) {
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: NextHopAttr,
-				Value:    [4]byte{100, 110, 120, 130},
+				Value:    strAddr("100.110.120.130"),
 			},
-			expected:    []byte{0, 3, 4, 100, 110, 120, 130},
+			expected:    []byte{64, 3, 4, 100, 110, 120, 130},
 			expectedLen: 7,
 		},
 	}
@@ -1186,7 +1184,7 @@ func TestSerialize(t *testing.T) {
 						},
 						Next: &PathAttribute{
 							TypeCode: NextHopAttr,
-							Value:    [4]byte{10, 20, 30, 40},
+							Value:    strAddr("10.20.30.40"),
 							Next: &PathAttribute{
 								TypeCode: MEDAttr,
 								Value:    uint32(100),
@@ -1216,7 +1214,7 @@ func TestSerialize(t *testing.T) {
 			},
 			expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0, 85, // Length
+				0, 86, // Length
 				2, // Msg Type
 
 				// Withdraws
@@ -1224,7 +1222,7 @@ func TestSerialize(t *testing.T) {
 				8, 10, // Withdraw 10/8
 				16, 192, 168, // Withdraw 192.168/16
 
-				0, 49, // Total Path Attribute Length
+				0, 50, // Total Path Attribute Length
 
 				// ORIGIN
 				64, // Attr. Flags
@@ -1234,6 +1232,7 @@ func TestSerialize(t *testing.T) {
 				// ASPath
 				64,                     // Attr. Flags
 				2,                      // Attr. Type Code
+				14,                     // Attr. Length
 				2,                      // Path Segment Type = AS_SEQUENCE
 				3,                      // Path Segment Length
 				0, 100, 0, 155, 0, 200, // ASNs
@@ -1288,7 +1287,7 @@ func TestSerialize(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, res)
+		assert.Equalf(t, test.expected, res, "%s", test.name)
 	}
 }
 

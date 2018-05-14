@@ -10,6 +10,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
@@ -50,6 +51,10 @@ func main() {
 		KeepAlive:    30,
 		Passive:      true,
 		RouterID:     b.RouterID(),
+		AddPathSend: routingtable.ClientOptions{
+			MaxPaths: 10,
+		},
+		AddPathRecv: 1,
 	}, rib)
 
 	go func() {

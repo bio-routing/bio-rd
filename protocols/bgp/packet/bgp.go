@@ -76,6 +76,14 @@ const (
 	OtherConfigChange             = 8
 	ConnectionCollisionResolution = 7
 	OutOfResoutces                = 8
+
+	IPv4AFI               = 1
+	UnicastSAFI           = 1
+	CapabilitiesParamType = 2
+	AddPathCapabilityCode = 69
+	AddPathReceive        = 1
+	AddPathSend           = 2
+	AddPathSendReceive    = 3
 )
 
 type BGPError struct {
@@ -104,6 +112,7 @@ type BGPOpen struct {
 	HoldTime      uint16
 	BGPIdentifier uint32
 	OptParmLen    uint8
+	OptParams     []OptParam
 }
 
 type BGPNotification struct {
@@ -144,6 +153,6 @@ type ASPathSegment struct {
 }
 
 type Aggretator struct {
-	Addr [4]byte
+	Addr uint32
 	ASN  uint16
 }
