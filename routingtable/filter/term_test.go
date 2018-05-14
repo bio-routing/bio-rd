@@ -46,10 +46,8 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					&PrefixList{
-						allowed: []net.Prefix{
-							net.NewPfx(0, 0),
-						},
+					[]*PrefixList{
+						NewPrefixList(net.NewPfx(0, 0)),
 					},
 				},
 			},
@@ -65,10 +63,8 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					&PrefixList{
-						allowed: []net.Prefix{
-							net.NewPfx(0, 32),
-						},
+					[]*PrefixList{
+						NewPrefixList(net.NewPfx(0, 32)),
 					},
 				},
 			},
@@ -84,10 +80,8 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					&PrefixList{
-						allowed: []net.Prefix{
-							net.NewPfx(0, 0),
-						},
+					[]*PrefixList{
+						NewPrefixList(net.NewPfx(0, 0)),
 					},
 				},
 			},
@@ -103,10 +97,8 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					&PrefixList{
-						allowed: []net.Prefix{
-							net.NewPfx(0, 0),
-						},
+					[]*PrefixList{
+						NewPrefixList(net.NewPfx(0, 0)),
 					},
 				},
 			},
@@ -123,17 +115,9 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					&PrefixList{
-						allowed: []net.Prefix{
-							net.NewPfx(0, 32),
-						},
-					},
-				},
-				{
-					&PrefixList{
-						allowed: []net.Prefix{
-							net.NewPfx(0, 0),
-						},
+					[]*PrefixList{
+						NewPrefixList(net.NewPfx(0, 32)),
+						NewPrefixList(net.NewPfx(0, 0)),
 					},
 				},
 			},
