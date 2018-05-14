@@ -24,7 +24,7 @@ func TestProcess(t *testing.T) {
 		name           string
 		prefix         net.Prefix
 		path           *route.Path
-		from           []*From
+		from           []*TermCondition
 		then           []FilterAction
 		expectReject   bool
 		expectModified bool
@@ -33,7 +33,7 @@ func TestProcess(t *testing.T) {
 			name:   "empty from",
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
-			from:   []*From{},
+			from:   []*TermCondition{},
 			then: []FilterAction{
 				&actions.AcceptAction{},
 			},
@@ -44,7 +44,7 @@ func TestProcess(t *testing.T) {
 			name:   "from matches",
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
-			from: []*From{
+			from: []*TermCondition{
 				{
 					prefixLists: []*PrefixList{
 						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
@@ -61,7 +61,7 @@ func TestProcess(t *testing.T) {
 			name:   "from does not match",
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
-			from: []*From{
+			from: []*TermCondition{
 				{
 					prefixLists: []*PrefixList{
 						NewPrefixList(net.NewPfx(0, 32)),
@@ -78,7 +78,7 @@ func TestProcess(t *testing.T) {
 			name:   "modified",
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
-			from: []*From{
+			from: []*TermCondition{
 				{
 					prefixLists: []*PrefixList{
 						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
@@ -95,7 +95,7 @@ func TestProcess(t *testing.T) {
 			name:   "modified and accepted (2 actions)",
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
-			from: []*From{
+			from: []*TermCondition{
 				{
 					prefixLists: []*PrefixList{
 						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
@@ -113,7 +113,7 @@ func TestProcess(t *testing.T) {
 			name:   "one of the prefix filters matches",
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
-			from: []*From{
+			from: []*TermCondition{
 				{
 					prefixLists: []*PrefixList{
 						NewPrefixListWithMatcher(Exact(), net.NewPfx(0, 32)),

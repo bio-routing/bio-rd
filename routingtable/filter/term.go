@@ -11,12 +11,12 @@ type FilterAction interface {
 
 // Term matches a path against a list of conditions and performs actions if it matches
 type Term struct {
-	from []*From
+	from []*TermCondition
 	then []FilterAction
 }
 
 // NewTerm creates a new term
-func NewTerm(from []*From, then []FilterAction) *Term {
+func NewTerm(from []*TermCondition, then []FilterAction) *Term {
 	t := &Term{
 		from: from,
 		then: then,

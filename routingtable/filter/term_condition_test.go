@@ -109,7 +109,7 @@ func TestMatches(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := &From{
+			f := &TermCondition{
 				prefixLists:  test.prefixLists,
 				routeFilters: test.routeFilters,
 			}
