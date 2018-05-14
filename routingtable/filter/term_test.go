@@ -46,8 +46,8 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					[]*PrefixList{
-						NewPrefixList(net.NewPfx(0, 0)),
+					prefixLists: []*PrefixList{
+						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
 					},
 				},
 			},
@@ -63,7 +63,7 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					[]*PrefixList{
+					prefixLists: []*PrefixList{
 						NewPrefixList(net.NewPfx(0, 32)),
 					},
 				},
@@ -80,8 +80,8 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					[]*PrefixList{
-						NewPrefixList(net.NewPfx(0, 0)),
+					prefixLists: []*PrefixList{
+						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
 					},
 				},
 			},
@@ -97,8 +97,8 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					[]*PrefixList{
-						NewPrefixList(net.NewPfx(0, 0)),
+					prefixLists: []*PrefixList{
+						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
 					},
 				},
 			},
@@ -115,9 +115,9 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*From{
 				{
-					[]*PrefixList{
-						NewPrefixList(net.NewPfx(0, 32)),
-						NewPrefixList(net.NewPfx(0, 0)),
+					prefixLists: []*PrefixList{
+						NewPrefixListWithMatcher(Exact(), net.NewPfx(0, 32)),
+						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
 					},
 				},
 			},
