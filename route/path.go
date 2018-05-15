@@ -10,6 +10,16 @@ type Path struct {
 
 // Compare returns negative if p < q, 0 if paths are equal, positive if p > q
 func (p *Path) Compare(q *Path) int8 {
+	switch {
+	case p == nil && q == nil:
+		return 0
+	case p == nil:
+		return -1
+	case q == nil:
+		return 1
+	default:
+	}
+
 	if p.Type > q.Type {
 		return 1
 	}
