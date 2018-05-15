@@ -51,7 +51,7 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 		oldRoute = r.Copy()
 		routeExisted = true
 	}
-	
+
 	// FIXME: in AddPath() we assume that the same reference of route (r) is modified (not responsibility of locRIB). If this implementation changes in the future this code will break.
 	a.rt.AddPath(pfx, p)
 	if !routeExisted {
@@ -131,6 +131,23 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 			client.RemovePath(newRoute.Prefix(), p)
 		}
 	}
+}
+
+func (a *LocRIB) ContainsPfxPath(pfx net.Prefix, p *route.Path) bool {
+	a.mu.RLock()
+	contains := false
+	r := a.rt.Get(pfx)
+	if r != nil {
+		for _, path := range r.Paths() {
+			if path.Compare(p) == 0 {
+				contains = true
+			}
+		}
+	} else {
+		contains = false
+	}
+	a.mu.RUnlock()
+	return contains
 }
 
 func (a *LocRIB) Print() string {
