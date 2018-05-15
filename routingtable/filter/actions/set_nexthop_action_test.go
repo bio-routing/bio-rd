@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSetLocalPref(t *testing.T) {
+func TestSetNextHopTest(t *testing.T) {
 	tests := []struct {
-		name              string
-		bgpPath           *route.BGPPath
-		expectedLocalPref uint32
+		name     string
+		bgpPath  *route.BGPPath
+		expected uint32
 	}{
 		{
 			name: "BGPPath is nil",
@@ -20,27 +20,22 @@ func TestSetLocalPref(t *testing.T) {
 		{
 			name: "modify path",
 			bgpPath: &route.BGPPath{
-				LocalPref: 100,
+				NextHop: strAddr("100.64.2.1"),
 			},
-			expectedLocalPref: 150,
+			expected: strAddr("100.64.2.1"),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			a := NewSetLocalPrefAction(150)
+			a := NewSetNextHopAction(strAddr("100.64.2.1"))
 			p, _ := a.Do(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 
-			if test.expectedLocalPref > 0 {
-				assert.Equal(te, test.expectedLocalPref, p.BGPPath.LocalPref)
+			if test.expected > 0 {
+				assert.Equal(te, test.expected, p.BGPPath.NextHop)
 			}
 		})
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := net.StrToAddr(s)
-	return ret
 }
