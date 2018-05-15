@@ -45,13 +45,16 @@ func NewRoute(pfx net.Prefix, p *Path) *Route {
 
 // Copy returns a copy of route r
 func (r *Route) Copy() *Route {
-	new := &Route{
+	if r == nil {
+		return nil
+	}
+	n := &Route{
 		pfx:       r.pfx,
 		ecmpPaths: r.ecmpPaths,
 	}
-	new.paths = make([]*Path, len(r.paths))
-	copy(new.paths, r.paths)
-	return new
+	n.paths = make([]*Path, len(r.paths))
+	copy(n.paths, r.paths)
+	return n
 }
 
 // Prefix gets the prefix of route `r`
