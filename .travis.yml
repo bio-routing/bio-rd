@@ -1,6 +1,6 @@
 language: go
 go:
-- "1.10"
+- "1.9.2"
 - master
 before_install:
 - mkdir -p $GOPATH/src/github.com/bio-routing
