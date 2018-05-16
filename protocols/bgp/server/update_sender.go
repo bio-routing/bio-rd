@@ -11,6 +11,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 )
 
+// UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
 	routingtable.ClientManager
 	fsm *FSM
@@ -22,8 +23,8 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 	}
 }
 
+// AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
-	fmt.Printf("SENDING AN BGP UPDATE\n")
 	asPathPA, err := packet.ParseASPathStr(fmt.Sprintf("%d %s", u.fsm.localASN, p.BGPPath.ASPath))
 	if err != nil {
 		return fmt.Errorf("Unable to parse AS path: %v", err)
@@ -53,7 +54,7 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 		log.Errorf("Unable to serialize BGP Update: %v", err)
 		return nil
 	}
-	fmt.Printf("Sending Update: %v\n", updateBytes)
+
 	_, err = u.fsm.con.Write(updateBytes)
 	if err != nil {
 		return fmt.Errorf("Failed sending Update: %v", err)
@@ -61,12 +62,14 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 	return nil
 }
 
+// RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	log.Warningf("BGP Update Sender: RemovePath not implemented")
 	return false
 }
 
+// UpdateNewClient does nothing
 func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) error {
-	log.Warningf("BGP Update Sender: RemovePath not implemented")
+	log.Warningf("BGP Update Sender: UpdateNewClient() not supported")
 	return nil
 }

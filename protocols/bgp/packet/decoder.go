@@ -182,7 +182,6 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 
 		read += 2
 
-		fmt.Printf("Type: %d\n", o.Type)
 		switch o.Type {
 		case CapabilitiesParamType:
 			caps, err := decodeCapabilities(buf, o.Length)

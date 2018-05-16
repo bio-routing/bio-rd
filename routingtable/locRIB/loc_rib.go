@@ -59,11 +59,7 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	}
 
 	r.PathSelection()
-
 	newRoute := r.Copy()
-
-	fmt.Printf("NEW: %v\n", newRoute.Paths())
-	fmt.Printf("OLD: %v\n", oldRoute.Paths())
 
 	a.propagateChanges(oldRoute, newRoute)
 	return nil
@@ -86,9 +82,6 @@ func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	r = a.rt.Get(pfx)
 	newRoute := r.Copy()
 
-	fmt.Printf("NEW: %v\n", newRoute.Paths())
-	fmt.Printf("OLD: %v\n", oldRoute.Paths())
-
 	a.propagateChanges(oldRoute, newRoute)
 	return true
 }
@@ -99,7 +92,6 @@ func (a *LocRIB) propagateChanges(oldRoute *route.Route, newRoute *route.Route) 
 }
 
 func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route) {
-	fmt.Printf("LocRIB: Updating %d clients\n", len(a.ClientManager.Clients()))
 	for _, client := range a.ClientManager.Clients() {
 		opts := a.ClientManager.GetOptions(client)
 		oldMaxPaths := opts.GetMaxPaths(oldRoute.ECMPPathCount())
@@ -108,11 +100,7 @@ func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route)
 		oldPathsLimit := int(math.Min(float64(oldMaxPaths), float64(len(oldRoute.Paths()))))
 		newPathsLimit := int(math.Min(float64(newMaxPaths), float64(len(newRoute.Paths()))))
 
-		fmt.Printf("oldPathsLimit: %v\n", oldPathsLimit)
-		fmt.Printf("newPathsLimit: %v\n", newPathsLimit)
-
 		advertise := route.PathsDiff(newRoute.Paths()[0:newPathsLimit], oldRoute.Paths()[0:oldPathsLimit])
-		fmt.Printf("ADVERTISING PATHS %v TO CLIENTS\n", advertise)
 
 		for _, p := range advertise {
 			client.AddPath(newRoute.Prefix(), p)
