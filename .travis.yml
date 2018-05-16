@@ -1,3 +1,10 @@
 language: go
 go:
-  - "1.10"
+- 1.10
+- master
+before_install:
+- mkdir -p $GOPATH/src/github.com/bio-routing
+- ln -s $TRAVIS_BUILD_DIR $HOME/gopath/src/github.com/bio-routing/ || true
+- go get github.com/mattn/goveralls
+script:
+- goveralls -v
