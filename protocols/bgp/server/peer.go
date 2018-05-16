@@ -17,7 +17,7 @@ type Peer struct {
 	rib           *locRIB.LocRIB
 	routerID      uint32
 	addPathSend   routingtable.ClientOptions
-	addPathRecv   uint
+	addPathRecv   bool
 	optOpenParams []packet.OptParam
 }
 
@@ -35,7 +35,7 @@ func NewPeer(c config.Peer, rib *locRIB.LocRIB) (*Peer, error) {
 	caps := make([]packet.Capability, 0)
 
 	addPath := uint8(0)
-	if c.AddPathRecv > 1 {
+	if c.AddPathRecv {
 		addPath += packet.AddPathReceive
 	}
 	if !c.AddPathSend.BestOnly {

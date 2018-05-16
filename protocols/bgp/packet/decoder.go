@@ -130,6 +130,9 @@ func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
 
 func decodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
 	msg, err := _decodeOpenMsg(buf)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to decode OPEN message: %v", err)
+	}
 	return msg.(*BGPOpen), err
 }
 
@@ -182,20 +185,39 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 		fmt.Printf("Type: %d\n", o.Type)
 		switch o.Type {
 		case CapabilitiesParamType:
-			cap, err := decodeCapability(buf)
+			caps, err := decodeCapabilities(buf, o.Length)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to decode capability: %v", err)
+				return nil, fmt.Errorf("Unable to decode capabilites: %v", err)
 			}
-			o.Value = cap
+
+			o.Value = caps
 			optParams = append(optParams, o)
-			read += cap.Length + 2
+			for _, cap := range caps {
+				read += cap.Length + 2
+			}
 		default:
-			return nil, fmt.Errorf("Unrecognized option")
+			return nil, fmt.Errorf("Unrecognized option: %d", o.Type)
 		}
 
 	}
 
 	return optParams, nil
+}
+
+func decodeCapabilities(buf *bytes.Buffer, length uint8) (Capabilities, error) {
+	ret := make(Capabilities, 0)
+	read := uint8(0)
+	for read < length {
+		cap, err := decodeCapability(buf)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode capability: %v", err)
+		}
+
+		ret = append(ret, cap)
+		read += cap.Length + 2
+	}
+
+	return ret, nil
 }
 
 func decodeCapability(buf *bytes.Buffer) (Capability, error) {
@@ -218,7 +240,12 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 		}
 		cap.Value = addPathCap
 	default:
-		return cap, fmt.Errorf("Unknown capability: %d", cap.Code)
+		for i := uint8(0); i < cap.Length; i++ {
+			_, err := buf.ReadByte()
+			if err != nil {
+				return cap, fmt.Errorf("Read failed: %v", err)
+			}
+		}
 	}
 
 	return cap, nil

@@ -4,6 +4,7 @@ const (
 	OctetLen       = 8
 	MaxASNsSegment = 255
 	BGP4Version    = 4
+	MinOpenLen     = 29
 
 	MarkerLen  = 16
 	HeaderLen  = 19
@@ -128,6 +129,14 @@ type BGPUpdate struct {
 	NLRI               *NLRI
 }
 
+type BGPUpdateAddPath struct {
+	WithdrawnRoutesLen uint16
+	WithdrawnRoutes    *NLRIAddPath
+	TotalPathAttrLen   uint16
+	PathAttributes     *PathAttribute
+	NLRI               *NLRIAddPath
+}
+
 type PathAttribute struct {
 	Length         uint16
 	Optional       bool
@@ -143,6 +152,13 @@ type NLRI struct {
 	IP     uint32
 	Pfxlen uint8
 	Next   *NLRI
+}
+
+type NLRIAddPath struct {
+	PathIdentifier uint32
+	IP             uint32
+	Pfxlen         uint8
+	Next           *NLRIAddPath
 }
 
 type ASPath []ASPathSegment

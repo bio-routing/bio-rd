@@ -17,5 +17,5 @@ type Peer struct {
 	Passive      bool
 	RouterID     uint32
 	AddPathSend  routingtable.ClientOptions
-	AddPathRecv  uint
+	AddPathRecv  bool
 }

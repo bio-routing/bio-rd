@@ -15,6 +15,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBOutAddPath"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 	tomb "gopkg.in/tomb.v2"
@@ -90,9 +91,12 @@ type FSM struct {
 	stopMsgRecvCh chan struct{}
 
 	adjRIBIn     *adjRIBIn.AdjRIBIn
-	adjRIBOut    *adjRIBOut.AdjRIBOut
+	adjRIBOut    routingtable.RouteTableClient
 	rib          *locRIB.LocRIB
-	updateSender *UpdateSender
+	updateSender routingtable.RouteTableClient
+
+	capAddPathSend bool
+	capAddPathRecv bool
 }
 
 type msgRecvMsg struct {
@@ -134,7 +138,6 @@ func NewFSM(peer *Peer, c config.Peer, rib *locRIB.LocRIB) *FSM {
 		rib: rib,
 	}
 
-	fsm.updateSender = newUpdateSender(fsm)
 	return fsm
 }
 
@@ -303,8 +306,6 @@ func (fsm *FSM) connect() int {
 }
 
 func (fsm *FSM) connectSendOpen() int {
-	optOpenParams := make([]packet.OptParam, 0)
-
 	err := fsm.sendOpen(fsm.con)
 	if err != nil {
 		stopTimer(fsm.connectRetryTimer)
@@ -459,6 +460,9 @@ func (fsm *FSM) openSent() int {
 					fsm.keepaliveTime = fsm.holdTime / 3
 					fsm.keepaliveTimer.Reset(time.Second * fsm.keepaliveTime)
 				}
+
+				fsm.processOpenOptions(openMsg.OptParams)
+
 				return fsm.changeState(OpenConfirm, "Received OPEN message")
 			default:
 				sendNotification(fsm.con, packet.FiniteStateMachineError, 0)
@@ -481,6 +485,56 @@ func (fsm *FSM) openSent() int {
 				continue
 			}
 			return fsm.openSentTCPFail(err.err)
+		}
+	}
+}
+
+func (fsm *FSM) processOpenOptions(optParams []packet.OptParam) {
+	for _, optParam := range optParams {
+		if optParam.Type != packet.CapabilitiesParamType {
+			continue
+		}
+
+		fsm.processCapabilities(optParam.Value.(packet.Capabilities))
+	}
+}
+
+func (fsm *FSM) processCapabilities(caps packet.Capabilities) {
+	for _, cap := range caps {
+		fsm.processCapability(cap)
+	}
+}
+
+func (fsm *FSM) processCapability(cap packet.Capability) {
+	switch cap.Code {
+	case packet.AddPathCapabilityCode:
+		fsm.processAddPathCapability(cap.Value.(packet.AddPathCapability))
+
+	}
+}
+
+func (fsm *FSM) processAddPathCapability(addPathCap packet.AddPathCapability) {
+	if addPathCap.AFI != 1 {
+		return
+	}
+	if addPathCap.SAFI != 1 {
+		return
+	}
+	switch addPathCap.SendReceive {
+	case packet.AddPathReceive:
+		if !fsm.peer.addPathSend.BestOnly {
+			fsm.capAddPathSend = true
+		}
+	case packet.AddPathSend:
+		if fsm.peer.addPathRecv {
+			fsm.capAddPathRecv = true
+		}
+	case packet.AddPathSendReceive:
+		if !fsm.peer.addPathSend.BestOnly {
+			fsm.capAddPathSend = true
+		}
+		if fsm.peer.addPathRecv {
+			fsm.capAddPathRecv = true
 		}
 	}
 }
@@ -607,7 +661,7 @@ func (fsm *FSM) openConfirm() int {
 
 			switch msg.Header.Type {
 			case packet.NotificationMsg:
-				nMsg := msg.Body.(packet.BGPNotification)
+				nMsg := msg.Body.(*packet.BGPNotification)
 				if nMsg.ErrorCode == packet.UnsupportedVersionNumber {
 					stopTimer(fsm.connectRetryTimer)
 					fsm.con.Close()
@@ -669,18 +723,30 @@ func (fsm *FSM) established() int {
 		Type:    route.BGPPathType,
 		Address: tnet.IPv4ToUint32(fsm.remote),
 	}
-	fsm.adjRIBOut = adjRIBOut.New(n)
+
+	clientOptions := routingtable.ClientOptions{}
+	if fsm.capAddPathSend {
+		fsm.updateSender = newUpdateSenderAddPath(fsm)
+		fsm.adjRIBOut = adjRIBOutAddPath.New(n)
+		clientOptions = fsm.peer.addPathSend
+	} else {
+		fsm.updateSender = newUpdateSender(fsm)
+		fsm.adjRIBOut = adjRIBOut.New(n)
+	}
+
 	fsm.adjRIBOut.Register(fsm.updateSender)
+	fsm.rib.RegisterWithOptions(fsm.adjRIBOut, clientOptions)
 
-	fsm.rib.RegisterWithOptions(fsm.adjRIBOut, routingtable.ClientOptions{BestOnly: true})
-
-	go func() {
+	/*go func() {
 		for {
+			if fsm.adjRIBOut == nil {
+				return
+			}
 			fmt.Printf("ADJ-RIB-OUT: %s\n", fsm.remote.String())
 			fmt.Print(fsm.adjRIBOut.Print())
 			time.Sleep(time.Second * 11)
 		}
-	}()
+	}()*/
 
 	for {
 		select {
@@ -756,8 +822,10 @@ func (fsm *FSM) established() int {
 					fmt.Printf("LPM: Adding prefix %s\n", pfx.String())
 
 					path := &route.Path{
-						Type:    route.BGPPathType,
-						BGPPath: &route.BGPPath{},
+						Type: route.BGPPathType,
+						BGPPath: &route.BGPPath{
+							Source: tnet.IPv4ToUint32(fsm.remote),
+						},
 					}
 
 					for pa := u.PathAttributes; pa != nil; pa = pa.Next {

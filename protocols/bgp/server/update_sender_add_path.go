@@ -11,25 +11,25 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 )
 
-type UpdateSender struct {
+type UpdateSenderAddPath struct {
 	routingtable.ClientManager
 	fsm *FSM
 }
 
-func newUpdateSender(fsm *FSM) *UpdateSender {
-	return &UpdateSender{
+func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
+	return &UpdateSenderAddPath{
 		fsm: fsm,
 	}
 }
 
-func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
-	fmt.Printf("SENDING AN BGP UPDATE\n")
+func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
+	fmt.Printf("SENDING AN BGP UPDATE WITH ADD PATH TO %s\n", u.fsm.remote.String())
 	asPathPA, err := packet.ParseASPathStr(fmt.Sprintf("%d %s", u.fsm.localASN, p.BGPPath.ASPath))
 	if err != nil {
 		return fmt.Errorf("Unable to parse AS path: %v", err)
 	}
 
-	update := &packet.BGPUpdate{
+	update := &packet.BGPUpdateAddPath{
 		PathAttributes: &packet.PathAttribute{
 			TypeCode: packet.OriginAttr,
 			Value:    p.BGPPath.Origin,
@@ -42,9 +42,10 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 				},
 			},
 		},
-		NLRI: &packet.NLRI{
-			IP:     pfx.Addr(),
-			Pfxlen: pfx.Pfxlen(),
+		NLRI: &packet.NLRIAddPath{
+			PathIdentifier: p.BGPPath.PathIdentifier,
+			IP:             pfx.Addr(),
+			Pfxlen:         pfx.Pfxlen(),
 		},
 	}
 
@@ -61,12 +62,12 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 	return nil
 }
 
-func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (u *UpdateSenderAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	log.Warningf("BGP Update Sender: RemovePath not implemented")
 	return false
 }
 
-func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) error {
+func (u *UpdateSenderAddPath) UpdateNewClient(client routingtable.RouteTableClient) error {
 	log.Warningf("BGP Update Sender: RemovePath not implemented")
 	return nil
 }

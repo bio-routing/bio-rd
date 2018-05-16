@@ -37,9 +37,12 @@ func main() {
 		KeepAlive:    30,
 		Passive:      true,
 		RouterID:     b.RouterID(),
+		AddPathSend: routingtable.ClientOptions{
+			MaxPaths: 10,
+		},
 	}, rib)
 
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Second * 15)
 
 	b.AddPeer(config.Peer{
 		AdminEnabled: true,
@@ -54,7 +57,7 @@ func main() {
 		AddPathSend: routingtable.ClientOptions{
 			MaxPaths: 10,
 		},
-		AddPathRecv: 1,
+		AddPathRecv: true,
 	}, rib)
 
 	go func() {

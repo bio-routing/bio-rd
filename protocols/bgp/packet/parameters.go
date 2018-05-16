@@ -16,10 +16,19 @@ type OptParam struct {
 	Value  Serializable
 }
 
+type Capabilities []Capability
+
 type Capability struct {
 	Code   uint8
 	Length uint8
 	Value  Serializable
+}
+
+func (c Capabilities) serialize(buf *bytes.Buffer) {
+	tmpBuf := bytes.NewBuffer(make([]byte, 0))
+	for _, cap := range c {
+		cap.serialize(tmpBuf)
+	}
 }
 
 func (c Capability) serialize(buf *bytes.Buffer) {
