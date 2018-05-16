@@ -7,7 +7,6 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/taktv6/tflow2/convert"
 )
 
 // AdjRIBOutAddPath represents an Adjacency RIB Out with BGP add path
@@ -35,8 +34,6 @@ func (a *AdjRIBOutAddPath) UpdateNewClient(client routingtable.RouteTableClient)
 
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOutAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
-	fmt.Printf("THIS IS ADD PATH ON ADJ RIB OUT FOR %v", convert.Uint32Byte(a.neighbor.Address))
-
 	if a.isOwnPath(p) {
 		return nil
 	}
