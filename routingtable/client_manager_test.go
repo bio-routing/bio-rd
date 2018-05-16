@@ -22,6 +22,12 @@ func (m MockClient) RemovePath(net.Prefix, *route.Path) bool {
 func (m MockClient) UpdateNewClient(RouteTableClient) error {
 	return nil
 }
+func (m MockClient) Register(RouteTableClient) {
+	return
+}
+func (m MockClient) Unregister(RouteTableClient) {
+	return
+}
 
 func TestClients(t *testing.T) {
 	tests := []struct {
