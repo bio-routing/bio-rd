@@ -30,6 +30,14 @@ func (m *RTMockClient) UpdateNewClient(client routingtable.RouteTableClient) err
 	return fmt.Errorf("Not implemented")
 }
 
+func (m *RTMockClient) Register(routingtable.RouteTableClient) {
+	return
+}
+
+func (m *RTMockClient) Unregister(routingtable.RouteTableClient) {
+	return
+}
+
 // RemovePath removes the path for prefix `pfx`
 func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	m.removePathParams.pfx = pfx

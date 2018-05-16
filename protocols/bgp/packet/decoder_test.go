@@ -1561,13 +1561,15 @@ func TestDecodeOptParams(t *testing.T) {
 				{
 					Type:   2,
 					Length: 6,
-					Value: Capability{
-						Code:   69,
-						Length: 4,
-						Value: AddPathCapability{
-							AFI:         1,
-							SAFI:        1,
-							SendReceive: 3,
+					Value: Capabilities{
+						{
+							Code:   69,
+							Length: 4,
+							Value: AddPathCapability{
+								AFI:         1,
+								SAFI:        1,
+								SendReceive: 3,
+							},
 						},
 					},
 				},
