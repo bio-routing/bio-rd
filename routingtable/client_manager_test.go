@@ -77,7 +77,7 @@ func TestClients(t *testing.T) {
 				}
 			}
 			if !found {
-				t.Errorf("Test %q failed: Client %v not found in result: %v", exp, ret)
+				t.Errorf("Test %q failed: Client %v not found in result: %v", test.name, exp, ret)
 			}
 		}
 	}
