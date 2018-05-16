@@ -10,4 +10,6 @@ type RouteTableClient interface {
 	AddPath(net.Prefix, *route.Path) error
 	RemovePath(net.Prefix, *route.Path) bool
 	UpdateNewClient(RouteTableClient) error
+	Register(RouteTableClient)
+	Unregister(RouteTableClient)
 }

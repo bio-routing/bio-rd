@@ -73,6 +73,19 @@ func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
 	return nBytes + 1
 }
 
+func (n *NLRIAddPath) serialize(buf *bytes.Buffer) uint8 {
+	a := convert.Uint32Byte(n.IP)
+
+	addr := [4]byte{a[0], a[1], a[2], a[3]}
+	nBytes := bytesInAddr(n.Pfxlen)
+
+	buf.Write(convert.Uint32Byte(n.PathIdentifier))
+	buf.WriteByte(n.Pfxlen)
+	buf.Write(addr[:nBytes])
+
+	return nBytes + 1
+}
+
 func bytesInAddr(pfxlen uint8) uint8 {
 	return uint8(math.Ceil(float64(pfxlen) / 8))
 }

@@ -160,6 +160,7 @@ func TestDecode(t *testing.T) {
 					HoldTime:      15,
 					BGPIdentifier: uint32(169090600),
 					OptParmLen:    0,
+					OptParams:     []OptParam{},
 				},
 			},
 		},
@@ -706,7 +707,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          [4]byte{10, 11, 12, 13},
+							Value:          strAddr("10.11.12.13"),
 						},
 					},
 				},
@@ -799,7 +800,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          [4]byte{10, 11, 12, 13},
+							Value:          strAddr("10.11.12.13"),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -905,7 +906,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          [4]byte{10, 11, 12, 13},
+							Value:          strAddr("10.11.12.13"),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -1023,7 +1024,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          [4]byte{10, 11, 12, 13},
+							Value:          strAddr("10.11.12.13"),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -1157,7 +1158,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          [4]byte{10, 11, 12, 13},
+							Value:          strAddr("10.11.12.13"),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -1190,7 +1191,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 											TypeCode:       7,
 											Value: Aggretator{
 												ASN:  uint16(258),
-												Addr: [4]byte{10, 11, 12, 13},
+												Addr: strAddr("10.11.12.13"),
 											},
 										},
 									},
@@ -1201,7 +1202,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				},
 				NLRI: &NLRI{
 					Pfxlen: 8,
-					IP:     strAddr("1.0.0.0"),
+					IP:     strAddr("11.0.0.0"),
 				},
 			},
 		},
@@ -1266,7 +1267,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, msg)
+		assert.Equalf(t, test.expected, msg, "%d", test.testNum)
 	}
 }
 
@@ -1313,6 +1314,7 @@ func TestDecodeOpenMsg(t *testing.T) {
 				HoldTime:      15,
 				BGPIdentifier: 169090600,
 				OptParmLen:    0,
+				OptParams:     make([]OptParam, 0),
 			},
 		},
 		{
@@ -1452,7 +1454,7 @@ func genericTest(f decodeFunc, tests []test, t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, msg)
+		assert.Equalf(t, test.expected, msg, "%d", test.testNum)
 	}
 }
 
@@ -1533,6 +1535,159 @@ func TestValidateOpenMessage(t *testing.T) {
 		if test.wantFail {
 			t.Errorf("Unexpected success for test %q", test.name)
 		}
+	}
+}
+
+func TestDecodeOptParams(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		wantFail bool
+		expected []OptParam
+	}{
+		{
+			name: "Add path capability",
+			input: []byte{
+				2,    // Type
+				6,    // Length
+				69,   // Code
+				4,    // Length
+				0, 1, // AFI
+				1, // SAFI
+				3, // Send/Receive
+			},
+			wantFail: false,
+			expected: []OptParam{
+				{
+					Type:   2,
+					Length: 6,
+					Value: Capabilities{
+						{
+							Code:   69,
+							Length: 4,
+							Value: AddPathCapability{
+								AFI:         1,
+								SAFI:        1,
+								SendReceive: 3,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(test.input)
+		res, err := decodeOptParams(buf, uint8(len(test.input)))
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equal(t, test.expected, res)
+	}
+}
+
+func TestDecodeCapability(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		expected Capability
+		wantFail bool
+	}{
+		{
+			name:  "Add Path",
+			input: []byte{69, 4, 0, 1, 1, 3},
+			expected: Capability{
+				Code:   69,
+				Length: 4,
+				Value: AddPathCapability{
+					AFI:         1,
+					SAFI:        1,
+					SendReceive: 3,
+				},
+			},
+			wantFail: false,
+		},
+		{
+			name:     "Fail",
+			input:    []byte{69, 4, 0, 1},
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		cap, err := decodeCapability(bytes.NewBuffer(test.input))
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", err)
+			continue
+		}
+
+		assert.Equal(t, test.expected, cap)
+	}
+}
+
+func TestDecodeAddPathCapability(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		expected AddPathCapability
+		wantFail bool
+	}{
+		{
+			name:     "ok",
+			input:    []byte{0, 1, 1, 3},
+			wantFail: false,
+			expected: AddPathCapability{
+				AFI:         1,
+				SAFI:        1,
+				SendReceive: 3,
+			},
+		},
+		{
+			name:     "Incomplete",
+			input:    []byte{0, 1, 1},
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(test.input)
+		cap, err := decodeAddPathCapability(buf)
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equal(t, test.expected, cap)
 	}
 }
 

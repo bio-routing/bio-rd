@@ -94,6 +94,45 @@ func TestSerializeOpenMsg(t *testing.T) {
 	}
 }
 
+func TestSerializeOptParams(t *testing.T) {
+	tests := []struct {
+		name      string
+		optParams []OptParam
+		expected  []byte
+	}{
+		{
+			name:      "empty",
+			optParams: []OptParam{},
+			expected:  []byte{},
+		},
+		{
+			name: "1 Option",
+			optParams: []OptParam{
+				{
+					Type:   2,
+					Length: 6,
+					Value: Capability{
+						Code:   69,
+						Length: 4,
+						Value: AddPathCapability{
+							AFI:         1,
+							SAFI:        1,
+							SendReceive: 3,
+						},
+					},
+				},
+			},
+			expected: []byte{2, 6, 69, 4, 0, 1, 1, 3},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(make([]byte, 0))
+		serializeOptParams(buf, test.optParams)
+		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
 func TestSerializeHeader(t *testing.T) {
 	tests := []struct {
 		name     string

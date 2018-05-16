@@ -11,26 +11,26 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 )
 
-// UpdateSender converts table changes into BGP update messages
-type UpdateSender struct {
+// UpdateSenderAddPath converts table changes into BGP update messages with add path
+type UpdateSenderAddPath struct {
 	routingtable.ClientManager
 	fsm *FSM
 }
 
-func newUpdateSender(fsm *FSM) *UpdateSender {
-	return &UpdateSender{
+func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
+	return &UpdateSenderAddPath{
 		fsm: fsm,
 	}
 }
 
 // AddPath serializes a new path and sends out a BGP update message
-func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
+func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 	asPathPA, err := packet.ParseASPathStr(fmt.Sprintf("%d %s", u.fsm.localASN, p.BGPPath.ASPath))
 	if err != nil {
 		return fmt.Errorf("Unable to parse AS path: %v", err)
 	}
 
-	update := &packet.BGPUpdate{
+	update := &packet.BGPUpdateAddPath{
 		PathAttributes: &packet.PathAttribute{
 			TypeCode: packet.OriginAttr,
 			Value:    p.BGPPath.Origin,
@@ -43,9 +43,10 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 				},
 			},
 		},
-		NLRI: &packet.NLRI{
-			IP:     pfx.Addr(),
-			Pfxlen: pfx.Pfxlen(),
+		NLRI: &packet.NLRIAddPath{
+			PathIdentifier: p.BGPPath.PathIdentifier,
+			IP:             pfx.Addr(),
+			Pfxlen:         pfx.Pfxlen(),
 		},
 	}
 
@@ -63,13 +64,13 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 }
 
 // RemovePath withdraws prefix `pfx` from a peer
-func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (u *UpdateSenderAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	log.Warningf("BGP Update Sender: RemovePath not implemented")
 	return false
 }
 
 // UpdateNewClient does nothing
-func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) error {
-	log.Warningf("BGP Update Sender: UpdateNewClient() not supported")
+func (u *UpdateSenderAddPath) UpdateNewClient(client routingtable.RouteTableClient) error {
+	log.Warningf("BGP Update Sender: RemovePath not implemented")
 	return nil
 }

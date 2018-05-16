@@ -186,24 +186,27 @@ func (pa *PathAttribute) decodeLocalPref(buf *bytes.Buffer) error {
 
 func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 	aggr := Aggretator{}
-
 	p := uint16(0)
+
 	err := decode(buf, []interface{}{&aggr.ASN})
 	if err != nil {
 		return err
 	}
 	p += 2
 
-	n, err := buf.Read(aggr.Addr[:])
+	addr := [4]byte{}
+	n, err := buf.Read(addr[:])
 	if err != nil {
 		return err
 	}
 	if n != 4 {
-		return fmt.Errorf("Unable to read aggregator IP: buf.Read read %d bytes", n)
+		return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
 	}
-	p += 4
+	aggr.Addr = fourBytesToUint32(addr)
 
 	pa.Value = aggr
+	p += 4
+
 	return dumpNBytes(buf, pa.Length-p)
 }
 
