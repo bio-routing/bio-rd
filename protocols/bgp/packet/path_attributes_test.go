@@ -62,7 +62,7 @@ func TestDecodePathAttrs(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, res, "%s", test.name)
+		assert.Equalf(t, test.expected, res, "%s", test.name)
 	}
 }
 
