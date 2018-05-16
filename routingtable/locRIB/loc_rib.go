@@ -137,19 +137,20 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 // present in this LocRIB.
 func (a *LocRIB) ContainsPfxPath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.RLock()
-	contains := false
+	defer a.mu.RUnlock()
+	
 	r := a.rt.Get(pfx)
-	if r != nil {
-		for _, path := range r.Paths() {
-			if path.Compare(p) == 0 {
-				contains = true
-			}
-		}
-	} else {
-		contains = false
+	if r == nil {
+		return false
 	}
-	a.mu.RUnlock()
-	return contains
+		
+	for _, path := range r.Paths() {
+		if path.Compare(p) == 0 {
+			return true
+		}
+	}
+	
+	return false
 }
 
 func (a *LocRIB) Print() string {
