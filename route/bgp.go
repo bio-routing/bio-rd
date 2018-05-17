@@ -2,6 +2,8 @@ package route
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/taktv6/tflow2/convert"
 )
@@ -155,11 +157,20 @@ func (b *BGPPath) Print() string {
 }
 
 func (b *BGPPath) Prepend(asn uint32, times uint16) {
-	for i := 0; uint16(i) < times; i++ {
-		b.ASPath = fmt.Sprintf("%d %s", asn, b.ASPath)
+	if times == 0 {
+		return
 	}
 
-	b.ASPathLen = b.ASPathLen + uint16(times)
+	asnStr := strconv.FormatUint(uint64(asn), 10)
+
+	path := make([]string, times+1)
+	for i := 0; uint16(i) < times; i++ {
+		path[i] = asnStr
+	}
+	path[times] = b.ASPath
+
+	b.ASPath = strings.TrimSuffix(strings.Join(path, " "), " ")
+	b.ASPathLen = b.ASPathLen + times
 }
 
 func (p *BGPPath) Copy() *BGPPath {
