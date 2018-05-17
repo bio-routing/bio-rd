@@ -33,10 +33,10 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 3",
 			times: 3,
 			bgpPath: &route.BGPPath{
-				ASPath:    "12345 12345",
+				ASPath:    "12345 15169",
 				ASPathLen: 2,
 			},
-			expectedPath:   "12345 12345 12345 12345 12345",
+			expectedPath:   "12345 12345 12345 12345 15169",
 			expectedLength: 5,
 		},
 	}
