@@ -12,16 +12,18 @@ import (
 // AdjRIBOutAddPath represents an Adjacency RIB Out with BGP add path
 type AdjRIBOutAddPath struct {
 	routingtable.ClientManager
-	rt       *routingtable.RoutingTable
-	neighbor *routingtable.Neighbor
-	mu       sync.RWMutex
+	rt            *routingtable.RoutingTable
+	neighbor      *routingtable.Neighbor
+	pathIDManager *pathIDManager
+	mu            sync.RWMutex
 }
 
 // New creates a new Adjacency RIB Out with BGP add path
 func New(neighbor *routingtable.Neighbor) *AdjRIBOutAddPath {
 	a := &AdjRIBOutAddPath{
-		rt:       routingtable.NewRoutingTable(),
-		neighbor: neighbor,
+		rt:            routingtable.NewRoutingTable(),
+		neighbor:      neighbor,
+		pathIDManager: newPathIDManager(),
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -41,8 +43,12 @@ func (a *AdjRIBOutAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	p.BGPPath.PathIdentifier = 7
+	pathID, err := a.pathIDManager.getNewID()
+	if err != nil {
+		return fmt.Errorf("Unable to get path ID: %v", err)
+	}
 
+	p.BGPPath.PathIdentifier = pathID
 	a.rt.AddPath(pfx, p)
 
 	for _, client := range a.ClientManager.Clients() {
@@ -66,6 +72,7 @@ func (a *AdjRIBOutAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	}
 
 	a.rt.RemovePath(pfx, p)
+	a.pathIDManager.releaseID(p.BGPPath.PathIdentifier)
 	a.removePathFromClients(pfx, p)
 	return true
 }
