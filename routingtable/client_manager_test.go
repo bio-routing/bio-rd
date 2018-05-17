@@ -22,6 +22,12 @@ func (m MockClient) RemovePath(net.Prefix, *route.Path) bool {
 func (m MockClient) UpdateNewClient(RouteTableClient) error {
 	return nil
 }
+func (m MockClient) Register(RouteTableClient) {
+	return
+}
+func (m MockClient) Unregister(RouteTableClient) {
+	return
+}
 
 func TestClients(t *testing.T) {
 	tests := []struct {
@@ -61,7 +67,19 @@ func TestClients(t *testing.T) {
 			cm.Register(client)
 		}
 		ret := cm.Clients()
-		assert.Equal(t, test.expected, ret)
+
+		for _, exp := range test.expected {
+			found := false
+			for _, client := range ret {
+				if exp == client {
+					found = true
+					continue
+				}
+			}
+			if !found {
+				t.Errorf("Test %q failed: Client %v not found in result: %v", test.name, exp, ret)
+			}
+		}
 	}
 }
 

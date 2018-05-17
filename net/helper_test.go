@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func IPv4ToUint32Test(t *testing.T) {
+func TestIPv4ToUint32(t *testing.T) {
 	tests := []struct {
 		input    []byte
 		expected uint32

@@ -4,6 +4,7 @@ const (
 	OctetLen       = 8
 	MaxASNsSegment = 255
 	BGP4Version    = 4
+	MinOpenLen     = 29
 
 	MarkerLen  = 16
 	HeaderLen  = 19
@@ -76,6 +77,14 @@ const (
 	OtherConfigChange             = 8
 	ConnectionCollisionResolution = 7
 	OutOfResoutces                = 8
+
+	IPv4AFI               = 1
+	UnicastSAFI           = 1
+	CapabilitiesParamType = 2
+	AddPathCapabilityCode = 69
+	AddPathReceive        = 1
+	AddPathSend           = 2
+	AddPathSendReceive    = 3
 )
 
 type BGPError struct {
@@ -104,6 +113,7 @@ type BGPOpen struct {
 	HoldTime      uint16
 	BGPIdentifier uint32
 	OptParmLen    uint8
+	OptParams     []OptParam
 }
 
 type BGPNotification struct {
@@ -117,6 +127,14 @@ type BGPUpdate struct {
 	TotalPathAttrLen   uint16
 	PathAttributes     *PathAttribute
 	NLRI               *NLRI
+}
+
+type BGPUpdateAddPath struct {
+	WithdrawnRoutesLen uint16
+	WithdrawnRoutes    *NLRIAddPath
+	TotalPathAttrLen   uint16
+	PathAttributes     *PathAttribute
+	NLRI               *NLRIAddPath
 }
 
 type PathAttribute struct {
@@ -136,6 +154,13 @@ type NLRI struct {
 	Next   *NLRI
 }
 
+type NLRIAddPath struct {
+	PathIdentifier uint32
+	IP             uint32
+	Pfxlen         uint8
+	Next           *NLRIAddPath
+}
+
 type ASPath []ASPathSegment
 type ASPathSegment struct {
 	Type  uint8
@@ -144,6 +169,6 @@ type ASPathSegment struct {
 }
 
 type Aggretator struct {
-	Addr [4]byte
+	Addr uint32
 	ASN  uint16
 }

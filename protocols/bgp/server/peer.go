@@ -3,26 +3,63 @@ package server
 import (
 	"net"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
 	"github.com/bio-routing/bio-rd/config"
 )
 
 type Peer struct {
-	addr     net.IP
-	asn      uint32
-	fsm      *FSM
-	rib      *locRIB.LocRIB
-	routerID uint32
+	addr          net.IP
+	asn           uint32
+	fsm           *FSM
+	rib           *locRIB.LocRIB
+	routerID      uint32
+	addPathSend   routingtable.ClientOptions
+	addPathRecv   bool
+	optOpenParams []packet.OptParam
 }
 
 func NewPeer(c config.Peer, rib *locRIB.LocRIB) (*Peer, error) {
 	p := &Peer{
-		addr: c.PeerAddress,
-		asn:  c.PeerAS,
-		fsm:  NewFSM(c, rib),
-		rib:  rib,
+		addr:          c.PeerAddress,
+		asn:           c.PeerAS,
+		rib:           rib,
+		addPathSend:   c.AddPathSend,
+		addPathRecv:   c.AddPathRecv,
+		optOpenParams: make([]packet.OptParam, 0),
 	}
+	p.fsm = NewFSM(p, c, rib)
+
+	caps := make([]packet.Capability, 0)
+
+	addPath := uint8(0)
+	if c.AddPathRecv {
+		addPath += packet.AddPathReceive
+	}
+	if !c.AddPathSend.BestOnly {
+		addPath += packet.AddPathSend
+	}
+
+	if addPath > 0 {
+		caps = append(caps, packet.Capability{
+			Code: packet.AddPathCapabilityCode,
+			Value: packet.AddPathCapability{
+				AFI:         packet.IPv4AFI,
+				SAFI:        packet.UnicastSAFI,
+				SendReceive: addPath,
+			},
+		})
+	}
+
+	for _, cap := range caps {
+		p.optOpenParams = append(p.optOpenParams, packet.OptParam{
+			Type:  packet.CapabilitiesParamType,
+			Value: cap,
+		})
+	}
+
 	return p, nil
 }
 

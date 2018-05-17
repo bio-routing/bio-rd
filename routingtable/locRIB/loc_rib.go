@@ -51,7 +51,7 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 		oldRoute = r.Copy()
 		routeExisted = true
 	}
-	
+
 	// FIXME: in AddPath() we assume that the same reference of route (r) is modified (not responsibility of locRIB). If this implementation changes in the future this code will break.
 	a.rt.AddPath(pfx, p)
 	if !routeExisted {
@@ -59,11 +59,7 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	}
 
 	r.PathSelection()
-
 	newRoute := r.Copy()
-
-	fmt.Printf("NEW: %v\n", newRoute.Paths())
-	fmt.Printf("OLD: %v\n", oldRoute.Paths())
 
 	a.propagateChanges(oldRoute, newRoute)
 	return nil
@@ -86,9 +82,6 @@ func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	r = a.rt.Get(pfx)
 	newRoute := r.Copy()
 
-	fmt.Printf("NEW: %v\n", newRoute.Paths())
-	fmt.Printf("OLD: %v\n", oldRoute.Paths())
-
 	a.propagateChanges(oldRoute, newRoute)
 	return true
 }
@@ -108,7 +101,6 @@ func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route)
 		newPathsLimit := int(math.Min(float64(newMaxPaths), float64(len(newRoute.Paths()))))
 
 		advertise := route.PathsDiff(newRoute.Paths()[0:newPathsLimit], oldRoute.Paths()[0:oldPathsLimit])
-		fmt.Printf("ADVERTISING PATHS %v TO CLIENTS\n", advertise)
 
 		for _, p := range advertise {
 			client.AddPath(newRoute.Prefix(), p)

@@ -2,6 +2,8 @@ package config
 
 import (
 	"net"
+
+	"github.com/bio-routing/bio-rd/routingtable"
 )
 
 type Peer struct {
@@ -14,4 +16,6 @@ type Peer struct {
 	PeerAS       uint32
 	Passive      bool
 	RouterID     uint32
+	AddPathSend  routingtable.ClientOptions
+	AddPathRecv  bool
 }

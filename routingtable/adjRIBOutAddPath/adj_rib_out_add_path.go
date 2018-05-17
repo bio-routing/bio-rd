@@ -1,4 +1,4 @@
-package adjRIBOut
+package adjRIBOutAddPath
 
 import (
 	"fmt"
@@ -9,17 +9,17 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 )
 
-// AdjRIBOut represents an Adjacency RIB In as described in RFC4271
-type AdjRIBOut struct {
+// AdjRIBOutAddPath represents an Adjacency RIB Out with BGP add path
+type AdjRIBOutAddPath struct {
 	routingtable.ClientManager
 	rt       *routingtable.RoutingTable
 	neighbor *routingtable.Neighbor
 	mu       sync.RWMutex
 }
 
-// New creates a new Adjacency RIB In
-func New(neighbor *routingtable.Neighbor) *AdjRIBOut {
-	a := &AdjRIBOut{
+// New creates a new Adjacency RIB Out with BGP add path
+func New(neighbor *routingtable.Neighbor) *AdjRIBOutAddPath {
+	a := &AdjRIBOutAddPath{
 		rt:       routingtable.NewRoutingTable(),
 		neighbor: neighbor,
 	}
@@ -28,12 +28,12 @@ func New(neighbor *routingtable.Neighbor) *AdjRIBOut {
 }
 
 // UpdateNewClient sends current state to a new client
-func (a *AdjRIBOut) UpdateNewClient(client routingtable.RouteTableClient) error {
+func (a *AdjRIBOutAddPath) UpdateNewClient(client routingtable.RouteTableClient) error {
 	return nil
 }
 
-// AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
-func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
+// AddPath adds path p to prefix `pfx`
+func (a *AdjRIBOutAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 	if a.isOwnPath(p) {
 		return nil
 	}
@@ -41,8 +41,9 @@ func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	oldPaths := a.rt.ReplacePath(pfx, p)
-	a.removePathsFromClients(pfx, oldPaths)
+	p.BGPPath.PathIdentifier = 7
+
+	a.rt.AddPath(pfx, p)
 
 	for _, client := range a.ClientManager.Clients() {
 		client.AddPath(pfx, p)
@@ -51,7 +52,7 @@ func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (a *AdjRIBOutAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	if a.isOwnPath(p) {
 		return false
 	}
@@ -64,16 +65,12 @@ func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
 		return false
 	}
 
-	oldPaths := r.Paths()
-	for _, path := range oldPaths {
-		a.rt.RemovePath(pfx, path)
-	}
-
-	a.removePathsFromClients(pfx, oldPaths)
+	a.rt.RemovePath(pfx, p)
+	a.removePathFromClients(pfx, p)
 	return true
 }
 
-func (a *AdjRIBOut) isOwnPath(p *route.Path) bool {
+func (a *AdjRIBOutAddPath) isOwnPath(p *route.Path) bool {
 	if p.Type != a.neighbor.Type {
 		return false
 	}
@@ -86,16 +83,14 @@ func (a *AdjRIBOut) isOwnPath(p *route.Path) bool {
 	return false
 }
 
-func (a *AdjRIBOut) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
-	for _, path := range paths {
-		for _, client := range a.ClientManager.Clients() {
-			client.RemovePath(pfx, path)
-		}
+func (a *AdjRIBOutAddPath) removePathFromClients(pfx net.Prefix, path *route.Path) {
+	for _, client := range a.ClientManager.Clients() {
+		client.RemovePath(pfx, path)
 	}
 }
 
 // Print dumps all prefixes in the Adj-RIB
-func (a *AdjRIBOut) Print() string {
+func (a *AdjRIBOutAddPath) Print() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 

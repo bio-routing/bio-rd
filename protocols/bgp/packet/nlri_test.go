@@ -208,3 +208,46 @@ func TestNLRISerialize(t *testing.T) {
 		assert.Equal(t, test.expected, res)
 	}
 }
+
+func TestNLRIAddPathSerialize(t *testing.T) {
+	tests := []struct {
+		name     string
+		nlri     *NLRIAddPath
+		expected []byte
+	}{
+		{
+			name: "Test #1",
+			nlri: &NLRIAddPath{
+				PathIdentifier: 100,
+				IP:             strAddr("1.2.3.0"),
+				Pfxlen:         25,
+			},
+			expected: []byte{0, 0, 0, 100, 25, 1, 2, 3, 0},
+		},
+		{
+			name: "Test #2",
+			nlri: &NLRIAddPath{
+				PathIdentifier: 100,
+				IP:             strAddr("1.2.3.0"),
+				Pfxlen:         24,
+			},
+			expected: []byte{0, 0, 0, 100, 24, 1, 2, 3},
+		},
+		{
+			name: "Test #3",
+			nlri: &NLRIAddPath{
+				PathIdentifier: 100,
+				IP:             strAddr("100.200.128.0"),
+				Pfxlen:         17,
+			},
+			expected: []byte{0, 0, 0, 100, 17, 100, 200, 128},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		test.nlri.serialize(buf)
+		res := buf.Bytes()
+		assert.Equal(t, test.expected, res)
+	}
+}
