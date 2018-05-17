@@ -100,3 +100,15 @@ func (p *Path) Print() string {
 
 	return ret
 }
+
+func (p *Path) Copy() *Path {
+	if p == nil {
+		return nil
+	}
+
+	cp := *p
+	cp.BGPPath = cp.BGPPath.Copy()
+	cp.StaticPath = cp.StaticPath.Copy()
+
+	return &cp
+}

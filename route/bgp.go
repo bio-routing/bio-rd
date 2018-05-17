@@ -154,6 +154,14 @@ func (b *BGPPath) Print() string {
 	return ret
 }
 
+func (b *BGPPath) Prepend(asn uint32, times uint16) {
+	for i := 0; uint16(i) < times; i++ {
+		b.ASPath = fmt.Sprintf("%d %s", asn, b.ASPath)
+	}
+
+	b.ASPathLen = b.ASPathLen + uint16(times)
+}
+
 func uint32To4Byte(addr uint32) [4]byte {
 	slice := convert.Uint32Byte(addr)
 	ret := [4]byte{
@@ -163,4 +171,13 @@ func uint32To4Byte(addr uint32) [4]byte {
 		slice[3],
 	}
 	return ret
+}
+
+func (p *BGPPath) Copy() *BGPPath {
+	if p == nil {
+		return nil
+	}
+
+	cp := *p
+	return &cp
 }
