@@ -125,6 +125,26 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 	}
 }
 
+// ContainsPfxPath returns true if this prefix and path combination is
+// present in this LocRIB.
+func (a *LocRIB) ContainsPfxPath(pfx net.Prefix, p *route.Path) bool {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	
+	r := a.rt.Get(pfx)
+	if r == nil {
+		return false
+	}
+		
+	for _, path := range r.Paths() {
+		if path.Compare(p) == 0 {
+			return true
+		}
+	}
+	
+	return false
+}
+
 func (a *LocRIB) Print() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()

@@ -45,13 +45,16 @@ func NewRoute(pfx net.Prefix, p *Path) *Route {
 
 // Copy returns a copy of route r
 func (r *Route) Copy() *Route {
-	new := &Route{
+	if r == nil {
+		return nil
+	}
+	n := &Route{
 		pfx:       r.pfx,
 		ecmpPaths: r.ecmpPaths,
 	}
-	new.paths = make([]*Path, len(r.paths))
-	copy(new.paths, r.paths)
-	return new
+	n.paths = make([]*Path, len(r.paths))
+	copy(n.paths, r.paths)
+	return n
 }
 
 // Prefix gets the prefix of route `r`
@@ -71,8 +74,8 @@ func (r *Route) Pfxlen() uint8 {
 
 // Paths returns a copy of the list of paths associated with route r
 func (r *Route) Paths() []*Path {
-	if r.paths == nil {
-		return []*Path{}
+	if r == nil || r.paths == nil {
+		return nil
 	}
 
 	ret := make([]*Path, len(r.paths))
@@ -82,11 +85,17 @@ func (r *Route) Paths() []*Path {
 
 // ECMPPathCount returns the count of ecmp paths for route r
 func (r *Route) ECMPPathCount() uint {
+	if r == nil {
+		return 0
+	}
 	return r.ecmpPaths
 }
 
 // ECMPPaths returns a copy of the list of paths associated with route r
 func (r *Route) ECMPPaths() []*Path {
+	if r == nil {
+		return nil
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -101,6 +110,9 @@ func (r *Route) ECMPPaths() []*Path {
 
 // BestPath returns the current best path. nil if non exists
 func (r *Route) BestPath() *Path {
+	if r == nil {
+		return nil
+	}
 	if len(r.paths) == 0 {
 		return nil
 	}

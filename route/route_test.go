@@ -289,11 +289,112 @@ func TestCopy(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "",
+		},
 	}
 
 	for _, test := range tests {
 		res := test.route.Copy()
 		assert.Equal(t, test.expected, res)
+	}
+}
+
+func TestECMPPathCount(t *testing.T) {
+	var r *Route
+	assert.Equal(t, uint(0), r.ECMPPathCount())
+	r = &Route{}
+	assert.Equal(t, uint(0), r.ECMPPathCount())
+	r.ecmpPaths = 12
+	assert.Equal(t, uint(12), r.ECMPPathCount())
+}
+
+func TestBestPath(t *testing.T) {
+	tests := []struct {
+		route    *Route
+		expected *Path
+	}{
+		{
+			route:    nil,
+			expected: nil,
+		},
+		{
+			route:    &Route{},
+			expected: nil,
+		},
+		{
+			route: &Route{
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: 32,
+						},
+					},
+				},
+			},
+			expected: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: 32,
+				},
+			},
+		},
+	}
+	for _, tc := range tests {
+		assert.Equal(t, tc.expected, tc.route.BestPath())
+	}
+}
+
+func TestECMPPaths(t *testing.T) {
+	tests := []struct {
+		route    *Route
+		expected []*Path
+	}{
+		{
+			route:    nil,
+			expected: nil,
+		},
+		{
+			route:    &Route{},
+			expected: nil,
+		},
+		{
+			route: &Route{
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: 32,
+						},
+					},
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: 32,
+						},
+					},
+				},
+			},
+			expected: []*Path{
+				{
+					Type: StaticPathType,
+					StaticPath: &StaticPath{
+						NextHop: 32,
+					},
+				},
+				{
+					Type: StaticPathType,
+					StaticPath: &StaticPath{
+						NextHop: 32,
+					},
+				},
+			},
+		},
+	}
+	for _, tc := range tests {
+		assert.Equal(t, tc.expected, tc.route.ECMPPaths())
 	}
 }
 
