@@ -23,3 +23,12 @@ func (s *StaticPath) Compare(t *StaticPath) int8 {
 func (s *StaticPath) ECMP(t *StaticPath) bool {
 	return true
 }
+
+func (s *StaticPath) Copy() *StaticPath {
+	if s == nil {
+		return nil
+	}
+
+	cp := *s
+	return &cp
+}
