@@ -1,5 +1,9 @@
 package packet
 
+import (
+	"fmt"
+)
+
 const (
 	OctetLen       = 8
 	MaxASNsSegment = 255
@@ -51,13 +55,14 @@ const (
 	MalformedASPath           = 11
 
 	// Attribute Type Codes
-	OriginAttr     = 1
-	ASPathAttr     = 2
-	NextHopAttr    = 3
-	MEDAttr        = 4
-	LocalPrefAttr  = 5
-	AtomicAggrAttr = 6
-	AggregatorAttr = 7
+	OriginAttr         = 1
+	ASPathAttr         = 2
+	NextHopAttr        = 3
+	MEDAttr            = 4
+	LocalPrefAttr      = 5
+	AtomicAggrAttr     = 6
+	AggregatorAttr     = 7
+	LargeCommunityAttr = 32
 
 	// ORIGIN values
 	IGP        = 0
@@ -171,4 +176,14 @@ type ASPathSegment struct {
 type Aggretator struct {
 	Addr uint32
 	ASN  uint16
+}
+
+type LargeCommunity struct {
+	GlobalAdministrator uint32
+	DataPart1           uint32
+	DataPart2           uint32
+}
+
+func (c LargeCommunity) String() string {
+	return fmt.Sprintf("(%d,%d,%d)", c.GlobalAdministrator, c.DataPart1, c.DataPart2)
 }

@@ -843,6 +843,8 @@ func (fsm *FSM) established() int {
 						case packet.ASPathAttr:
 							path.BGPPath.ASPath = pa.ASPathString()
 							path.BGPPath.ASPathLen = pa.ASPathLen()
+						case packet.LargeCommunityAttr:
+							path.BGPPath.LargeCommunities = pa.LargeCommunityString()
 						}
 					}
 					fsm.adjRIBIn.AddPath(pfx, path)

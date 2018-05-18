@@ -84,6 +84,10 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 		}
 	case AtomicAggrAttr:
 		// Nothing to do for 0 octet long attribute
+	case LargeCommunityAttr:
+		if err := pa.decodeLargeCommunities(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to decode large communities: %v", err)
+		}
 	default:
 		return nil, consumed, fmt.Errorf("Invalid Attribute Type Code: %v", pa.TypeCode)
 	}
@@ -210,6 +214,43 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 	return dumpNBytes(buf, pa.Length-p)
 }
 
+func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
+	length := pa.Length
+	recordLen := uint16(12)
+	count := length / recordLen
+
+	coms := make([]LargeCommunity, count)
+
+	for i := uint16(0); i < count; i++ {
+		com := LargeCommunity{}
+
+		v, err := read4BytesAsUin32(buf)
+		if err != nil {
+			return err
+		}
+		com.GlobalAdministrator = v
+
+		v, err = read4BytesAsUin32(buf)
+		if err != nil {
+			return err
+		}
+		com.DataPart1 = v
+
+		v, err = read4BytesAsUin32(buf)
+		if err != nil {
+			return err
+		}
+		com.DataPart2 = v
+
+		coms[i] = com
+	}
+
+	pa.Value = coms
+
+	dump := pa.Length - (count * recordLen)
+	return dumpNBytes(buf, dump)
+}
+
 func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	bytesRead := 0
 	if pa.ExtendedLength {
@@ -279,6 +320,15 @@ func (pa *PathAttribute) ASPathLen() (ret uint16) {
 	}
 
 	return
+}
+
+func (a *PathAttribute) LargeCommunityString() string {
+	s := ""
+	for _, com := range a.Value.([]LargeCommunity) {
+		s += com.String() + " "
+	}
+
+	return strings.TrimRight(s, " ")
 }
 
 // dumpNBytes is used to dump n bytes of buf. This is useful in case an path attributes
@@ -499,4 +549,17 @@ func isEndOfASSset(asPathPart string) bool {
 
 func fourBytesToUint32(address [4]byte) uint32 {
 	return uint32(address[0])<<24 + uint32(address[1])<<16 + uint32(address[2])<<8 + uint32(address[3])
+}
+
+func read4BytesAsUin32(buf *bytes.Buffer) (uint32, error) {
+	b := [4]byte{}
+	n, err := buf.Read(b[:])
+	if err != nil {
+		return 0, err
+	}
+	if n != 4 {
+		return 0, fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
+	}
+
+	return fourBytesToUint32(b), nil
 }

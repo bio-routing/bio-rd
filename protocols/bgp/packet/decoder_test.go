@@ -852,7 +852,6 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				5,          // Attribute Type code (Local Pref)
 				4,          // Length
 				0, 0, 1, 0, // Local Pref 256
-
 			},
 			wantFail: false,
 			expected: &BGPUpdate{
