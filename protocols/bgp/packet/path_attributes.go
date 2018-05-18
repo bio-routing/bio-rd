@@ -171,7 +171,7 @@ func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
 func (pa *PathAttribute) decodeMED(buf *bytes.Buffer) error {
 	med, err := pa.decodeUint32(buf)
 	if err != nil {
-		return fmt.Errorf("Unable to recode local pref: %v", err)
+		return fmt.Errorf("Unable to decode local pref: %v", err)
 	}
 
 	pa.Value = uint32(med)
@@ -181,7 +181,7 @@ func (pa *PathAttribute) decodeMED(buf *bytes.Buffer) error {
 func (pa *PathAttribute) decodeLocalPref(buf *bytes.Buffer) error {
 	lpref, err := pa.decodeUint32(buf)
 	if err != nil {
-		return fmt.Errorf("Unable to recode local pref: %v", err)
+		return fmt.Errorf("Unable to decode local pref: %v", err)
 	}
 
 	pa.Value = uint32(lpref)
@@ -216,8 +216,7 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 
 func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 	length := pa.Length
-	recordLen := uint16(12)
-	count := length / recordLen
+	count := length / LargeCommunityLen
 
 	coms := make([]LargeCommunity, count)
 
@@ -247,7 +246,7 @@ func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 
 	pa.Value = coms
 
-	dump := pa.Length - (count * recordLen)
+	dump := pa.Length - (count * LargeCommunityLen)
 	return dumpNBytes(buf, dump)
 }
 
@@ -363,6 +362,8 @@ func (pa *PathAttribute) serialize(buf *bytes.Buffer) uint8 {
 		pathAttrLen = pa.serializeAtomicAggregate(buf)
 	case AggregatorAttr:
 		pathAttrLen = pa.serializeAggregator(buf)
+	case LargeCommunityAttr:
+		pathAttrLen = pa.serializeLargeCommunities(buf)
 	}
 
 	return pathAttrLen
@@ -458,6 +459,32 @@ func (pa *PathAttribute) serializeAggregator(buf *bytes.Buffer) uint8 {
 	return 5
 }
 
+func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
+	coms := pa.Value.([]LargeCommunity)
+	if len(coms) == 0 {
+		return 0
+	}
+
+	attrFlags := uint8(0)
+	attrFlags = setOptional(attrFlags)
+	attrFlags = setTransitive(attrFlags)
+	attrFlags = setPartial(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(LargeCommunityAttr)
+
+	length := uint8(LargeCommunityLen * len(coms))
+
+	buf.WriteByte(length)
+
+	for _, com := range coms {
+		buf.Write(convert.Uint32Byte(com.GlobalAdministrator))
+		buf.Write(convert.Uint32Byte(com.DataPart1))
+		buf.Write(convert.Uint32Byte(com.DataPart2))
+	}
+
+	return length
+}
+
 /*func (pa *PathAttribute) PrependASPath(prepend []uint32) {
 	if pa.TypeCode != ASPathAttr {
 		return
@@ -536,6 +563,24 @@ func ParseASPathStr(asPathString string) (*PathAttribute, error) {
 	return &PathAttribute{
 		TypeCode: ASPathAttr,
 		Value:    asPath,
+	}, nil
+}
+
+func largeCommunityAttributeForString(s string) (*PathAttribute, error) {
+	strs := strings.Split(s, " ")
+	coms := make([]LargeCommunity, len(strs))
+
+	var err error
+	for i, str := range strs {
+		coms[i], err = ParseCommunityString(str)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &PathAttribute{
+		TypeCode: LargeCommunityAttr,
+		Value:    coms,
 	}, nil
 }
 
