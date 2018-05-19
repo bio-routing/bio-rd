@@ -4,17 +4,20 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMatches(t *testing.T) {
 	tests := []struct {
-		name         string
-		prefix       net.Prefix
-		prefixLists  []*PrefixList
-		routeFilters []*RouteFilter
-		expected     bool
+		name                  string
+		prefix                net.Prefix
+		bgpPath               *route.BGPPath
+		prefixLists           []*PrefixList
+		routeFilters          []*RouteFilter
+		largeCommunityFilters []*LargeCommunityFilter
+		expected              bool
 	}{
 		{
 			name:   "one prefix matches in prefix list, no route filters set",
@@ -105,16 +108,53 @@ func TestMatches(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name:   "large community matches",
+			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
+			bgpPath: &route.BGPPath{
+				LargeCommunities: "(1,2,0) (1,2,3)",
+			},
+			largeCommunityFilters: []*LargeCommunityFilter{
+				{
+					&packet.LargeCommunity{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           3,
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name:    "large community does not match",
+			prefix:  net.NewPfx(strAddr("10.0.0.0"), 24),
+			bgpPath: &route.BGPPath{},
+			largeCommunityFilters: []*LargeCommunityFilter{
+				{
+					&packet.LargeCommunity{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           3,
+					},
+				},
+			},
+			expected: false,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
 			f := &TermCondition{
-				prefixLists:  test.prefixLists,
-				routeFilters: test.routeFilters,
+				prefixLists:           test.prefixLists,
+				routeFilters:          test.routeFilters,
+				largeCommunityFilters: test.largeCommunityFilters,
 			}
 
-			assert.Equal(te, test.expected, f.Matches(test.prefix, &route.Path{}))
+			pa := &route.Path{
+				BGPPath: test.bgpPath,
+			}
+
+			assert.Equal(te, test.expected, f.Matches(test.prefix, pa))
 		})
 	}
 }
