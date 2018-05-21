@@ -603,7 +603,7 @@ func read4BytesAsUin32(buf *bytes.Buffer) (uint32, error) {
 		return 0, err
 	}
 	if n != 4 {
-		return 0, fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
+		return 0, fmt.Errorf("Unable to read as uint32: buf.Read read %d bytes", n)
 	}
 
 	return fourBytesToUint32(b), nil
