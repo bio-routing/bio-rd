@@ -63,6 +63,8 @@ func (c *ClientManager) RegisterWithOptions(client RouteTableClient, opt ClientO
 
 // Unregister unregisters a client
 func (c *ClientManager) Unregister(client RouteTableClient) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if _, ok := c.clients[client]; !ok {
 		return
 	}
@@ -71,6 +73,8 @@ func (c *ClientManager) Unregister(client RouteTableClient) {
 
 // Clients returns a list of registered clients
 func (c *ClientManager) Clients() []RouteTableClient {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	ret := make([]RouteTableClient, 0)
 	for rtc := range c.clients {
 		ret = append(ret, rtc)
