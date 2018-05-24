@@ -53,19 +53,7 @@ func (p *Path) Equal(q *Path) bool {
 	if p == nil || q == nil {
 		return false
 	}
-
-	if p.Type != q.Type {
-		return false
-	}
-
-	switch p.Type {
-	case BGPPathType:
-		if *p.BGPPath != *q.BGPPath {
-			return false
-		}
-	}
-
-	return true
+	return p.Compare(q) == 0
 }
 
 // PathsDiff gets the list of elements contained by a but not b

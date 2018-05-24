@@ -65,8 +65,8 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
-	log.Warningf("BGP Update Sender: RemovePath not implemented")
-	return false
+	err := withDrawPrefixes(u.fsm.con, pfx)
+	return err == nil
 }
 
 // UpdateNewClient does nothing
