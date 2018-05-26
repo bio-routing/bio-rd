@@ -724,7 +724,9 @@ func (fsm *FSM) established() int {
 		Address: tnet.IPv4ToUint32(fsm.remote),
 	}
 
-	clientOptions := routingtable.ClientOptions{}
+	clientOptions := routingtable.ClientOptions{
+		BestOnly: true,
+	}
 	if fsm.capAddPathSend {
 		fsm.updateSender = newUpdateSenderAddPath(fsm)
 		fsm.adjRIBOut = adjRIBOutAddPath.New(n)

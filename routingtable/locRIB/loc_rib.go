@@ -120,7 +120,7 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 		withdraw := route.PathsDiff(oldRoute.Paths()[0:oldPathsLimit], newRoute.Paths()[0:newPathsLimit])
 
 		for _, p := range withdraw {
-			client.RemovePath(newRoute.Prefix(), p)
+			client.RemovePath(oldRoute.Prefix(), p)
 		}
 	}
 }
@@ -130,18 +130,18 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 func (a *LocRIB) ContainsPfxPath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
-	
+
 	r := a.rt.Get(pfx)
 	if r == nil {
 		return false
 	}
-		
+
 	for _, path := range r.Paths() {
 		if path.Compare(p) == 0 {
 			return true
 		}
 	}
-	
+
 	return false
 }
 

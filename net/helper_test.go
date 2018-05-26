@@ -3,6 +3,8 @@ package net
 import (
 	"testing"
 
+	"net"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,6 +23,10 @@ func TestIPv4ToUint32(t *testing.T) {
 		},
 		{
 			input:    []byte{172, 24, 5, 1},
+			expected: 2887255297,
+		},
+		{
+			input:    net.ParseIP("172.24.5.1"),
 			expected: 2887255297,
 		},
 	}
