@@ -171,7 +171,7 @@ func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
 func (pa *PathAttribute) decodeMED(buf *bytes.Buffer) error {
 	med, err := pa.decodeUint32(buf)
 	if err != nil {
-		return fmt.Errorf("Unable to decode local pref: %v", err)
+		return fmt.Errorf("Unable to decode MED: %v", err)
 	}
 
 	pa.Value = uint32(med)
