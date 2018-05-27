@@ -2,12 +2,10 @@ package server
 
 import (
 	"fmt"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 )
@@ -26,29 +24,10 @@ func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
-	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(fmt.Sprintf("%d %s", u.fsm.localASN, p.BGPPath.ASPath), " "))
+	update, err := updateMessageForPath(pfx, p, u.fsm)
 	if err != nil {
-		return fmt.Errorf("Unable to parse AS path: %v", err)
-	}
-
-	update := &packet.BGPUpdateAddPath{
-		PathAttributes: &packet.PathAttribute{
-			TypeCode: packet.OriginAttr,
-			Value:    p.BGPPath.Origin,
-			Next: &packet.PathAttribute{
-				TypeCode: packet.ASPathAttr,
-				Value:    asPathPA.Value,
-				Next: &packet.PathAttribute{
-					TypeCode: packet.NextHopAttr,
-					Value:    p.BGPPath.NextHop,
-				},
-			},
-		},
-		NLRI: &packet.NLRIAddPath{
-			PathIdentifier: p.BGPPath.PathIdentifier,
-			IP:             pfx.Addr(),
-			Pfxlen:         pfx.Pfxlen(),
-		},
+		log.Errorf("Unable to create BGP Update: %v", err)
+		return nil
 	}
 
 	updateBytes, err := update.SerializeUpdate()

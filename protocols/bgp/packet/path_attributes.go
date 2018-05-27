@@ -566,7 +566,7 @@ func ParseASPathStr(asPathString string) (*PathAttribute, error) {
 	}, nil
 }
 
-func largeCommunityAttributeForString(s string) (*PathAttribute, error) {
+func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
 	strs := strings.Split(s, " ")
 	coms := make([]LargeCommunity, len(strs))
 
