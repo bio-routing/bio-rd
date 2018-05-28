@@ -77,6 +77,14 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
+	if c.NextHop < b.NextHop {
+		return 1
+	}
+
+	if c.NextHop > b.NextHop {
+		return -1
+	}
+
 	return 0
 }
 
