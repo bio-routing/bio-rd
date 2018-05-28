@@ -753,6 +753,7 @@ func (fsm *FSM) established() int {
 	}()*/
 
 	for {
+		log.Debug("Iterate established loop.")
 		select {
 		case e := <-fsm.eventCh:
 			if e == ManualStop { // Event 2
@@ -777,6 +778,7 @@ func (fsm *FSM) established() int {
 			fsm.connectRetryCounter++
 			return fsm.changeState(Idle, "Holdtimer expired")
 		case <-fsm.keepaliveTimer.C:
+
 			err := fsm.sendKeepalive()
 			if err != nil {
 				stopTimer(fsm.connectRetryTimer)
@@ -920,9 +922,10 @@ func (fsm *FSM) resetDelayOpenTimer() {
 }
 
 func (fsm *FSM) sendKeepalive() error {
-	msg := packet.SerializeKeepaliveMsg()
 
+	msg := packet.SerializeKeepaliveMsg()
 	_, err := fsm.con.Write(msg)
+	log.WithError(err).Debug("Send keepalive")
 	if err != nil {
 		return fmt.Errorf("Unable to send KEEPALIVE message: %v", err)
 	}
