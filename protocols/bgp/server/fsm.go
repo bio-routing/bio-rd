@@ -125,7 +125,7 @@ func NewFSM(peer *Peer, c config.Peer, rib *locRIB.LocRIB) *FSM {
 		holdTimer:          time.NewTimer(0),
 
 		keepaliveTime:  time.Duration(c.KeepAlive),
-		keepaliveTimer: nil,
+		keepaliveTimer: time.NewTicker(time.Duration(c.KeepAlive)),
 
 		routerID: c.RouterID,
 		remote:   c.PeerAddress,
@@ -461,7 +461,7 @@ func (fsm *FSM) openSent() int {
 					if fsm.keepaliveTimer != nil {
 						fsm.keepaliveTimer.Stop()
 					}
-					fsm.keepaliveTimer = time.NewTicker(fsm.keepaliveTime)
+					fsm.keepaliveTimer = time.NewTicker(fsm.keepaliveTime * time.Second)
 				}
 
 				fsm.processOpenOptions(openMsg.OptParams)
