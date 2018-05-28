@@ -74,6 +74,8 @@ func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	r := a.rt.Get(pfx)
 	if r != nil {
 		oldRoute = r.Copy()
+	} else {
+		return true
 	}
 
 	a.rt.RemovePath(pfx, p)

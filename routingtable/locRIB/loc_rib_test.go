@@ -84,3 +84,14 @@ func TestContainsPfxPath(t *testing.T) {
 		assert.Equal(t, tc.expected, contains, "mismatch in testcase %v", i)
 	}
 }
+
+func TestLocRIB_RemovePathUnknown(t *testing.T) {
+	rib := New()
+	assert.True(t, rib.RemovePath(net.NewPfx(1, 32),
+		&route.Path{
+			Type: route.StaticPathType,
+			StaticPath: &route.StaticPath{
+				NextHop: 2,
+			},
+		}))
+}
