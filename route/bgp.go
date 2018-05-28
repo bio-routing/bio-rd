@@ -140,10 +140,6 @@ func (b *BGPPath) better(c *BGPPath) bool {
 	return false
 }
 
-func (b *BGPPath) ecmp(c *BGPPath) bool {
-	return b.LocalPref == c.LocalPref && b.ASPathLen == c.ASPathLen && b.Origin == c.Origin && b.MED == c.MED
-}
-
 func (b *BGPPath) Print() string {
 	origin := ""
 	switch b.Origin {
