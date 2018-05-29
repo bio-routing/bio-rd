@@ -16,7 +16,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOutAddPath"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 	tomb "gopkg.in/tomb.v2"
 )
@@ -92,7 +91,7 @@ type FSM struct {
 
 	adjRIBIn     *adjRIBIn.AdjRIBIn
 	adjRIBOut    routingtable.RouteTableClient
-	rib          *locRIB.LocRIB
+	rib          routingtable.RouteTableClient
 	updateSender routingtable.RouteTableClient
 
 	capAddPathSend bool
@@ -109,7 +108,7 @@ type msgRecvErr struct {
 	con *net.TCPConn
 }
 
-func NewFSM(peer *Peer, c config.Peer, rib *locRIB.LocRIB) *FSM {
+func NewFSM(peer *Peer, c config.Peer, rib routingtable.RouteTableClient) *FSM {
 	fsm := &FSM{
 		peer:              peer,
 		state:             Idle,
