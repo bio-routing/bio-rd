@@ -7,6 +7,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -1357,7 +1358,6 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				1,    // Attribute Type code (ORIGIN)
 				0, 1, // Length
 				2, // INCOMPLETE
-
 			},
 			wantFail: false,
 			expected: &BGPUpdate{
@@ -1406,6 +1406,25 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			// Unknown attribute
+			testNum: 20,
+			input: []byte{
+				0, 0, // No Withdraws
+				0, 7, // Total Path Attributes Length
+				64, 111, 4, 1, 1, 1, 1, // Unknown attribute
+			},
+			wantFail: false,
+			expected: &BGPUpdate{
+				TotalPathAttrLen: 7,
+				PathAttributes: &PathAttribute{
+					Length:     4,
+					Transitive: true,
+					TypeCode:   111,
+					Value:      []byte{1, 1, 1, 1},
 				},
 			},
 		},
