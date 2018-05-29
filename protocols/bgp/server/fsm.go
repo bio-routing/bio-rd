@@ -719,6 +719,7 @@ func (fsm *FSM) openConfirmTCPFail(err error) int {
 func (fsm *FSM) established() int {
 	fsm.adjRIBIn = adjRIBIn.New()
 	fsm.adjRIBIn.Register(fsm.rib)
+	log.Debug("Registered locRIB to adjRIBIn")
 
 	n := &routingtable.Neighbor{
 		Type:    route.BGPPathType,
@@ -738,8 +739,9 @@ func (fsm *FSM) established() int {
 	}
 
 	fsm.adjRIBOut.Register(fsm.updateSender)
+	log.Debug("Registered updateSender to adjRIBOut")
 	fsm.rib.RegisterWithOptions(fsm.adjRIBOut, clientOptions)
-
+	log.Debug("Registered adjRIBOut to locRIB")
 	/*go func() {
 		for {
 			if fsm.adjRIBOut == nil {
