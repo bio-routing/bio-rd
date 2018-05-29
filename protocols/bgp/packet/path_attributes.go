@@ -88,6 +88,14 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 		if err := pa.decodeCommunities(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode Community: %v", err)
 		}
+	case AS4PathAttr:
+		if err := pa.decodeAS4Path(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Path: %v", err)
+		}
+	case AS4AggregatorAttr:
+		if err := pa.decodeAS4Aggregator(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Aggregator: %v", err)
+		}
 	default:
 		return nil, consumed, fmt.Errorf("Invalid Attribute Type Code: %v", pa.TypeCode)
 	}
@@ -232,6 +240,26 @@ func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 		com[i] = fourBytesToUint32(c)
 	}
 	pa.Value = com
+	return nil
+}
+
+func (pa *PathAttribute) decodeAS4Path(buf *bytes.Buffer) error {
+	as4Path, err := pa.decodeUint32(buf)
+	if err != nil {
+		return fmt.Errorf("Unable to decode AS4Path: %v", err)
+	}
+
+	pa.Value = as4Path
+	return nil
+}
+
+func (pa *PathAttribute) decodeAS4Aggregator(buf *bytes.Buffer) error {
+	as4Aggregator, err := pa.decodeUint32(buf)
+	if err != nil {
+		return fmt.Errorf("Unable to decode AS4Aggregator: %v", err)
+	}
+
+	pa.Value = as4Aggregator
 	return nil
 }
 
