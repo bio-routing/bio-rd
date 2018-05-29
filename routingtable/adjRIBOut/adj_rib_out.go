@@ -7,6 +7,7 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	log "github.com/sirupsen/logrus"
 )
 
 // AdjRIBOut represents an Adjacency RIB In as described in RFC4271
@@ -45,7 +46,10 @@ func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.removePathsFromClients(pfx, oldPaths)
 
 	for _, client := range a.ClientManager.Clients() {
-		client.AddPath(pfx, p)
+		err := client.AddPath(pfx, p)
+		if err != nil {
+			log.WithField("Sender", "AdjRIBOut").WithError(err).Error("Could not send update to client")
+		}
 	}
 	return nil
 }
