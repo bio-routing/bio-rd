@@ -1243,6 +1243,25 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			explicitLength: 5,
 			wantFail:       true,
 		},
+		{
+			// Unknown attribute
+			testNum: 16,
+			input: []byte{
+				0, 0, // No Withdraws
+				0, 7, // Total Path Attributes Length
+				64, 111, 4, 1, 1, 1, 1, // Unknown attribute
+			},
+			wantFail: false,
+			expected: &BGPUpdate{
+				TotalPathAttrLen: 7,
+				PathAttributes: &PathAttribute{
+					Length:     4,
+					Transitive: true,
+					TypeCode:   111,
+					Value:      []byte{1, 1, 1, 1},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
