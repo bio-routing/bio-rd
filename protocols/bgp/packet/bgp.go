@@ -59,6 +59,9 @@ const (
 	AtomicAggrAttr = 6
 	AggregatorAttr = 7
 
+	AS4PathAttr       = 17
+	AS4AggregatorAttr = 18
+
 	// ORIGIN values
 	IGP        = 0
 	EGP        = 1
