@@ -6,6 +6,7 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	log "github.com/sirupsen/logrus"
 )
 
 // AdjRIBIn represents an Adjacency RIB In as described in RFC4271
@@ -33,7 +34,11 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 	for _, route := range routes {
 		paths := route.Paths()
 		for _, path := range paths {
-			client.AddPath(route.Prefix(), path)
+
+			err := client.AddPath(route.Prefix(), path)
+			if err != nil {
+				log.WithField("Sender", "AdjRIBOutAddPath").WithError(err).Error("Could not send update to client")
+			}
 		}
 	}
 	return nil

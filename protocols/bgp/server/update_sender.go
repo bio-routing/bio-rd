@@ -15,18 +15,20 @@ import (
 // UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
 	routingtable.ClientManager
-	fsm *FSM
+	fsm  *FSM
+	iBGP bool
 }
 
 func newUpdateSender(fsm *FSM) *UpdateSender {
 	return &UpdateSender{
-		fsm: fsm,
+		fsm:  fsm,
+		iBGP: fsm.localASN == fsm.remoteASN,
 	}
 }
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
-	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(fmt.Sprintf("%d %s", u.fsm.localASN, p.BGPPath.ASPath), " "))
+	asPathPA, err := packet.ParseASPathStr(asPathString(u.iBGP, u.fsm.localASN, p.BGPPath.ASPath))
 	if err != nil {
 		return fmt.Errorf("Unable to parse AS path: %v", err)
 	}
@@ -41,6 +43,10 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 				Next: &packet.PathAttribute{
 					TypeCode: packet.NextHopAttr,
 					Value:    p.BGPPath.NextHop,
+					Next: &packet.PathAttribute{
+						TypeCode: packet.LocalPrefAttr,
+						Value:    p.BGPPath.LocalPref,
+					},
 				},
 			},
 		},
@@ -73,4 +79,13 @@ func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
 func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) error {
 	log.Warningf("BGP Update Sender: UpdateNewClient() not supported")
 	return nil
+}
+
+func asPathString(iBGP bool, localASN uint16, asPath string) string {
+	ret := ""
+	if iBGP {
+		ret = ret + fmt.Sprintf("%d ", localASN)
+	}
+	ret = ret + asPath
+	return strings.TrimRight(ret, " ")
 }
