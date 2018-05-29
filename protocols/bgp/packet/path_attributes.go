@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -19,10 +20,11 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16) (*PathAttribute, error) {
 	p := uint16(0)
 	for p < tpal {
 		pa, consumed, err = decodePathAttr(buf)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to decode path attr: %v", err)
-		}
 		p += consumed
+		if err != nil {
+			logrus.Errorf("Unable to decode path attr: %v", err)
+			continue
+		}
 
 		if ret == nil {
 			ret = pa
