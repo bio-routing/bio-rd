@@ -25,6 +25,11 @@ func (m MockClient) UpdateNewClient(RouteTableClient) error {
 func (m MockClient) Register(RouteTableClient) {
 	return
 }
+
+func (m MockClient) RegisterWithOptions(RouteTableClient, ClientOptions) {
+	return
+}
+
 func (m MockClient) Unregister(RouteTableClient) {
 	return
 }
