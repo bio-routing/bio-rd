@@ -467,6 +467,10 @@ func ParseASPathStr(asPathString string) (*PathAttribute, error) {
 	newSegmentNeeded := true
 	currentSegment := -1
 	for _, asn := range strings.Split(asPathString, " ") {
+		if asn == "" {
+			continue
+		}
+
 		if isBeginOfASSet(asn) {
 			currentType = ASSet
 			newSegmentNeeded = true

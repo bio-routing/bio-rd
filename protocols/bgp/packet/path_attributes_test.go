@@ -1299,6 +1299,15 @@ func TestParseASPathStr(t *testing.T) {
 		expected *PathAttribute
 	}{
 		{
+			name:     "Empty AS Path",
+			input:    "",
+			wantFail: false,
+			expected: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value:    ASPath{},
+			},
+		},
+		{
 			name:     "Simple AS_SEQUENCE",
 			input:    "3320 15169",
 			wantFail: false,
