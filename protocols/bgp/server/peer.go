@@ -71,5 +71,9 @@ func (p *Peer) GetASN() uint32 {
 
 func (p *Peer) Start() {
 	p.fsm.start()
-	p.fsm.activate()
+	go func() {
+		for {
+			p.fsm.activate()
+		}
+	}() 
 }
