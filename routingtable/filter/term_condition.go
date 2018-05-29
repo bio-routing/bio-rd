@@ -10,6 +10,13 @@ type TermCondition struct {
 	routeFilters []*RouteFilter
 }
 
+func NewTermCondition(prefixLists []*PrefixList, routeFilters []*RouteFilter) *TermCondition {
+	return &TermCondition{
+		prefixLists:  prefixLists,
+		routeFilters: routeFilters,
+	}
+}
+
 func (f *TermCondition) Matches(p net.Prefix, pa *route.Path) bool {
 	return f.matchesAnyPrefixList(p) || f.machtchesAnyRouteFilter(p)
 }
