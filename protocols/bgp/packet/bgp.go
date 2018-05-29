@@ -50,6 +50,10 @@ const (
 	InvalidNetworkField       = 10
 	MalformedASPath           = 11
 
+	// Notification Msg Subcodes
+	AdministrativeShutdown = 2
+	AdministrativeReset    = 4
+
 	// Attribute Type Codes
 	OriginAttr     = 1
 	ASPathAttr     = 2
