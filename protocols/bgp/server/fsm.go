@@ -790,7 +790,7 @@ func (fsm *FSM) established() int {
 		case recvMsg := <-fsm.msgRecvCh:
 			msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
 			if err != nil {
-				fmt.Printf("Failed to decode BGP message: %v\n", recvMsg.msg)
+				fmt.Printf("Failed to decode BGP message: %v msg: %v\n", err, recvMsg.msg)
 				switch bgperr := err.(type) {
 				case packet.BGPError:
 					sendNotification(fsm.con, bgperr.ErrorCode, bgperr.ErrorSubCode)
