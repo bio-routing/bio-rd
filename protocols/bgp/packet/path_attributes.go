@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -20,11 +19,10 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16) (*PathAttribute, error) {
 	p := uint16(0)
 	for p < tpal {
 		pa, consumed, err = decodePathAttr(buf)
-		p += consumed
 		if err != nil {
-			logrus.Errorf("Unable to decode path attr: %v", err)
-			continue
+			return nil, fmt.Errorf("Unable to decode path attr: %v", err)
 		}
+		p += consumed
 
 		if ret == nil {
 			ret = pa
@@ -87,10 +85,27 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 	case AtomicAggrAttr:
 		// Nothing to do for 0 octet long attribute
 	default:
-		return nil, consumed, fmt.Errorf("Invalid Attribute Type Code: %v", pa.TypeCode)
+		if err := pa.decodeUnknown(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to decode unknown attribute: %v", err)
+		}
 	}
 
 	return pa, consumed + pa.Length, nil
+}
+
+func (pa *PathAttribute) decodeUnknown(buf *bytes.Buffer) error {
+	u := make([]byte, pa.Length)
+
+	p := uint16(0)
+	err := decode(buf, []interface{}{&u})
+	if err != nil {
+		return fmt.Errorf("Unable to decode: %v", err)
+	}
+
+	pa.Value = u
+	p += pa.Length
+
+	return nil
 }
 
 func (pa *PathAttribute) decodeOrigin(buf *bytes.Buffer) error {
