@@ -1243,6 +1243,92 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			explicitLength: 5,
 			wantFail:       true,
 		},
+		{
+			// 2 withdraws with two path attributes (ORIGIN + Community), valid update
+			testNum: 16,
+			input: []byte{0, 5, 8, 10, 16, 192, 168,
+				0, 12, // Total Path Attribute Length
+
+				255,  // Attribute flags
+				1,    // Attribute Type code (ORIGIN)
+				0, 1, // Length
+				2, // INCOMPLETE
+
+				0,          // Attribute flags
+				8,          // Attribute Type code (Community)
+				4,          // Length
+				0, 0, 1, 0, // Arbitrary Community
+			},
+			wantFail: false,
+			expected: &BGPUpdate{
+				WithdrawnRoutesLen: 5,
+				WithdrawnRoutes: &NLRI{
+					IP:     strAddr("10.0.0.0"),
+					Pfxlen: 8,
+					Next: &NLRI{
+						IP:     strAddr("192.168.0.0"),
+						Pfxlen: 16,
+					},
+				},
+				TotalPathAttrLen: 12,
+				PathAttributes: &PathAttribute{
+					Optional:       true,
+					Transitive:     true,
+					Partial:        true,
+					ExtendedLength: true,
+					Length:         1,
+					TypeCode:       1,
+					Value:          uint8(2),
+					Next: &PathAttribute{
+						Optional:       false,
+						Transitive:     false,
+						Partial:        false,
+						ExtendedLength: false,
+						Length:         4,
+						TypeCode:       8,
+						Value:          uint32(256),
+					},
+				},
+			},
+		},
+		{
+			// 2 withdraws with two path attributes (ORIGIN + Community), invalid update (too short community)
+			testNum: 17,
+			input: []byte{0, 5, 8, 10, 16, 192, 168,
+				0, 11, // Total Path Attribute Length
+
+				255,  // Attribute flags
+				1,    // Attribute Type code (ORIGIN)
+				0, 1, // Length
+				2, // INCOMPLETE
+
+				0,       // Attribute flags
+				8,       // Attribute Type code (Community)
+				3,       // Length
+				0, 0, 1, // Arbitrary Community
+			},
+			wantFail: true,
+			expected: nil,
+		},
+		{
+			// 2 withdraws with two path attributes (ORIGIN + Community), invalid update (too long community)
+			testNum: 18,
+			input: []byte{0, 5, 8, 10, 16, 192, 168,
+				0, 13, // Total Path Attribute Length
+
+				255,  // Attribute flags
+				1,    // Attribute Type code (ORIGIN)
+				0, 1, // Length
+				2, // INCOMPLETE
+
+				0,             // Attribute flags
+				8,             // Attribute Type code (Community)
+				5,             // Length
+				0, 0, 1, 0, 1, // Arbitrary Community
+			},
+			wantFail: true,
+			expected: nil,
+		},
 	}
 
 	for _, test := range tests {

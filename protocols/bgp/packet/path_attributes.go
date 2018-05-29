@@ -84,6 +84,10 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 		}
 	case AtomicAggrAttr:
 		// Nothing to do for 0 octet long attribute
+	case CommunitiesAttr:
+		if err := pa.decodeCommunity(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to decode Community: %v", err)
+		}
 	default:
 		return nil, consumed, fmt.Errorf("Invalid Attribute Type Code: %v", pa.TypeCode)
 	}
@@ -208,6 +212,18 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 	p += 4
 
 	return dumpNBytes(buf, pa.Length-p)
+}
+
+func (pa *PathAttribute) decodeCommunity(buf *bytes.Buffer) error {
+	if pa.Length != 4 {
+		return fmt.Errorf("Unable to read community path attribute length %d is not 4", pa.Length)
+	}
+	com, err := pa.decodeUint32(buf)
+	if err != nil {
+		return err
+	}
+	pa.Value = com
+	return nil
 }
 
 func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {

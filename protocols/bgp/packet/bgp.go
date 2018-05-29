@@ -51,13 +51,14 @@ const (
 	MalformedASPath           = 11
 
 	// Attribute Type Codes
-	OriginAttr     = 1
-	ASPathAttr     = 2
-	NextHopAttr    = 3
-	MEDAttr        = 4
-	LocalPrefAttr  = 5
-	AtomicAggrAttr = 6
-	AggregatorAttr = 7
+	OriginAttr      = 1
+	ASPathAttr      = 2
+	NextHopAttr     = 3
+	MEDAttr         = 4
+	LocalPrefAttr   = 5
+	AtomicAggrAttr  = 6
+	AggregatorAttr  = 7
+	CommunitiesAttr = 8
 
 	// ORIGIN values
 	IGP        = 0
