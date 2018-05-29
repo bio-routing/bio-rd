@@ -17,7 +17,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOutAddPath"
 	log "github.com/sirupsen/logrus"
-	tomb "gopkg.in/tomb.v2"
+	"gopkg.in/tomb.v2"
 )
 
 const (
@@ -648,7 +648,7 @@ func (fsm *FSM) openConfirm() int {
 		case recvMsg := <-fsm.msgRecvCh:
 			msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
 			if err != nil {
-				fmt.Printf("Failed to decode message: %v\n", recvMsg.msg)
+				log.WithError(err).Errorf("Failed to decode BGP message %v\n", recvMsg.msg)
 				switch bgperr := err.(type) {
 				case packet.BGPError:
 					sendNotification(fsm.con, bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -792,7 +792,7 @@ func (fsm *FSM) established() int {
 		case recvMsg := <-fsm.msgRecvCh:
 			msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
 			if err != nil {
-				fmt.Printf("Failed to decode BGP message: %v msg: %v\n", err, recvMsg.msg)
+				log.WithError(err).Errorf("Failed to decode BGP message %v\n", recvMsg.msg)
 				switch bgperr := err.(type) {
 				case packet.BGPError:
 					sendNotification(fsm.con, bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -817,14 +817,13 @@ func (fsm *FSM) established() int {
 
 				for r := u.WithdrawnRoutes; r != nil; r = r.Next {
 					pfx := tnet.NewPfx(r.IP, r.Pfxlen)
-					fmt.Printf("LPM: Removing prefix %s\n", pfx.String())
+					log.WithField("Prefix", pfx.String()).Debug("LPM: Removing prefix")
 					fsm.adjRIBIn.RemovePath(pfx, nil)
 				}
 
 				for r := u.NLRI; r != nil; r = r.Next {
 					pfx := tnet.NewPfx(r.IP, r.Pfxlen)
-					fmt.Printf("LPM: Adding prefix %s\n", pfx.String())
-
+					log.WithField("Prefix", pfx.String()).Debug("LPM: Adding prefix")
 					path := &route.Path{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
@@ -833,7 +832,6 @@ func (fsm *FSM) established() int {
 					}
 
 					for pa := u.PathAttributes; pa != nil; pa = pa.Next {
-						fmt.Printf("TypeCode: %d\n", pa.TypeCode)
 						switch pa.TypeCode {
 						case packet.OriginAttr:
 							path.BGPPath.Origin = pa.Value.(uint8)
@@ -842,7 +840,7 @@ func (fsm *FSM) established() int {
 						case packet.MEDAttr:
 							path.BGPPath.MED = pa.Value.(uint32)
 						case packet.NextHopAttr:
-							fmt.Printf("RECEIVED NEXT_HOP: %d\n", pa.Value.(uint32))
+							log.WithField("NextHop", pa.Value.(uint32)).Debug("RECEIVED NEXT_HOP")
 							path.BGPPath.NextHop = pa.Value.(uint32)
 						case packet.ASPathAttr:
 							path.BGPPath.ASPath = pa.ASPathString()
