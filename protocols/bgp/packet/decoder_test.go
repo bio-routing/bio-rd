@@ -1244,20 +1244,22 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			wantFail:       true,
 		},
 		{
-			// 2 withdraws with two path attributes (ORIGIN + Community), valid update
+			// 2 withdraws with two path attributes (Communities + Origin), valid update
 			testNum: 16,
 			input: []byte{0, 5, 8, 10, 16, 192, 168,
-				0, 12, // Total Path Attribute Length
+				0, 16, // Total Path Attribute Length
+
+				0,          // Attribute flags
+				8,          // Attribute Type code (Community)
+				8,          // Length
+				0, 0, 1, 0, // Arbitrary Community
+				0, 0, 1, 1, // Arbitrary Community
 
 				255,  // Attribute flags
 				1,    // Attribute Type code (ORIGIN)
 				0, 1, // Length
 				2, // INCOMPLETE
 
-				0,          // Attribute flags
-				8,          // Attribute Type code (Community)
-				4,          // Length
-				0, 0, 1, 0, // Arbitrary Community
 			},
 			wantFail: false,
 			expected: &BGPUpdate{
@@ -1270,23 +1272,23 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						Pfxlen: 16,
 					},
 				},
-				TotalPathAttrLen: 12,
+				TotalPathAttrLen: 16,
 				PathAttributes: &PathAttribute{
-					Optional:       true,
-					Transitive:     true,
-					Partial:        true,
-					ExtendedLength: true,
-					Length:         1,
-					TypeCode:       1,
-					Value:          uint8(2),
+					Optional:       false,
+					Transitive:     false,
+					Partial:        false,
+					ExtendedLength: false,
+					Length:         8,
+					TypeCode:       8,
+					Value:          []uint32{256, 257},
 					Next: &PathAttribute{
-						Optional:       false,
-						Transitive:     false,
-						Partial:        false,
-						ExtendedLength: false,
-						Length:         4,
-						TypeCode:       8,
-						Value:          uint32(256),
+						Optional:       true,
+						Transitive:     true,
+						Partial:        true,
+						ExtendedLength: true,
+						Length:         1,
+						TypeCode:       1,
+						Value:          uint8(2),
 					},
 				},
 			},
