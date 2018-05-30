@@ -8,8 +8,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 
 	"time"
-
-	"github.com/bio-routing/bio-rd/config"
 )
 
 type Peer struct {
