@@ -39,7 +39,7 @@ func (b *BGPServer) Start(c *config.Global) error {
 		return fmt.Errorf("Failed to load defaults: %v", err)
 	}
 
-	fmt.Printf("ROUTER ID: %d\n", c.RouterID)
+	log.Infof("ROUTER ID: %d\n", c.RouterID)
 	b.routerID = c.RouterID
 
 	if c.Listen {
@@ -62,8 +62,6 @@ func (b *BGPServer) Start(c *config.Global) error {
 func (b *BGPServer) incomingConnectionWorker() {
 	for {
 		c := <-b.acceptCh
-		fmt.Printf("Incoming connection!\n")
-		fmt.Printf("Connection from: %v\n", c.RemoteAddr())
 
 		peerAddr := strings.Split(c.RemoteAddr().String(), ":")[0]
 		if _, ok := b.peers[peerAddr]; !ok {
@@ -78,9 +76,9 @@ func (b *BGPServer) incomingConnectionWorker() {
 			"source": c.RemoteAddr(),
 		}).Info("Incoming TCP connection")
 
-		fmt.Printf("DEBUG: Sending incoming TCP connection to fsm for peer %s\n", peerAddr)
+		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
 		b.peers[peerAddr].fsm.conCh <- c
-		fmt.Printf("DEBUG: Sending done\n")
+		log.Debug("Sending done")
 	}
 }
 
