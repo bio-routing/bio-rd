@@ -63,9 +63,9 @@ const (
 	LocalPrefAttr      = 5
 	AtomicAggrAttr     = 6
 	AggregatorAttr     = 7
-	CommunitiesAttr = 8
-	AS4PathAttr       = 17
-	AS4AggregatorAttr = 18
+	CommunitiesAttr    = 8
+	AS4PathAttr        = 17
+	AS4AggregatorAttr  = 18
 	LargeCommunityAttr = 32
 
 	// ORIGIN values
