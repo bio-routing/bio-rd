@@ -4,25 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 )
-
-func updateMessageForPath(pfx net.Prefix, p *route.Path, fsm *FSM) (*packet.BGPUpdate, error) {
-	pathAttrs, err := pathAttribues(p, fsm)
-	if err != nil {
-		return nil, err
-	}
-
-	return &packet.BGPUpdate{
-		PathAttributes: pathAttrs,
-		NLRI: &packet.NLRI{
-			IP:     pfx.Addr(),
-			Pfxlen: pfx.Pfxlen(),
-		},
-	}, nil
-}
 
 func pathAttribues(p *route.Path, fsm *FSM) (*packet.PathAttribute, error) {
 	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(fmt.Sprintf("%d %s", fsm.localASN, p.BGPPath.ASPath), " "))
@@ -42,8 +26,14 @@ func pathAttribues(p *route.Path, fsm *FSM) (*packet.PathAttribute, error) {
 	}
 	asPathPA.Next = nextHop
 
+	localPref := &packet.PathAttribute{
+		TypeCode: packet.LocalPrefAttr,
+		Value:    p.BGPPath.LocalPref,
+	}
+	nextHop.Next = localPref
+
 	if p.BGPPath != nil {
-		err := addOptionalPathAttribues(p, nextHop)
+		err := addOptionalPathAttribues(p, localPref)
 
 		if err != nil {
 			return nil, err

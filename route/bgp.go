@@ -78,6 +78,14 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
+	if c.NextHop < b.NextHop {
+		return 1
+	}
+
+	if c.NextHop > b.NextHop {
+		return -1
+	}
+
 	return 0
 }
 
@@ -131,10 +139,6 @@ func (b *BGPPath) better(c *BGPPath) bool {
 	}
 
 	return false
-}
-
-func (b *BGPPath) ecmp(c *BGPPath) bool {
-	return b.LocalPref == c.LocalPref && b.ASPathLen == c.ASPathLen && b.Origin == c.Origin && b.MED == c.MED
 }
 
 func (b *BGPPath) Print() string {

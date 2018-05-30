@@ -51,6 +51,10 @@ const (
 	InvalidNetworkField       = 10
 	MalformedASPath           = 11
 
+	// Notification Msg Subcodes
+	AdministrativeShutdown = 2
+	AdministrativeReset    = 4
+
 	// Attribute Type Codes
 	OriginAttr         = 1
 	ASPathAttr         = 2
@@ -59,6 +63,9 @@ const (
 	LocalPrefAttr      = 5
 	AtomicAggrAttr     = 6
 	AggregatorAttr     = 7
+	CommunitiesAttr = 8
+	AS4PathAttr       = 17
+	AS4AggregatorAttr = 18
 	LargeCommunityAttr = 32
 
 	// ORIGIN values

@@ -34,6 +34,10 @@ func (m *RTMockClient) Register(routingtable.RouteTableClient) {
 	return
 }
 
+func (m *RTMockClient) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
+	return
+}
+
 func (m *RTMockClient) Unregister(routingtable.RouteTableClient) {
 	return
 }

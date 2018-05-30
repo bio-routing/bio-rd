@@ -2,10 +2,12 @@ package server
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 )
@@ -13,21 +15,32 @@ import (
 // UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
 	routingtable.ClientManager
-	fsm *FSM
+	fsm  *FSM
+	iBGP bool
 }
 
 func newUpdateSender(fsm *FSM) *UpdateSender {
 	return &UpdateSender{
-		fsm: fsm,
+		fsm:  fsm,
+		iBGP: fsm.localASN == fsm.remoteASN,
 	}
 }
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
-	update, err := updateMessageForPath(pfx, p, u.fsm)
+	pathAttrs, err := pathAttribues(p, u.fsm)
 	if err != nil {
 		log.Errorf("Unable to create BGP Update: %v", err)
 		return nil
+	}
+
+	update := &packet.BGPUpdateAddPath{
+		PathAttributes: pathAttrs,
+		NLRI: &packet.NLRIAddPath{
+			PathIdentifier: p.BGPPath.PathIdentifier,
+			IP:             pfx.Addr(),
+			Pfxlen:         pfx.Pfxlen(),
+		},
 	}
 
 	updateBytes, err := update.SerializeUpdate()
@@ -53,4 +66,13 @@ func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
 func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) error {
 	log.Warningf("BGP Update Sender: UpdateNewClient() not supported")
 	return nil
+}
+
+func asPathString(iBGP bool, localASN uint16, asPath string) string {
+	ret := ""
+	if iBGP {
+		ret = ret + fmt.Sprintf("%d ", localASN)
+	}
+	ret = ret + asPath
+	return strings.TrimRight(ret, " ")
 }

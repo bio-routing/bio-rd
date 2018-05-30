@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 )
@@ -13,21 +14,31 @@ import (
 // UpdateSenderAddPath converts table changes into BGP update messages with add path
 type UpdateSenderAddPath struct {
 	routingtable.ClientManager
-	fsm *FSM
+	fsm  *FSM
+	iBGP bool
 }
 
 func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
 	return &UpdateSenderAddPath{
-		fsm: fsm,
+		fsm:  fsm,
+		iBGP: fsm.localASN == fsm.remoteASN,
 	}
 }
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
-	update, err := updateMessageForPath(pfx, p, u.fsm)
+	pathAttrs, err := pathAttribues(p, u.fsm)
 	if err != nil {
 		log.Errorf("Unable to create BGP Update: %v", err)
 		return nil
+	}
+
+	update := &packet.BGPUpdate{
+		PathAttributes: pathAttrs,
+		NLRI: &packet.NLRI{
+			IP:     pfx.Addr(),
+			Pfxlen: pfx.Pfxlen(),
+		},
 	}
 
 	updateBytes, err := update.SerializeUpdate()

@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	fmt.Printf("This is a BGP speaker\n")
+	logrus.Printf("This is a BGP speaker\n")
 
 	rib := locRIB.New()
 	b := server.NewBgpServer()

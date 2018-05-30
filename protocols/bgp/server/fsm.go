@@ -16,7 +16,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOutAddPath"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 	tomb "gopkg.in/tomb.v2"
 )
@@ -84,7 +83,7 @@ type FSM struct {
 	holdTimer          *time.Timer
 
 	keepaliveTime  time.Duration
-	keepaliveTimer *time.Timer
+	keepaliveTimer *time.Ticker
 
 	msgRecvCh     chan msgRecvMsg
 	msgRecvFailCh chan msgRecvErr
@@ -92,7 +91,7 @@ type FSM struct {
 
 	adjRIBIn     *adjRIBIn.AdjRIBIn
 	adjRIBOut    routingtable.RouteTableClient
-	rib          *locRIB.LocRIB
+	rib          routingtable.RouteTableClient
 	updateSender routingtable.RouteTableClient
 
 	capAddPathSend bool
@@ -109,7 +108,7 @@ type msgRecvErr struct {
 	con *net.TCPConn
 }
 
-func NewFSM(peer *Peer, c config.Peer, rib *locRIB.LocRIB) *FSM {
+func NewFSM(peer *Peer, c config.Peer, rib routingtable.RouteTableClient) *FSM {
 	fsm := &FSM{
 		peer:              peer,
 		state:             Idle,
@@ -125,7 +124,7 @@ func NewFSM(peer *Peer, c config.Peer, rib *locRIB.LocRIB) *FSM {
 		holdTimer:          time.NewTimer(0),
 
 		keepaliveTime:  time.Duration(c.KeepAlive),
-		keepaliveTimer: time.NewTimer(0),
+		keepaliveTimer: time.NewTicker(time.Duration(c.KeepAlive)),
 
 		routerID: c.RouterID,
 		remote:   c.PeerAddress,
@@ -458,7 +457,10 @@ func (fsm *FSM) openSent() int {
 				if fsm.holdTime != 0 {
 					fsm.holdTimer.Reset(time.Second * fsm.holdTime)
 					fsm.keepaliveTime = fsm.holdTime / 3
-					fsm.keepaliveTimer.Reset(time.Second * fsm.keepaliveTime)
+					if fsm.keepaliveTimer != nil {
+						fsm.keepaliveTimer.Stop()
+					}
+					fsm.keepaliveTimer = time.NewTicker(fsm.keepaliveTime * time.Second)
 				}
 
 				fsm.processOpenOptions(openMsg.OptParams)
@@ -624,7 +626,6 @@ func (fsm *FSM) openConfirm() int {
 				fsm.connectRetryCounter++
 				return fsm.changeState(Idle, fmt.Sprintf("Failed to send keepalive: %v", err))
 			}
-			fsm.keepaliveTimer.Reset(time.Second * fsm.keepaliveTime)
 			continue
 		case c := <-fsm.conCh:
 			if fsm.con2 != nil {
@@ -647,7 +648,7 @@ func (fsm *FSM) openConfirm() int {
 		case recvMsg := <-fsm.msgRecvCh:
 			msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
 			if err != nil {
-				fmt.Printf("Failed to decode message: %v\n", recvMsg.msg)
+				log.WithError(err).Errorf("Failed to decode BGP message %v\n", recvMsg.msg)
 				switch bgperr := err.(type) {
 				case packet.BGPError:
 					sendNotification(fsm.con, bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -751,6 +752,7 @@ func (fsm *FSM) established() int {
 	}()*/
 
 	for {
+		log.Debug("Iterate established loop.")
 		select {
 		case e := <-fsm.eventCh:
 			if e == ManualStop { // Event 2
@@ -775,6 +777,7 @@ func (fsm *FSM) established() int {
 			fsm.connectRetryCounter++
 			return fsm.changeState(Idle, "Holdtimer expired")
 		case <-fsm.keepaliveTimer.C:
+
 			err := fsm.sendKeepalive()
 			if err != nil {
 				stopTimer(fsm.connectRetryTimer)
@@ -782,7 +785,6 @@ func (fsm *FSM) established() int {
 				fsm.connectRetryCounter++
 				return fsm.changeState(Idle, fmt.Sprintf("Failed to send keepalive: %v", err))
 			}
-			fsm.keepaliveTimer.Reset(time.Second * fsm.keepaliveTime)
 			continue
 		case c := <-fsm.conCh:
 			c.Close()
@@ -790,7 +792,7 @@ func (fsm *FSM) established() int {
 		case recvMsg := <-fsm.msgRecvCh:
 			msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
 			if err != nil {
-				fmt.Printf("Failed to decode BGP message: %v\n", recvMsg.msg)
+        log.WithError(err).Errorf("Failed to decode BGP message %v\n", recvMsg.msg)
 				switch bgperr := err.(type) {
 				case packet.BGPError:
 					sendNotification(fsm.con, bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -815,14 +817,13 @@ func (fsm *FSM) established() int {
 
 				for r := u.WithdrawnRoutes; r != nil; r = r.Next {
 					pfx := tnet.NewPfx(r.IP, r.Pfxlen)
-					fmt.Printf("LPM: Removing prefix %s\n", pfx.String())
+					log.WithField("Prefix", pfx.String()).Debug("LPM: Removing prefix")
 					fsm.adjRIBIn.RemovePath(pfx, nil)
 				}
 
 				for r := u.NLRI; r != nil; r = r.Next {
 					pfx := tnet.NewPfx(r.IP, r.Pfxlen)
-					fmt.Printf("LPM: Adding prefix %s\n", pfx.String())
-
+					log.WithField("Prefix", pfx.String()).Debug("LPM: Adding prefix")
 					path := &route.Path{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
@@ -831,7 +832,6 @@ func (fsm *FSM) established() int {
 					}
 
 					for pa := u.PathAttributes; pa != nil; pa = pa.Next {
-						fmt.Printf("TypeCode: %d\n", pa.TypeCode)
 						switch pa.TypeCode {
 						case packet.OriginAttr:
 							path.BGPPath.Origin = pa.Value.(uint8)
@@ -840,7 +840,7 @@ func (fsm *FSM) established() int {
 						case packet.MEDAttr:
 							path.BGPPath.MED = pa.Value.(uint32)
 						case packet.NextHopAttr:
-							fmt.Printf("RECEIVED NEXT_HOP: %d\n", pa.Value.(uint32))
+							log.WithField("NextHop", pa.Value.(uint32)).Debug("RECEIVED NEXT_HOP")
 							path.BGPPath.NextHop = pa.Value.(uint32)
 						case packet.ASPathAttr:
 							path.BGPPath.ASPath = pa.ASPathString()
@@ -921,9 +921,10 @@ func (fsm *FSM) resetDelayOpenTimer() {
 }
 
 func (fsm *FSM) sendKeepalive() error {
-	msg := packet.SerializeKeepaliveMsg()
 
+	msg := packet.SerializeKeepaliveMsg()
 	_, err := fsm.con.Write(msg)
+	log.WithError(err).Debug("Send keepalive")
 	if err != nil {
 		return fmt.Errorf("Unable to send KEEPALIVE message: %v", err)
 	}
