@@ -55,9 +55,8 @@ func (c *ClientManager) Register(client RouteTableClient) {
 // RegisterWithOptions registers a client with options for updates
 func (c *ClientManager) RegisterWithOptions(client RouteTableClient, opt ClientOptions) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	c.clients[client] = opt
+	c.mu.Unlock()
 	c.master.UpdateNewClient(client)
 }
 
