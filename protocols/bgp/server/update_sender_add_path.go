@@ -42,6 +42,10 @@ func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 				Next: &packet.PathAttribute{
 					TypeCode: packet.NextHopAttr,
 					Value:    p.BGPPath.NextHop,
+					Next: &packet.PathAttribute{
+						TypeCode: packet.LocalPrefAttr,
+						Value:    p.BGPPath.LocalPref,
+					},
 				},
 			},
 		},
