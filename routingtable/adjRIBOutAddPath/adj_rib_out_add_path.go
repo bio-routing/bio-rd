@@ -7,6 +7,7 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	log "github.com/sirupsen/logrus"
 )
 
 // AdjRIBOutAddPath represents an Adjacency RIB Out with BGP add path
@@ -52,7 +53,10 @@ func (a *AdjRIBOutAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.rt.AddPath(pfx, p)
 
 	for _, client := range a.ClientManager.Clients() {
-		client.AddPath(pfx, p)
+		err := client.AddPath(pfx, p)
+		if err != nil {
+			log.WithField("Sender", "AdjRIBOutAddPath").WithError(err).Error("Could not send update to client")
+		}
 	}
 	return nil
 }
