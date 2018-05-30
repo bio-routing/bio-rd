@@ -83,7 +83,7 @@ type FSM struct {
 	holdTimer          *time.Timer
 
 	keepaliveTime  time.Duration
-	keepaliveTimer *time.Timer
+	keepaliveTimer *time.Ticker
 
 	msgRecvCh     chan msgRecvMsg
 	msgRecvFailCh chan msgRecvErr
@@ -124,7 +124,7 @@ func NewFSM(peer *Peer, c config.Peer, rib routingtable.RouteTableClient) *FSM {
 		holdTimer:          time.NewTimer(0),
 
 		keepaliveTime:  time.Duration(c.KeepAlive),
-		keepaliveTimer: time.NewTimer(0),
+		keepaliveTimer: time.NewTicker(time.Duration(c.KeepAlive)),
 
 		routerID: c.RouterID,
 		remote:   c.PeerAddress,
@@ -457,7 +457,10 @@ func (fsm *FSM) openSent() int {
 				if fsm.holdTime != 0 {
 					fsm.holdTimer.Reset(time.Second * fsm.holdTime)
 					fsm.keepaliveTime = fsm.holdTime / 3
-					fsm.keepaliveTimer.Reset(time.Second * fsm.keepaliveTime)
+					if fsm.keepaliveTimer != nil {
+						fsm.keepaliveTimer.Stop()
+					}
+					fsm.keepaliveTimer = time.NewTicker(fsm.keepaliveTime * time.Second)
 				}
 
 				fsm.processOpenOptions(openMsg.OptParams)
@@ -623,7 +626,6 @@ func (fsm *FSM) openConfirm() int {
 				fsm.connectRetryCounter++
 				return fsm.changeState(Idle, fmt.Sprintf("Failed to send keepalive: %v", err))
 			}
-			fsm.keepaliveTimer.Reset(time.Second * fsm.keepaliveTime)
 			continue
 		case c := <-fsm.conCh:
 			if fsm.con2 != nil {
@@ -750,6 +752,7 @@ func (fsm *FSM) established() int {
 	}()*/
 
 	for {
+		log.Debug("Iterate established loop.")
 		select {
 		case e := <-fsm.eventCh:
 			if e == ManualStop { // Event 2
@@ -774,6 +777,7 @@ func (fsm *FSM) established() int {
 			fsm.connectRetryCounter++
 			return fsm.changeState(Idle, "Holdtimer expired")
 		case <-fsm.keepaliveTimer.C:
+
 			err := fsm.sendKeepalive()
 			if err != nil {
 				stopTimer(fsm.connectRetryTimer)
@@ -781,7 +785,6 @@ func (fsm *FSM) established() int {
 				fsm.connectRetryCounter++
 				return fsm.changeState(Idle, fmt.Sprintf("Failed to send keepalive: %v", err))
 			}
-			fsm.keepaliveTimer.Reset(time.Second * fsm.keepaliveTime)
 			continue
 		case c := <-fsm.conCh:
 			c.Close()
@@ -916,9 +919,10 @@ func (fsm *FSM) resetDelayOpenTimer() {
 }
 
 func (fsm *FSM) sendKeepalive() error {
-	msg := packet.SerializeKeepaliveMsg()
 
+	msg := packet.SerializeKeepaliveMsg()
 	_, err := fsm.con.Write(msg)
+	log.WithError(err).Debug("Send keepalive")
 	if err != nil {
 		return fmt.Errorf("Unable to send KEEPALIVE message: %v", err)
 	}
