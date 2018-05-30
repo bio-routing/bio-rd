@@ -84,6 +84,21 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 		}
 	case AtomicAggrAttr:
 		// Nothing to do for 0 octet long attribute
+<<<<<<< HEAD
+=======
+	case CommunitiesAttr:
+		if err := pa.decodeCommunities(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to decode Community: %v", err)
+		}
+	case AS4PathAttr:
+		if err := pa.decodeAS4Path(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Path: %v", err)
+		}
+	case AS4AggregatorAttr:
+		if err := pa.decodeAS4Aggregator(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Aggregator: %v", err)
+		}
+>>>>>>> 6c261fc... Implement support for PathAttributes 17 and 18 (RFC 6793)
 	default:
 		if err := pa.decodeUnknown(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode unknown attribute: %v", err)
@@ -227,6 +242,50 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 	return dumpNBytes(buf, pa.Length-p)
 }
 
+<<<<<<< HEAD
+=======
+func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
+	if pa.Length%4 != 0 {
+		return fmt.Errorf("Unable to read community path attribute length %d is not divisible by 4", pa.Length)
+	}
+	comNumber := pa.Length / 4
+	var com = make([]uint32, comNumber)
+	for i := uint16(0); i < comNumber; i++ {
+		c := [4]byte{}
+		n, err := buf.Read(c[:])
+		if err != nil {
+			return err
+		}
+		if n != 4 {
+			return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
+		}
+		com[i] = fourBytesToUint32(c)
+	}
+	pa.Value = com
+	return nil
+}
+
+func (pa *PathAttribute) decodeAS4Path(buf *bytes.Buffer) error {
+	as4Path, err := pa.decodeUint32(buf)
+	if err != nil {
+		return fmt.Errorf("Unable to decode AS4Path: %v", err)
+	}
+
+	pa.Value = as4Path
+	return nil
+}
+
+func (pa *PathAttribute) decodeAS4Aggregator(buf *bytes.Buffer) error {
+	as4Aggregator, err := pa.decodeUint32(buf)
+	if err != nil {
+		return fmt.Errorf("Unable to decode AS4Aggregator: %v", err)
+	}
+
+	pa.Value = as4Aggregator
+	return nil
+}
+
+>>>>>>> 6c261fc... Implement support for PathAttributes 17 and 18 (RFC 6793)
 func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	bytesRead := 0
 	if pa.ExtendedLength {
