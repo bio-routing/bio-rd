@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func CommunityString(v uint32) string {
+func CommunityStringForUint32(v uint32) string {
 	e1 := v >> 16
 	e2 := v - e1<<16
 

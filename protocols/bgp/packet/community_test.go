@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCommunityString(t *testing.T) {
+func TestCommunityStringFromUint32(t *testing.T) {
 	tests := []struct {
 		name     string
 		value    uint32
@@ -31,7 +31,7 @@ func TestCommunityString(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			assert.Equal(te, test.expected, CommunityString(test.value))
+			assert.Equal(te, test.expected, CommunityStringForUint32(test.value))
 		})
 	}
 }

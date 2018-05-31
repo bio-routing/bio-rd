@@ -396,6 +396,15 @@ func (pa *PathAttribute) ASPathLen() (ret uint16) {
 	return
 }
 
+func (a *PathAttribute) CommunityString() string {
+	s := ""
+	for _, com := range a.Value.([]uint32) {
+		s += CommunityStringForUint32(com) + " "
+	}
+
+	return strings.TrimRight(s, " ")
+}
+
 func (a *PathAttribute) LargeCommunityString() string {
 	s := ""
 	for _, com := range a.Value.([]LargeCommunity) {

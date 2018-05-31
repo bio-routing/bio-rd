@@ -674,7 +674,7 @@ func TestDecodeCommunity(t *testing.T) {
 			expected: &PathAttribute{
 				Length: 8,
 				Value: []uint32{
-					131080, 16777216 + 1025,
+					131080, 16778241,
 				},
 			},
 		},
@@ -912,6 +912,31 @@ func TestLargeCommunityString(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
 			res := test.pa.LargeCommunityString()
+			assert.Equal(te, test.expected, res)
+		})
+	}
+}
+
+func TestCommunityString(t *testing.T) {
+	tests := []struct {
+		name     string
+		pa       *PathAttribute
+		expected string
+	}{
+		{
+			name: "two attributes",
+			pa: &PathAttribute{
+				Value: []uint32{
+					131080, 16778241,
+				},
+			},
+			expected: "(2,8) (256,1025)",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			res := test.pa.CommunityString()
 			assert.Equal(te, test.expected, res)
 		})
 	}
