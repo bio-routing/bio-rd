@@ -245,7 +245,7 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 
 func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 	if pa.Length%CommunityLen != 0 {
-		return fmt.Errorf("Unable to read community path attribute length %d is not divisible by 4", pa.Length)
+		return fmt.Errorf("Unable to read community path attribute. Length %d is not divisible by 4", pa.Length)
 	}
 
 	count := pa.Length / CommunityLen
