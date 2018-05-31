@@ -252,10 +252,10 @@ func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 	coms := make([]uint32, count)
 
 	for i := uint16(0); i < count; i++ {
-		v, err = read4BytesAsUin32(buf)
-+		if err != nil {
-+			return err
-+		}
+		v, err := read4BytesAsUin32(buf)
+		if err != nil {
+			return err
+		}
 		coms[i] = v
 	}
 
