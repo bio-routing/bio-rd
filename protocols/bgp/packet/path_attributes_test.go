@@ -1335,6 +1335,53 @@ func TestSerializeLargeCommunities(t *testing.T) {
 	}
 }
 
+func TestSerializeCommunities(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "2 communities",
+			input: &PathAttribute{
+				TypeCode: LargeCommunityAttr,
+				Value: []uint32{
+					131080, 16778241,
+				},
+			},
+			expected: []byte{
+				0xe0,                   // Attribute flags
+				8,                      // Type
+				8,                      // Length
+				0, 2, 0, 8, 1, 0, 4, 1, // Communities (2,8), (256,1025)
+			},
+			expectedLen: 8,
+		},
+		{
+			name: "empty list of communities",
+			input: &PathAttribute{
+				TypeCode: CommunitiesAttr,
+				Value:    []uint32{},
+			},
+			expected:    []byte{},
+			expectedLen: 0,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			buf := bytes.NewBuffer([]byte{})
+			n := test.input.serializeCommunities(buf)
+			if n != test.expectedLen {
+				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
+	}
+}
+
 func TestSerialize(t *testing.T) {
 	tests := []struct {
 		name     string

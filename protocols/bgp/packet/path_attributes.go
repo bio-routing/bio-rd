@@ -446,6 +446,8 @@ func (pa *PathAttribute) serialize(buf *bytes.Buffer) uint8 {
 		pathAttrLen = pa.serializeAtomicAggregate(buf)
 	case AggregatorAttr:
 		pathAttrLen = pa.serializeAggregator(buf)
+	case CommunitiesAttr:
+		pathAttrLen = pa.serializeCommunities(buf)
 	case LargeCommunityAttr:
 		pathAttrLen = pa.serializeLargeCommunities(buf)
 	}
@@ -541,6 +543,30 @@ func (pa *PathAttribute) serializeAggregator(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(length)
 	buf.Write(convert.Uint16Byte(pa.Value.(uint16)))
 	return 5
+}
+
+func (pa *PathAttribute) serializeCommunities(buf *bytes.Buffer) uint8 {
+	coms := pa.Value.([]uint32)
+	if len(coms) == 0 {
+		return 0
+	}
+
+	attrFlags := uint8(0)
+	attrFlags = setOptional(attrFlags)
+	attrFlags = setTransitive(attrFlags)
+	attrFlags = setPartial(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(CommunitiesAttr)
+
+	length := uint8(CommunityLen * len(coms))
+
+	buf.WriteByte(length)
+
+	for _, com := range coms {
+		buf.Write(convert.Uint32Byte(com))
+	}
+
+	return length
 }
 
 func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
