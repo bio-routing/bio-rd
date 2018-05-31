@@ -261,8 +261,7 @@ func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 			return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
 		}
 
-		v := fourBytesToUint32(c)
-		coms[i] = v
+		coms[i] = fourBytesToUint32(c)
 	}
 
 	pa.Value = coms
