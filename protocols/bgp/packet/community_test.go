@@ -1,0 +1,93 @@
+package packet
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCommunityString(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    uint32
+		expected string
+	}{
+		{
+			name:     "both elements",
+			value:    131080,
+			expected: "(2,8)",
+		},
+		{
+			name:     "right element only",
+			value:    250,
+			expected: "(0,250)",
+		},
+		{
+			name:     "left element only",
+			value:    131072,
+			expected: "(2,0)",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			assert.Equal(te, test.expected, CommunityString(test.value))
+		})
+	}
+}
+
+func TestParseCommunityString(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		expected uint32
+		wantFail bool
+	}{
+		{
+			name:     "both elements",
+			expected: 131080,
+			value:    "(2,8)",
+		},
+		{
+			name:     "right element only",
+			expected: 250,
+			value:    "(0,250)",
+		},
+		{
+			name:     "left element only",
+			expected: 131072,
+			value:    "(2,0)",
+		},
+		{
+			name:     "too big",
+			value:    "(131072,256)",
+			wantFail: true,
+		},
+		{
+			name:     "empty string",
+			value:    "",
+			wantFail: true,
+		},
+		{
+			name:     "random string",
+			value:    "foo-bar",
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			c, err := ParseCommunityString(test.value)
+
+			if test.wantFail {
+				if err == nil {
+					te.Fatal("test was expected to fail, but did not")
+				}
+
+				return
+			}
+
+			assert.Equal(te, test.expected, c)
+		})
+	}
+}

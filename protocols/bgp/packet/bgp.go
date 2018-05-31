@@ -11,6 +11,7 @@ const (
 	MinLen            = 19
 	MaxLen            = 4096
 	NLRIMaxLen        = 5
+	CommunityLen      = 4
 	LargeCommunityLen = 12
 
 	OpenMsg         = 1

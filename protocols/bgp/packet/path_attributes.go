@@ -244,13 +244,15 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 }
 
 func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
-	if pa.Length%4 != 0 {
+	if pa.Length%CommunityLen != 0 {
 		return fmt.Errorf("Unable to read community path attribute length %d is not divisible by 4", pa.Length)
 	}
-	comNumber := pa.Length / 4
-	var com = make([]uint32, comNumber)
-	for i := uint16(0); i < comNumber; i++ {
-		c := [4]byte{}
+
+	count := pa.Length / CommunityLen
+	coms := make([]uint32, count)
+
+	for i := uint16(0); i < count; i++ {
+		c := [CommunityLen]byte{}
 		n, err := buf.Read(c[:])
 		if err != nil {
 			return err
@@ -258,16 +260,21 @@ func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 		if n != 4 {
 			return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
 		}
-		com[i] = fourBytesToUint32(c)
+
+		v := fourBytesToUint32(c)
+		coms[i] = v
 	}
-	pa.Value = com
+
+	pa.Value = coms
 	return nil
 }
 
 func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
-	length := pa.Length
-	count := length / LargeCommunityLen
+	if pa.Length%LargeCommunityLen != 0 {
+		return fmt.Errorf("Unable to read large community path attribute. Length %d is not divisible by 12", pa.Length)
+	}
 
+	count := pa.Length / LargeCommunityLen
 	coms := make([]LargeCommunity, count)
 
 	for i := uint16(0); i < count; i++ {
@@ -295,9 +302,7 @@ func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 	}
 
 	pa.Value = coms
-
-	dump := pa.Length - (count * LargeCommunityLen)
-	return dumpNBytes(buf, dump)
+	return nil
 }
 
 func (pa *PathAttribute) decodeAS4Path(buf *bytes.Buffer) error {
@@ -646,7 +651,7 @@ func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
 
 	var err error
 	for i, str := range strs {
-		coms[i], err = ParseCommunityString(str)
+		coms[i], err = ParseLargeCommunityString(str)
 		if err != nil {
 			return nil, err
 		}

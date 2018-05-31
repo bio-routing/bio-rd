@@ -16,7 +16,7 @@ func (c LargeCommunity) String() string {
 	return fmt.Sprintf("(%d,%d,%d)", c.GlobalAdministrator, c.DataPart1, c.DataPart2)
 }
 
-func ParseCommunityString(s string) (com LargeCommunity, err error) {
+func ParseLargeCommunityString(s string) (com LargeCommunity, err error) {
 	s = strings.Trim(s, "()")
 	t := strings.Split(s, ",")
 

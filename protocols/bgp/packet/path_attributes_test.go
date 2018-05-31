@@ -657,6 +657,65 @@ func TestDecodeLargeCommunity(t *testing.T) {
 	}
 }
 
+func TestDecodeCommunity(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          []byte
+		wantFail       bool
+		explicitLength uint16
+		expected       *PathAttribute
+	}{
+		{
+			name: "two valid communities",
+			input: []byte{
+				0, 2, 0, 8, 1, 0, 4, 1, // (2,8), (256,1025)
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 8,
+				Value: []uint32{
+					131080, 16777216 + 1025,
+				},
+			},
+		},
+		{
+			name:     "Empty input",
+			input:    []byte{},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 0,
+				Value:  []uint32{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		l := uint16(len(test.input))
+		if test.explicitLength != 0 {
+			l = test.explicitLength
+		}
+		pa := &PathAttribute{
+			Length: l,
+		}
+		err := pa.decodeCommunities(bytes.NewBuffer(test.input))
+
+		if test.wantFail {
+			if err != nil {
+				continue
+			}
+			t.Errorf("Expected error did not happen for test %q", test.name)
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		assert.Equal(t, test.expected, pa)
+	}
+}
+
 func TestSetLength(t *testing.T) {
 	tests := []struct {
 		name             string
