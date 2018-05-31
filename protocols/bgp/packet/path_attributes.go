@@ -96,7 +96,7 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 		if err := pa.decodeAS4Aggregator(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Aggregator: %v", err)
 		}
-	case LargeCommunityAttr:
+	case LargeCommunitiesAttr:
 		if err := pa.decodeLargeCommunities(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode large communities: %v", err)
 		}
@@ -448,7 +448,7 @@ func (pa *PathAttribute) serialize(buf *bytes.Buffer) uint8 {
 		pathAttrLen = pa.serializeAggregator(buf)
 	case CommunitiesAttr:
 		pathAttrLen = pa.serializeCommunities(buf)
-	case LargeCommunityAttr:
+	case LargeCommunitiesAttr:
 		pathAttrLen = pa.serializeLargeCommunities(buf)
 	}
 
@@ -580,7 +580,7 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	attrFlags = setTransitive(attrFlags)
 	attrFlags = setPartial(attrFlags)
 	buf.WriteByte(attrFlags)
-	buf.WriteByte(LargeCommunityAttr)
+	buf.WriteByte(LargeCommunitiesAttr)
 
 	length := uint8(LargeCommunityLen * len(coms))
 
@@ -693,7 +693,25 @@ func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
 	}
 
 	return &PathAttribute{
-		TypeCode: LargeCommunityAttr,
+		TypeCode: LargeCommunitiesAttr,
+		Value:    coms,
+	}, nil
+}
+
+func CommunityAttributeForString(s string) (*PathAttribute, error) {
+	strs := strings.Split(s, " ")
+	coms := make([]uint32, len(strs))
+
+	var err error
+	for i, str := range strs {
+		coms[i], err = ParseCommunityString(str)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &PathAttribute{
+		TypeCode: CommunitiesAttr,
 		Value:    coms,
 	}, nil
 }
