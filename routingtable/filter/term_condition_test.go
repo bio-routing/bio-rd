@@ -26,8 +26,7 @@ func TestMatches(t *testing.T) {
 			prefixLists: []*PrefixList{
 				NewPrefixList(net.NewPfx(strAddr("127.0.0.1"), 8)),
 			},
-			routeFilters: []*RouteFilter{},
-			expected:     true,
+			expected: true,
 		},
 		{
 			name:   "one prefix in prefix list and no match, no route filters set",
@@ -35,8 +34,7 @@ func TestMatches(t *testing.T) {
 			prefixLists: []*PrefixList{
 				NewPrefixList(net.NewPfx(0, 32)),
 			},
-			routeFilters: []*RouteFilter{},
-			expected:     false,
+			expected: false,
 		},
 		{
 			name:   "one prefix of 2 matches in prefix list, no route filters set",
@@ -45,22 +43,19 @@ func TestMatches(t *testing.T) {
 				NewPrefixList(net.NewPfx(strAddr("10.0.0.0"), 8)),
 				NewPrefixList(net.NewPfx(strAddr("127.0.0.1"), 8)),
 			},
-			routeFilters: []*RouteFilter{},
-			expected:     true,
+			expected: true,
 		},
 		{
-			name:        "no prefixes in prefix list, only route filter matches",
-			prefix:      net.NewPfx(strAddr("10.0.0.0"), 24),
-			prefixLists: []*PrefixList{},
+			name:   "no prefixes in prefix list, only route filter matches",
+			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			routeFilters: []*RouteFilter{
 				NewRouteFilter(net.NewPfx(strAddr("10.0.0.0"), 8), Longer()),
 			},
 			expected: true,
 		},
 		{
-			name:        "no prefixes in prefix list, one route filter matches",
-			prefix:      net.NewPfx(strAddr("10.0.0.0"), 24),
-			prefixLists: []*PrefixList{},
+			name:   "no prefixes in prefix list, one route filter matches",
+			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			routeFilters: []*RouteFilter{
 				NewRouteFilter(net.NewPfx(strAddr("8.0.0.0"), 8), Longer()),
 				NewRouteFilter(net.NewPfx(strAddr("10.0.0.0"), 8), Longer()),
@@ -68,9 +63,8 @@ func TestMatches(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:        "no prefixes in prefix list, one of many route filters matches",
-			prefix:      net.NewPfx(strAddr("127.0.0.1"), 8),
-			prefixLists: []*PrefixList{},
+			name:   "no prefixes in prefix list, one of many route filters matches",
+			prefix: net.NewPfx(strAddr("127.0.0.1"), 8),
 			routeFilters: []*RouteFilter{
 				NewRouteFilter(net.NewPfx(strAddr("10.0.0.0"), 8), Longer()),
 			},
@@ -88,7 +82,7 @@ func TestMatches(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:   "one prefix in prefixlist, one route fitler, only prefix list matches",
+			name:   "one prefix in prefixlist, one route filter, only prefix list matches",
 			prefix: net.NewPfx(strAddr("8.8.8.0"), 24),
 			prefixLists: []*PrefixList{
 				NewPrefixList(net.NewPfx(strAddr("8.0.0.0"), 8)),
@@ -96,10 +90,10 @@ func TestMatches(t *testing.T) {
 			routeFilters: []*RouteFilter{
 				NewRouteFilter(net.NewPfx(strAddr("10.0.0.0"), 8), Longer()),
 			},
-			expected: true,
+			expected: false,
 		},
 		{
-			name:   "one prefix in prefixlist, one route fitler, only route filter matches",
+			name:   "one prefix in prefixlist, one route filter, only route filter matches",
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			prefixLists: []*PrefixList{
 				NewPrefixList(net.NewPfx(strAddr("8.0.0.0"), 8)),
@@ -107,7 +101,7 @@ func TestMatches(t *testing.T) {
 			routeFilters: []*RouteFilter{
 				NewRouteFilter(net.NewPfx(strAddr("10.0.0.0"), 8), Longer()),
 			},
-			expected: true,
+			expected: false,
 		},
 		{
 			name:   "community matches",
@@ -122,6 +116,17 @@ func TestMatches(t *testing.T) {
 		},
 		{
 			name:   "community does not match",
+			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
+			bgpPath: &route.BGPPath{
+				Communities: "(1,2) (3,4) (5,6)",
+			},
+			communityFilters: []*CommunityFilter{
+				&CommunityFilter{196608}, // (3,0)
+			},
+			expected: false,
+		},
+		{
+			name:   "community filter, bgp path is nil",
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			communityFilters: []*CommunityFilter{
 				&CommunityFilter{196608}, // (3,0)
@@ -149,6 +154,20 @@ func TestMatches(t *testing.T) {
 			name:    "large community does not match",
 			prefix:  net.NewPfx(strAddr("10.0.0.0"), 24),
 			bgpPath: &route.BGPPath{},
+			largeCommunityFilters: []*LargeCommunityFilter{
+				{
+					&packet.LargeCommunity{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           3,
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name:   "large community filter, bgp path is nil",
+			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			largeCommunityFilters: []*LargeCommunityFilter{
 				{
 					&packet.LargeCommunity{
