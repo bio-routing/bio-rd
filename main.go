@@ -8,10 +8,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"net/http"
+
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/metrics"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -19,7 +24,7 @@ func main() {
 
 	rib := locRIB.New()
 	b := server.NewBgpServer()
-
+	metrics.RegisterMetrics(prometheus.DefaultRegisterer)
 	err := b.Start(&config.Global{
 		Listen: true,
 	})
@@ -65,6 +70,12 @@ func main() {
 			fmt.Print(rib.Print())
 			time.Sleep(time.Second * 10)
 		}
+	}()
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		httpErr := http.ListenAndServe("0.0.0.0:8080", http.DefaultServeMux)
+		logrus.WithError(httpErr).Error("stopped http metrics endpoint.")
 	}()
 
 	var wg sync.WaitGroup

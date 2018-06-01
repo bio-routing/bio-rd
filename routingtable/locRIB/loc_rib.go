@@ -5,6 +5,7 @@ import (
 	"math"
 	"sync"
 
+	"github.com/bio-routing/bio-rd/metrics"
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -44,6 +45,7 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("locRIB"), metrics.AddPathAction)
 
 	logrus.WithFields(map[string]interface{}{
 		"Prefix": pfx,
@@ -74,6 +76,7 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("locRIB"), metrics.RemovePathAction)
 
 	logrus.WithFields(map[string]interface{}{
 		"Prefix": pfx,

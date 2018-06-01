@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/bio-routing/bio-rd/metrics"
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
@@ -28,6 +29,8 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSender-%s", u.fsm.peer.GetAddr().String()), metrics.AddPathAction)
+
 	asPathPA, err := packet.ParseASPathStr(asPathString(u.iBGP, u.fsm.localASN, p.BGPPath.ASPath))
 	if err != nil {
 		return fmt.Errorf("Unable to parse AS path: %v", err)

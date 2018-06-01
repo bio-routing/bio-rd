@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/bio-routing/bio-rd/metrics"
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -41,6 +42,7 @@ func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBOut-%s", a.neighbor.String()), metrics.AddPathAction)
 
 	oldPaths := a.rt.ReplacePath(pfx, p)
 	a.removePathsFromClients(pfx, oldPaths)
@@ -62,6 +64,7 @@ func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBOut-%s", a.neighbor.String()), metrics.RemovePathAction)
 
 	r := a.rt.Get(pfx)
 	if r == nil {
