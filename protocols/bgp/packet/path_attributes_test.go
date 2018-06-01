@@ -783,7 +783,7 @@ func TestSetLength(t *testing.T) {
 	}
 }
 
-func TestRead4BytesAsUint32(t *testing.T) {
+func TestDecodeUint32(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          []byte
