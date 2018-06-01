@@ -724,7 +724,7 @@ func TestSetLength(t *testing.T) {
 	}
 }
 
-func TestDecodeUint32(t *testing.T) {
+func TestRead4BytesAsUint32(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          []byte
@@ -763,7 +763,7 @@ func TestDecodeUint32(t *testing.T) {
 		pa := &PathAttribute{
 			Length: l,
 		}
-		res, err := pa.decodeUint32(bytes.NewBuffer(test.input))
+		err := pa.decodeUint32(bytes.NewBuffer(test.input), "test")
 
 		if test.wantFail {
 			if err != nil {
@@ -778,7 +778,7 @@ func TestDecodeUint32(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, res)
+		assert.Equal(t, test.expected, pa.Value)
 	}
 }
 
