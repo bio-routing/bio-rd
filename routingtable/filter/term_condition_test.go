@@ -16,6 +16,7 @@ func TestMatches(t *testing.T) {
 		bgpPath               *route.BGPPath
 		prefixLists           []*PrefixList
 		routeFilters          []*RouteFilter
+		communityFilters      []*CommunityFilter
 		largeCommunityFilters []*LargeCommunityFilter
 		expected              bool
 	}{
@@ -109,6 +110,25 @@ func TestMatches(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:   "community matches",
+			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
+			bgpPath: &route.BGPPath{
+				Communities: "(1,2) (3,4) (5,6)",
+			},
+			communityFilters: []*CommunityFilter{
+				&CommunityFilter{196612}, // (3,4)
+			},
+			expected: true,
+		},
+		{
+			name:   "community does not match",
+			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
+			communityFilters: []*CommunityFilter{
+				&CommunityFilter{196608}, // (3,0)
+			},
+			expected: false,
+		},
+		{
 			name:   "large community matches",
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			bgpPath: &route.BGPPath{
@@ -145,6 +165,7 @@ func TestMatches(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
 			f := NewTermCondition(test.prefixLists, test.routeFilters)
+			f.communityFilters = test.communityFilters
 			f.largeCommunityFilters = test.largeCommunityFilters
 
 			pa := &route.Path{
