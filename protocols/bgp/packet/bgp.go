@@ -11,6 +11,7 @@ const (
 	MinLen            = 19
 	MaxLen            = 4096
 	NLRIMaxLen        = 5
+	CommunityLen      = 4
 	LargeCommunityLen = 12
 
 	OpenMsg         = 1
@@ -56,17 +57,17 @@ const (
 	AdministrativeReset    = 4
 
 	// Attribute Type Codes
-	OriginAttr         = 1
-	ASPathAttr         = 2
-	NextHopAttr        = 3
-	MEDAttr            = 4
-	LocalPrefAttr      = 5
-	AtomicAggrAttr     = 6
-	AggregatorAttr     = 7
-	CommunitiesAttr    = 8
-	AS4PathAttr        = 17
-	AS4AggregatorAttr  = 18
-	LargeCommunityAttr = 32
+	OriginAttr           = 1
+	ASPathAttr           = 2
+	NextHopAttr          = 3
+	MEDAttr              = 4
+	LocalPrefAttr        = 5
+	AtomicAggrAttr       = 6
+	AggregatorAttr       = 7
+	CommunitiesAttr      = 8
+	AS4PathAttr          = 17
+	AS4AggregatorAttr    = 18
+	LargeCommunitiesAttr = 32
 
 	// ORIGIN values
 	IGP        = 0

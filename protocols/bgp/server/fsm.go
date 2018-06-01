@@ -845,7 +845,9 @@ func (fsm *FSM) established() int {
 						case packet.ASPathAttr:
 							path.BGPPath.ASPath = pa.ASPathString()
 							path.BGPPath.ASPathLen = pa.ASPathLen()
-						case packet.LargeCommunityAttr:
+						case packet.CommunitiesAttr:
+							path.BGPPath.Communities = pa.CommunityString()
+						case packet.LargeCommunitiesAttr:
 							path.BGPPath.LargeCommunities = pa.LargeCommunityString()
 						}
 					}

@@ -46,10 +46,20 @@ func pathAttribues(p *route.Path, fsm *FSM) (*packet.PathAttribute, error) {
 func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error {
 	current := parent
 
+	if len(p.BGPPath.Communities) > 0 {
+		communities, err := packet.CommunityAttributeForString(p.BGPPath.Communities)
+		if err != nil {
+			return fmt.Errorf("Could not create communities attribute: %v", err)
+		}
+
+		current.Next = communities
+		current = communities
+	}
+
 	if len(p.BGPPath.LargeCommunities) > 0 {
 		largeCommunities, err := packet.LargeCommunityAttributeForString(p.BGPPath.LargeCommunities)
 		if err != nil {
-			return fmt.Errorf("Could not create large community attribute: %v", err)
+			return fmt.Errorf("Could not create large communities attribute: %v", err)
 		}
 
 		current.Next = largeCommunities
