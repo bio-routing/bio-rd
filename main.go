@@ -22,6 +22,10 @@ func main() {
 
 	err := b.Start(&config.Global{
 		Listen: true,
+		LocalAddressList: []net.IP{
+			net.IPv4(169, 254, 100, 1),
+			net.IPv4(169, 254, 200, 0),
+		},
 	})
 	if err != nil {
 		logrus.Fatalf("Unable to start BGP server: %v", err)

@@ -6,11 +6,12 @@ const (
 	BGP4Version    = 4
 	MinOpenLen     = 29
 
-	MarkerLen  = 16
-	HeaderLen  = 19
-	MinLen     = 19
-	MaxLen     = 4096
-	NLRIMaxLen = 5
+	MarkerLen         = 16
+	HeaderLen         = 19
+	MinLen            = 19
+	MaxLen            = 4096
+	NLRIMaxLen        = 5
+	LargeCommunityLen = 12
 
 	OpenMsg         = 1
 	UpdateMsg       = 2
@@ -55,17 +56,17 @@ const (
 	AdministrativeReset    = 4
 
 	// Attribute Type Codes
-	OriginAttr      = 1
-	ASPathAttr      = 2
-	NextHopAttr     = 3
-	MEDAttr         = 4
-	LocalPrefAttr   = 5
-	AtomicAggrAttr  = 6
-	AggregatorAttr  = 7
-	CommunitiesAttr = 8
-
-	AS4PathAttr       = 17
-	AS4AggregatorAttr = 18
+	OriginAttr         = 1
+	ASPathAttr         = 2
+	NextHopAttr        = 3
+	MEDAttr            = 4
+	LocalPrefAttr      = 5
+	AtomicAggrAttr     = 6
+	AggregatorAttr     = 7
+	CommunitiesAttr    = 8
+	AS4PathAttr        = 17
+	AS4AggregatorAttr  = 18
+	LargeCommunityAttr = 32
 
 	// ORIGIN values
 	IGP        = 0

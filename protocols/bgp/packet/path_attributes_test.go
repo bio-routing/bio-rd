@@ -589,6 +589,74 @@ func TestDecodeAggregator(t *testing.T) {
 	}
 }
 
+func TestDecodeLargeCommunity(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          []byte
+		wantFail       bool
+		explicitLength uint16
+		expected       *PathAttribute
+	}{
+		{
+			name: "two valid large communities",
+			input: []byte{
+				0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 6, // (1, 2, 3), (4, 5, 6)
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 24,
+				Value: []LargeCommunity{
+					{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           3,
+					},
+					{
+						GlobalAdministrator: 4,
+						DataPart1:           5,
+						DataPart2:           6,
+					},
+				},
+			},
+		},
+		{
+			name:     "Empty input",
+			input:    []byte{},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 0,
+				Value:  []LargeCommunity{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		l := uint16(len(test.input))
+		if test.explicitLength != 0 {
+			l = test.explicitLength
+		}
+		pa := &PathAttribute{
+			Length: l,
+		}
+		err := pa.decodeLargeCommunities(bytes.NewBuffer(test.input))
+
+		if test.wantFail {
+			if err != nil {
+				continue
+			}
+			t.Errorf("Expected error did not happen for test %q", test.name)
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		assert.Equal(t, test.expected, pa)
+	}
+}
+
 func TestSetLength(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -695,7 +763,7 @@ func TestDecodeUint32(t *testing.T) {
 		pa := &PathAttribute{
 			Length: l,
 		}
-		res, err := pa.decodeUint32(bytes.NewBuffer(test.input))
+		err := pa.decodeUint32(bytes.NewBuffer(test.input), "test")
 
 		if test.wantFail {
 			if err != nil {
@@ -710,7 +778,7 @@ func TestDecodeUint32(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, res)
+		assert.Equal(t, test.expected, pa.Value)
 	}
 }
 
@@ -753,6 +821,40 @@ func TestASPathString(t *testing.T) {
 	for _, test := range tests {
 		res := test.pa.ASPathString()
 		assert.Equal(t, test.expected, res)
+	}
+}
+
+func TestLargeCommunityString(t *testing.T) {
+	tests := []struct {
+		name     string
+		pa       *PathAttribute
+		expected string
+	}{
+		{
+			name: "two attributes",
+			pa: &PathAttribute{
+				Value: []LargeCommunity{
+					{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           3,
+					},
+					{
+						GlobalAdministrator: 4,
+						DataPart1:           5,
+						DataPart2:           6,
+					},
+				},
+			},
+			expected: "(1,2,3) (4,5,6)",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			res := test.pa.LargeCommunityString()
+			assert.Equal(te, test.expected, res)
+		})
 	}
 }
 
@@ -1090,6 +1192,62 @@ func TestSerializeASPath(t *testing.T) {
 		}
 
 		assert.Equal(t, test.expected, buf.Bytes())
+	}
+}
+
+func TestSerializeLargeCommunities(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "2 large communities",
+			input: &PathAttribute{
+				TypeCode: LargeCommunityAttr,
+				Value: []LargeCommunity{
+					{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           3,
+					},
+					{
+						GlobalAdministrator: 4,
+						DataPart1:           5,
+						DataPart2:           6,
+					},
+				},
+			},
+			expected: []byte{
+				0xe0,                                                                   // Attribute flags
+				32,                                                                     // Type
+				24,                                                                     // Length
+				0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 6, // Communities (1, 2, 3), (4, 5, 6)
+			},
+			expectedLen: 24,
+		},
+		{
+			name: "empty list of communities",
+			input: &PathAttribute{
+				TypeCode: LargeCommunityAttr,
+				Value:    []LargeCommunity{},
+			},
+			expected:    []byte{},
+			expectedLen: 0,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			buf := bytes.NewBuffer([]byte{})
+			n := test.input.serializeLargeCommunities(buf)
+			if n != test.expectedLen {
+				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
 	}
 }
 

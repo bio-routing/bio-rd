@@ -28,31 +28,18 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
-	asPathPA, err := packet.ParseASPathStr(asPathString(u.iBGP, u.fsm.localASN, p.BGPPath.ASPath))
+	pathAttrs, err := pathAttribues(p, u.fsm)
 	if err != nil {
-		return fmt.Errorf("Unable to parse AS path: %v", err)
+		log.Errorf("Unable to create BGP Update: %v", err)
+		return nil
 	}
 
-	update := &packet.BGPUpdate{
-		PathAttributes: &packet.PathAttribute{
-			TypeCode: packet.OriginAttr,
-			Value:    p.BGPPath.Origin,
-			Next: &packet.PathAttribute{
-				TypeCode: packet.ASPathAttr,
-				Value:    asPathPA.Value,
-				Next: &packet.PathAttribute{
-					TypeCode: packet.NextHopAttr,
-					Value:    p.BGPPath.NextHop,
-					Next: &packet.PathAttribute{
-						TypeCode: packet.LocalPrefAttr,
-						Value:    p.BGPPath.LocalPref,
-					},
-				},
-			},
-		},
-		NLRI: &packet.NLRI{
-			IP:     pfx.Addr(),
-			Pfxlen: pfx.Pfxlen(),
+	update := &packet.BGPUpdateAddPath{
+		PathAttributes: pathAttrs,
+		NLRI: &packet.NLRIAddPath{
+			PathIdentifier: p.BGPPath.PathIdentifier,
+			IP:             pfx.Addr(),
+			Pfxlen:         pfx.Pfxlen(),
 		},
 	}
 
