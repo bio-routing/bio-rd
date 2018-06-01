@@ -29,7 +29,7 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
-	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSender-%s", u.fsm.peer.GetAddr().String()), metrics.AddPathAction)
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSender-%s", u.fsm.peer.GetAddr().String()), metrics.AddPathAction).Inc()
 
 	asPathPA, err := packet.ParseASPathStr(asPathString(u.iBGP, u.fsm.localASN, p.BGPPath.ASPath))
 	if err != nil {
@@ -74,6 +74,8 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSender-%s", u.fsm.peer.GetAddr().String()), metrics.RemovePathAction).Inc()
+
 	err := withDrawPrefixes(u.fsm.con, pfx)
 	return err == nil
 }

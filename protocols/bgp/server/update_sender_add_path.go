@@ -28,7 +28,7 @@ func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
-	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSenderAddPath-%s", u.fsm.peer.GetAddr().String()), metrics.AddPathAction)
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSenderAddPath-%s", u.fsm.peer.GetAddr().String()), metrics.AddPathAction).Inc()
 	asPathPA, err := packet.ParseASPathStr(asPathString(u.iBGP, u.fsm.localASN, p.BGPPath.ASPath))
 	if err != nil {
 		return fmt.Errorf("Unable to parse AS path: %v", err)
@@ -73,7 +73,7 @@ func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSenderAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
-	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSenderAddPath-%s", u.fsm.peer.GetAddr().String()), metrics.RemovePathAction)
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("updateSenderAddPath-%s", u.fsm.peer.GetAddr().String()), metrics.RemovePathAction).Inc()
 
 	err := withDrawPrefixesAddPath(u.fsm.con, pfx, p)
 	return err == nil

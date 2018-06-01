@@ -53,7 +53,7 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBIn-%s", a.neighbor.String()), metrics.AddPathAction)
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBIn-%s", a.neighbor.String()), metrics.AddPathAction).Inc()
 
 	oldPaths := a.rt.ReplacePath(pfx, p)
 	a.removePathsFromClients(pfx, oldPaths)
@@ -68,7 +68,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBIn-%s", a.neighbor.String()), metrics.RemovePathAction)
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBIn-%s", a.neighbor.String()), metrics.RemovePathAction).Inc()
 
 	r := a.rt.Get(pfx)
 	if r == nil {

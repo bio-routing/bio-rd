@@ -44,7 +44,7 @@ func (a *AdjRIBOutAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBOutAddPath-%s", a.neighbor.String()), metrics.AddPathAction)
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBOutAddPath-%s", a.neighbor.String()), metrics.AddPathAction).Inc()
 
 	pathID, err := a.pathIDManager.getNewID()
 	if err != nil {
@@ -71,7 +71,7 @@ func (a *AdjRIBOutAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBOutAddPath-%s", a.neighbor.String()), metrics.RemovePathAction)
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBOutAddPath-%s", a.neighbor.String()), metrics.RemovePathAction).Inc()
 
 	r := a.rt.Get(pfx)
 	if r == nil {
