@@ -10,6 +10,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/metrics"
 	tnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
@@ -172,7 +173,7 @@ func (fsm *FSM) changeState(new int, reason string) int {
 	fsm.lastState = fsm.state
 	fsm.state = new
 	fsm.stateReason = reason
-
+	metrics.CurrentFSMState.WithLabelValues(fsm.peer.GetAddr().String()).Set(float64(fsm.state))
 	return fsm.state
 }
 
@@ -717,13 +718,13 @@ func (fsm *FSM) openConfirmTCPFail(err error) int {
 }
 
 func (fsm *FSM) established() int {
-	fsm.adjRIBIn = adjRIBIn.New()
-	fsm.adjRIBIn.Register(fsm.rib)
-
 	n := &routingtable.Neighbor{
 		Type:    route.BGPPathType,
 		Address: tnet.IPv4ToUint32(fsm.remote),
 	}
+
+	fsm.adjRIBIn = adjRIBIn.New(n)
+	fsm.adjRIBIn.Register(fsm.rib)
 
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
@@ -792,7 +793,7 @@ func (fsm *FSM) established() int {
 		case recvMsg := <-fsm.msgRecvCh:
 			msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
 			if err != nil {
-        log.WithError(err).Errorf("Failed to decode BGP message %v\n", recvMsg.msg)
+				log.WithError(err).Errorf("Failed to decode BGP message %v\n", recvMsg.msg)
 				switch bgperr := err.(type) {
 				case packet.BGPError:
 					sendNotification(fsm.con, bgperr.ErrorCode, bgperr.ErrorSubCode)

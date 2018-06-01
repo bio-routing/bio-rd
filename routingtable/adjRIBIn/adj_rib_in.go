@@ -3,6 +3,9 @@ package adjRIBIn
 import (
 	"sync"
 
+	"fmt"
+
+	"github.com/bio-routing/bio-rd/metrics"
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -12,14 +15,16 @@ import (
 // AdjRIBIn represents an Adjacency RIB In as described in RFC4271
 type AdjRIBIn struct {
 	routingtable.ClientManager
-	rt *routingtable.RoutingTable
-	mu sync.RWMutex
+	rt       *routingtable.RoutingTable
+	neighbor *routingtable.Neighbor
+	mu       sync.RWMutex
 }
 
 // New creates a new Adjacency RIB In
-func New() *AdjRIBIn {
+func New(neighbor *routingtable.Neighbor) *AdjRIBIn {
 	a := &AdjRIBIn{
-		rt: routingtable.NewRoutingTable(),
+		rt:       routingtable.NewRoutingTable(),
+		neighbor: neighbor,
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -48,6 +53,7 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBIn-%s", a.neighbor.String()), metrics.AddPathAction).Inc()
 
 	oldPaths := a.rt.ReplacePath(pfx, p)
 	a.removePathsFromClients(pfx, oldPaths)
@@ -62,6 +68,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	defer metrics.PathUpdates.WithLabelValues(fmt.Sprintf("adjRIBIn-%s", a.neighbor.String()), metrics.RemovePathAction).Inc()
 
 	r := a.rt.Get(pfx)
 	if r == nil {
