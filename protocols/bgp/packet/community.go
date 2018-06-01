@@ -8,7 +8,7 @@ import (
 
 func CommunityStringForUint32(v uint32) string {
 	e1 := v >> 16
-	e2 := v - e1<<16
+	e2 := v & 0x0000FFFF
 
 	return fmt.Sprintf("(%d,%d)", e1, e2)
 }
