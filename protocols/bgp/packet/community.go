@@ -31,7 +31,7 @@ func ParseCommunityString(s string) (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
-	e2 := uint16(v)
+	e2 := uint32(v)
 
-	return e1<<16 + uint32(e2), nil
+	return e1<<16 + e2, nil
 }
