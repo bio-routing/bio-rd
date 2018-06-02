@@ -35,7 +35,7 @@ func (a *AdjRIBOut) UpdateNewClient(client routingtable.RouteTableClient) error 
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
 func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
-	if a.isOwnPath(p) {
+	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
 		return nil
 	}
 
@@ -56,7 +56,7 @@ func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
 
 // RemovePath removes the path for prefix `pfx`
 func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
-	if a.isOwnPath(p) {
+	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
 		return false
 	}
 
@@ -75,19 +75,6 @@ func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
 
 	a.removePathsFromClients(pfx, oldPaths)
 	return true
-}
-
-func (a *AdjRIBOut) isOwnPath(p *route.Path) bool {
-	if p.Type != a.neighbor.Type {
-		return false
-	}
-
-	switch p.Type {
-	case route.BGPPathType:
-		return p.BGPPath.Source == a.neighbor.Address
-	}
-
-	return false
 }
 
 func (a *AdjRIBOut) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {

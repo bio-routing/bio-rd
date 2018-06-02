@@ -7,4 +7,7 @@ type Neighbor struct {
 
 	// Type is the type / protocol used for routing inforation communitation
 	Type uint8
+
+	// IBGP returns if local ASN is equal to remote ASN
+	IBGP bool
 }
