@@ -262,6 +262,12 @@ func TestGetLonger(t *testing.T) {
 				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
 			},
 		},
+		{
+			name:     "Test 2: Empty root",
+			routes:   nil,
+			needle:   net.NewPfx(strAddr("10.0.0.0"), 8),
+			expected: []*route.Route{},
+		},
 	}
 
 	for _, test := range tests {
@@ -443,6 +449,372 @@ func TestRemovePath(t *testing.T) {
 
 		assert.Equal(t, rtExpected.Dump(), rt.Dump())
 	}
+}
+
+func TestReplacePath(t *testing.T) {
+	tests := []struct {
+		name        string
+		routes      []*route.Route
+		replacePfx  net.Prefix
+		replacePath *route.Path
+		expected    []*route.Route
+		expectedOld []*route.Path
+	}{
+		{
+			name:       "replace in empty table",
+			replacePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			replacePath: &route.Path{
+				Type:    route.BGPPathType,
+				BGPPath: &route.BGPPath{},
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type:    route.BGPPathType,
+					BGPPath: &route.BGPPath{},
+				}),
+			},
+			expectedOld: nil,
+		},
+		{
+			name: "replace not existing prefix with multiple paths",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1001,
+						NextHop:   101,
+					},
+				}),
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			replacePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			replacePath: &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					LocalPref: 1000,
+				},
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1000,
+					},
+				}),
+				newMultiPathRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1001,
+						NextHop:   101,
+					},
+				}, &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			expectedOld: []*route.Path{},
+		},
+		{
+			name: "replace existing prefix with multiple paths",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 2,
+					},
+				}),
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1001,
+						NextHop:   101,
+					},
+				}),
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			replacePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			replacePath: &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					LocalPref: 1000,
+				},
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1000,
+					},
+				}),
+				newMultiPathRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1001,
+						NextHop:   101,
+					},
+				}, &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			expectedOld: []*route.Path{
+				{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				},
+				{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 2,
+					},
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rt := NewRoutingTable()
+			for _, route := range test.routes {
+				for _, p := range route.Paths() {
+					rt.AddPath(route.Prefix(), p)
+				}
+			}
+
+			old := rt.ReplacePath(test.replacePfx, test.replacePath)
+			assert.ElementsMatch(t, test.expectedOld, old)
+			assert.ElementsMatch(t, test.expected, rt.Dump())
+		})
+
+	}
+}
+
+func TestRemovePrefix(t *testing.T) {
+	tests := []struct {
+		name        string
+		routes      []*route.Route
+		removePfx   net.Prefix
+		expected    []*route.Route
+		expectedOld []*route.Path
+	}{
+		{
+			name:        "remove in empty table",
+			removePfx:   net.NewPfx(strAddr("10.0.0.0"), 8),
+			expected:    []*route.Route{},
+			expectedOld: nil,
+		},
+		{
+			name: "remove not exist prefix",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			removePfx: net.NewPfx(strAddr("12.0.0.0"), 8),
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			expectedOld: nil,
+		},
+		{
+			name: "remove not existing more specific prefix",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			removePfx: net.NewPfx(strAddr("10.0.0.0"), 9),
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			expectedOld: nil,
+		},
+		{
+			name: "remove not existing more less prefix",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			removePfx: net.NewPfx(strAddr("10.0.0.0"), 7),
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			expectedOld: nil,
+		},
+		{
+			name: "remove existing prefix",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				}),
+				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 2,
+					},
+				}),
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1002,
+						NextHop:   100,
+					},
+				}),
+			},
+			expectedOld: []*route.Path{
+				{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				},
+				{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 2,
+					},
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rt := NewRoutingTable()
+			for _, route := range test.routes {
+				for _, p := range route.Paths() {
+					rt.AddPath(route.Prefix(), p)
+				}
+			}
+
+			old := rt.RemovePfx(test.removePfx)
+			assert.ElementsMatch(t, test.expectedOld, old)
+			assert.ElementsMatch(t, test.expected, rt.Dump())
+		})
+
+	}
+}
+
+func newMultiPathRoute(pfx net.Prefix, paths ...*route.Path) *route.Route {
+	if len(paths) == 0 {
+		return route.NewRoute(pfx, nil)
+	}
+	r := route.NewRoute(pfx, paths[0])
+	for i := 1; i < len(paths); i++ {
+		r.AddPath(paths[i])
+	}
+	return r
+
 }
 
 func strAddr(s string) uint32 {

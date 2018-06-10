@@ -2,10 +2,12 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
+	log "github.com/sirupsen/logrus"
 )
 
 func pathAttribues(p *route.Path, fsm *FSM) (*packet.PathAttribute, error) {
@@ -66,5 +68,23 @@ func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error
 		current = largeCommunities
 	}
 
+	return nil
+}
+
+type serializeAbleUpdate interface {
+	SerializeUpdate() ([]byte, error)
+}
+
+func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate) error {
+	updateBytes, err := update.SerializeUpdate()
+	if err != nil {
+		log.Errorf("Unable to serialize BGP Update: %v", err)
+		return nil
+	}
+
+	_, err = out.Write(updateBytes)
+	if err != nil {
+		return fmt.Errorf("Failed sending Update: %v", err)
+	}
 	return nil
 }

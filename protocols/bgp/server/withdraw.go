@@ -35,12 +35,8 @@ func withDrawPrefixes(out io.Writer, prefixes ...net.Prefix) error {
 	update := &packet.BGPUpdate{
 		WithdrawnRoutes: rootNLRI,
 	}
-	data, err := update.SerializeUpdate()
-	if err != nil {
-		return err
-	}
-	_, err = out.Write(data)
-	return err
+	return serializeAndSendUpdate(out, update)
+
 }
 
 // withDrawPrefixesAddPath generates a BGPUpdateAddPath message and write it to the given
@@ -59,10 +55,5 @@ func withDrawPrefixesAddPath(out io.Writer, pfx net.Prefix, p *route.Path) error
 			Pfxlen:         pfx.Pfxlen(),
 		},
 	}
-	data, err := update.SerializeUpdate()
-	if err != nil {
-		return err
-	}
-	_, err = out.Write(data)
-	return err
+	return serializeAndSendUpdate(out, update)
 }

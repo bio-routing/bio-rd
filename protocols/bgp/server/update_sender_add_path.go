@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -32,26 +30,15 @@ func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 		log.Errorf("Unable to create BGP Update: %v", err)
 		return nil
 	}
-
-	update := &packet.BGPUpdate{
+	update := &packet.BGPUpdateAddPath{
 		PathAttributes: pathAttrs,
-		NLRI: &packet.NLRI{
-			IP:     pfx.Addr(),
-			Pfxlen: pfx.Pfxlen(),
+		NLRI: &packet.NLRIAddPath{
+			PathIdentifier: p.BGPPath.PathIdentifier,
+			IP:             pfx.Addr(),
+			Pfxlen:         pfx.Pfxlen(),
 		},
 	}
-
-	updateBytes, err := update.SerializeUpdate()
-	if err != nil {
-		log.Errorf("Unable to serialize BGP Update: %v", err)
-		return nil
-	}
-
-	_, err = u.fsm.con.Write(updateBytes)
-	if err != nil {
-		return fmt.Errorf("Failed sending Update: %v", err)
-	}
-	return nil
+	return serializeAndSendUpdate(u.fsm.con, update)
 }
 
 // RemovePath withdraws prefix `pfx` from a peer
