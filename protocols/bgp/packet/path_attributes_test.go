@@ -1580,6 +1580,212 @@ func TestSerialize(t *testing.T) {
 	}
 }
 
+func TestSerializeAddPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		msg      *BGPUpdateAddPath
+		expected []byte
+		wantFail bool
+	}{
+		{
+			name: "Withdraw only",
+			msg: &BGPUpdateAddPath{
+				WithdrawnRoutes: &NLRIAddPath{
+					PathIdentifier: 257,
+					IP:             strAddr("100.110.120.0"),
+					Pfxlen:         24,
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 31, // Length
+				2,    // Msg Type
+				0, 8, // Withdrawn Routes Length
+				0, 0, 1, 1, // Path Identifier
+				24, 100, 110, 120, // NLRI
+				0, 0, // Total Path Attribute Length
+			},
+		},
+		{
+			name: "NLRI only",
+			msg: &BGPUpdateAddPath{
+				NLRI: &NLRIAddPath{
+					PathIdentifier: 257,
+					IP:             strAddr("100.110.128.0"),
+					Pfxlen:         17,
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 31, // Length
+				2,    // Msg Type
+				0, 0, // Withdrawn Routes Length
+				0, 0, // Total Path Attribute Length
+				0, 0, 1, 1, // Path Identifier
+				17, 100, 110, 128, // NLRI
+			},
+		},
+		{
+			name: "Path Attributes only",
+			msg: &BGPUpdateAddPath{
+				PathAttributes: &PathAttribute{
+					Optional:   true,
+					Transitive: true,
+					TypeCode:   OriginAttr,
+					Value:      uint8(0), // IGP
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 27, // Length
+				2,    // Msg Type
+				0, 0, // Withdrawn Routes Length
+				0, 4, // Total Path Attribute Length
+				64, // Attr. Flags
+				1,  // Attr. Type Code
+				1,  // Length
+				0,  // Value
+			},
+		},
+		{
+			name: "Full test",
+			msg: &BGPUpdateAddPath{
+				WithdrawnRoutes: &NLRIAddPath{
+					IP:     strAddr("10.0.0.0"),
+					Pfxlen: 8,
+					Next: &NLRIAddPath{
+						IP:     strAddr("192.168.0.0"),
+						Pfxlen: 16,
+					},
+				},
+				PathAttributes: &PathAttribute{
+					TypeCode: OriginAttr,
+					Value:    uint8(0),
+					Next: &PathAttribute{
+						TypeCode: ASPathAttr,
+						Value: ASPath{
+							{
+								Type: 2,
+								ASNs: []uint32{100, 155, 200},
+							},
+							{
+								Type: 1,
+								ASNs: []uint32{10, 20},
+							},
+						},
+						Next: &PathAttribute{
+							TypeCode: NextHopAttr,
+							Value:    strAddr("10.20.30.40"),
+							Next: &PathAttribute{
+								TypeCode: MEDAttr,
+								Value:    uint32(100),
+								Next: &PathAttribute{
+									TypeCode: LocalPrefAttr,
+									Value:    uint32(500),
+									Next: &PathAttribute{
+										TypeCode: AtomicAggrAttr,
+										Next: &PathAttribute{
+											TypeCode: AggregatorAttr,
+											Value:    uint16(200),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				NLRI: &NLRIAddPath{
+					IP:     strAddr("8.8.8.0"),
+					Pfxlen: 24,
+					Next: &NLRIAddPath{
+						IP:     strAddr("185.65.240.0"),
+						Pfxlen: 22,
+					},
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 102, // Length
+				2, // Msg Type
+
+				// Withdraws
+				0, 13, // Withdrawn Routes Length
+				0, 0, 0, 0, // Path Identifier
+				8, 10, // Withdraw 10/8
+				0, 0, 0, 0, // Path Identifier
+				16, 192, 168, // Withdraw 192.168/16
+
+				0, 50, // Total Path Attribute Length
+
+				// ORIGIN
+				64, // Attr. Flags
+				1,  // Attr. Type Code
+				1,  // Length
+				0,  // Value
+				// ASPath
+				64,                     // Attr. Flags
+				2,                      // Attr. Type Code
+				14,                     // Attr. Length
+				2,                      // Path Segment Type = AS_SEQUENCE
+				3,                      // Path Segment Length
+				0, 100, 0, 155, 0, 200, // ASNs
+				1,            // Path Segment Type = AS_SET
+				2,            // Path Segment Type = AS_SET
+				0, 10, 0, 20, // ASNs
+				// Next Hop
+				64,             // Attr. Flags
+				3,              // Attr. Type Code
+				4,              // Length
+				10, 20, 30, 40, // Next Hop Address
+				// MED
+				128,          // Attr. Flags
+				4,            // Attr Type Code
+				4,            // Length
+				0, 0, 0, 100, // MED = 100
+				// LocalPref
+				64,           // Attr. Flags
+				5,            // Attr. Type Code
+				4,            // Length
+				0, 0, 1, 244, // Localpref
+				// Atomic Aggregate
+				64, // Attr. Flags
+				6,  // Attr. Type Code
+				0,  // Length
+				// Aggregator
+				192,    // Attr. Flags
+				7,      // Attr. Type Code
+				2,      // Length
+				0, 200, // Aggregator ASN = 200
+
+				// NLRI
+				0, 0, 0, 0, // Path Identifier
+				24, 8, 8, 8, // 8.8.8.0/24
+				0, 0, 0, 0, // Path Identifier
+				22, 185, 65, 240, // 185.65.240.0/22
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res, err := test.msg.SerializeUpdate()
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equalf(t, test.expected, res, "%s", test.name)
+	}
+}
+
 func TestParseASPathStr(t *testing.T) {
 	tests := []struct {
 		name     string
