@@ -23,7 +23,7 @@ func (f *TermCondition) Matches(p net.Prefix, pa *route.Path) bool {
 	return f.matchesPrefixListFilters(p) &&
 		f.machtchesRouteFilters(p) &&
 		f.machtchesCommunityFilters(pa) &&
-		f.machtchesLageCommunityFilters(pa)
+		f.machtchesLargeCommunityFilters(pa)
 }
 
 func (t *TermCondition) matchesPrefixListFilters(p net.Prefix) bool {
@@ -72,7 +72,7 @@ func (t *TermCondition) machtchesCommunityFilters(pa *route.Path) bool {
 	return false
 }
 
-func (t *TermCondition) machtchesLageCommunityFilters(pa *route.Path) bool {
+func (t *TermCondition) machtchesLargeCommunityFilters(pa *route.Path) bool {
 	if len(t.largeCommunityFilters) == 0 {
 		return true
 	}
