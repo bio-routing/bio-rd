@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+const (
+	WellKnownCommunityNoExport    = 0xFFFFFF01
+	WellKnownCommunityNoAdvertise = 0xFFFFFF02
+)
+
 func CommunityStringForUint32(v uint32) string {
 	e1 := v >> 16
 	e2 := v - e1<<16

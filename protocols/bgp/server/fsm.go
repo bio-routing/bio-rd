@@ -723,6 +723,7 @@ func (fsm *FSM) established() int {
 	n := &routingtable.Neighbor{
 		Type:    route.BGPPathType,
 		Address: tnet.IPv4ToUint32(fsm.remote),
+		IBGP:    fsm.remoteASN == fsm.localASN,
 	}
 
 	clientOptions := routingtable.ClientOptions{
