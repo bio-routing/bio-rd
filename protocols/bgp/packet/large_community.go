@@ -2,9 +2,12 @@ package packet
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var largeCommunityRegEx = regexp.MustCompile("^\\(?\\d+,\\d+,\\d+\\)?$")
 
 type LargeCommunity struct {
 	GlobalAdministrator uint32
@@ -17,12 +20,11 @@ func (c LargeCommunity) String() string {
 }
 
 func ParseLargeCommunityString(s string) (com LargeCommunity, err error) {
+	if !largeCommunityRegEx.Match([]byte(s)) {
+		return com, fmt.Errorf("malformed large community string %s", s)
+	}
 	s = strings.Trim(s, "()")
 	t := strings.Split(s, ",")
-
-	if len(t) != 3 {
-		return com, fmt.Errorf("can not parse large community %s", s)
-	}
 
 	v, err := strconv.ParseUint(t[0], 10, 32)
 	if err != nil {
