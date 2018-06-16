@@ -25,7 +25,7 @@ func NewTermConditionWithRouteFilters(filters ...*RouteFilter) *TermCondition {
 	}
 }
 
-func TermConditionWithPrefixLists(filters ...*PrefixList) *TermCondition {
+func NewTermConditionWithPrefixLists(filters ...*PrefixList) *TermCondition {
 	return &TermCondition{
 		prefixLists: filters,
 	}

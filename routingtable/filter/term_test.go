@@ -45,11 +45,8 @@ func TestProcess(t *testing.T) {
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
 			from: []*TermCondition{
-				{
-					prefixLists: []*PrefixList{
-						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
-					},
-				},
+				NewTermConditionWithPrefixLists(
+					NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8))),
 			},
 			then: []FilterAction{
 				&actions.AcceptAction{},
@@ -62,11 +59,8 @@ func TestProcess(t *testing.T) {
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
 			from: []*TermCondition{
-				{
-					prefixLists: []*PrefixList{
-						NewPrefixList(net.NewPfx(0, 32)),
-					},
-				},
+				NewTermConditionWithPrefixLists(
+					NewPrefixList(net.NewPfx(0, 32))),
 			},
 			then: []FilterAction{
 				&actions.AcceptAction{},
@@ -79,11 +73,8 @@ func TestProcess(t *testing.T) {
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
 			from: []*TermCondition{
-				{
-					prefixLists: []*PrefixList{
-						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
-					},
-				},
+				NewTermConditionWithPrefixLists(
+					NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8))),
 			},
 			then: []FilterAction{
 				&mockAction{},
@@ -96,11 +87,8 @@ func TestProcess(t *testing.T) {
 			prefix: net.NewPfx(strAddr("100.64.0.1"), 8),
 			path:   &route.Path{},
 			from: []*TermCondition{
-				{
-					prefixLists: []*PrefixList{
-						NewPrefixList(net.NewPfx(strAddr("100.64.0.1"), 8)),
-					},
-				},
+				NewTermConditionWithRouteFilters(
+					NewRouteFilter(net.NewPfx(strAddr("100.64.0.1"), 8), Exact())),
 			},
 			then: []FilterAction{
 				&mockAction{},
