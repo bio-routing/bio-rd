@@ -6,6 +6,7 @@ import (
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 
 	"time"
 )
@@ -20,6 +21,8 @@ type Peer struct {
 	addPathRecv       bool
 	optOpenParams     []packet.OptParam
 	reconnectInterval time.Duration
+	importFilter      *filter.Filter
+	exportFilter      *filter.Filter
 }
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
@@ -33,6 +36,8 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient) (*Peer, error) {
 		addPathRecv:       c.AddPathRecv,
 		optOpenParams:     make([]packet.OptParam, 0),
 		reconnectInterval: c.ReconnectInterval,
+		importFilter:      filterOrDefault(c.ImportFilter),
+		exportFilter:      filterOrDefault(c.ExportFilter),
 	}
 	p.fsm = NewFSM(p, c, rib)
 
@@ -92,4 +97,12 @@ func (p *Peer) Start() {
 			p.fsm.activate()
 		}
 	}()
+}
+
+func filterOrDefault(f *filter.Filter) *filter.Filter {
+	if f != nil {
+		return f
+	}
+
+	return filter.NewAcceptAllFilter()
 }

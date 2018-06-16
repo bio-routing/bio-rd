@@ -16,5 +16,6 @@
 # IDE specific files
 .idea/
 *.iml
+*.vscode
 
 bio-rd

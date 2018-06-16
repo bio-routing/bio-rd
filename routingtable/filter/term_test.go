@@ -71,7 +71,7 @@ func TestProcess(t *testing.T) {
 			then: []FilterAction{
 				&actions.AcceptAction{},
 			},
-			expectReject:   true,
+			expectReject:   false,
 			expectModified: false,
 		},
 		{
