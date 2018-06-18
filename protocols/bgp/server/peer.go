@@ -104,5 +104,5 @@ func filterOrDefault(f *filter.Filter) *filter.Filter {
 		return f
 	}
 
-	return filter.NewAcceptAllFilter()
+	return filter.NewDrainFilter()
 }
