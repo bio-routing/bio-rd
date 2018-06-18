@@ -39,7 +39,7 @@ func (t *Term) Process(p net.Prefix, pa *route.Path) (modPath *route.Path, rejec
 		}
 	}
 
-	return orig, true
+	return orig, false
 }
 
 func (t *Term) processActions(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {

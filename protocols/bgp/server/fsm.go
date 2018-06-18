@@ -7,6 +7,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
+
 	"github.com/bio-routing/bio-rd/routingtable"
 
 	"github.com/bio-routing/bio-rd/config"
@@ -14,7 +16,6 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
-	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOutAddPath"
 	log "github.com/sirupsen/logrus"
 	tomb "gopkg.in/tomb.v2"
@@ -89,7 +90,7 @@ type FSM struct {
 	msgRecvFailCh chan msgRecvErr
 	stopMsgRecvCh chan struct{}
 
-	adjRIBIn     *adjRIBIn.AdjRIBIn
+	adjRIBIn     routingtable.RouteTableClient
 	adjRIBOut    routingtable.RouteTableClient
 	rib          routingtable.RouteTableClient
 	updateSender routingtable.RouteTableClient
@@ -216,12 +217,12 @@ func (fsm *FSM) main() error {
 }
 
 func (fsm *FSM) idle() int {
-	if fsm.adjRIBOut != nil {
-		fsm.rib.Unregister(fsm.adjRIBOut)
-		fsm.adjRIBOut.Unregister(fsm.updateSender)
-	}
-	fsm.adjRIBIn = nil
-	fsm.adjRIBOut = nil
+	fsm.resetAdjRIBOut()
+	fsm.resetAdjRIBIn()
+
+	fsm.peer.importFilter.Unregister(fsm.rib)
+	fsm.rib.Unregister(fsm.peer.exportFilter)
+
 	for {
 		select {
 		case c := <-fsm.conCh:
@@ -248,6 +249,24 @@ func (fsm *FSM) idle() int {
 		}
 
 	}
+}
+
+func (fsm *FSM) resetAdjRIBIn() {
+	if fsm.adjRIBIn != nil {
+		fsm.adjRIBIn.Unregister(fsm.peer.importFilter)
+	}
+
+	fsm.adjRIBIn = nil
+}
+
+func (fsm *FSM) resetAdjRIBOut() {
+	if fsm.adjRIBOut != nil {
+		fsm.peer.exportFilter.Unregister(fsm.adjRIBOut)
+		fsm.adjRIBOut.Unregister(fsm.updateSender)
+	}
+
+	fsm.adjRIBOut = nil
+	fsm.updateSender = nil
 }
 
 func (fsm *FSM) tcpConnector() error {
@@ -718,7 +737,9 @@ func (fsm *FSM) openConfirmTCPFail(err error) int {
 
 func (fsm *FSM) established() int {
 	fsm.adjRIBIn = adjRIBIn.New()
-	fsm.adjRIBIn.Register(fsm.rib)
+	fsm.adjRIBIn.Register(fsm.peer.importFilter)
+
+	fsm.peer.importFilter.Register(fsm.rib)
 
 	n := &routingtable.Neighbor{
 		Type:    route.BGPPathType,
@@ -739,18 +760,8 @@ func (fsm *FSM) established() int {
 	}
 
 	fsm.adjRIBOut.Register(fsm.updateSender)
-	fsm.rib.RegisterWithOptions(fsm.adjRIBOut, clientOptions)
-
-	/*go func() {
-		for {
-			if fsm.adjRIBOut == nil {
-				return
-			}
-			fmt.Printf("ADJ-RIB-OUT: %s\n", fsm.remote.String())
-			fmt.Print(fsm.adjRIBOut.Print())
-			time.Sleep(time.Second * 11)
-		}
-	}()*/
+	fsm.peer.exportFilter.Register(fsm.adjRIBOut)
+	fsm.rib.RegisterWithOptions(fsm.peer.exportFilter, clientOptions)
 
 	for {
 		log.Debug("Iterate established loop.")

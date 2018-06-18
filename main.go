@@ -9,8 +9,11 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/filter/actions"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
@@ -44,6 +47,22 @@ func main() {
 		AddPathSend: routingtable.ClientOptions{
 			MaxPaths: 10,
 		},
+		ImportFilter: filter.NewFilter([]*filter.Term{
+			filter.NewTerm(
+				[]*filter.TermCondition{
+					filter.NewTermConditionWithRouteFilters(
+						filter.NewRouteFilter(bnet.NewPfx(bnet.IPv4ToUint32(net.IPv4(172, 17, 0, 0)), 16), filter.Exact())),
+				},
+				[]filter.FilterAction{
+					&actions.RejectAction{},
+				}),
+			filter.NewTerm(
+				[]*filter.TermCondition{},
+				[]filter.FilterAction{
+					&actions.AcceptAction{},
+				}),
+		}),
+		ExportFilter: filter.NewAcceptAllFilter(),
 	}, rib)
 
 	time.Sleep(time.Second * 15)
@@ -62,6 +81,23 @@ func main() {
 			MaxPaths: 10,
 		},
 		AddPathRecv: true,
+		ImportFilter: filter.NewFilter([]*filter.Term{
+			filter.NewTerm(
+				[]*filter.TermCondition{
+					filter.NewTermConditionWithRouteFilters(
+						filter.NewRouteFilter(bnet.NewPfx(bnet.IPv4ToUint32(net.IPv4(172, 17, 0, 0)), 16), filter.Exact())),
+				},
+				[]filter.FilterAction{
+					&actions.RejectAction{},
+				}),
+			filter.NewTerm(
+				[]*filter.TermCondition{},
+				[]filter.FilterAction{
+					actions.NewSetLocalPrefAction(200),
+					&actions.AcceptAction{},
+				}),
+		}),
+		ExportFilter: filter.NewDrainFilter(),
 	}, rib)
 
 	go func() {
