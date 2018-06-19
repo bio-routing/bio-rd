@@ -14,10 +14,10 @@ import (
 // UpdateSenderAddPath converts table changes into BGP update messages with add path
 type UpdateSenderAddPath struct {
 	routingtable.ClientManager
-	fsm *FSM
+	fsm *FSM2
 }
 
-func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
+func newUpdateSenderAddPath(fsm *FSM2) *UpdateSenderAddPath {
 	return &UpdateSenderAddPath{
 		fsm: fsm,
 	}

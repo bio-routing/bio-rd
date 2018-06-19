@@ -14,10 +14,10 @@ import (
 // UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
 	routingtable.ClientManager
-	fsm *FSM
+	fsm *FSM2
 }
 
-func newUpdateSender(fsm *FSM) *UpdateSender {
+func newUpdateSender(fsm *FSM2) *UpdateSender {
 	return &UpdateSender{
 		fsm: fsm,
 	}

@@ -891,15 +891,6 @@ func (fsm *FSM) established() int {
 	}
 }
 
-func stopTimer(t *time.Timer) {
-	if !t.Stop() {
-		select {
-		case <-t.C:
-		default:
-		}
-	}
-}
-
 func (fsm *FSM) startConnectRetryTimer() {
 	fsm.connectRetryTimer = time.NewTimer(time.Second * fsm.connectRetryTime)
 }
