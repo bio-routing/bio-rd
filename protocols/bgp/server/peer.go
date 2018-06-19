@@ -13,6 +13,7 @@ import (
 type Peer struct {
 	addr              net.IP
 	asn               uint32
+	localASN          uint32
 	fsm               *FSM
 	rib               routingtable.RouteTableClient
 	routerID          uint32
@@ -28,6 +29,7 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient) (*Peer, error) {
 	p := &Peer{
 		addr:              c.PeerAddress,
 		asn:               c.PeerAS,
+		localASN:          c.LocalAS,
 		rib:               rib,
 		addPathSend:       c.AddPathSend,
 		addPathRecv:       c.AddPathRecv,

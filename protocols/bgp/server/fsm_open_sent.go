@@ -1,0 +1,182 @@
+package server
+
+import (
+	"bytes"
+	"fmt"
+	"math"
+	"time"
+
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+)
+
+type openSentState struct {
+	fsm *FSM2
+}
+
+func newOpenSentState(fsm *FSM2) *openSentState {
+	return &openSentState{
+		fsm: fsm,
+	}
+}
+
+func (s *openSentState) run() (state, string) {
+	for {
+		select {
+		case e := <-s.fsm.eventCh:
+			switch e {
+			case ManualStop:
+				return s.manualStop()
+			case AutomaticStop:
+				return s.automaticStop()
+			default:
+				continue
+			}
+		case <-s.fsm.holdTimer.C:
+			return s.holdTimerExpired()
+		case recvMsg := <-s.fsm.msgRecvCh:
+			return s.msgReceived(recvMsg)
+		}
+	}
+}
+
+func (s *openSentState) manualStop() (state, string) {
+	s.fsm.sendNotification(packet.Cease, 0)
+	s.fsm.resetConnectRetryTimer()
+	s.fsm.con.Close()
+	s.fsm.resetConnectRetryCounter()
+	return newIdleState(s.fsm), "Manual stop event"
+}
+
+func (s *openSentState) automaticStop() (state, string) {
+	s.fsm.sendNotification(packet.Cease, 0)
+	s.fsm.resetConnectRetryTimer()
+	s.fsm.con.Close()
+	s.fsm.connectRetryCounter++
+	return newIdleState(s.fsm), "Automatic stop event"
+}
+
+func (s *openSentState) holdTimerExpired() (state, string) {
+	s.fsm.sendNotification(packet.HoldTimeExpired, 0)
+	stopTimer(s.fsm.connectRetryTimer)
+	s.fsm.con.Close()
+	s.fsm.connectRetryCounter++
+	return newIdleState(s.fsm), "Holdtimer expired"
+}
+
+func (s *openSentState) msgReceived(recvMsg msgRecvMsg) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
+	if err != nil {
+		switch bgperr := err.(type) {
+		case packet.BGPError:
+			s.fsm.sendNotification(bgperr.ErrorCode, bgperr.ErrorSubCode)
+		}
+		stopTimer(s.fsm.connectRetryTimer)
+		s.fsm.con.Close()
+		s.fsm.connectRetryCounter++
+		return newIdleState(s.fsm), fmt.Sprintf("Failed to decode BGP message: %v", err)
+	}
+	switch msg.Header.Type {
+	case packet.NotificationMsg:
+		return s.notification(msg)
+	case packet.OpenMsg:
+		return s.openMsgReceived(msg)
+	default:
+		return s.unexpectedMessage()
+	}
+}
+
+func (s *openSentState) unexpectedMessage() (state, string) {
+	s.fsm.sendNotification(packet.FiniteStateMachineError, 0)
+	stopTimer(s.fsm.connectRetryTimer)
+	s.fsm.con.Close()
+	s.fsm.connectRetryCounter++
+	return newIdleState(s.fsm), "FSM Error"
+}
+
+func (s *openSentState) openMsgReceived(msg *packet.BGPMessage) (state, string) {
+	openMsg := msg.Body.(*packet.BGPOpen)
+	s.fsm.neighborID = openMsg.BGPIdentifier
+	stopTimer(s.fsm.connectRetryTimer)
+	err := s.fsm.sendKeepalive()
+	if err != nil {
+		return s.tcpFailure()
+	}
+
+	s.fsm.holdTime = time.Duration(math.Min(float64(s.fsm.holdTimeConfigured), float64(openMsg.HoldTime)))
+	if s.fsm.holdTime != 0 {
+		s.fsm.holdTimer.Reset(time.Second * s.fsm.holdTime)
+		s.fsm.keepaliveTime = s.fsm.holdTime / 3
+		s.fsm.keepaliveTimer.Reset(time.Second * s.fsm.keepaliveTime)
+	}
+
+	s.processOpenOptions(openMsg.OptParams)
+	return newOpenConfirmState(s.fsm), "Received OPEN message"
+}
+
+func (s *openSentState) tcpFailure() (state, string) {
+	s.fsm.con.Close()
+	s.fsm.resetConnectRetryTimer()
+	return newActiveState(s.fsm), "TCP connection failure"
+}
+
+func (s *openSentState) processOpenOptions(optParams []packet.OptParam) {
+	for _, optParam := range optParams {
+		if optParam.Type != packet.CapabilitiesParamType {
+			continue
+		}
+
+		s.processCapabilities(optParam.Value.(packet.Capabilities))
+	}
+}
+
+func (s *openSentState) processCapabilities(caps packet.Capabilities) {
+	for _, cap := range caps {
+		s.processCapability(cap)
+	}
+}
+
+func (s *openSentState) processCapability(cap packet.Capability) {
+	switch cap.Code {
+	case packet.AddPathCapabilityCode:
+		s.processAddPathCapability(cap.Value.(packet.AddPathCapability))
+
+	}
+}
+
+func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
+	if addPathCap.AFI != 1 {
+		return
+	}
+	if addPathCap.SAFI != 1 {
+		return
+	}
+
+	switch addPathCap.SendReceive {
+	case packet.AddPathReceive:
+		if !s.fsm.peer.addPathSend.BestOnly {
+			s.fsm.capAddPathSend = true
+		}
+	case packet.AddPathSend:
+		if s.fsm.peer.addPathRecv {
+			s.fsm.capAddPathRecv = true
+		}
+	case packet.AddPathSendReceive:
+		if !s.fsm.peer.addPathSend.BestOnly {
+			s.fsm.capAddPathSend = true
+		}
+		if s.fsm.peer.addPathRecv {
+			s.fsm.capAddPathRecv = true
+		}
+	}
+}
+
+func (s *openSentState) notification(msg *packet.BGPMessage) (state, string) {
+	stopTimer(s.fsm.connectRetryTimer)
+	s.fsm.con.Close()
+	nMsg := msg.Body.(*packet.BGPNotification)
+	if nMsg.ErrorCode != packet.UnsupportedVersionNumber {
+		s.fsm.connectRetryCounter++
+	}
+
+	return newIdleState(s.fsm), "Received NOTIFICATION"
+}

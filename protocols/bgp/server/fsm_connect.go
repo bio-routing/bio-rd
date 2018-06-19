@@ -1,0 +1,61 @@
+package server
+
+import (
+	"fmt"
+	"net"
+	"time"
+)
+
+type connectState struct {
+	fsm *FSM2
+}
+
+func newConnectState(fsm *FSM2) *connectState {
+	return &connectState{
+		fsm: fsm,
+	}
+}
+
+func (s *connectState) run() (state, string) {
+	for {
+		select {
+		case e := <-s.fsm.eventCh:
+			if e == ManualStop {
+				return s.manualStop()
+			}
+			continue
+		case <-s.fsm.connectRetryTimer.C:
+			s.connectRetryTimerExpired()
+			continue
+		case c := <-s.fsm.conCh:
+			s.connectionSuccess(c)
+		}
+	}
+}
+
+func (s *connectState) connectionSuccess(c net.Conn) (state, string) {
+	s.fsm.con = c
+	stopTimer(s.fsm.connectRetryTimer)
+	err := s.fsm.sendOpen()
+	if err != nil {
+		return newIdleState(s.fsm), fmt.Sprintf("Unable to send open: %v", err)
+	}
+
+	s.fsm.holdTimer = time.NewTimer(time.Minute * 4)
+	return newOpenSentState(s.fsm), "TCP connection succeeded"
+}
+
+func (s *connectState) connectRetryTimerExpired() {
+	s.fsm.resetConnectRetryTimer()
+	s.fsm.tcpConnect()
+}
+
+func (s *connectState) manualStop() (state, string) {
+	s.fsm.resetConnectRetryCounter()
+	stopTimer(s.fsm.connectRetryTimer)
+	return newIdleState(s.fsm), "Manual stop event"
+}
+
+func (s *connectState) cease() {
+
+}

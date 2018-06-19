@@ -15,14 +15,14 @@ import (
 // UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
 	routingtable.ClientManager
-	fsm  *FSM
+	fsm  *FSM2
 	iBGP bool
 }
 
-func newUpdateSender(fsm *FSM) *UpdateSender {
+func newUpdateSender(fsm *FSM2) *UpdateSender {
 	return &UpdateSender{
 		fsm:  fsm,
-		iBGP: fsm.localASN == fsm.remoteASN,
+		iBGP: fsm.peer.localASN == fsm.peer.asn,
 	}
 }
 
