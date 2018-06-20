@@ -80,9 +80,16 @@ func (s *establishedState) init() {
 }
 
 func (s *establishedState) uninit() {
-	s.fsm.adjRIBOut.Unregister(s.fsm.updateSender)
-	s.fsm.rib.Unregister(s.fsm.adjRIBOut)
-	s.fsm.adjRIBIn.Unregister(s.fsm.rib)
+	s.fsm.adjRIBIn.Unregister(s.fsm.peer.importFilter)
+	s.fsm.peer.importFilter.Unregister(s.fsm.rib)
+
+	s.fsm.rib.Unregister(s.fsm.peer.exportFilter)
+	s.fsm.peer.exportFilter.Unregister(s.fsm.adjRIBOut)
+	s.fsm.updateSender.Unregister(s.fsm.adjRIBOut)
+
+	s.fsm.adjRIBIn = nil
+	s.fsm.adjRIBOut = nil
+
 	s.fsm.ribsInitialized = false
 }
 
