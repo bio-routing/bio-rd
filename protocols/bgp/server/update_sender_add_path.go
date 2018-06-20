@@ -19,7 +19,7 @@ type UpdateSenderAddPath struct {
 func newUpdateSenderAddPath(fsm *FSM2) *UpdateSenderAddPath {
 	return &UpdateSenderAddPath{
 		fsm:  fsm,
-		iBGP: fsm.peer.localASN == fsm.peer.asn,
+		iBGP: fsm.peer.localASN == fsm.peer.peerASN,
 	}
 }
 

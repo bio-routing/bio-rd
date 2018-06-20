@@ -8,7 +8,6 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -63,7 +62,7 @@ type FSM2 struct {
 	ribsInitialized bool
 	adjRIBIn        routingtable.RouteTableClient
 	adjRIBOut       routingtable.RouteTableClient
-	rib             *locRIB.LocRIB
+	rib             routingtable.RouteTableClient
 	updateSender    routingtable.RouteTableClient
 
 	neighborID uint32

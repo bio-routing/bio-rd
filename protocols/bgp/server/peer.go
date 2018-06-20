@@ -9,9 +9,6 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-
-	"time"
 )
 
 type Peer struct {
@@ -21,7 +18,7 @@ type Peer struct {
 	localASN          uint32
 	fsms              []*FSM2
 	fsmsMu            sync.Mutex
-	rib               *locRIB.LocRIB
+	rib               routingtable.RouteTableClient
 	routerID          uint32
 	addPathSend       routingtable.ClientOptions
 	addPathRecv       bool
@@ -85,7 +82,7 @@ func isEstablishedState(s state) bool {
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func NewPeer(c config.Peer, rib *locRIB.LocRIB, server *BGPServer) (*Peer, error) {
+func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer) (*Peer, error) {
 	p := &Peer{
 		server:            server,
 		addr:              c.PeerAddress,
