@@ -106,7 +106,9 @@ func (s *openSentState) openMsgReceived(msg *packet.BGPMessage) (state, string) 
 	openMsg := msg.Body.(*packet.BGPOpen)
 	s.fsm.neighborID = openMsg.BGPIdentifier
 	stopTimer(s.fsm.connectRetryTimer)
-	s.fsm.peer.collisionHandling(s.fsm)
+	if s.fsm.peer.collisionHandling(s.fsm) {
+		return s.cease()
+	}
 	err := s.fsm.sendKeepalive()
 	if err != nil {
 		return s.tcpFailure()

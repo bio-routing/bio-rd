@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -60,10 +61,7 @@ func (b *BGPServer) Start(c *config.Global) error {
 
 func (b *BGPServer) incomingConnectionWorker() {
 	for {
-		// Disabled. We're active only for now.
-		/*c := <-b.acceptCh
-		fmt.Printf("Incoming connection!\n")
-		fmt.Printf("Connection from: %v\n", c.RemoteAddr())
+		c := <-b.acceptCh
 
 		peerAddr := strings.Split(c.RemoteAddr().String(), ":")[0]
 		if _, ok := b.peers[peerAddr]; !ok {
@@ -79,19 +77,16 @@ func (b *BGPServer) incomingConnectionWorker() {
 		}).Info("Incoming TCP connection")
 
 		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
-		fmt.Printf("Initiating new ActiveFSM due to incoming connection from peer %s\n", peerAddr)
 		fsm := NewActiveFSM2(b.peers[peerAddr])
 		fsm.state = newActiveState(fsm)
 		fsm.startConnectRetryTimer()
 
-		fmt.Printf("Getting lock...\n")
 		b.peers[peerAddr].fsmsMu.Lock()
 		b.peers[peerAddr].fsms = append(b.peers[peerAddr].fsms, fsm)
-		fmt.Printf("Releasing lock...\n")
 		b.peers[peerAddr].fsmsMu.Unlock()
 
 		go fsm.run()
-		fsm.conCh <- c*/
+		fsm.conCh <- c
 	}
 }
 

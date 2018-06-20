@@ -57,7 +57,6 @@ type FSM2 struct {
 	capAddPathRecv bool
 
 	local net.IP
-	//remote net.IP
 
 	ribsInitialized bool
 	adjRIBIn        routingtable.RouteTableClient
