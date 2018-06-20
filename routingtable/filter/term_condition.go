@@ -19,6 +19,18 @@ func NewTermCondition(prefixLists []*PrefixList, routeFilters []*RouteFilter) *T
 	}
 }
 
+func NewTermConditionWithRouteFilters(filters ...*RouteFilter) *TermCondition {
+	return &TermCondition{
+		routeFilters: filters,
+	}
+}
+
+func NewTermConditionWithPrefixLists(filters ...*PrefixList) *TermCondition {
+	return &TermCondition{
+		prefixLists: filters,
+	}
+}
+
 func (f *TermCondition) Matches(p net.Prefix, pa *route.Path) bool {
 	return f.matchesPrefixListFilters(p) &&
 		f.machtchesRouteFilters(p) &&

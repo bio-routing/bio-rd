@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
 type Peer struct {
@@ -20,4 +21,6 @@ type Peer struct {
 	RouterID          uint32
 	AddPathSend       routingtable.ClientOptions
 	AddPathRecv       bool
+	ImportFilter      *filter.Filter
+	ExportFilter      *filter.Filter
 }

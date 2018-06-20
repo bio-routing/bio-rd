@@ -53,7 +53,9 @@ func (s establishedState) run() (state, string) {
 
 func (s *establishedState) init() {
 	s.fsm.adjRIBIn = adjRIBIn.New()
-	s.fsm.adjRIBIn.Register(s.fsm.rib)
+
+	s.fsm.peer.importFilter.Register(s.fsm.rib)
+	s.fsm.adjRIBIn.Register(s.fsm.peer.importFilter)
 
 	n := &routingtable.Neighbor{
 		Type:    route.BGPPathType,
@@ -71,15 +73,23 @@ func (s *establishedState) init() {
 	}
 
 	s.fsm.adjRIBOut.Register(s.fsm.updateSender)
-	s.fsm.rib.RegisterWithOptions(s.fsm.adjRIBOut, clientOptions)
+	s.fsm.peer.exportFilter.Register(s.fsm.adjRIBOut)
+	s.fsm.rib.RegisterWithOptions(s.fsm.peer.exportFilter, clientOptions)
 
 	s.fsm.ribsInitialized = true
 }
 
 func (s *establishedState) uninit() {
-	s.fsm.adjRIBOut.Unregister(s.fsm.updateSender)
-	s.fsm.rib.Unregister(s.fsm.adjRIBOut)
-	s.fsm.adjRIBIn.Unregister(s.fsm.rib)
+	s.fsm.adjRIBIn.Unregister(s.fsm.peer.importFilter)
+	s.fsm.peer.importFilter.Unregister(s.fsm.rib)
+
+	s.fsm.rib.Unregister(s.fsm.peer.exportFilter)
+	s.fsm.peer.exportFilter.Unregister(s.fsm.adjRIBOut)
+	s.fsm.updateSender.Unregister(s.fsm.adjRIBOut)
+
+	s.fsm.adjRIBIn = nil
+	s.fsm.adjRIBOut = nil
+
 	s.fsm.ribsInitialized = false
 }
 

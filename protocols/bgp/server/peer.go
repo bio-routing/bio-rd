@@ -96,6 +96,8 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 		keepaliveTime:     c.KeepAlive,
 		holdTime:          c.HoldTime,
 		optOpenParams:     make([]packet.OptParam, 0),
+		importFilter:      filterOrDefault(c.ImportFilter),
+		exportFilter:      filterOrDefault(c.ExportFilter),
 	}
 	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
@@ -128,6 +130,14 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 	}
 
 	return p, nil
+}
+
+func filterOrDefault(f *filter.Filter) *filter.Filter {
+	if f != nil {
+		return f
+	}
+
+	return filter.NewDrainFilter()
 }
 
 // GetAddr returns the IP address of the peer
