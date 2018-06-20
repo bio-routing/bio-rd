@@ -38,7 +38,6 @@ func (s connectState) run() (state, string) {
 }
 
 func (s *connectState) connectionSuccess(c net.Conn) (state, string) {
-	fmt.Printf("GOT A TCP CONNECTION!\n")
 	s.fsm.con = c
 	stopTimer(s.fsm.connectRetryTimer)
 	err := s.fsm.sendOpen()
@@ -50,7 +49,6 @@ func (s *connectState) connectionSuccess(c net.Conn) (state, string) {
 }
 
 func (s *connectState) connectRetryTimerExpired() {
-	fmt.Printf("Connect retry timer expired\n")
 	s.fsm.resetConnectRetryTimer()
 	s.fsm.tcpConnect()
 }

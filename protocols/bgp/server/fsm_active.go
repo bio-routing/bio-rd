@@ -17,7 +17,6 @@ func newActiveState(fsm *FSM2) *activeState {
 }
 
 func (s activeState) run() (state, string) {
-	fmt.Printf("THIS IS ACTIVE STATE\n")
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -32,7 +31,6 @@ func (s activeState) run() (state, string) {
 		case <-s.fsm.connectRetryTimer.C:
 			return s.connectRetryTimerExpired()
 		case c := <-s.fsm.conCh:
-			fmt.Printf("Received a connection in active state\n")
 			return s.connectionSuccess(c)
 		}
 	}
@@ -66,6 +64,5 @@ func (s *activeState) connectionSuccess(con net.Conn) (state, string) {
 		return newIdleState(s.fsm), fmt.Sprintf("Sending OPEN message failed: %v", err)
 	}
 	s.fsm.holdTimer = time.NewTimer(time.Minute * 4)
-	fmt.Printf("Next state: OpenSent!\n")
 	return newOpenSentState(s.fsm), "Sent OPEN message"
 }

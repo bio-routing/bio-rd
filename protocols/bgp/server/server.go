@@ -60,6 +60,7 @@ func (b *BGPServer) Start(c *config.Global) error {
 
 func (b *BGPServer) incomingConnectionWorker() {
 	for {
+		// Disabled. We're active only for now.
 		/*c := <-b.acceptCh
 		fmt.Printf("Incoming connection!\n")
 		fmt.Printf("Connection from: %v\n", c.RemoteAddr())

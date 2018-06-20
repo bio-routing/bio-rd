@@ -50,6 +50,6 @@ func (u *UpdateSenderAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
 
 // UpdateNewClient does nothing
 func (u *UpdateSenderAddPath) UpdateNewClient(client routingtable.RouteTableClient) error {
-	log.Warningf("BGP Update Sender: RemovePath not implemented")
+	log.Warningf("BGP Update Sender: UpdateNewClient not implemented")
 	return nil
 }

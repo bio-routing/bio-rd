@@ -74,7 +74,6 @@ type FSM2 struct {
 
 // NewPassiveFSM2 initiates a new passive FSM
 func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM2 {
-	fmt.Printf("NewPassiveFSM2\n")
 	fsm := newFSM2(peer)
 	fsm.con = con
 	fsm.state = newIdleState(fsm)
@@ -83,7 +82,6 @@ func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM2 {
 
 // NewActiveFSM2 initiates a new passive FSM
 func NewActiveFSM2(peer *Peer) *FSM2 {
-	fmt.Printf("NewActiveFSM2\n")
 	fsm := newFSM2(peer)
 	fsm.active = true
 	fsm.state = newIdleState(fsm)
@@ -116,7 +114,6 @@ func (fsm *FSM2) activate() {
 }
 
 func (fsm *FSM2) run() {
-	//fmt.Printf("Starting FSM\n")
 	next, reason := fsm.state.run()
 	for {
 		newState := stateName(next)
@@ -135,13 +132,10 @@ func (fsm *FSM2) run() {
 			return
 		}
 
-		//fmt.Printf("Aquiring lock...\n")
 		fsm.stateMu.Lock()
 		fsm.state = next
-		//fmt.Printf("Releasing lock...\n")
 		fsm.stateMu.Unlock()
 
-		//fmt.Printf("Running new state\n")
 		next, reason = fsm.state.run()
 	}
 }
@@ -172,12 +166,9 @@ func (fsm *FSM2) cease() {
 }
 
 func (fsm *FSM2) tcpConnector() error {
-	fmt.Printf("TCP CONNECTOR STARTED\n")
 	for {
-		//fmt.Printf("READING FROM fsm.initiateCon\n")
 		select {
 		case <-fsm.initiateCon:
-			fmt.Printf("Initiating connection to %s\n", fsm.peer.addr.String())
 			c, err := net.DialTCP("tcp", &net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr, Port: BGPPORT})
 			if err != nil {
 				select {
@@ -188,7 +179,6 @@ func (fsm *FSM2) tcpConnector() error {
 				}
 			}
 
-			//fmt.Printf("GOT CONNECTION!\n")
 			select {
 			case fsm.conCh <- c:
 				continue
@@ -210,21 +200,12 @@ func (fsm *FSM2) msgReceiver() error {
 		if err != nil {
 			fsm.msgRecvFailCh <- err
 			return nil
-
-			/*select {
-			case fsm.msgRecvFailCh <- msgRecvErr{err: err, con: c}:
-				continue
-			case <-time.NewTimer(time.Second * 60).C:
-				return nil
-			}*/
 		}
-		fmt.Printf("Message received for %s: %v\n", fsm.con.RemoteAddr().String(), msg[18])
 		fsm.msgRecvCh <- msg
 	}
 }
 
 func (fsm *FSM2) startConnectRetryTimer() {
-	fmt.Printf("Initializing connectRetryTimer: %d\n", fsm.connectRetryTime)
 	fsm.connectRetryTimer = time.NewTimer(fsm.connectRetryTime)
 }
 
@@ -239,8 +220,6 @@ func (fsm *FSM2) resetConnectRetryCounter() {
 }
 
 func (fsm *FSM2) sendOpen() error {
-	fmt.Printf("Sending OPEN Message to %s\n", fsm.con.RemoteAddr().String())
-
 	msg := packet.SerializeOpenMsg(&packet.BGPOpen{
 		Version:       BGPVersion,
 		AS:            uint16(fsm.peer.localASN),
@@ -258,7 +237,6 @@ func (fsm *FSM2) sendOpen() error {
 }
 
 func (fsm *FSM2) sendNotification(errorCode uint8, errorSubCode uint8) error {
-	fmt.Printf("Sending NOTIFICATION Message to %s\n", fsm.con.RemoteAddr().String())
 	msg := packet.SerializeNotificationMsg(&packet.BGPNotification{})
 
 	_, err := fsm.con.Write(msg)
@@ -270,7 +248,6 @@ func (fsm *FSM2) sendNotification(errorCode uint8, errorSubCode uint8) error {
 }
 
 func (fsm *FSM2) sendKeepalive() error {
-	fmt.Printf("Sending KEEPALIVE to %s\n", fsm.con.RemoteAddr().String())
 	msg := packet.SerializeKeepaliveMsg()
 
 	_, err := fsm.con.Write(msg)

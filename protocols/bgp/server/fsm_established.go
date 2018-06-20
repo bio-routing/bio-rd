@@ -201,11 +201,14 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 			case packet.MEDAttr:
 				path.BGPPath.MED = pa.Value.(uint32)
 			case packet.NextHopAttr:
-				fmt.Printf("RECEIVED NEXT_HOP: %d\n", pa.Value.(uint32))
 				path.BGPPath.NextHop = pa.Value.(uint32)
 			case packet.ASPathAttr:
 				path.BGPPath.ASPath = pa.ASPathString()
 				path.BGPPath.ASPathLen = pa.ASPathLen()
+			case packet.CommunitiesAttr:
+				path.BGPPath.Communities = pa.CommunityString()
+			case packet.LargeCommunitiesAttr:
+				path.BGPPath.LargeCommunities = pa.LargeCommunityString()
 			}
 		}
 		s.fsm.adjRIBIn.AddPath(pfx, path)

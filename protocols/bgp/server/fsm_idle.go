@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -23,7 +22,6 @@ func (s idleState) run() (state, string) {
 	}
 	for {
 		event := <-s.fsm.eventCh
-		fmt.Printf("Event: %d\n", event)
 		switch event {
 		case ManualStart:
 			return s.manualStart()

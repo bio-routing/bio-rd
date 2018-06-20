@@ -14,7 +14,6 @@ type openSentState struct {
 }
 
 func newOpenSentState(fsm *FSM2) *openSentState {
-	fmt.Printf("newOpenSentState\n")
 	return &openSentState{
 		fsm: fsm,
 	}
