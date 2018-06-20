@@ -26,6 +26,7 @@ func newUpdateSenderAddPath(fsm *FSM2) *UpdateSenderAddPath {
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 	pathAttrs, err := pathAttribues(p, u.fsm)
+
 	if err != nil {
 		log.Errorf("Unable to create BGP Update: %v", err)
 		return nil

@@ -7,12 +7,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-<<<<<<< HEAD
 	"github.com/bio-routing/bio-rd/routingtable"
 	log "github.com/sirupsen/logrus"
-=======
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
->>>>>>> Replaced FSM
 )
 
 const (

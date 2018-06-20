@@ -114,7 +114,11 @@ func decodeNotificationMsg(buf *bytes.Buffer) (*BGPNotification, error) {
 			return invalidErrCode(msg)
 		}
 	case Cease:
+<<<<<<< HEAD
 		if !(msg.ErrorSubcode == 0 || msg.ErrorSubcode == AdministrativeShutdown || msg.ErrorSubcode == AdministrativeReset) {
+=======
+		if msg.ErrorSubcode == 0 || msg.ErrorSubcode > 8 {
+>>>>>>> 453a853eeb0507c5e83706d9e3f251adba5b2484
 			return invalidErrCode(msg)
 		}
 	default:

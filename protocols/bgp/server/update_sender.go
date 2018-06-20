@@ -15,8 +15,12 @@ import (
 // UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
 	routingtable.ClientManager
+<<<<<<< HEAD
 	fsm  *FSM2
 	iBGP bool
+=======
+	fsm *FSM2
+>>>>>>> 453a853eeb0507c5e83706d9e3f251adba5b2484
 }
 
 func newUpdateSender(fsm *FSM2) *UpdateSender {
@@ -29,10 +33,14 @@ func newUpdateSender(fsm *FSM2) *UpdateSender {
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	pathAttrs, err := pathAttribues(p, u.fsm)
 =======
 	asPathPA, err := packet.ParseASPathStr(fmt.Sprintf("%d %s", u.fsm.peer.localASN, p.BGPPath.ASPath))
 >>>>>>> Replaced FSM
+=======
+	asPathPA, err := packet.ParseASPathStr(fmt.Sprintf("%d %s", u.fsm.peer.localASN, p.BGPPath.ASPath))
+>>>>>>> 453a853eeb0507c5e83706d9e3f251adba5b2484
 	if err != nil {
 		log.Errorf("Unable to create BGP Update: %v", err)
 		return nil
