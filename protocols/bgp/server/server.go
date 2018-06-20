@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+<<<<<<< HEAD
 	"github.com/bio-routing/bio-rd/routingtable"
 	log "github.com/sirupsen/logrus"
+=======
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+>>>>>>> Replaced FSM
 )
 
 const (
@@ -61,7 +64,9 @@ func (b *BGPServer) Start(c *config.Global) error {
 
 func (b *BGPServer) incomingConnectionWorker() {
 	for {
-		c := <-b.acceptCh
+		/*c := <-b.acceptCh
+		fmt.Printf("Incoming connection!\n")
+		fmt.Printf("Connection from: %v\n", c.RemoteAddr())
 
 		peerAddr := strings.Split(c.RemoteAddr().String(), ":")[0]
 		if _, ok := b.peers[peerAddr]; !ok {
@@ -77,8 +82,19 @@ func (b *BGPServer) incomingConnectionWorker() {
 		}).Info("Incoming TCP connection")
 
 		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
-		b.peers[peerAddr].fsm.conCh <- c
-		log.Debug("Sending done")
+		fmt.Printf("Initiating new ActiveFSM due to incoming connection from peer %s\n", peerAddr)
+		fsm := NewActiveFSM2(b.peers[peerAddr])
+		fsm.state = newActiveState(fsm)
+		fsm.startConnectRetryTimer()
+
+		fmt.Printf("Getting lock...\n")
+		b.peers[peerAddr].fsmsMu.Lock()
+		b.peers[peerAddr].fsms = append(b.peers[peerAddr].fsms, fsm)
+		fmt.Printf("Releasing lock...\n")
+		b.peers[peerAddr].fsmsMu.Unlock()
+
+		go fsm.run()
+		fsm.conCh <- c*/
 	}
 }
 
@@ -87,7 +103,7 @@ func (b *BGPServer) AddPeer(c config.Peer, rib routingtable.RouteTableClient) er
 		return fmt.Errorf("32bit ASNs are not supported yet")
 	}
 
-	peer, err := NewPeer(c, rib)
+	peer, err := NewPeer(c, rib, b)
 	if err != nil {
 		return err
 	}
@@ -100,7 +116,7 @@ func (b *BGPServer) AddPeer(c config.Peer, rib routingtable.RouteTableClient) er
 	return nil
 }
 
-func recvMsg(c *net.TCPConn) (msg []byte, err error) {
+func recvMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, packet.MaxLen)
 	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
 	if err != nil {

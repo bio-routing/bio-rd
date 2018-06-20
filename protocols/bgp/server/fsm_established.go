@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	tnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -24,7 +23,7 @@ func newEstablishedState(fsm *FSM2) *establishedState {
 	}
 }
 
-func (s *establishedState) run() (state, string) {
+func (s establishedState) run() (state, string) {
 	if !s.fsm.ribsInitialized {
 		s.init()
 	}
@@ -32,13 +31,16 @@ func (s *establishedState) run() (state, string) {
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
-			if e == ManualStop {
+			switch e {
+			case ManualStop:
 				return s.manualStop()
-			}
-			if e == AutomaticStop {
+			case AutomaticStop:
 				return s.automaticStop()
+			case Cease:
+				return s.cease()
+			default:
+				continue
 			}
-			continue
 		case <-s.fsm.holdTimer.C:
 			return s.holdTimerExpired()
 		case <-s.fsm.keepaliveTimer.C:
@@ -55,7 +57,7 @@ func (s *establishedState) init() {
 
 	n := &routingtable.Neighbor{
 		Type:    route.BGPPathType,
-		Address: tnet.IPv4ToUint32(s.fsm.remote),
+		Address: tnet.IPv4ToUint32(s.fsm.peer.addr),
 	}
 
 	clientOptions := routingtable.ClientOptions{}
@@ -99,6 +101,13 @@ func (s *establishedState) automaticStop() (state, string) {
 	return newIdleState(s.fsm), "Automatic stop event"
 }
 
+func (s *establishedState) cease() (state, string) {
+	s.fsm.sendNotification(packet.Cease, 0)
+	s.uninit()
+	s.fsm.con.Close()
+	return newCeaseState(), "Cease"
+}
+
 func (s *establishedState) holdTimerExpired() (state, string) {
 	s.fsm.sendNotification(packet.HoldTimeExpired, 0)
 	s.uninit()
@@ -117,14 +126,13 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 		return newIdleState(s.fsm), fmt.Sprintf("Failed to send keepalive: %v", err)
 	}
 
-	s.fsm.keepaliveTimer.Reset(time.Second * s.fsm.keepaliveTime)
+	s.fsm.keepaliveTimer.Reset(s.fsm.keepaliveTime)
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) msgReceived(recvMsg msgRecvMsg) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
+func (s *establishedState) msgReceived(data []byte) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data))
 	if err != nil {
-		fmt.Printf("Failed to decode BGP message: %v\n", recvMsg.msg)
 		switch bgperr := err.(type) {
 		case packet.BGPError:
 			s.fsm.sendNotification(bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -139,6 +147,8 @@ func (s *establishedState) msgReceived(recvMsg msgRecvMsg) (state, string) {
 		return s.notification()
 	case packet.UpdateMsg:
 		return s.update(msg)
+	case packet.KeepaliveMsg:
+		return s.keepaliveReceived()
 	default:
 		return s.unexpectedMessage()
 	}
@@ -154,7 +164,7 @@ func (s *establishedState) notification() (state, string) {
 
 func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	if s.fsm.holdTime != 0 {
-		s.fsm.holdTimer.Reset(time.Second * s.fsm.holdTime)
+		s.fsm.holdTimer.Reset(s.fsm.holdTime)
 	}
 
 	u := msg.Body.(*packet.BGPUpdate)
@@ -167,7 +177,6 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 func (s *establishedState) withdraws(u *packet.BGPUpdate) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
 		pfx := tnet.NewPfx(r.IP, r.Pfxlen)
-		fmt.Printf("LPM: Removing prefix %s\n", pfx.String())
 		s.fsm.adjRIBIn.RemovePath(pfx, nil)
 	}
 }
@@ -175,17 +184,15 @@ func (s *establishedState) withdraws(u *packet.BGPUpdate) {
 func (s *establishedState) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
 		pfx := tnet.NewPfx(r.IP, r.Pfxlen)
-		fmt.Printf("LPM: Adding prefix %s\n", pfx.String())
 
 		path := &route.Path{
 			Type: route.BGPPathType,
 			BGPPath: &route.BGPPath{
-				Source: tnet.IPv4ToUint32(s.fsm.remote),
+				Source: tnet.IPv4ToUint32(s.fsm.peer.addr),
 			},
 		}
 
 		for pa := u.PathAttributes; pa != nil; pa = pa.Next {
-			fmt.Printf("TypeCode: %d\n", pa.TypeCode)
 			switch pa.TypeCode {
 			case packet.OriginAttr:
 				path.BGPPath.Origin = pa.Value.(uint8)
@@ -203,6 +210,13 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 		}
 		s.fsm.adjRIBIn.AddPath(pfx, path)
 	}
+}
+
+func (s *establishedState) keepaliveReceived() (state, string) {
+	if s.fsm.holdTime != 0 {
+		s.fsm.holdTimer.Reset(s.fsm.holdTime)
+	}
+	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
 func (s *establishedState) unexpectedMessage() (state, string) {

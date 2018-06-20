@@ -14,12 +14,14 @@ type openSentState struct {
 }
 
 func newOpenSentState(fsm *FSM2) *openSentState {
+	fmt.Printf("newOpenSentState\n")
 	return &openSentState{
 		fsm: fsm,
 	}
 }
 
-func (s *openSentState) run() (state, string) {
+func (s openSentState) run() (state, string) {
+	go s.fsm.msgReceiver()
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -28,6 +30,8 @@ func (s *openSentState) run() (state, string) {
 				return s.manualStop()
 			case AutomaticStop:
 				return s.automaticStop()
+			case Cease:
+				return s.cease()
 			default:
 				continue
 			}
@@ -55,6 +59,12 @@ func (s *openSentState) automaticStop() (state, string) {
 	return newIdleState(s.fsm), "Automatic stop event"
 }
 
+func (s *openSentState) cease() (state, string) {
+	s.fsm.sendNotification(packet.Cease, 0)
+	s.fsm.con.Close()
+	return newCeaseState(), "Cease"
+}
+
 func (s *openSentState) holdTimerExpired() (state, string) {
 	s.fsm.sendNotification(packet.HoldTimeExpired, 0)
 	stopTimer(s.fsm.connectRetryTimer)
@@ -63,8 +73,8 @@ func (s *openSentState) holdTimerExpired() (state, string) {
 	return newIdleState(s.fsm), "Holdtimer expired"
 }
 
-func (s *openSentState) msgReceived(recvMsg msgRecvMsg) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
+func (s *openSentState) msgReceived(data []byte) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data))
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -97,16 +107,19 @@ func (s *openSentState) openMsgReceived(msg *packet.BGPMessage) (state, string) 
 	openMsg := msg.Body.(*packet.BGPOpen)
 	s.fsm.neighborID = openMsg.BGPIdentifier
 	stopTimer(s.fsm.connectRetryTimer)
+	s.fsm.peer.collisionHandling(s.fsm)
 	err := s.fsm.sendKeepalive()
 	if err != nil {
 		return s.tcpFailure()
 	}
 
-	s.fsm.holdTime = time.Duration(math.Min(float64(s.fsm.holdTimeConfigured), float64(openMsg.HoldTime)))
+	s.fsm.holdTime = time.Duration(math.Min(float64(s.fsm.peer.holdTime), float64(time.Duration(openMsg.HoldTime)*time.Second)))
 	if s.fsm.holdTime != 0 {
-		s.fsm.holdTimer.Reset(time.Second * s.fsm.holdTime)
+		if !s.fsm.holdTimer.Reset(s.fsm.holdTime) {
+			<-s.fsm.holdTimer.C
+		}
 		s.fsm.keepaliveTime = s.fsm.holdTime / 3
-		s.fsm.keepaliveTimer.Reset(time.Second * s.fsm.keepaliveTime)
+		s.fsm.keepaliveTimer = time.NewTimer(s.fsm.keepaliveTime)
 	}
 
 	s.processOpenOptions(openMsg.OptParams)

@@ -2,7 +2,6 @@ package config
 
 import (
 	"net"
-
 	"time"
 
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -10,8 +9,9 @@ import (
 
 type Peer struct {
 	AdminEnabled      bool
-	KeepAlive         uint16
-	HoldTimer         uint16
+	ReconnectInterval time.Duration
+	KeepAlive         time.Duration
+	HoldTimer         time.Duration
 	LocalAddress      net.IP
 	PeerAddress       net.IP
 	LocalAS           uint32
@@ -20,5 +20,4 @@ type Peer struct {
 	RouterID          uint32
 	AddPathSend       routingtable.ClientOptions
 	AddPathRecv       bool
-	ReconnectInterval time.Duration
 }

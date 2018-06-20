@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 )
@@ -18,14 +17,18 @@ func newOpenConfirmState(fsm *FSM2) *openConfirmState {
 	}
 }
 
-func (s *openConfirmState) run() (state, string) {
+func (s openConfirmState) run() (state, string) {
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
-			if e == ManualStop {
+			switch e {
+			case ManualStop:
 				return s.manualStop()
+			case Cease:
+				return s.cease()
+			default:
+				continue
 			}
-			continue
 		case <-s.fsm.holdTimer.C:
 			return s.holdTimerExpired()
 		case <-s.fsm.keepaliveTimer.C:
@@ -52,6 +55,12 @@ func (s *openConfirmState) automaticStop() (state, string) {
 	return newIdleState(s.fsm), "Automatic stop event"
 }
 
+func (s *openConfirmState) cease() (state, string) {
+	s.fsm.sendNotification(packet.Cease, 0)
+	s.fsm.con.Close()
+	return newCeaseState(), "Cease"
+}
+
 func (s *openConfirmState) holdTimerExpired() (state, string) {
 	s.fsm.sendNotification(packet.HoldTimeExpired, 0)
 	stopTimer(s.fsm.connectRetryTimer)
@@ -68,12 +77,12 @@ func (s *openConfirmState) keepaliveTimerExpired() (state, string) {
 		s.fsm.connectRetryCounter++
 		return newIdleState(s.fsm), fmt.Sprintf("Failed to send keepalive: %v", err)
 	}
-	s.fsm.keepaliveTimer.Reset(time.Second * s.fsm.keepaliveTime)
+	s.fsm.keepaliveTimer.Reset(s.fsm.keepaliveTime)
 	return newOpenConfirmState(s.fsm), s.fsm.reason
 }
 
-func (s *openConfirmState) msgReceived(recvMsg msgRecvMsg) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(recvMsg.msg))
+func (s *openConfirmState) msgReceived(data []byte) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data))
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -106,7 +115,7 @@ func (s *openConfirmState) notification(msg *packet.BGPMessage) (state, string) 
 }
 
 func (s *openConfirmState) keepaliveReceived() (state, string) {
-	s.fsm.holdTimer.Reset(time.Second * s.fsm.holdTime)
+	s.fsm.holdTimer.Reset(s.fsm.holdTime)
 	return newEstablishedState(s.fsm), "Received KEEPALIVE"
 }
 

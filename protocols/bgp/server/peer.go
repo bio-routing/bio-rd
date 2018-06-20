@@ -2,41 +2,105 @@ package server
 
 import (
 	"net"
+	"sync"
+	"time"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
 	"time"
 )
 
 type Peer struct {
+	server            *BGPServer
 	addr              net.IP
-	asn               uint32
+	peerASN           uint32
 	localASN          uint32
-	fsm               *FSM
-	rib               routingtable.RouteTableClient
+	fsms              []*FSM2
+	fsmsMu            sync.Mutex
+	rib               *locRIB.LocRIB
 	routerID          uint32
 	addPathSend       routingtable.ClientOptions
 	addPathRecv       bool
-	optOpenParams     []packet.OptParam
 	reconnectInterval time.Duration
+	keepaliveTime     time.Duration
+	holdTime          time.Duration
+	optOpenParams     []packet.OptParam
+	importFilter      *filter.Filter
+	exportFilter      *filter.Filter
+}
+
+func (p *Peer) collisionHandling(callingFSM *FSM2) bool {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+
+	for _, fsm := range p.fsms {
+		if callingFSM == fsm {
+			continue
+		}
+
+		fsm.stateMu.RLock()
+		isEstablished := isEstablishedState(fsm.state)
+		isOpenConfirm := isOpenConfirmState(fsm.state)
+		fsm.stateMu.RUnlock()
+
+		if isEstablished {
+			return true
+		}
+
+		if !isOpenConfirm {
+			continue
+		}
+
+		if p.routerID < callingFSM.neighborID {
+			fsm.cease()
+		} else {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isOpenConfirmState(s state) bool {
+	switch s.(type) {
+	case openConfirmState:
+		return true
+	}
+
+	return false
+}
+
+func isEstablishedState(s state) bool {
+	switch s.(type) {
+	case establishedState:
+		return true
+	}
+
+	return false
 }
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func NewPeer(c config.Peer, rib routingtable.RouteTableClient) (*Peer, error) {
+func NewPeer(c config.Peer, rib *locRIB.LocRIB, server *BGPServer) (*Peer, error) {
 	p := &Peer{
+		server:            server,
 		addr:              c.PeerAddress,
-		asn:               c.PeerAS,
+		peerASN:           c.PeerAS,
 		localASN:          c.LocalAS,
+		fsms:              make([]*FSM2, 0),
 		rib:               rib,
 		addPathSend:       c.AddPathSend,
 		addPathRecv:       c.AddPathRecv,
-		optOpenParams:     make([]packet.OptParam, 0),
 		reconnectInterval: c.ReconnectInterval,
+		keepaliveTime:     c.KeepAlive,
+		holdTime:          c.HoldTimer,
+		optOpenParams:     make([]packet.OptParam, 0),
 	}
-	p.fsm = NewFSM(p, c, rib)
+	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
 	caps := make([]packet.Capability, 0)
 
@@ -74,24 +138,6 @@ func (p *Peer) GetAddr() net.IP {
 	return p.addr
 }
 
-// GetASN returns the configured AS number of the peer
-func (p *Peer) GetASN() uint32 {
-	return p.asn
-}
-
-// Start the peers fsm. It starts from the Idle state and will get an ManualStart event. To trigger
-// reconnects if the fsm falls back into the Idle state, every reconnectInterval a ManualStart event is send.
-// The default value for reconnectInterval is 30 seconds.
 func (p *Peer) Start() {
-	p.fsm.start()
-	if p.reconnectInterval == 0 {
-		p.reconnectInterval = 30 * time.Second
-	}
-	t := time.Tick(p.reconnectInterval)
-	go func() {
-		for {
-			<-t
-			p.fsm.activate()
-		}
-	}()
+	p.fsms[0].start()
 }
