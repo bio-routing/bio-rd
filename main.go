@@ -46,11 +46,9 @@ func main() {
 		AddPathSend: routingtable.ClientOptions{
 			MaxPaths: 10,
 		},
-		ExportFilter: filter.NewAcceptAllFilter(),
 		ImportFilter: filter.NewDrainFilter(),
+		ExportFilter: filter.NewAcceptAllFilter(),
 	}, rib)
-
-	//time.Sleep(time.Second * 15)
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
@@ -67,8 +65,8 @@ func main() {
 			MaxPaths: 10,
 		},
 		AddPathRecv:  true,
-		ImportFilter: filter.NewDrainFilter(),
-		ExportFilter: filter.NewAcceptAllFilter(),
+		ImportFilter: filter.NewAcceptAllFilter(),
+		ExportFilter: filter.NewDrainFilter(),
 	}, rib)
 
 	go func() {
