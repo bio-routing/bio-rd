@@ -11,6 +11,7 @@ import (
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
@@ -45,6 +46,8 @@ func main() {
 		AddPathSend: routingtable.ClientOptions{
 			MaxPaths: 10,
 		},
+		ExportFilter: filter.NewAcceptAllFilter(),
+		ImportFilter: filter.NewDrainFilter(),
 	}, rib)
 
 	//time.Sleep(time.Second * 15)
@@ -63,7 +66,9 @@ func main() {
 		AddPathSend: routingtable.ClientOptions{
 			MaxPaths: 10,
 		},
-		AddPathRecv: true,
+		AddPathRecv:  true,
+		ImportFilter: filter.NewDrainFilter(),
+		ExportFilter: filter.NewAcceptAllFilter(),
 	}, rib)
 
 	go func() {
