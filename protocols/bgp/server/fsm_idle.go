@@ -1,5 +1,10 @@
 package server
 
+import (
+	"fmt"
+	"time"
+)
+
 type idleState struct {
 	fsm            *FSM2
 	newStateReason string
@@ -11,35 +16,41 @@ func newIdleState(fsm *FSM2) *idleState {
 	}
 }
 
-func (s *idleState) run() (state, string) {
+func (s idleState) run() (state, string) {
+	if s.fsm.peer.reconnectInterval != 0 {
+		time.Sleep(s.fsm.peer.reconnectInterval)
+		go s.fsm.activate()
+	}
 	for {
-		switch <-s.fsm.eventCh {
+		event := <-s.fsm.eventCh
+		fmt.Printf("Event: %d\n", event)
+		switch event {
 		case ManualStart:
-			s.manualStart()
+			return s.manualStart()
 		case AutomaticStart:
-			s.automaticStart()
+			return s.automaticStart()
+		case Cease:
+			return newCeaseState(), "Cease"
 		default:
 			continue
 		}
-
-		return newConnectState(s.fsm), s.newStateReason
 	}
 }
 
-func (s *idleState) manualStart() {
+func (s *idleState) manualStart() (state, string) {
 	s.newStateReason = "Received ManualStart event"
-	s.start()
+	return s.start()
 }
 
-func (s *idleState) automaticStart() {
+func (s *idleState) automaticStart() (state, string) {
 	s.newStateReason = "Received AutomaticStart event"
-	s.start()
+	return s.start()
 }
 
-func (s *idleState) start() {
+func (s *idleState) start() (state, string) {
 	s.fsm.resetConnectRetryCounter()
 	s.fsm.startConnectRetryTimer()
-	if s.fsm.active {
-		s.fsm.tcpConnect()
-	}
+	go s.fsm.tcpConnect()
+
+	return newConnectState(s.fsm), s.newStateReason
 }

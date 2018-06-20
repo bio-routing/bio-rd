@@ -25,7 +25,7 @@ func newUpdateSenderAddPath(fsm *FSM2) *UpdateSenderAddPath {
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
-	asPathPA, err := packet.ParseASPathStr(fmt.Sprintf("%d %s", u.fsm.localASN, p.BGPPath.ASPath))
+	asPathPA, err := packet.ParseASPathStr(fmt.Sprintf("%d %s", u.fsm.peer.localASN, p.BGPPath.ASPath))
 	if err != nil {
 		return fmt.Errorf("Unable to parse AS path: %v", err)
 	}

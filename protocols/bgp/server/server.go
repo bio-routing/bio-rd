@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -61,7 +59,7 @@ func (b *BGPServer) Start(c *config.Global) error {
 
 func (b *BGPServer) incomingConnectionWorker() {
 	for {
-		c := <-b.acceptCh
+		/*c := <-b.acceptCh
 		fmt.Printf("Incoming connection!\n")
 		fmt.Printf("Connection from: %v\n", c.RemoteAddr())
 
@@ -78,9 +76,19 @@ func (b *BGPServer) incomingConnectionWorker() {
 			"source": c.RemoteAddr(),
 		}).Info("Incoming TCP connection")
 
-		fmt.Printf("DEBUG: Sending incoming TCP connection to fsm for peer %s\n", peerAddr)
-		b.peers[peerAddr].fsm.conCh <- c
-		fmt.Printf("DEBUG: Sending done\n")
+		fmt.Printf("Initiating new ActiveFSM due to incoming connection from peer %s\n", peerAddr)
+		fsm := NewActiveFSM2(b.peers[peerAddr])
+		fsm.state = newActiveState(fsm)
+		fsm.startConnectRetryTimer()
+
+		fmt.Printf("Getting lock...\n")
+		b.peers[peerAddr].fsmsMu.Lock()
+		b.peers[peerAddr].fsms = append(b.peers[peerAddr].fsms, fsm)
+		fmt.Printf("Releasing lock...\n")
+		b.peers[peerAddr].fsmsMu.Unlock()
+
+		go fsm.run()
+		fsm.conCh <- c*/
 	}
 }
 
@@ -89,7 +97,7 @@ func (b *BGPServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
 		return fmt.Errorf("32bit ASNs are not supported yet")
 	}
 
-	peer, err := NewPeer(c, rib)
+	peer, err := NewPeer(c, rib, b)
 	if err != nil {
 		return err
 	}
@@ -102,7 +110,7 @@ func (b *BGPServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
 	return nil
 }
 
-func recvMsg(c *net.TCPConn) (msg []byte, err error) {
+func recvMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, packet.MaxLen)
 	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
 	if err != nil {

@@ -16,36 +16,41 @@ func newConnectState(fsm *FSM2) *connectState {
 	}
 }
 
-func (s *connectState) run() (state, string) {
+func (s connectState) run() (state, string) {
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
-			if e == ManualStop {
+			switch e {
+			case ManualStop:
 				return s.manualStop()
+			case Cease:
+				return newCeaseState(), "Cease"
+			default:
+				continue
 			}
-			continue
 		case <-s.fsm.connectRetryTimer.C:
 			s.connectRetryTimerExpired()
 			continue
 		case c := <-s.fsm.conCh:
-			s.connectionSuccess(c)
+			return s.connectionSuccess(c)
 		}
 	}
 }
 
 func (s *connectState) connectionSuccess(c net.Conn) (state, string) {
+	fmt.Printf("GOT A TCP CONNECTION!\n")
 	s.fsm.con = c
 	stopTimer(s.fsm.connectRetryTimer)
 	err := s.fsm.sendOpen()
 	if err != nil {
 		return newIdleState(s.fsm), fmt.Sprintf("Unable to send open: %v", err)
 	}
-
 	s.fsm.holdTimer = time.NewTimer(time.Minute * 4)
 	return newOpenSentState(s.fsm), "TCP connection succeeded"
 }
 
 func (s *connectState) connectRetryTimerExpired() {
+	fmt.Printf("Connect retry timer expired\n")
 	s.fsm.resetConnectRetryTimer()
 	s.fsm.tcpConnect()
 }
@@ -54,8 +59,4 @@ func (s *connectState) manualStop() (state, string) {
 	s.fsm.resetConnectRetryCounter()
 	stopTimer(s.fsm.connectRetryTimer)
 	return newIdleState(s.fsm), "Manual stop event"
-}
-
-func (s *connectState) cease() {
-
 }

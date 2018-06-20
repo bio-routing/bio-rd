@@ -2,35 +2,102 @@ package server
 
 import (
 	"net"
+	"sync"
+	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
 	"github.com/bio-routing/bio-rd/config"
 )
 
 type Peer struct {
-	addr          net.IP
-	asn           uint32
-	fsm           *FSM
-	rib           *locRIB.LocRIB
-	routerID      uint32
-	addPathSend   routingtable.ClientOptions
-	addPathRecv   bool
-	optOpenParams []packet.OptParam
+	server            *BGPServer
+	addr              net.IP
+	peerASN           uint32
+	localASN          uint32
+	fsms              []*FSM2
+	fsmsMu            sync.Mutex
+	rib               *locRIB.LocRIB
+	routerID          uint32
+	addPathSend       routingtable.ClientOptions
+	addPathRecv       bool
+	reconnectInterval time.Duration
+	keepaliveTime     time.Duration
+	holdTime          time.Duration
+	optOpenParams     []packet.OptParam
+	importFilter      *filter.Filter
+	exportFilter      *filter.Filter
 }
 
-func NewPeer(c config.Peer, rib *locRIB.LocRIB) (*Peer, error) {
-	p := &Peer{
-		addr:          c.PeerAddress,
-		asn:           c.PeerAS,
-		rib:           rib,
-		addPathSend:   c.AddPathSend,
-		addPathRecv:   c.AddPathRecv,
-		optOpenParams: make([]packet.OptParam, 0),
+func (p *Peer) collisionHandling(callingFSM *FSM2) bool {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+
+	for _, fsm := range p.fsms {
+		if callingFSM == fsm {
+			continue
+		}
+
+		fsm.stateMu.RLock()
+		isEstablished := isEstablishedState(fsm.state)
+		isOpenConfirm := isOpenConfirmState(fsm.state)
+		fsm.stateMu.RUnlock()
+
+		if isEstablished {
+			return true
+		}
+
+		if !isOpenConfirm {
+			continue
+		}
+
+		if p.routerID < callingFSM.neighborID {
+			fsm.cease()
+		} else {
+			return true
+		}
 	}
-	p.fsm = NewFSM(p, c, rib)
+
+	return false
+}
+
+func isOpenConfirmState(s state) bool {
+	switch s.(type) {
+	case openConfirmState:
+		return true
+	}
+
+	return false
+}
+
+func isEstablishedState(s state) bool {
+	switch s.(type) {
+	case establishedState:
+		return true
+	}
+
+	return false
+}
+
+func NewPeer(c config.Peer, rib *locRIB.LocRIB, server *BGPServer) (*Peer, error) {
+	p := &Peer{
+		server:            server,
+		addr:              c.PeerAddress,
+		peerASN:           c.PeerAS,
+		localASN:          c.LocalAS,
+		fsms:              make([]*FSM2, 0),
+		rib:               rib,
+		addPathSend:       c.AddPathSend,
+		addPathRecv:       c.AddPathRecv,
+		reconnectInterval: c.ReconnectInterval,
+		keepaliveTime:     c.KeepAlive,
+		holdTime:          c.HoldTimer,
+		optOpenParams:     make([]packet.OptParam, 0),
+	}
+	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
 	caps := make([]packet.Capability, 0)
 
@@ -67,11 +134,6 @@ func (p *Peer) GetAddr() net.IP {
 	return p.addr
 }
 
-func (p *Peer) GetASN() uint32 {
-	return p.asn
-}
-
 func (p *Peer) Start() {
-	p.fsm.start()
-	p.fsm.activate()
+	p.fsms[0].start()
 }

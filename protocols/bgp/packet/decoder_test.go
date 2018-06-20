@@ -227,6 +227,26 @@ func TestDecode(t *testing.T) {
 			},
 			wantFail: true,
 		},
+		{
+			testNum: 8,
+			input: []byte{
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 21,
+				3,
+				6, 4,
+			},
+			wantFail: false,
+			expected: &BGPMessage{
+				Header: &BGPHeader{
+					Length: 21,
+					Type:   3,
+				},
+				Body: &BGPNotification{
+					ErrorCode:    6,
+					ErrorSubcode: 4,
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -252,7 +272,7 @@ func TestDecode(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expected, msg)
+		assert.Equalf(t, test.expected, msg, "Test: %d", test.testNum)
 	}
 }
 
