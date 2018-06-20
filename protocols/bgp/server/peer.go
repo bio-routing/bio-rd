@@ -94,7 +94,7 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 		addPathRecv:       c.AddPathRecv,
 		reconnectInterval: c.ReconnectInterval,
 		keepaliveTime:     c.KeepAlive,
-		holdTime:          c.HoldTimer,
+		holdTime:          c.HoldTime,
 		optOpenParams:     make([]packet.OptParam, 0),
 	}
 	p.fsms = append(p.fsms, NewActiveFSM2(p))

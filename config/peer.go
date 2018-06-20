@@ -11,7 +11,7 @@ type Peer struct {
 	AdminEnabled      bool
 	ReconnectInterval time.Duration
 	KeepAlive         time.Duration
-	HoldTimer         time.Duration
+	HoldTime          time.Duration
 	LocalAddress      net.IP
 	PeerAddress       net.IP
 	LocalAS           uint32
