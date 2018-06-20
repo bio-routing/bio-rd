@@ -33,7 +33,7 @@ func TestParseLargeCommunityString(t *testing.T) {
 			name:     "too short community",
 			in:       "(1,2)",
 			expected: LargeCommunity{},
-			err:      errors.New("malformed large community string (1,2)"),
+			err:      errors.New("can not parse large community 1,2"),
 		},
 		{
 			name: "missing parentheses large community",
@@ -49,13 +49,13 @@ func TestParseLargeCommunityString(t *testing.T) {
 			name:     "malformed large community",
 			in:       "[1,2,3]",
 			expected: LargeCommunity{},
-			err:      errors.New("malformed large community string [1,2,3]"),
+			err:      &strconv.NumError{Func: "ParseUint", Num: "[1", Err: strconv.ErrSyntax},
 		},
 		{
 			name:     "missing digit",
 			in:       "(,2,3)",
 			expected: LargeCommunity{},
-			err:      errors.New("malformed large community string (,2,3)"),
+			err:      &strconv.NumError{Func: "ParseUint", Num: "", Err: strconv.ErrSyntax},
 		},
 		{
 			name:     "too big global administrator",
@@ -79,7 +79,12 @@ func TestParseLargeCommunityString(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			com, err := ParseLargeCommunityString(test.in)
-			assert.Equal(t, test.err, err)
+			if test.err != nil {
+				assert.EqualError(t, err, test.err.Error())
+			} else {
+				assert.Nil(t, err)
+			}
+
 			assert.Equal(t, test.expected, com)
 		})
 	}
