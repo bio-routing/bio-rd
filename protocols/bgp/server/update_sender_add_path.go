@@ -19,13 +19,14 @@ type UpdateSenderAddPath struct {
 func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
 	return &UpdateSenderAddPath{
 		fsm:  fsm,
-		iBGP: fsm.localASN == fsm.remoteASN,
+		iBGP: fsm.peer.localASN == fsm.peer.peerASN,
 	}
 }
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 	pathAttrs, err := pathAttribues(p, u.fsm)
+
 	if err != nil {
 		log.Errorf("Unable to create BGP Update: %v", err)
 		return nil
@@ -49,6 +50,6 @@ func (u *UpdateSenderAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
 
 // UpdateNewClient does nothing
 func (u *UpdateSenderAddPath) UpdateNewClient(client routingtable.RouteTableClient) error {
-	log.Warningf("BGP Update Sender: RemovePath not implemented")
+	log.Warningf("BGP Update Sender: UpdateNewClient not implemented")
 	return nil
 }

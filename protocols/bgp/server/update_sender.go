@@ -22,7 +22,7 @@ type UpdateSender struct {
 func newUpdateSender(fsm *FSM) *UpdateSender {
 	return &UpdateSender{
 		fsm:  fsm,
-		iBGP: fsm.localASN == fsm.remoteASN,
+		iBGP: fsm.peer.localASN == fsm.peer.peerASN,
 	}
 }
 

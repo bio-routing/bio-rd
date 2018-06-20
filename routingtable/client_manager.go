@@ -57,6 +57,7 @@ func (c *ClientManager) RegisterWithOptions(client RouteTableClient, opt ClientO
 	c.mu.Lock()
 	c.clients[client] = opt
 	c.mu.Unlock()
+
 	c.master.UpdateNewClient(client)
 }
 

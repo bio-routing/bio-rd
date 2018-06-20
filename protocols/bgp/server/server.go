@@ -77,8 +77,16 @@ func (b *BGPServer) incomingConnectionWorker() {
 		}).Info("Incoming TCP connection")
 
 		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
-		b.peers[peerAddr].fsm.conCh <- c
-		log.Debug("Sending done")
+		fsm := NewActiveFSM2(b.peers[peerAddr])
+		fsm.state = newActiveState(fsm)
+		fsm.startConnectRetryTimer()
+
+		b.peers[peerAddr].fsmsMu.Lock()
+		b.peers[peerAddr].fsms = append(b.peers[peerAddr].fsms, fsm)
+		b.peers[peerAddr].fsmsMu.Unlock()
+
+		go fsm.run()
+		fsm.conCh <- c
 	}
 }
 
@@ -87,7 +95,7 @@ func (b *BGPServer) AddPeer(c config.Peer, rib routingtable.RouteTableClient) er
 		return fmt.Errorf("32bit ASNs are not supported yet")
 	}
 
-	peer, err := NewPeer(c, rib)
+	peer, err := NewPeer(c, rib, b)
 	if err != nil {
 		return err
 	}
@@ -100,7 +108,7 @@ func (b *BGPServer) AddPeer(c config.Peer, rib routingtable.RouteTableClient) er
 	return nil
 }
 
-func recvMsg(c *net.TCPConn) (msg []byte, err error) {
+func recvMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, packet.MaxLen)
 	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
 	if err != nil {
