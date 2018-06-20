@@ -10,10 +10,10 @@ import (
 )
 
 type openSentState struct {
-	fsm *FSM2
+	fsm *FSM
 }
 
-func newOpenSentState(fsm *FSM2) *openSentState {
+func newOpenSentState(fsm *FSM) *openSentState {
 	return &openSentState{
 		fsm: fsm,
 	}

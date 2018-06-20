@@ -7,10 +7,10 @@ import (
 )
 
 type connectState struct {
-	fsm *FSM2
+	fsm *FSM
 }
 
-func newConnectState(fsm *FSM2) *connectState {
+func newConnectState(fsm *FSM) *connectState {
 	return &connectState{
 		fsm: fsm,
 	}

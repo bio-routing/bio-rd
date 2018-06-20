@@ -26,8 +26,8 @@ type state interface {
 	run() (state, string)
 }
 
-// FSM2 implements the BGP finite state machine (RFC4271)
-type FSM2 struct {
+// FSM implements the BGP finite state machine (RFC4271)
+type FSM struct {
 	peer        *Peer
 	eventCh     chan int
 	con         net.Conn
@@ -72,7 +72,7 @@ type FSM2 struct {
 }
 
 // NewPassiveFSM2 initiates a new passive FSM
-func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM2 {
+func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM {
 	fsm := newFSM2(peer)
 	fsm.con = con
 	fsm.state = newIdleState(fsm)
@@ -80,15 +80,15 @@ func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM2 {
 }
 
 // NewActiveFSM2 initiates a new passive FSM
-func NewActiveFSM2(peer *Peer) *FSM2 {
+func NewActiveFSM2(peer *Peer) *FSM {
 	fsm := newFSM2(peer)
 	fsm.active = true
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-func newFSM2(peer *Peer) *FSM2 {
-	return &FSM2{
+func newFSM2(peer *Peer) *FSM {
+	return &FSM{
 		connectRetryTime: time.Minute,
 		peer:             peer,
 		eventCh:          make(chan int),
@@ -102,17 +102,17 @@ func newFSM2(peer *Peer) *FSM2 {
 	}
 }
 
-func (fsm *FSM2) start() {
+func (fsm *FSM) start() {
 	go fsm.run()
 	go fsm.tcpConnector()
 	return
 }
 
-func (fsm *FSM2) activate() {
+func (fsm *FSM) activate() {
 	fsm.eventCh <- AutomaticStart
 }
 
-func (fsm *FSM2) run() {
+func (fsm *FSM) run() {
 	next, reason := fsm.state.run()
 	for {
 		newState := stateName(next)
@@ -160,11 +160,11 @@ func stateName(s state) string {
 	}
 }
 
-func (fsm *FSM2) cease() {
+func (fsm *FSM) cease() {
 	fsm.eventCh <- Cease
 }
 
-func (fsm *FSM2) tcpConnector() error {
+func (fsm *FSM) tcpConnector() error {
 	for {
 		select {
 		case <-fsm.initiateCon:
@@ -189,11 +189,11 @@ func (fsm *FSM2) tcpConnector() error {
 	}
 }
 
-func (fsm *FSM2) tcpConnect() {
+func (fsm *FSM) tcpConnect() {
 	fsm.initiateCon <- struct{}{}
 }
 
-func (fsm *FSM2) msgReceiver() error {
+func (fsm *FSM) msgReceiver() error {
 	for {
 		msg, err := recvMsg(fsm.con)
 		if err != nil {
@@ -204,21 +204,21 @@ func (fsm *FSM2) msgReceiver() error {
 	}
 }
 
-func (fsm *FSM2) startConnectRetryTimer() {
+func (fsm *FSM) startConnectRetryTimer() {
 	fsm.connectRetryTimer = time.NewTimer(fsm.connectRetryTime)
 }
 
-func (fsm *FSM2) resetConnectRetryTimer() {
+func (fsm *FSM) resetConnectRetryTimer() {
 	if !fsm.connectRetryTimer.Reset(fsm.connectRetryTime) {
 		<-fsm.connectRetryTimer.C
 	}
 }
 
-func (fsm *FSM2) resetConnectRetryCounter() {
+func (fsm *FSM) resetConnectRetryCounter() {
 	fsm.connectRetryCounter = 0
 }
 
-func (fsm *FSM2) sendOpen() error {
+func (fsm *FSM) sendOpen() error {
 	msg := packet.SerializeOpenMsg(&packet.BGPOpen{
 		Version:       BGPVersion,
 		AS:            uint16(fsm.peer.localASN),
@@ -235,7 +235,7 @@ func (fsm *FSM2) sendOpen() error {
 	return nil
 }
 
-func (fsm *FSM2) sendNotification(errorCode uint8, errorSubCode uint8) error {
+func (fsm *FSM) sendNotification(errorCode uint8, errorSubCode uint8) error {
 	msg := packet.SerializeNotificationMsg(&packet.BGPNotification{})
 
 	_, err := fsm.con.Write(msg)
@@ -246,7 +246,7 @@ func (fsm *FSM2) sendNotification(errorCode uint8, errorSubCode uint8) error {
 	return nil
 }
 
-func (fsm *FSM2) sendKeepalive() error {
+func (fsm *FSM) sendKeepalive() error {
 	msg := packet.SerializeKeepaliveMsg()
 
 	_, err := fsm.con.Write(msg)

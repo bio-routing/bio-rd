@@ -8,10 +8,10 @@ import (
 )
 
 type openConfirmState struct {
-	fsm *FSM2
+	fsm *FSM
 }
 
-func newOpenConfirmState(fsm *FSM2) *openConfirmState {
+func newOpenConfirmState(fsm *FSM) *openConfirmState {
 	return &openConfirmState{
 		fsm: fsm,
 	}

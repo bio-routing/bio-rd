@@ -5,11 +5,11 @@ import (
 )
 
 type idleState struct {
-	fsm            *FSM2
+	fsm            *FSM
 	newStateReason string
 }
 
-func newIdleState(fsm *FSM2) *idleState {
+func newIdleState(fsm *FSM) *idleState {
 	return &idleState{
 		fsm: fsm,
 	}

@@ -14,10 +14,10 @@ import (
 )
 
 type establishedState struct {
-	fsm *FSM2
+	fsm *FSM
 }
 
-func newEstablishedState(fsm *FSM2) *establishedState {
+func newEstablishedState(fsm *FSM) *establishedState {
 	return &establishedState{
 		fsm: fsm,
 	}

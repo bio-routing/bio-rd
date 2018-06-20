@@ -16,7 +16,7 @@ type Peer struct {
 	addr              net.IP
 	peerASN           uint32
 	localASN          uint32
-	fsms              []*FSM2
+	fsms              []*FSM
 	fsmsMu            sync.Mutex
 	rib               routingtable.RouteTableClient
 	routerID          uint32
@@ -30,7 +30,7 @@ type Peer struct {
 	exportFilter      *filter.Filter
 }
 
-func (p *Peer) collisionHandling(callingFSM *FSM2) bool {
+func (p *Peer) collisionHandling(callingFSM *FSM) bool {
 	p.fsmsMu.Lock()
 	defer p.fsmsMu.Unlock()
 
@@ -88,7 +88,7 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 		addr:              c.PeerAddress,
 		peerASN:           c.PeerAS,
 		localASN:          c.LocalAS,
-		fsms:              make([]*FSM2, 0),
+		fsms:              make([]*FSM, 0),
 		rib:               rib,
 		addPathSend:       c.AddPathSend,
 		addPathRecv:       c.AddPathRecv,

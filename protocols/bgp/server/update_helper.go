@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func pathAttribues(p *route.Path, fsm *FSM2) (*packet.PathAttribute, error) {
+func pathAttribues(p *route.Path, fsm *FSM) (*packet.PathAttribute, error) {
 	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(fmt.Sprintf("%d %s", fsm.peer.localASN, p.BGPPath.ASPath), " "))
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse AS path: %v", err)

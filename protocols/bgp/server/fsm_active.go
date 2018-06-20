@@ -7,10 +7,10 @@ import (
 )
 
 type activeState struct {
-	fsm *FSM2
+	fsm *FSM
 }
 
-func newActiveState(fsm *FSM2) *activeState {
+func newActiveState(fsm *FSM) *activeState {
 	return &activeState{
 		fsm: fsm,
 	}

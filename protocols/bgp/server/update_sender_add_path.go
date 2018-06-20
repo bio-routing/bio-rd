@@ -12,11 +12,11 @@ import (
 // UpdateSenderAddPath converts table changes into BGP update messages with add path
 type UpdateSenderAddPath struct {
 	routingtable.ClientManager
-	fsm  *FSM2
+	fsm  *FSM
 	iBGP bool
 }
 
-func newUpdateSenderAddPath(fsm *FSM2) *UpdateSenderAddPath {
+func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
 	return &UpdateSenderAddPath{
 		fsm:  fsm,
 		iBGP: fsm.peer.localASN == fsm.peer.peerASN,
