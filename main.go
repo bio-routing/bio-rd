@@ -10,7 +10,6 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
@@ -40,15 +39,6 @@ func main() {
 		logrus.Fatalf("Unable to start BGP server: %v", err)
 	}
 
-	rib.AddPath(bnet.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
-		Type: route.BGPPathType,
-		BGPPath: &route.BGPPath{
-			NextHop: 100,
-			ASPath:  "3320",
-			Origin:  1,
-		},
-	})
-
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
 		LocalAS:           65200,
@@ -67,7 +57,7 @@ func main() {
 		ExportFilter: filter.NewAcceptAllFilter(),
 	}, rib)
 
-	/*b.AddPeer(config.Peer{
+	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
 		LocalAS:           65200,
 		PeerAS:            65100,
@@ -84,7 +74,7 @@ func main() {
 		AddPathRecv:  true,
 		ImportFilter: filter.NewAcceptAllFilter(),
 		ExportFilter: filter.NewDrainFilter(),
-	}, rib)*/
+	}, rib)
 
 	go func() {
 		for {
