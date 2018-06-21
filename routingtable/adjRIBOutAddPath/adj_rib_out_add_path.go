@@ -41,6 +41,11 @@ func (a *AdjRIBOutAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 		return nil
 	}
 
+	p = p.Copy()
+	if !a.neighbor.IBGP {
+		p.BGPPath.ASPath = fmt.Sprintf("%d %s", a.neighbor.LocalASN, p.BGPPath.ASPath)
+	}
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
