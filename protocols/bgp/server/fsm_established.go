@@ -58,8 +58,10 @@ func (s *establishedState) init() {
 	s.fsm.adjRIBIn.Register(s.fsm.peer.importFilter)
 
 	n := &routingtable.Neighbor{
-		Type:    route.BGPPathType,
-		Address: tnet.IPv4ToUint32(s.fsm.peer.addr),
+		Type:     route.BGPPathType,
+		Address:  tnet.IPv4ToUint32(s.fsm.peer.addr),
+		IBGP:     s.fsm.peer.localASN == s.fsm.peer.peerASN,
+		LocalASN: s.fsm.peer.localASN,
 	}
 
 	clientOptions := routingtable.ClientOptions{}

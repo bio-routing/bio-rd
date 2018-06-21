@@ -13,7 +13,14 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
+
+func strAddr(s string) uint32 {
+	ret, _ := bnet.StrToAddr(s)
+	return ret
+}
 
 func main() {
 	logrus.Printf("This is a BGP speaker\n")

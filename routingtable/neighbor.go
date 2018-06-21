@@ -10,4 +10,7 @@ type Neighbor struct {
 
 	// IBGP returns if local ASN is equal to remote ASN
 	IBGP bool
+
+	// Local ASN of session
+	LocalASN uint32
 }
