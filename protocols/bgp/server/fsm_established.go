@@ -62,7 +62,9 @@ func (s *establishedState) init() {
 		Address: tnet.IPv4ToUint32(s.fsm.peer.addr),
 	}
 
-	clientOptions := routingtable.ClientOptions{}
+	clientOptions := routingtable.ClientOptions{
+		BestOnly: true,
+	}
 	if s.fsm.capAddPathSend {
 		s.fsm.updateSender = newUpdateSenderAddPath(s.fsm)
 		s.fsm.adjRIBOut = adjRIBOutAddPath.New(n)
