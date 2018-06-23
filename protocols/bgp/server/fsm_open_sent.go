@@ -74,7 +74,7 @@ func (s *openSentState) holdTimerExpired() (state, string) {
 }
 
 func (s *openSentState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data))
+	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.decodingOptions)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -199,6 +199,8 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 }
 
 func (s *openSentState) processASN4Capability(cap packet.ASN4Capability) {
+	s.fsm.decodingOptions.Supports4OctetASN = true
+
 	if s.peerASNRcvd == packet.ASTransASN {
 		s.peerASNRcvd = cap.ASN4
 	}

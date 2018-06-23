@@ -70,7 +70,7 @@ func TestSerializeOpenMsg(t *testing.T) {
 			name: "Valid #1",
 			input: &BGPOpen{
 				Version:       4,
-				AS:            15169,
+				ASN:           15169,
 				HoldTime:      120,
 				BGPIdentifier: convert.Uint32([]byte{100, 111, 120, 130}),
 				OptParmLen:    0,

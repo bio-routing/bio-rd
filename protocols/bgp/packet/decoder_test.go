@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -70,7 +71,7 @@ func BenchmarkDecodeUpdateMsg(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		buf := bytes.NewBuffer(input)
-		_, err := decodeUpdateMsg(buf, uint16(len(input)))
+		_, err := decodeUpdateMsg(buf, uint16(len(input)), &DecodingOptions{})
 		if err != nil {
 			fmt.Printf("decodeUpdateMsg failed: %v\n", err)
 		}
@@ -251,7 +252,7 @@ func TestDecode(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		msg, err := Decode(buf)
+		msg, err := Decode(buf, &DecodingOptions{})
 
 		if err != nil && !test.wantFail {
 			t.Errorf("Unexpected error in test %d: %v", test.testNum, err)
@@ -1369,9 +1370,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 		},
 		{
 			// 2 withdraws with four path attributes (Communities + AS4Path +AS4Aggregator + Origin), valid update
-			testNum: 19,
+			testNum: 20,
 			input: []byte{0, 5, 8, 10, 16, 192, 168,
-				0, 30, // Total Path Attribute Length
+				0, 32, // Total Path Attribute Length
 
 				0,          // Attribute flags
 				8,          // Attribute Type code (Community)
@@ -1379,10 +1380,12 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				0, 0, 1, 0, // Arbitrary Community
 				0, 0, 1, 1, // Arbitrary Community
 
-				128,        // Attribute flags
-				17,         // Attribute Type code (AS4Path)
-				4,          // Length
-				0, 0, 2, 3, // Arbitrary Bytes
+				128,                    // Attribute flags
+				17,                     // Attribute Type code (AS4Path)
+				6,                      // Length
+				2,                      // AS_SEQUENCE
+				1,                      // Number of ASNs
+				0x00, 0x03, 0x17, 0xf3, // 202739
 
 				128,        // Attribute flags
 				18,         // Attribute Type code (AS4Aggregator)
@@ -1406,7 +1409,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						Pfxlen: 16,
 					},
 				},
-				TotalPathAttrLen: 30,
+				TotalPathAttrLen: 32,
 				PathAttributes: &PathAttribute{
 					Optional:       false,
 					Transitive:     false,
@@ -1420,9 +1423,15 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						Transitive:     false,
 						Partial:        false,
 						ExtendedLength: false,
-						Length:         4,
+						Length:         6,
 						TypeCode:       17,
-						Value:          uint32(515),
+						Value: ASPath{
+							ASPathSegment{
+								Type:  2,
+								Count: 1,
+								ASNs:  []uint32{202739},
+							},
+						},
 						Next: &PathAttribute{
 							Optional:       true,
 							Transitive:     false,
@@ -1447,29 +1456,31 @@ func TestDecodeUpdateMsg(t *testing.T) {
 		},
 	}
 
+	t.Parallel()
+
 	for _, test := range tests {
-		buf := bytes.NewBuffer(test.input)
-		l := test.explicitLength
-		if l == 0 {
-			l = uint16(len(test.input))
-		}
-		msg, err := decodeUpdateMsg(buf, l)
+		t.Run(strconv.Itoa(test.testNum), func(t *testing.T) {
+			buf := bytes.NewBuffer(test.input)
+			l := test.explicitLength
+			if l == 0 {
+				l = uint16(len(test.input))
+			}
+			msg, err := decodeUpdateMsg(buf, l, &DecodingOptions{})
 
-		if err != nil && !test.wantFail {
-			t.Errorf("Unexpected error in test %d: %v", test.testNum, err)
-			continue
-		}
+			if err != nil && !test.wantFail {
+				t.Fatalf("Unexpected error in test %d: %v", test.testNum, err)
+			}
 
-		if err == nil && test.wantFail {
-			t.Errorf("Expected error did not happen in test %d", test.testNum)
-			continue
-		}
+			if err == nil && test.wantFail {
+				t.Fatalf("Expected error did not happen in test %d", test.testNum)
+			}
 
-		if err != nil && test.wantFail {
-			continue
-		}
+			if err != nil && test.wantFail {
+				return
+			}
 
-		assert.Equalf(t, test.expected, msg, "%d", test.testNum)
+			assert.Equalf(t, test.expected, msg, "%d", test.testNum)
+		})
 	}
 }
 
@@ -1490,7 +1501,7 @@ func TestDecodeMsgBody(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodeMsgBody(test.buffer, test.msgType, test.length)
+		res, err := decodeMsgBody(test.buffer, test.msgType, test.length, &DecodingOptions{})
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error dit not happen in test %q", test.name)
 		}

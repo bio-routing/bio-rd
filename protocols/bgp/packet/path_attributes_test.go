@@ -50,7 +50,7 @@ func TestDecodePathAttrs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)))
+		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &DecodingOptions{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -173,7 +173,7 @@ func TestDecodePathAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _, err := decodePathAttr(bytes.NewBuffer(test.input))
+		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &DecodingOptions{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -264,6 +264,7 @@ func TestDecodeASPath(t *testing.T) {
 		input          []byte
 		wantFail       bool
 		explicitLength uint16
+		use4OctetASNs  bool
 		expected       *PathAttribute
 	}{
 		{
@@ -309,6 +310,28 @@ func TestDecodeASPath(t *testing.T) {
 			},
 		},
 		{
+			name: "32 bit ASNs in AS_PATH",
+			input: []byte{
+				1, // AS_SEQUENCE
+				3, // Path Length
+				0, 0, 0, 100, 0, 0, 0, 222, 0, 0, 0, 240,
+			},
+			wantFail:      false,
+			use4OctetASNs: true,
+			expected: &PathAttribute{
+				Length: 14,
+				Value: ASPath{
+					ASPathSegment{
+						Type:  1,
+						Count: 3,
+						ASNs: []uint32{
+							100, 222, 240,
+						},
+					},
+				},
+			},
+		},
+		{
 			name:           "Empty input",
 			input:          []byte{},
 			explicitLength: 5,
@@ -326,28 +349,36 @@ func TestDecodeASPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		l := uint16(len(test.input))
-		if test.explicitLength != 0 {
-			l = test.explicitLength
-		}
-		pa := &PathAttribute{
-			Length: l,
-		}
-		err := pa.decodeASPath(bytes.NewBuffer(test.input))
+		t.Run(test.name, func(t *testing.T) {
+			l := uint16(len(test.input))
+			if test.explicitLength != 0 {
+				l = test.explicitLength
+			}
+			pa := &PathAttribute{
+				Length: l,
+			}
 
-		if test.wantFail && err == nil {
-			t.Errorf("Expected error did not happen for test %q", test.name)
-		}
+			asnLength := uint8(2)
+			if test.use4OctetASNs {
+				asnLength = 4
+			}
 
-		if !test.wantFail && err != nil {
-			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
-		}
+			err := pa.decodeASPath(bytes.NewBuffer(test.input), asnLength)
 
-		if err != nil {
-			continue
-		}
+			if test.wantFail && err == nil {
+				t.Errorf("Expected error did not happen for test %q", test.name)
+			}
 
-		assert.Equal(t, test.expected, pa)
+			if !test.wantFail && err != nil {
+				t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, test.expected, pa)
+		})
 	}
 }
 
