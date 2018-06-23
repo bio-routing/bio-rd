@@ -67,10 +67,12 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		a.removePathsFromClients(pfx, oldPaths)
 	}
 
-	pathID, err := a.pathIDManager.getNewID()
+	fmt.Printf("Adding path: %s\n", p.Print())
+	pathID, err := a.pathIDManager.addPath(p)
 	if err != nil {
 		return fmt.Errorf("Unable to get path ID: %v", err)
 	}
+	fmt.Printf("New path ID: %d\n", pathID)
 
 	p.BGPPath.PathIdentifier = pathID
 	a.rt.AddPath(pfx, p)
@@ -90,6 +92,11 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 		return false
 	}
 
+	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	if reject {
+		return false
+	}
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -99,7 +106,14 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	}
 
 	a.rt.RemovePath(pfx, p)
-	a.pathIDManager.releaseID(p.BGPPath.PathIdentifier)
+	pathID, err := a.pathIDManager.releasePath(p)
+	if err != nil {
+		log.Warningf("Unable to release path: %v", err)
+		return true
+	}
+
+	p = p.Copy()
+	p.BGPPath.PathIdentifier = pathID
 	a.removePathFromClients(pfx, p)
 	return true
 }
