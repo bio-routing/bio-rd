@@ -64,7 +64,9 @@ func (s *establishedState) init() {
 		LocalASN: s.fsm.peer.localASN,
 	}
 
-	clientOptions := routingtable.ClientOptions{}
+	clientOptions := routingtable.ClientOptions{
+		BestOnly: true,
+	}
 	if s.fsm.capAddPathSend {
 		s.fsm.updateSender = newUpdateSenderAddPath(s.fsm)
 		s.fsm.adjRIBOut = adjRIBOutAddPath.New(n)
