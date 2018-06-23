@@ -28,6 +28,7 @@ type Peer struct {
 	optOpenParams     []packet.OptParam
 	importFilter      *filter.Filter
 	exportFilter      *filter.Filter
+	routeServerClient bool
 }
 
 func (p *Peer) collisionHandling(callingFSM *FSM) bool {
@@ -98,6 +99,7 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 		optOpenParams:     make([]packet.OptParam, 0),
 		importFilter:      filterOrDefault(c.ImportFilter),
 		exportFilter:      filterOrDefault(c.ExportFilter),
+		routeServerClient: c.RouteServerClient,
 	}
 	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
