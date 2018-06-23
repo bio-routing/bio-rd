@@ -221,7 +221,7 @@ func (fsm *FSM) resetConnectRetryCounter() {
 func (fsm *FSM) sendOpen() error {
 	msg := packet.SerializeOpenMsg(&packet.BGPOpen{
 		Version:       BGPVersion,
-		AS:            uint16(fsm.peer.localASN),
+		ASN:           uint16(fsm.peer.localASN),
 		HoldTime:      uint16(fsm.peer.holdTime / time.Second),
 		BGPIdentifier: fsm.peer.server.routerID,
 		OptParams:     fsm.peer.optOpenParams,

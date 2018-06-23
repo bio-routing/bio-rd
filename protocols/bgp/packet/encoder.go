@@ -35,7 +35,7 @@ func SerializeOpenMsg(msg *BGPOpen) []byte {
 	serializeHeader(buf, openLen, OpenMsg)
 
 	buf.WriteByte(msg.Version)
-	buf.Write(convert.Uint16Byte(msg.AS))
+	buf.Write(convert.Uint16Byte(msg.ASN))
 	buf.Write(convert.Uint16Byte(msg.HoldTime))
 	buf.Write(convert.Uint32Byte(msg.BGPIdentifier))
 

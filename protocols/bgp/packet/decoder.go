@@ -141,7 +141,7 @@ func _decodeOpenMsg(buf *bytes.Buffer) (interface{}, error) {
 
 	fields := []interface{}{
 		&msg.Version,
-		&msg.AS,
+		&msg.ASN,
 		&msg.HoldTime,
 		&msg.BGPIdentifier,
 		&msg.OptParmLen,

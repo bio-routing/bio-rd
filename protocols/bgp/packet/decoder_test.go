@@ -156,7 +156,7 @@ func TestDecode(t *testing.T) {
 				},
 				Body: &BGPOpen{
 					Version:       4,
-					AS:            200,
+					ASN:           200,
 					HoldTime:      15,
 					BGPIdentifier: uint32(169090600),
 					OptParmLen:    0,
@@ -184,7 +184,7 @@ func TestDecode(t *testing.T) {
 				},
 				Body: &BGPOpen{
 					Version:       4,
-					AS:            200,
+					ASN:           200,
 					HoldTime:      15,
 					BGPIdentifier: uint32(100),
 				},
@@ -1512,7 +1512,7 @@ func TestDecodeOpenMsg(t *testing.T) {
 			wantFail: false,
 			expected: &BGPOpen{
 				Version:       4,
-				AS:            257,
+				ASN:           257,
 				HoldTime:      15,
 				BGPIdentifier: 169090600,
 				OptParmLen:    0,
