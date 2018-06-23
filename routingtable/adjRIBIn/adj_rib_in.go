@@ -3,6 +3,8 @@ package adjRIBIn
 import (
 	"sync"
 
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -12,14 +14,16 @@ import (
 // AdjRIBIn represents an Adjacency RIB In as described in RFC4271
 type AdjRIBIn struct {
 	routingtable.ClientManager
-	rt *routingtable.RoutingTable
-	mu sync.RWMutex
+	rt           *routingtable.RoutingTable
+	mu           sync.RWMutex
+	exportFilter *filter.Filter
 }
 
 // New creates a new Adjacency RIB In
-func New() *AdjRIBIn {
+func New(exportFilter *filter.Filter) *AdjRIBIn {
 	a := &AdjRIBIn{
-		rt: routingtable.NewRoutingTable(),
+		rt:           routingtable.NewRoutingTable(),
+		exportFilter: exportFilter,
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -34,6 +38,10 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 	for _, route := range routes {
 		paths := route.Paths()
 		for _, path := range paths {
+			path, reject := a.exportFilter.ProcessTerms(route.Prefix(), path)
+			if reject {
+				continue
+			}
 
 			err := client.AddPath(route.Prefix(), path)
 			if err != nil {
@@ -51,6 +59,11 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 
 	oldPaths := a.rt.ReplacePath(pfx, p)
 	a.removePathsFromClients(pfx, oldPaths)
+
+	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	if reject {
+		return nil
+	}
 
 	for _, client := range a.ClientManager.Clients() {
 		client.AddPath(pfx, p)
@@ -79,6 +92,10 @@ func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 
 func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
 	for _, path := range paths {
+		path, reject := a.exportFilter.ProcessTerms(pfx, path)
+		if reject {
+			continue
+		}
 		for _, client := range a.ClientManager.Clients() {
 			client.RemovePath(pfx, path)
 		}

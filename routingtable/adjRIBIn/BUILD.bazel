@@ -9,6 +9,7 @@ go_library(
         "//net:go_default_library",
         "//route:go_default_library",
         "//routingtable:go_default_library",
+        "//routingtable/filter:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )
@@ -21,6 +22,7 @@ go_test(
         "//net:go_default_library",
         "//route:go_default_library",
         "//routingtable:go_default_library",
+        "//routingtable/filter:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

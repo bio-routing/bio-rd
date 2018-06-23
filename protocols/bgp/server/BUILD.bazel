@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
-        "fsm2.go",
+        "fsm.go",
         "fsm_active.go",
         "fsm_cease.go",
         "fsm_connect.go",
@@ -32,7 +32,6 @@ go_library(
         "//routingtable:go_default_library",
         "//routingtable/adjRIBIn:go_default_library",
         "//routingtable/adjRIBOut:go_default_library",
-        "//routingtable/adjRIBOutAddPath:go_default_library",
         "//routingtable/filter:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
@@ -47,9 +46,12 @@ go_test(
     ],
     embed = [":go_default_library"],
     deps = [
+        "//config:go_default_library",
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
         "//route:go_default_library",
+        "//routingtable:go_default_library",
+        "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],

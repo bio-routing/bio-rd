@@ -37,6 +37,7 @@ type peer struct {
 	optOpenParams     []packet.OptParam
 	importFilter      *filter.Filter
 	exportFilter      *filter.Filter
+	routeServerClient bool
 }
 
 func (p *peer) snapshot() PeerInfo {
@@ -118,6 +119,7 @@ func newPeer(c config.Peer, rib routingtable.RouteTableClient, server *bgpServer
 		optOpenParams:     make([]packet.OptParam, 0),
 		importFilter:      filterOrDefault(c.ImportFilter),
 		exportFilter:      filterOrDefault(c.ExportFilter),
+		routeServerClient: c.RouteServerClient,
 	}
 	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
