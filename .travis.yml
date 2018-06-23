@@ -1,10 +1,29 @@
-language: go
-go:
-- "1.9.2"
-- master
+dist: trusty
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - wget
+      - pkg-config
+      - zip
+      - g++
+      - zlib1g-dev
+      - unzip
+      - python
+
 before_install:
-- mkdir -p $GOPATH/src/github.com/bio-routing
-- ln -s $TRAVIS_BUILD_DIR $HOME/gopath/src/github.com/bio-routing/ || true
-- go get github.com/mattn/goveralls
+  - wget https://github.com/bazelbuild/bazel/releases/download/0.14.1/bazel-0.14.1-installer-linux-x86_64.sh
+  - sha256sum -c .travis.bazel-0.14.1-installer-linux-x86_64.sh.sha256
+  - bash bazel-0.14.1-installer-linux-x86_64.sh --user
+
 script:
-- goveralls -v
+- mkdir -p $HOME/gopath/src/github.com/bio-routing/
+- ln -s $TRAVIS_BUILD_DIR $HOME/gopath/src/github.com/bio-routing/bio-rd || true
+- cp .bazelrc.travis .bazelrc
+- bazel build //vendor/github.com/mattn/goveralls
+- bazel test //...
+- bazel coverage //...
+- bazel-bin/vendor/github.com/mattn/goveralls/linux_amd64_stripped/goveralls -coverprofile=$(find bazel-testlogs/ -name coverage.dat | paste -sd "," -)
+
