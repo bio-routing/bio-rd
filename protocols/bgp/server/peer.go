@@ -87,7 +87,6 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 		server:            server,
 		addr:              c.PeerAddress,
 		peerASN:           c.PeerAS,
-		localASN:          c.LocalAS,
 		fsms:              make([]*FSM, 0),
 		rib:               rib,
 		addPathSend:       c.AddPathSend,
@@ -103,24 +102,12 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 
 	caps := make([]packet.Capability, 0)
 
-	addPath := uint8(0)
-	if c.AddPathRecv {
-		addPath += packet.AddPathReceive
-	}
-	if !c.AddPathSend.BestOnly {
-		addPath += packet.AddPathSend
+	addPathEnabled, addPathCap := handleAddPathCapability(c)
+	if addPathEnabled {
+		caps = append(caps, addPathCap)
 	}
 
-	if addPath > 0 {
-		caps = append(caps, packet.Capability{
-			Code: packet.AddPathCapabilityCode,
-			Value: packet.AddPathCapability{
-				AFI:         packet.IPv4AFI,
-				SAFI:        packet.UnicastSAFI,
-				SendReceive: addPath,
-			},
-		})
-	}
+	caps = append(caps, asn4Capability(c))
 
 	for _, cap := range caps {
 		p.optOpenParams = append(p.optOpenParams, packet.OptParam{
@@ -130,6 +117,38 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 	}
 
 	return p, nil
+}
+
+func asn4Capability(c config.Peer) packet.Capability {
+	return packet.Capability{
+		Code: packet.ASN4CapabilityCode,
+		Value: packet.ASN4Capability{
+			ASN4: c.LocalAS,
+		},
+	}
+}
+
+func handleAddPathCapability(c config.Peer) (bool, packet.Capability) {
+	addPath := uint8(0)
+	if c.AddPathRecv {
+		addPath += packet.AddPathReceive
+	}
+	if !c.AddPathSend.BestOnly {
+		addPath += packet.AddPathSend
+	}
+
+	if addPath == 0 {
+		return false, packet.Capability{}
+	}
+
+	return true, packet.Capability{
+		Code: packet.AddPathCapabilityCode,
+		Value: packet.AddPathCapability{
+			AFI:         packet.IPv4AFI,
+			SAFI:        packet.UnicastSAFI,
+			SendReceive: addPath,
+		},
+	}
 }
 
 func filterOrDefault(f *filter.Filter) *filter.Filter {

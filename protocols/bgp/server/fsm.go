@@ -219,13 +219,7 @@ func (fsm *FSM) resetConnectRetryCounter() {
 }
 
 func (fsm *FSM) sendOpen() error {
-	msg := packet.SerializeOpenMsg(&packet.BGPOpen{
-		Version:       BGPVersion,
-		ASN:           uint16(fsm.peer.localASN),
-		HoldTime:      uint16(fsm.peer.holdTime / time.Second),
-		BGPIdentifier: fsm.peer.server.routerID,
-		OptParams:     fsm.peer.optOpenParams,
-	})
+	msg := packet.SerializeOpenMsg(fsm.openMessage())
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
@@ -233,6 +227,24 @@ func (fsm *FSM) sendOpen() error {
 	}
 
 	return nil
+}
+
+func (fsm *FSM) openMessage() *packet.BGPOpen {
+	return &packet.BGPOpen{
+		Version:       BGPVersion,
+		ASN:           fsm.local16BitASN(),
+		HoldTime:      uint16(fsm.peer.holdTime / time.Second),
+		BGPIdentifier: fsm.peer.routerID,
+		OptParams:     fsm.peer.optOpenParams,
+	}
+}
+
+func (fsm *FSM) local16BitASN() uint16 {
+	if fsm.peer.localASN > uint32(^uint16(0)) {
+		return packet.ASTransASN
+	}
+
+	return uint16(fsm.peer.localASN)
 }
 
 func (fsm *FSM) sendNotification(errorCode uint8, errorSubCode uint8) error {
