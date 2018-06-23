@@ -40,7 +40,7 @@ Update vendor/dependencies
 After updating Gopkg.toml, run
 
     bazel build //vendor/github.com/golang/dep/cmd/dep
-    bazel-bin/vendor/github.com/golang/dep/cmd/dep/linux_amd64_stripped/dep
+    bazel-bin/vendor/github.com/golang/dep/cmd/dep/linux_amd64_stripped/dep use
     # hack: dep of dep gives us these, and it breaks gazelle
     rm -rf vendor/github.com/golang/dep/cmd/dep/testdata
     rm -rf vendor/github.com/golang/dep/internal/fs/testdata/symlinks/dir-symlink

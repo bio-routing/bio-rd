@@ -47,9 +47,12 @@ go_test(
     ],
     embed = [":go_default_library"],
     deps = [
+        "//config:go_default_library",
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
         "//route:go_default_library",
+        "//routingtable:go_default_library",
+        "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
