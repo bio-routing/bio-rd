@@ -41,6 +41,7 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
+        "server_test.go",
         "update_helper_test.go",
         "withdraw_test.go",
     ],
@@ -49,6 +50,7 @@ go_test(
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
         "//route:go_default_library",
+        "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

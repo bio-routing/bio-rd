@@ -28,7 +28,7 @@ type state interface {
 
 // FSM implements the BGP finite state machine (RFC4271)
 type FSM struct {
-	peer        *Peer
+	peer        *peer
 	eventCh     chan int
 	con         net.Conn
 	conCh       chan net.Conn
@@ -72,7 +72,7 @@ type FSM struct {
 }
 
 // NewPassiveFSM2 initiates a new passive FSM
-func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM {
+func NewPassiveFSM2(peer *peer, con *net.TCPConn) *FSM {
 	fsm := newFSM2(peer)
 	fsm.con = con
 	fsm.state = newIdleState(fsm)
@@ -80,14 +80,14 @@ func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM {
 }
 
 // NewActiveFSM2 initiates a new passive FSM
-func NewActiveFSM2(peer *Peer) *FSM {
+func NewActiveFSM2(peer *peer) *FSM {
 	fsm := newFSM2(peer)
 	fsm.active = true
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-func newFSM2(peer *Peer) *FSM {
+func newFSM2(peer *peer) *FSM {
 	return &FSM{
 		connectRetryTime: time.Minute,
 		peer:             peer,
