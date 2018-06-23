@@ -19,9 +19,15 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+required = ["github.com/golang/dep", "github.com/mattn/goveralls", "github.com/go-yaml/yaml"]
+
 [prune]
   go-tests = true
   unused-packages = true
+  [[prune.project]]
+    name = "github.com/golang/dep"
+    unused-packages = false
+
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
