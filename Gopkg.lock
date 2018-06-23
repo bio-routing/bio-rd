@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/bio-routing/bio-rd"
-  packages = ["config","net","protocols/bgp/packet","protocols/bgp/server","rt"]
-  revision = "cde9a80f20bf6a6c4b4f810337d9308e42e11e3d"
-
-[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -45,25 +39,16 @@
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
-
-[[projects]]
-  branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "bb9c189858d91f42db229b04d45a4c3d23a7662a"
-
-[[projects]]
-  branch = "v2"
-  name = "gopkg.in/tomb.v2"
-  packages = ["."]
-  revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "57d99764685b75e316ae1a1245ae53ad0f5ca7d60f1eee63102c3759e188d0fd"
+  inputs-digest = "073c66875ae5e826b99de44a296f0ad013f1ba03c3b3b5e6fe6fe812fb0b6722"
   solver-name = "gps-cdcl"
   solver-version = 1
