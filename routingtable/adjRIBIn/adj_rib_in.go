@@ -3,6 +3,7 @@ package adjRIBIn
 import (
 	"sync"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -14,16 +15,18 @@ import (
 // AdjRIBIn represents an Adjacency RIB In as described in RFC4271
 type AdjRIBIn struct {
 	routingtable.ClientManager
-	rt           *routingtable.RoutingTable
-	mu           sync.RWMutex
-	exportFilter *filter.Filter
+	rt               *routingtable.RoutingTable
+	mu               sync.RWMutex
+	exportFilter     *filter.Filter
+	contributingASNs *routingtable.ContributingASNs
 }
 
 // New creates a new Adjacency RIB In
 func New(exportFilter *filter.Filter, contributingASNs *routingtable.ContributingASNs) *AdjRIBIn {
 	a := &AdjRIBIn{
-		rt:           routingtable.NewRoutingTable(),
-		exportFilter: exportFilter,
+		rt:               routingtable.NewRoutingTable(),
+		exportFilter:     exportFilter,
+		contributingASNs: contributingASNs,
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -65,10 +68,30 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 		return nil
 	}
 
+	// Bail out - for all clients for now - if any of our ASNs is within the path
+	if a.ourASNsInPath(p) {
+		return nil
+	}
+
 	for _, client := range a.ClientManager.Clients() {
 		client.AddPath(pfx, p)
 	}
 	return nil
+}
+
+func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
+	// Don't accept path via iBGP which contain our ASN
+	ASPathAttr, _ := packet.ParseASPathStr(p.BGPPath.ASPath)
+
+	for _, pathSegment := range ASPathAttr.Value.(packet.ASPath) {
+		for _, asn := range pathSegment.ASNs {
+			if a.contributingASNs.IsContributingASN(asn) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // RemovePath removes the path for prefix `pfx`
