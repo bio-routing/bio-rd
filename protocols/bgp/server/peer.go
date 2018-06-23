@@ -11,13 +11,22 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
-type Peer struct {
-	server            *BGPServer
-	addr              net.IP
-	peerASN           uint32
-	localASN          uint32
-	fsms              []*FSM
-	fsmsMu            sync.Mutex
+type PeerInfo struct {
+	PeerAddr net.IP
+	PeerASN  uint32
+	LocalASN uint32
+}
+
+type peer struct {
+	server   *bgpServer
+	addr     net.IP
+	peerASN  uint32
+	localASN uint32
+
+	// guarded by fsmsMu
+	fsms   []*FSM
+	fsmsMu sync.Mutex
+
 	rib               routingtable.RouteTableClient
 	routerID          uint32
 	addPathSend       routingtable.ClientOptions
@@ -30,7 +39,15 @@ type Peer struct {
 	exportFilter      *filter.Filter
 }
 
-func (p *Peer) collisionHandling(callingFSM *FSM) bool {
+func (p *peer) snapshot() PeerInfo {
+	return PeerInfo{
+		PeerAddr: p.addr,
+		PeerASN:  p.peerASN,
+		LocalASN: p.localASN,
+	}
+}
+
+func (p *peer) collisionHandling(callingFSM *FSM) bool {
 	p.fsmsMu.Lock()
 	defer p.fsmsMu.Unlock()
 
@@ -82,8 +99,11 @@ func isEstablishedState(s state) bool {
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer) (*Peer, error) {
-	p := &Peer{
+func newPeer(c config.Peer, rib routingtable.RouteTableClient, server *bgpServer) (*peer, error) {
+	if c.LocalAS == 0 {
+		c.LocalAS = server.localASN
+	}
+	p := &peer{
 		server:            server,
 		addr:              c.PeerAddress,
 		peerASN:           c.PeerAS,
@@ -141,10 +161,10 @@ func filterOrDefault(f *filter.Filter) *filter.Filter {
 }
 
 // GetAddr returns the IP address of the peer
-func (p *Peer) GetAddr() net.IP {
+func (p *peer) GetAddr() net.IP {
 	return p.addr
 }
 
-func (p *Peer) Start() {
+func (p *peer) Start() {
 	p.fsms[0].start()
 }

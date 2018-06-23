@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -83,7 +82,5 @@ func main() {
 		}
 	}()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	wg.Wait()
+	select {}
 }
