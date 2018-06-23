@@ -10,6 +10,7 @@ go_library(
         "table.go",
         "trie.go",
         "update_helper.go",
+        "contributing_asn_list.go",
     ],
     importpath = "github.com/bio-routing/bio-rd/routingtable",
     visibility = ["//visibility:public"],
