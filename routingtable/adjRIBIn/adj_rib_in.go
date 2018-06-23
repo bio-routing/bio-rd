@@ -20,7 +20,7 @@ type AdjRIBIn struct {
 }
 
 // New creates a new Adjacency RIB In
-func New(exportFilter *filter.Filter) *AdjRIBIn {
+func New(exportFilter *filter.Filter, contributingASNs *routingtable.ContributingASNs) *AdjRIBIn {
 	a := &AdjRIBIn{
 		rt:           routingtable.NewRoutingTable(),
 		exportFilter: exportFilter,
