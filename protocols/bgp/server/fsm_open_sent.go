@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math"
 	"time"
@@ -20,7 +21,10 @@ func newOpenSentState(fsm *FSM) *openSentState {
 }
 
 func (s openSentState) run() (state, string) {
-	go s.fsm.msgReceiver()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.fsm.messageReceiverCancelFunc = cancel
+
+	go s.fsm.msgReceiver(ctx)
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
