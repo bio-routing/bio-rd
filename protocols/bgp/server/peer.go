@@ -5,12 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
 type PeerInfo struct {
