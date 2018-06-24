@@ -200,6 +200,7 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 
 func (s *openSentState) processASN4Capability(cap packet.ASN4Capability) {
 	s.fsm.decodingOptions.Supports4OctetASN = true
+	s.fsm.encodingOptions.Supports4OctetASN = true
 
 	if s.peerASNRcvd == packet.ASTransASN {
 		s.peerASNRcvd = cap.ASN4

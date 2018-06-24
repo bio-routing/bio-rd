@@ -3,6 +3,8 @@ package server
 import (
 	"testing"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+
 	"errors"
 
 	"bytes"
@@ -52,7 +54,8 @@ func TestWithDrawPrefixes(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		buf := bytes.NewBuffer([]byte{})
-		err := withDrawPrefixes(buf, tc.Prefix...)
+		opt := &packet.EncodingOptions{}
+		err := withDrawPrefixes(buf, opt, tc.Prefix...)
 		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
 		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
 	}
@@ -108,7 +111,8 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		buf := bytes.NewBuffer([]byte{})
-		err := withDrawPrefixesAddPath(buf, tc.Prefix, tc.Path)
+		opt := &packet.EncodingOptions{}
+		err := withDrawPrefixesAddPath(buf, opt, tc.Prefix, tc.Path)
 		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
 		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
 	}

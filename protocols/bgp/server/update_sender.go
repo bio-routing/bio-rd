@@ -42,12 +42,12 @@ func (u *UpdateSender) AddPath(pfx net.Prefix, p *route.Path) error {
 		},
 	}
 
-	return serializeAndSendUpdate(u.fsm.con, update)
+	return serializeAndSendUpdate(u.fsm.con, update, u.fsm.encodingOptions)
 }
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx net.Prefix, p *route.Path) bool {
-	err := withDrawPrefixes(u.fsm.con, pfx)
+	err := withDrawPrefixes(u.fsm.con, u.fsm.encodingOptions, pfx)
 	return err == nil
 }
 

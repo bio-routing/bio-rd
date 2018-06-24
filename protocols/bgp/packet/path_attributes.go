@@ -409,14 +409,14 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 	return nil
 }
 
-func (pa *PathAttribute) serialize(buf *bytes.Buffer) uint8 {
+func (pa *PathAttribute) serialize(buf *bytes.Buffer, opt *EncodingOptions) uint8 {
 	pathAttrLen := uint8(0)
 
 	switch pa.TypeCode {
 	case OriginAttr:
 		pathAttrLen = pa.serializeOrigin(buf)
 	case ASPathAttr:
-		pathAttrLen = pa.serializeASPath(buf)
+		pathAttrLen = pa.serializeASPath(buf, opt)
 	case NextHopAttr:
 		pathAttrLen = pa.serializeNextHop(buf)
 	case MEDAttr:
@@ -447,21 +447,32 @@ func (pa *PathAttribute) serializeOrigin(buf *bytes.Buffer) uint8 {
 	return 4
 }
 
-func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer) uint8 {
+func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *EncodingOptions) uint8 {
 	attrFlags := uint8(0)
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(ASPathAttr)
+
+	asnLength := uint8(2)
+	if opt.Supports4OctetASN {
+		asnLength = 4
+	}
 
 	length := uint8(0)
 	segmentsBuf := bytes.NewBuffer(nil)
 	for _, segment := range pa.Value.(ASPath) {
 		segmentsBuf.WriteByte(segment.Type)
 		segmentsBuf.WriteByte(uint8(len(segment.ASNs)))
+
 		for _, asn := range segment.ASNs {
-			segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
+			if asnLength == 2 {
+				segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
+			} else {
+				segmentsBuf.Write(convert.Uint32Byte(asn))
+			}
 		}
-		length += 2 + uint8(len(segment.ASNs))*2
+		fmt.Println(segment.ASNs)
+		length += 2 + uint8(len(segment.ASNs))*asnLength
 	}
 
 	buf.WriteByte(length)

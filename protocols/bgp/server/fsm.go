@@ -57,6 +57,7 @@ type FSM struct {
 	capAddPathRecv bool
 
 	decodingOptions *packet.DecodingOptions
+	encodingOptions *packet.EncodingOptions
 
 	local net.IP
 
@@ -102,6 +103,7 @@ func newFSM2(peer *peer) *FSM {
 		stopMsgRecvCh:    make(chan struct{}),
 		rib:              peer.rib,
 		decodingOptions:  &packet.DecodingOptions{},
+		encodingOptions:  &packet.EncodingOptions{},
 	}
 }
 

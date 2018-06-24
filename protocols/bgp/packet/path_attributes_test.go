@@ -1270,6 +1270,7 @@ func TestSerializeASPath(t *testing.T) {
 		input       *PathAttribute
 		expected    []byte
 		expectedLen uint8
+		use32BitASN bool
 	}{
 		{
 			name: "Test #1",
@@ -1296,17 +1297,49 @@ func TestSerializeASPath(t *testing.T) {
 			},
 			expectedLen: 10,
 		},
+		{
+			name: "32bit ASN",
+			input: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					{
+						Type: 2, // Sequence
+						ASNs: []uint32{
+							100, 200, 210,
+						},
+					},
+				},
+			},
+			expected: []byte{
+				64,           // Attribute flags
+				2,            // Type
+				14,           // Length
+				2,            // AS_SEQUENCE
+				3,            // ASN count
+				0, 0, 0, 100, // ASN 100
+				0, 0, 0, 200, // ASN 200
+				0, 0, 0, 210, // ASN 210
+			},
+			expectedLen: 16,
+			use32BitASN: true,
+		},
 	}
 
-	for _, test := range tests {
-		buf := bytes.NewBuffer(nil)
-		n := test.input.serializeASPath(buf)
-		if n != test.expectedLen {
-			t.Errorf("Unexpected length for test %q: %d", test.name, n)
-			continue
-		}
+	t.Parallel()
 
-		assert.Equal(t, test.expected, buf.Bytes())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := bytes.NewBuffer(nil)
+			opt := &EncodingOptions{
+				Supports4OctetASN: test.use32BitASN,
+			}
+			n := test.input.serializeASPath(buf, opt)
+			if n != test.expectedLen {
+				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
 	}
 }
 
@@ -1592,7 +1625,8 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &EncodingOptions{}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -1798,7 +1832,8 @@ func TestSerializeAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &EncodingOptions{}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
