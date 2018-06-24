@@ -27,6 +27,14 @@ func New() *LocRIB {
 	return a
 }
 
+//Count routes from the LocRIP
+func (a *LocRIB) Count() uint64 {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	return uint64(len(a.rt.Dump()))
+}
+
 // UpdateNewClient sends current state to a new client
 func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 	a.mu.RLock()

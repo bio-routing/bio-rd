@@ -27,7 +27,7 @@ func newNode(pfx net.Prefix, path *route.Path, skip uint8, dummy bool) *node {
 	return n
 }
 
-func (n *node) removePath(pfx net.Prefix, p *route.Path) (success bool) {
+func (n *node) removePath(pfx net.Prefix, p *route.Path) (final bool) {
 	if n == nil {
 		return false
 	}
@@ -37,14 +37,13 @@ func (n *node) removePath(pfx net.Prefix, p *route.Path) (success bool) {
 			return
 		}
 
-		nPaths := len(n.route.Paths())
 		nPathsAfterDel := n.route.RemovePath(p)
 		if len(n.route.Paths()) == 0 {
 			// FIXME: Can this node actually be removed from the trie entirely?
 			n.dummy = true
 		}
 
-		return nPathsAfterDel < nPaths
+		return nPathsAfterDel == 0
 	}
 
 	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)

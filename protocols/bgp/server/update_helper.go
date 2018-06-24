@@ -82,7 +82,6 @@ func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate) error {
 		return nil
 	}
 
-	fmt.Printf("Sending Update: %v\n", updateBytes)
 	_, err = out.Write(updateBytes)
 	if err != nil {
 		return fmt.Errorf("Failed sending Update: %v", err)
