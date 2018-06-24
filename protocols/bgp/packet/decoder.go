@@ -9,12 +9,8 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
-type DecodingOptions struct {
-	Supports4OctetASN bool
-}
-
 // Decode decodes a BGP message
-func Decode(buf *bytes.Buffer, opt *DecodingOptions) (*BGPMessage, error) {
+func Decode(buf *bytes.Buffer, opt *Options) (*BGPMessage, error) {
 	hdr, err := decodeHeader(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to decode header: %v", err)
@@ -31,7 +27,7 @@ func Decode(buf *bytes.Buffer, opt *DecodingOptions) (*BGPMessage, error) {
 	}, nil
 }
 
-func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodingOptions) (interface{}, error) {
+func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *Options) (interface{}, error) {
 	switch msgType {
 	case OpenMsg:
 		return decodeOpenMsg(buf)
@@ -45,7 +41,7 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodingOpti
 	return nil, fmt.Errorf("Unknown message type: %d", msgType)
 }
 
-func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodingOptions) (*BGPUpdate, error) {
+func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *Options) (*BGPUpdate, error) {
 	msg := &BGPUpdate{}
 
 	err := decode(buf, []interface{}{&msg.WithdrawnRoutesLen})

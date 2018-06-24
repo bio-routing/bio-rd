@@ -11,7 +11,7 @@ import (
 
 // withDrawPrefixes generates a BGPUpdate message and write it to the given
 // io.Writer.
-func withDrawPrefixes(out io.Writer, opt *packet.EncodingOptions, prefixes ...net.Prefix) error {
+func withDrawPrefixes(out io.Writer, opt *packet.Options, prefixes ...net.Prefix) error {
 	if len(prefixes) < 1 {
 		return nil
 	}
@@ -41,7 +41,7 @@ func withDrawPrefixes(out io.Writer, opt *packet.EncodingOptions, prefixes ...ne
 
 // withDrawPrefixesAddPath generates a BGPUpdateAddPath message and write it to the given
 // io.Writer.
-func withDrawPrefixesAddPath(out io.Writer, opt *packet.EncodingOptions, pfx net.Prefix, p *route.Path) error {
+func withDrawPrefixesAddPath(out io.Writer, opt *packet.Options, pfx net.Prefix, p *route.Path) error {
 	if p.Type != route.BGPPathType {
 		return errors.New("wrong path type, expected BGPPathType")
 	}

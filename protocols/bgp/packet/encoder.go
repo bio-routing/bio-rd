@@ -7,10 +7,6 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
-type EncodingOptions struct {
-	Supports4OctetASN bool
-}
-
 func SerializeKeepaliveMsg() []byte {
 	keepaliveLen := uint16(19)
 	buf := bytes.NewBuffer(make([]byte, 0, keepaliveLen))
@@ -67,7 +63,7 @@ func serializeHeader(buf *bytes.Buffer, length uint16, typ uint8) {
 	buf.WriteByte(typ)
 }
 
-func (b *BGPUpdateAddPath) SerializeUpdate(opt *EncodingOptions) ([]byte, error) {
+func (b *BGPUpdateAddPath) SerializeUpdate(opt *Options) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
 
@@ -126,7 +122,7 @@ func (b *BGPUpdateAddPath) SerializeUpdate(opt *EncodingOptions) ([]byte, error)
 	return buf.Bytes(), nil
 }
 
-func (b *BGPUpdate) SerializeUpdate(opt *EncodingOptions) ([]byte, error) {
+func (b *BGPUpdate) SerializeUpdate(opt *Options) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
 
