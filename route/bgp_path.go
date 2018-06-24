@@ -163,6 +163,7 @@ func (b *BGPPath) better(c *BGPPath) bool {
 	return false
 }
 
+// Print all known information about a route in human readable form
 func (b *BGPPath) Print() string {
 	origin := ""
 	switch b.Origin {
@@ -173,9 +174,16 @@ func (b *BGPPath) Print() string {
 	case 2:
 		origin = "IGP"
 	}
+
+	bgpType := "iBGP"
+	if b.EBGP {
+		bgpType = "eBGP"
+	}
+
 	ret := fmt.Sprintf("\t\tLocal Pref: %d\n", b.LocalPref)
 	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
 	ret += fmt.Sprintf("\t\tAS Path: %v\n", b.ASPath)
+	ret += fmt.Sprintf("\t\tBGP type: %s\n", bgpType)
 	nh := uint32To4Byte(b.NextHop)
 	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
@@ -187,6 +195,7 @@ func (b *BGPPath) Print() string {
 	return ret
 }
 
+// Prepend the given BGPPath with the given ASN given times
 func (b *BGPPath) Prepend(asn uint32, times uint16) {
 	if times == 0 {
 		return
