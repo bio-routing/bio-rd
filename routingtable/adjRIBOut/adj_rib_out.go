@@ -58,9 +58,6 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	p = p.Copy()
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.Prepend(a.neighbor.LocalASN, 1)
-	}
-
-	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.NextHop = a.neighbor.LocalAddress
 	}
 
