@@ -40,6 +40,10 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 	return nil
 }
 
+func (a *LocRIB) RouteCount() int64 {
+	return a.rt.
+}
+
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
 func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()

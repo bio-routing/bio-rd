@@ -154,8 +154,10 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 }
 
 func (s *establishedState) msgReceived(data []byte) (state, string) {
+	fmt.Printf("Processing MSG\n")
 	msg, err := packet.Decode(bytes.NewBuffer(data))
 	if err != nil {
+		fmt.Printf("Decode failure: %v\n", err)
 		switch bgperr := err.(type) {
 		case packet.BGPError:
 			s.fsm.sendNotification(bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -165,6 +167,7 @@ func (s *establishedState) msgReceived(data []byte) (state, string) {
 		s.fsm.connectRetryCounter++
 		return newIdleState(s.fsm), "Failed to decode BGP message"
 	}
+	fmt.Printf("Msg type: %d\n", msg.Header.Type)
 	switch msg.Header.Type {
 	case packet.NotificationMsg:
 		return s.notification()
@@ -191,9 +194,12 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	}
 
 	u := msg.Body.(*packet.BGPUpdate)
+	fmt.Printf("Processing withdraws\n")
 	s.withdraws(u)
+	fmt.Printf("Processing advertisements\n")
 	s.updates(u)
 
+	fmt.Printf("update done\n")
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
