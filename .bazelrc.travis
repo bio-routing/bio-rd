@@ -17,5 +17,3 @@ build --google_credentials=bio-routing-bazel.json
 build --spawn_strategy=remote --genrule_strategy=remote --strategy=Go=remote
 build --strategy=Javac=remote --strategy=Closure=remote
 build --remote_http_cache=https://storage.googleapis.com/bio-routing-bazel
-build --experimental_strict_action_env
-
