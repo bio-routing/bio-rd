@@ -11,14 +11,14 @@ type contributingASN struct {
 
 // ContributingASNs contains a list of contributing ASN to a LocRIB to check ASPaths for possible routing loops.
 type ContributingASNs struct {
-	contributingASNs []contributingASN
+	contributingASNs []*contributingASN
 	mu               sync.RWMutex
 }
 
 // NewContributingASNs creates a list of contributing ASNs to a LocRIB for routing loop prevention.
 func NewContributingASNs() *ContributingASNs {
 	c := &ContributingASNs{
-		contributingASNs: []contributingASN{},
+		contributingASNs: []*contributingASN{},
 	}
 
 	return c
@@ -36,7 +36,7 @@ func (c *ContributingASNs) Add(asn uint32) {
 		}
 	}
 
-	c.contributingASNs = append(c.contributingASNs, contributingASN{
+	c.contributingASNs = append(c.contributingASNs, &contributingASN{
 		asn:   asn,
 		count: 1,
 	})
