@@ -75,8 +75,8 @@ func (c *ContributingASNs) Remove(asn uint32) {
 
 // IsContributingASN checks if  a given ASN is part of the contributing ASNs
 func (c *ContributingASNs) IsContributingASN(asn uint32) bool {
-	c.contributingASNsLock.Lock()
-	defer c.contributingASNsLock.Unlock()
+	c.contributingASNsLock.RLock()
+	defer c.contributingASNsLock.RUnlock()
 
 	for _, cASN := range c.contributingASNs {
 		if asn == cASN.asn {
