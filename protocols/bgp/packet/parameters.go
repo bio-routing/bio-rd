@@ -52,3 +52,11 @@ func (a AddPathCapability) serialize(buf *bytes.Buffer) {
 	buf.WriteByte(a.SAFI)
 	buf.WriteByte(a.SendReceive)
 }
+
+type ASN4Capability struct {
+	ASN4 uint32
+}
+
+func (a ASN4Capability) serialize(buf *bytes.Buffer) {
+	buf.Write(convert.Uint32Byte(a.ASN4))
+}
