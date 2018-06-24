@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	uint16max  = 65535
 	BGPVersion = 4
 )
 
@@ -115,10 +114,6 @@ func (b *bgpServer) incomingConnectionWorker() {
 }
 
 func (b *bgpServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
-	if c.LocalAS > uint16max || c.PeerAS > uint16max {
-		return fmt.Errorf("32bit ASNs are not supported yet")
-	}
-
 	peer, err := newPeer(c, rib, b)
 	if err != nil {
 		return err

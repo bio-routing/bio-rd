@@ -35,7 +35,7 @@ func SerializeOpenMsg(msg *BGPOpen) []byte {
 	serializeHeader(buf, openLen, OpenMsg)
 
 	buf.WriteByte(msg.Version)
-	buf.Write(convert.Uint16Byte(msg.AS))
+	buf.Write(convert.Uint16Byte(msg.ASN))
 	buf.Write(convert.Uint16Byte(msg.HoldTime))
 	buf.Write(convert.Uint32Byte(msg.BGPIdentifier))
 
@@ -63,7 +63,7 @@ func serializeHeader(buf *bytes.Buffer, length uint16, typ uint8) {
 	buf.WriteByte(typ)
 }
 
-func (b *BGPUpdateAddPath) SerializeUpdate() ([]byte, error) {
+func (b *BGPUpdateAddPath) SerializeUpdate(opt *Options) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
 
@@ -78,7 +78,7 @@ func (b *BGPUpdateAddPath) SerializeUpdate() ([]byte, error) {
 
 	pathAttributesBuf := bytes.NewBuffer(nil)
 	for pa := b.PathAttributes; pa != nil; pa = pa.Next {
-		paLen := int(pa.serialize(pathAttributesBuf))
+		paLen := int(pa.serialize(pathAttributesBuf, opt))
 		budget -= paLen
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
@@ -122,7 +122,7 @@ func (b *BGPUpdateAddPath) SerializeUpdate() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (b *BGPUpdate) SerializeUpdate() ([]byte, error) {
+func (b *BGPUpdate) SerializeUpdate(opt *Options) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
 
@@ -137,7 +137,7 @@ func (b *BGPUpdate) SerializeUpdate() ([]byte, error) {
 
 	pathAttributesBuf := bytes.NewBuffer(nil)
 	for pa := b.PathAttributes; pa != nil; pa = pa.Next {
-		paLen := int(pa.serialize(pathAttributesBuf))
+		paLen := int(pa.serialize(pathAttributesBuf, opt))
 		budget -= paLen
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
