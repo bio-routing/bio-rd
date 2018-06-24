@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+// This protobuf is still in flux - please don't depend on it.
+
 package proto;
 
 message ListServersRequest {
