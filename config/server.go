@@ -46,46 +46,7 @@ func generateRouterID() (uint32, error) {
 		return convert.Uint32b([]byte(addr)[12:16]), nil
 	}
 
-	return 0, fmt.Errorf("Unable to determine router id")
-}
-
-func getHighestIP() (net.IP, error) {
-	ifs, err := net.Interfaces()
-	if err != nil {
-		return nil, fmt.Errorf("Unable to ")
-	}
-
-	return _getHighestIP(ifs)
-}
-
-func _getHighestIP(ifs []net.Interface) (net.IP, error) {
-	candidates := make([]net.IP, 0)
-	for _, iface := range ifs {
-		addrs, err := iface.Addrs()
-		if err != nil {
-			return nil, fmt.Errorf("Unable to get interface addrs for %s: %v", iface.Name, err)
-		}
-
-		for _, addr := range addrs {
-			a := net.ParseIP(addr.String())
-			if addr.String() != "127.0.0.1" && a.To4() != nil {
-				candidates = append(candidates, a)
-			}
-		}
-	}
-
-	if len(candidates) == 0 {
-		return nil, fmt.Errorf("No IPv4 address found on any interface")
-	}
-
-	max := candidates[0]
-	for _, c := range candidates[1:] {
-		if addrIsGreater(c, max) {
-			max = c
-		}
-	}
-
-	return nil, fmt.Errorf("No non localhost IPv4 address found on interface lo")
+	return 0, fmt.Errorf("Unable to determine router id: %v", err)
 }
 
 func getLoopbackIP() (net.IP, error) {

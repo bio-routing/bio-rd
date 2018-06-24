@@ -44,3 +44,13 @@ After updating Gopkg.toml, run
     # hack: dep of dep gives us these, and it breaks gazelle
     rm -rf vendor/github.com/golang/dep/cmd/dep/testdata
     rm -rf vendor/github.com/golang/dep/internal/fs/testdata/symlinks/dir-symlink
+
+Managemnt Protocol
+==================
+
+    alias grpc="docker run --net=host returnpath/grpc_cli"
+    grpc ls '[::1]:1337'
+    grpc ls '[::1]:1337' proto.Management
+    grpc call '[::1]:1337' proto.Management.ListServers ''
+    grpc call '[::1]:1337' proto.Management.GetBGPServerStatus 'name: "main"'
+

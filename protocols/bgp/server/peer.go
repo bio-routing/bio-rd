@@ -101,14 +101,14 @@ func isEstablishedState(s state) bool {
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
 func newPeer(c config.Peer, rib routingtable.RouteTableClient, server *bgpServer) (*peer, error) {
-	if c.LocalAS == 0 {
-		c.LocalAS = server.localASN
+	if c.LocalASN == 0 {
+		c.LocalASN = server.localASN
 	}
 	p := &peer{
 		server:            server,
 		addr:              c.PeerAddress,
-		peerASN:           c.PeerAS,
-		localASN:          c.LocalAS,
+		peerASN:           c.PeerASN,
+		localASN:          c.LocalASN,
 		fsms:              make([]*FSM, 0),
 		rib:               rib,
 		addPathSend:       c.AddPathSend,

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"time"
@@ -21,14 +22,26 @@ func strAddr(s string) uint32 {
 	return ret
 }
 
+var (
+	flagMgmtListen string
+)
+
 func main() {
+	flag.StringVar(&flagMgmtListen, "mgmt_listen", "[::1]:1337", "gRPC management listen address")
+	flag.Parse()
 	logrus.Printf("This is a BGP speaker\n")
 
 	rib := locRIB.New()
 	b := server.NewBgpServer()
 
+	mgmt := newMgmtService(flagMgmtListen, map[string]server.BGPServer{
+		"main": b,
+	})
+	mgmt.start()
+
 	err := b.Start(&config.Global{
-		Listen: true,
+		Listen:   true,
+		LocalASN: 6695,
 		LocalAddressList: []net.IP{
 			net.IPv4(169, 254, 100, 1),
 			net.IPv4(169, 254, 200, 0),
@@ -40,8 +53,7 @@ func main() {
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
-		LocalAS:           6695,
-		PeerAS:            65300,
+		PeerASN:           65300,
 		PeerAddress:       net.IP([]byte{169, 254, 200, 1}),
 		LocalAddress:      net.IP([]byte{169, 254, 200, 0}),
 		ReconnectInterval: time.Second * 15,
@@ -59,8 +71,7 @@ func main() {
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
-		LocalAS:           6695,
-		PeerAS:            65100,
+		PeerASN:           65100,
 		PeerAddress:       net.IP([]byte{169, 254, 100, 0}),
 		LocalAddress:      net.IP([]byte{169, 254, 100, 1}),
 		ReconnectInterval: time.Second * 15,

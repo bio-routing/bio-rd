@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package proto;
+
+message ListServersRequest {
+}
+
+message ListServersResponse {
+    message Server {
+        string family = 1;
+        string name = 2;
+    };
+    repeated Server server = 1;
+}
+
+message GetBGPServerStatusRequest {
+    string name = 1;
+}
+
+message GetBGPServerStatusResponse {
+    uint32 router_id = 1;
+    uint32 local_asn = 2;
+
+    message PeerInfo {
+        string peer_address = 1;
+        uint32 peer_asn = 2;
+        uint32 local_asn = 3;
+    };
+    repeated PeerInfo peers = 4;
+}
+
+service Management {
+    rpc ListServers(ListServersRequest) returns (ListServersResponse);
+    rpc GetBGPServerStatus(GetBGPServerStatusRequest) returns (GetBGPServerStatusResponse);
+}

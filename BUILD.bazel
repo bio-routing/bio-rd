@@ -10,17 +10,25 @@ gazelle(
 
 go_library(
     name = "go_default_library",
-    srcs = ["main.go"],
+    srcs = [
+        "main.go",
+        "management.go",
+    ],
     importpath = "github.com/bio-routing/bio-rd",
     visibility = ["//visibility:private"],
     deps = [
         "//config:go_default_library",
         "//net:go_default_library",
+        "//proto:mgmt_go_proto",
         "//protocols/bgp/server:go_default_library",
         "//routingtable:go_default_library",
         "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/google.golang.org/grpc:go_default_library",
+        "//vendor/google.golang.org/grpc/codes:go_default_library",
+        "//vendor/google.golang.org/grpc/reflection:go_default_library",
+        "//vendor/google.golang.org/grpc/status:go_default_library",
     ],
 )
 

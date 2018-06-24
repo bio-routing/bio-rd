@@ -28,6 +28,7 @@ type bgpServer struct {
 
 type BGPServer interface {
 	RouterID() uint32
+	LocalASN() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer, routingtable.RouteTableClient) error
 	GetPeerInfoAll() map[string]PeerInfo
@@ -52,6 +53,10 @@ func (b *bgpServer) GetPeerInfoAll() map[string]PeerInfo {
 
 func (b *bgpServer) RouterID() uint32 {
 	return b.routerID
+}
+
+func (b *bgpServer) LocalASN() uint32 {
+	return b.localASN
 }
 
 func (b *bgpServer) Start(c *config.Global) error {
@@ -114,7 +119,7 @@ func (b *bgpServer) incomingConnectionWorker() {
 }
 
 func (b *bgpServer) AddPeer(c config.Peer, rib routingtable.RouteTableClient) error {
-	if c.LocalAS > uint16max || c.PeerAS > uint16max {
+	if c.LocalASN > uint16max || c.PeerASN > uint16max {
 		return fmt.Errorf("32bit ASNs are not supported yet")
 	}
 

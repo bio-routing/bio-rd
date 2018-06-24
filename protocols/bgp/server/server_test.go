@@ -46,7 +46,7 @@ func TestBgpServerPeerSnapshot(t *testing.T) {
 	rib := locRIB.New()
 	pc := config.Peer{
 		AdminEnabled:      true,
-		PeerAS:            65300,
+		PeerASN:           65300,
 		PeerAddress:       net.IP([]byte{169, 254, 200, 1}),
 		LocalAddress:      net.IP([]byte{169, 254, 200, 0}),
 		ReconnectInterval: time.Second * 15,

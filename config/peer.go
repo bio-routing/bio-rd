@@ -15,8 +15,8 @@ type Peer struct {
 	HoldTime          time.Duration
 	LocalAddress      net.IP
 	PeerAddress       net.IP
-	LocalAS           uint32
-	PeerAS            uint32
+	LocalASN          uint32
+	PeerASN           uint32
 	Passive           bool
 	RouterID          uint32
 	AddPathSend       routingtable.ClientOptions

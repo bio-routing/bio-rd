@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("@io_bazel_rules_go//proto:compiler.bzl", "go_proto_compiler")
+
+proto_library(
+    name = "mgmt_proto",
+    srcs = ["mgmt.proto"],
+)
+
+# We're defining our own proto compiler so that generated proto stubs use our
+# vendored libraries.
+go_proto_compiler(
+    name = "go_grpc",
+    options = ["plugins=grpc"],
+    deps = [
+        "//net:go_default_library",
+        "//vendor/github.com/golang/protobuf/proto:go_default_library",
+        "//vendor/google.golang.org/grpc:go_default_library",
+        "//vendor/golang.org/x/net/context:go_default_library",
+    ],
+)
+
+go_proto_library(
+    name = "mgmt_go_proto",
+    compilers = [":go_grpc"],
+    importpath = "github.com/bio-routing/bio-rd/proto/mgmt",
+    proto = ":mgmt_proto",
+    visibility = ["//visibility:public"],
+    importmap = "",
+)

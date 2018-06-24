@@ -16,7 +16,7 @@ func TestGetLoopbackIP(t *testing.T) {
 		want    net.IP
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -32,32 +32,6 @@ func TestGetLoopbackIP(t *testing.T) {
 	}
 }
 
-func TestGetHighestIP(t *testing.T) {
-	type args struct {
-		ifs []net.Interface
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    net.IP
-		wantErr bool
-	}{
-	// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := _getHighestIP(tt.args.ifs)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("_getHighestIP() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("_getHighestIP() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestAddrIsGreater(t *testing.T) {
 	type args struct {
 		a net.IP
@@ -68,7 +42,7 @@ func TestAddrIsGreater(t *testing.T) {
 		args args
 		want bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
