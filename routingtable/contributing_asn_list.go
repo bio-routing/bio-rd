@@ -1,6 +1,8 @@
 package routingtable
 
 import (
+	"fmt"
+	"math"
 	"sync"
 )
 
@@ -11,8 +13,8 @@ type contributingASN struct {
 
 // ContributingASNs contains a list of contributing ASN to a LocRIB to check ASPaths for possible routing loops.
 type ContributingASNs struct {
-	contributingASNs []*contributingASN
-	mu               sync.RWMutex
+	contributingASNs     []*contributingASN
+	contributingASNsLock sync.RWMutex
 }
 
 // NewContributingASNs creates a list of contributing ASNs to a LocRIB for routing loop prevention.
@@ -26,12 +28,17 @@ func NewContributingASNs() *ContributingASNs {
 
 // Add a new ASN to the list of contributing ASNs or add the ref count of an existing one.
 func (c *ContributingASNs) Add(asn uint32) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.contributingASNsLock.Lock()
+	defer c.contributingASNsLock.Unlock()
 
 	for _, cASN := range c.contributingASNs {
 		if cASN.asn == asn {
 			cASN.count++
+
+			if cASN.count == math.MaxUint32 {
+				panic(fmt.Sprintf("Contributing ASNs counter overflow triggered for AS %d. Dyning of shame.", asn))
+			}
+
 			return
 		}
 	}
@@ -44,27 +51,33 @@ func (c *ContributingASNs) Add(asn uint32) {
 
 // Remove a ASN to the list of contributing ASNs or decrement the ref count of an existing one.
 func (c *ContributingASNs) Remove(asn uint32) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.contributingASNsLock.Lock()
+	defer c.contributingASNsLock.Unlock()
 
 	asnList := c.contributingASNs
 
 	for i, cASN := range asnList {
-		if cASN.asn == asn {
-			cASN.count--
-
-			if cASN.count == 0 {
-				copy(asnList[i:], asnList[i+1:])
-				asnList = asnList[:len(asnList)]
-				c.contributingASNs = asnList[:len(asnList)-1]
-			}
-			return
+		if cASN.asn != asn {
+			continue
 		}
+
+		cASN.count--
+
+		if cASN.count == 0 {
+			copy(asnList[i:], asnList[i+1:])
+			asnList = asnList[:len(asnList)]
+			c.contributingASNs = asnList[:len(asnList)-1]
+		}
+
+		return
 	}
 }
 
 // IsContributingASN checks if  a given ASN is part of the contributing ASNs
 func (c *ContributingASNs) IsContributingASN(asn uint32) bool {
+	c.contributingASNsLock.Lock()
+	defer c.contributingASNsLock.Unlock()
+
 	for _, cASN := range c.contributingASNs {
 		if asn == cASN.asn {
 			return true
