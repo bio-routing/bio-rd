@@ -79,7 +79,7 @@ func main() {
 
 	go func() {
 		for {
-			fmt.Print(rib.Print())
+			fmt.Printf("LocRIB count: %d\n", rib.Count())
 			time.Sleep(time.Second * 10)
 		}
 	}()
