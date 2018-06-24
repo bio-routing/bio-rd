@@ -40,6 +40,8 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
+        "fsm_open_sent_test.go",
+        "fsm_test.go",
         "server_test.go",
         "update_helper_test.go",
         "withdraw_test.go",

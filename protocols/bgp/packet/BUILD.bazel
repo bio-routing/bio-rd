@@ -9,6 +9,7 @@ go_library(
         "encoder.go",
         "large_community.go",
         "nlri.go",
+        "options.go",
         "parameters.go",
         "path_attribute_flags.go",
         "path_attributes.go",
