@@ -17,4 +17,8 @@
 .idea/
 *.iml
 
+# 'go build' binary
 bio-rd
+
+# bazel directories
+/bazel-*

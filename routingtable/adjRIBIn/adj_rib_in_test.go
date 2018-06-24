@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -113,7 +115,7 @@ func TestAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New()
+		adjRIBIn := New(filter.NewAcceptAllFilter())
 		mc := NewRTMockClient()
 		adjRIBIn.ClientManager.Register(mc)
 
@@ -204,7 +206,7 @@ func TestRemovePath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New()
+		adjRIBIn := New(filter.NewAcceptAllFilter())
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
 		}

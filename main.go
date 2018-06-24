@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -41,7 +40,7 @@ func main() {
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
-		LocalAS:           65200,
+		LocalAS:           6695,
 		PeerAS:            65300,
 		PeerAddress:       net.IP([]byte{169, 254, 200, 1}),
 		LocalAddress:      net.IP([]byte{169, 254, 200, 0}),
@@ -53,13 +52,14 @@ func main() {
 		AddPathSend: routingtable.ClientOptions{
 			MaxPaths: 10,
 		},
-		ImportFilter: filter.NewDrainFilter(),
-		ExportFilter: filter.NewAcceptAllFilter(),
+		ImportFilter:      filter.NewAcceptAllFilter(),
+		ExportFilter:      filter.NewAcceptAllFilter(),
+		RouteServerClient: true,
 	}, rib)
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
-		LocalAS:           65200,
+		LocalAS:           6695,
 		PeerAS:            65100,
 		PeerAddress:       net.IP([]byte{169, 254, 100, 0}),
 		LocalAddress:      net.IP([]byte{169, 254, 100, 1}),
@@ -71,9 +71,10 @@ func main() {
 		AddPathSend: routingtable.ClientOptions{
 			MaxPaths: 10,
 		},
-		AddPathRecv:  true,
-		ImportFilter: filter.NewAcceptAllFilter(),
-		ExportFilter: filter.NewDrainFilter(),
+		AddPathRecv:       true,
+		ImportFilter:      filter.NewAcceptAllFilter(),
+		ExportFilter:      filter.NewAcceptAllFilter(),
+		RouteServerClient: true,
 	}, rib)
 
 	go func() {
@@ -83,7 +84,5 @@ func main() {
 		}
 	}()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	wg.Wait()
+	select {}
 }
