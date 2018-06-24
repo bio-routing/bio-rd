@@ -175,9 +175,9 @@ func (b *BGPPath) Print() string {
 		origin = "IGP"
 	}
 
-	bgpType := "iBGP"
+	bgpType := "internal"
 	if b.EBGP {
-		bgpType = "eBGP"
+		bgpType = "external"
 	}
 
 	ret := fmt.Sprintf("\t\tLocal Pref: %d\n", b.LocalPref)
