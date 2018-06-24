@@ -17,6 +17,7 @@ before_install:
   - wget https://github.com/bazelbuild/bazel/releases/download/0.14.1/bazel-0.14.1-installer-linux-x86_64.sh
   - sha256sum -c .travis.bazel-0.14.1-installer-linux-x86_64.sh.sha256
   - bash bazel-0.14.1-installer-linux-x86_64.sh --user
+  - openssl aes-256-cbc -K $encrypted_f41459709989_key -iv $encrypted_f41459709989_iv -in bio-routing-bazel.json.enc -out bio-routing-bazel.json -d
 
 script:
 - mkdir -p $HOME/gopath/src/github.com/bio-routing/
