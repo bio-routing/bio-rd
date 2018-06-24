@@ -55,7 +55,10 @@ func (s establishedState) run() (state, string) {
 }
 
 func (s *establishedState) init() error {
-	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter)
+	contributingASNs := s.fsm.rib.GetContributingASNs()
+
+	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs)
+	contributingASNs.Add(s.fsm.peer.localASN)
 	s.fsm.adjRIBIn.Register(s.fsm.rib)
 
 	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
@@ -96,6 +99,7 @@ func (s *establishedState) init() error {
 }
 
 func (s *establishedState) uninit() {
+	s.fsm.rib.GetContributingASNs().Remove(s.fsm.peer.localASN)
 	s.fsm.adjRIBIn.Unregister(s.fsm.rib)
 	s.fsm.rib.Unregister(s.fsm.adjRIBOut)
 	s.fsm.adjRIBOut.Unregister(s.fsm.updateSender)

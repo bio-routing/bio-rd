@@ -33,6 +33,7 @@ go_library(
         "//routingtable/adjRIBIn:go_default_library",
         "//routingtable/adjRIBOut:go_default_library",
         "//routingtable/filter:go_default_library",
+        "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )

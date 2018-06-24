@@ -22,6 +22,7 @@ script:
 - mkdir -p $HOME/gopath/src/github.com/bio-routing/
 - ln -s $TRAVIS_BUILD_DIR $HOME/gopath/src/github.com/bio-routing/bio-rd || true
 - cp .bazelrc.travis .bazelrc
+- bazel test //...
 - bazel coverage //...
 - bazel build //vendor/github.com/q3k/goveralls
 - bazel-bin/vendor/github.com/q3k/goveralls/linux_amd64_stripped/goveralls -coverprofile=$(find bazel-testlogs/ -iname coverage.dat -or -iname baseline_coverage.dat | paste -sd ',') -merge=false
