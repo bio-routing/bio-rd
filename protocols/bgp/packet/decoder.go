@@ -242,6 +242,12 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 			return cap, fmt.Errorf("Unable to decode add path capability")
 		}
 		cap.Value = addPathCap
+	case ASN4CapabilityCode:
+		asn4Cap, err := decodeASN4Capability(buf)
+		if err != nil {
+			return cap, fmt.Errorf("Unable to decode 4 octet ASN capability")
+		}
+		cap.Value = asn4Cap
 	default:
 		for i := uint8(0); i < cap.Length; i++ {
 			_, err := buf.ReadByte()
@@ -268,6 +274,20 @@ func decodeAddPathCapability(buf *bytes.Buffer) (AddPathCapability, error) {
 	}
 
 	return addPathCap, nil
+}
+
+func decodeASN4Capability(buf *bytes.Buffer) (ASN4Capability, error) {
+	asn4Cap := ASN4Capability{}
+	fields := []interface{}{
+		&asn4Cap.ASN4,
+	}
+
+	err := decode(buf, fields)
+	if err != nil {
+		return asn4Cap, err
+	}
+
+	return asn4Cap, nil
 }
 
 func validateOpen(msg *BGPOpen) error {

@@ -70,7 +70,7 @@ func TestOpenMessage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			p := Peer{
+			p := peer{
 				localASN: test.localASN,
 				holdTime: test.holdTime,
 				routerID: test.routerID,

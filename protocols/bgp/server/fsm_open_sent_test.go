@@ -65,7 +65,7 @@ func TestOpenMsgReceived(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			fsm := newFSM2(&Peer{
+			fsm := newFSM2(&peer{
 				peerASN: test.asn,
 			})
 

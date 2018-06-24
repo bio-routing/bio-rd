@@ -108,6 +108,7 @@ func newPeer(c config.Peer, rib routingtable.RouteTableClient, server *bgpServer
 		server:            server,
 		addr:              c.PeerAddress,
 		peerASN:           c.PeerAS,
+		localASN:          c.LocalAS,
 		fsms:              make([]*FSM, 0),
 		rib:               rib,
 		addPathSend:       c.AddPathSend,
