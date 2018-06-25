@@ -41,7 +41,7 @@ func pathAttribues(p *route.Path) (*packet.PathAttribute, error) {
 		}
 	}
 
-	return origin, nil
+	return asPath, nil
 }
 
 func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error {
