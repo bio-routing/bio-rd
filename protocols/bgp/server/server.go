@@ -5,42 +5,62 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	uint16max  = 65535
 	BGPVersion = 4
 )
 
-type BGPServer struct {
+type bgpServer struct {
 	listeners []*TCPListener
 	acceptCh  chan *net.TCPConn
-	peers     map[string]*Peer
+	peers     sync.Map
 	routerID  uint32
+	localASN  uint32
 }
 
-func NewBgpServer() *BGPServer {
-	return &BGPServer{
-		peers: make(map[string]*Peer),
-	}
+type BGPServer interface {
+	RouterID() uint32
+	Start(*config.Global) error
+	AddPeer(config.Peer, *locRIB.LocRIB) error
+	GetPeerInfoAll() map[string]PeerInfo
 }
 
-func (b *BGPServer) RouterID() uint32 {
+func NewBgpServer() BGPServer {
+	return &bgpServer{}
+}
+
+func (b *bgpServer) GetPeerInfoAll() map[string]PeerInfo {
+	res := make(map[string]PeerInfo)
+	b.peers.Range(func(key, value interface{}) bool {
+		name := key.(string)
+		peer := value.(*peer)
+
+		res[name] = peer.snapshot()
+
+		return true
+	})
+	return res
+}
+
+func (b *bgpServer) RouterID() uint32 {
 	return b.routerID
 }
 
-func (b *BGPServer) Start(c *config.Global) error {
+func (b *bgpServer) Start(c *config.Global) error {
 	if err := c.SetDefaultGlobalConfigValues(); err != nil {
 		return fmt.Errorf("Failed to load defaults: %v", err)
 	}
 
 	log.Infof("ROUTER ID: %d\n", c.RouterID)
 	b.routerID = c.RouterID
+	b.localASN = c.LocalASN
 
 	if c.Listen {
 		acceptCh := make(chan *net.TCPConn, 4096)
@@ -59,51 +79,49 @@ func (b *BGPServer) Start(c *config.Global) error {
 	return nil
 }
 
-func (b *BGPServer) incomingConnectionWorker() {
+func (b *bgpServer) incomingConnectionWorker() {
 	for {
 		c := <-b.acceptCh
 
 		peerAddr := strings.Split(c.RemoteAddr().String(), ":")[0]
-		if _, ok := b.peers[peerAddr]; !ok {
+		peerInterface, ok := b.peers.Load(peerAddr)
+		if !ok {
 			c.Close()
 			log.WithFields(log.Fields{
 				"source": c.RemoteAddr(),
 			}).Warning("TCP connection from unknown source")
 			continue
 		}
+		peer := peerInterface.(*peer)
 
 		log.WithFields(log.Fields{
 			"source": c.RemoteAddr(),
 		}).Info("Incoming TCP connection")
 
 		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
-		fsm := NewActiveFSM2(b.peers[peerAddr])
+		fsm := NewActiveFSM2(peer)
 		fsm.state = newActiveState(fsm)
 		fsm.startConnectRetryTimer()
 
-		b.peers[peerAddr].fsmsMu.Lock()
-		b.peers[peerAddr].fsms = append(b.peers[peerAddr].fsms, fsm)
-		b.peers[peerAddr].fsmsMu.Unlock()
+		peer.fsmsMu.Lock()
+		peer.fsms = append(peer.fsms, fsm)
+		peer.fsmsMu.Unlock()
 
 		go fsm.run()
 		fsm.conCh <- c
 	}
 }
 
-func (b *BGPServer) AddPeer(c config.Peer, rib routingtable.RouteTableClient) error {
-	if c.LocalAS > uint16max || c.PeerAS > uint16max {
-		return fmt.Errorf("32bit ASNs are not supported yet")
-	}
-
-	peer, err := NewPeer(c, rib, b)
+func (b *bgpServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
+	peer, err := newPeer(c, rib, b)
 	if err != nil {
 		return err
 	}
 
 	peer.routerID = c.RouterID
 	peerAddr := peer.GetAddr().String()
-	b.peers[peerAddr] = peer
-	b.peers[peerAddr].Start()
+	b.peers.Store(peerAddr, peer)
+	peer.Start()
 
 	return nil
 }

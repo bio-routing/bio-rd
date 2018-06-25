@@ -8,6 +8,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,7 +29,7 @@ type state interface {
 
 // FSM implements the BGP finite state machine (RFC4271)
 type FSM struct {
-	peer        *Peer
+	peer        *peer
 	eventCh     chan int
 	con         net.Conn
 	conCh       chan net.Conn
@@ -56,12 +57,14 @@ type FSM struct {
 	capAddPathSend bool
 	capAddPathRecv bool
 
+	options *packet.Options
+
 	local net.IP
 
 	ribsInitialized bool
 	adjRIBIn        routingtable.RouteTableClient
 	adjRIBOut       routingtable.RouteTableClient
-	rib             routingtable.RouteTableClient
+	rib             *locRIB.LocRIB
 	updateSender    routingtable.RouteTableClient
 
 	neighborID uint32
@@ -72,7 +75,7 @@ type FSM struct {
 }
 
 // NewPassiveFSM2 initiates a new passive FSM
-func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM {
+func NewPassiveFSM2(peer *peer, con *net.TCPConn) *FSM {
 	fsm := newFSM2(peer)
 	fsm.con = con
 	fsm.state = newIdleState(fsm)
@@ -80,14 +83,14 @@ func NewPassiveFSM2(peer *Peer, con *net.TCPConn) *FSM {
 }
 
 // NewActiveFSM2 initiates a new passive FSM
-func NewActiveFSM2(peer *Peer) *FSM {
+func NewActiveFSM2(peer *peer) *FSM {
 	fsm := newFSM2(peer)
 	fsm.active = true
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-func newFSM2(peer *Peer) *FSM {
+func newFSM2(peer *peer) *FSM {
 	return &FSM{
 		connectRetryTime: time.Minute,
 		peer:             peer,
@@ -99,6 +102,7 @@ func newFSM2(peer *Peer) *FSM {
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
 		rib:              peer.rib,
+		options:          &packet.Options{},
 	}
 }
 
@@ -219,13 +223,7 @@ func (fsm *FSM) resetConnectRetryCounter() {
 }
 
 func (fsm *FSM) sendOpen() error {
-	msg := packet.SerializeOpenMsg(&packet.BGPOpen{
-		Version:       BGPVersion,
-		AS:            uint16(fsm.peer.localASN),
-		HoldTime:      uint16(fsm.peer.holdTime / time.Second),
-		BGPIdentifier: fsm.peer.server.routerID,
-		OptParams:     fsm.peer.optOpenParams,
-	})
+	msg := packet.SerializeOpenMsg(fsm.openMessage())
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
@@ -233,6 +231,24 @@ func (fsm *FSM) sendOpen() error {
 	}
 
 	return nil
+}
+
+func (fsm *FSM) openMessage() *packet.BGPOpen {
+	return &packet.BGPOpen{
+		Version:       BGPVersion,
+		ASN:           fsm.local16BitASN(),
+		HoldTime:      uint16(fsm.peer.holdTime / time.Second),
+		BGPIdentifier: fsm.peer.routerID,
+		OptParams:     fsm.peer.optOpenParams,
+	}
+}
+
+func (fsm *FSM) local16BitASN() uint16 {
+	if fsm.peer.localASN > uint32(^uint16(0)) {
+		return packet.ASTransASN
+	}
+
+	return uint16(fsm.peer.localASN)
 }
 
 func (fsm *FSM) sendNotification(errorCode uint8, errorSubCode uint8) error {

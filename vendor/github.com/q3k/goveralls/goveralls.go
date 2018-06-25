@@ -8,6 +8,7 @@ package main
 import (
 	"bytes"
 	_ "crypto/sha512"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -54,6 +55,9 @@ var (
 	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 	shallow    = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
 	ignore     = flag.String("ignore", "", "Comma separated files to ignore")
+	insecure   = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
+	show       = flag.Bool("show", false, "Show which package is being tested")
+	merge      = flag.Bool("merge", true, "Merge multiple coverage profiles into one")
 )
 
 // usage supplants package flag's Usage variable
@@ -149,6 +153,9 @@ func getCoverage() ([]*SourceFile, error) {
 		args = append(args, line)
 		cmd.Args = args
 
+		if *show {
+			fmt.Println("goveralls:", line)
+		}
 		err = cmd.Run()
 		if err != nil {
 			return nil, fmt.Errorf("%v: %v", err, outBuf.String())
@@ -225,6 +232,13 @@ func process() error {
 	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
 
 	//
+	// Handle certificate verification configuration
+	//
+	if *insecure {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	//
 	// Initialize Job
 	//
 	var jobId string
@@ -234,6 +248,10 @@ func process() error {
 		jobId = circleCiJobId
 	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
 		jobId = appveyorJobId
+	} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
+		jobId = semaphoreJobId
+	} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
+		jobId = jenkinsJobId
 	}
 
 	if *repotoken == "" {
@@ -249,6 +267,8 @@ func process() error {
 		// for Circle CI
 		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
 	} else if prNumber := os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER"); prNumber != "" {
+		pullRequest = prNumber
+	} else if prNumber := os.Getenv("PULL_REQUEST_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	}
 

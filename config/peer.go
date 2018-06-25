@@ -23,4 +23,5 @@ type Peer struct {
 	AddPathRecv       bool
 	ImportFilter      *filter.Filter
 	ExportFilter      *filter.Filter
+	RouteServerClient bool
 }

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "client_interface.go",
         "client_manager.go",
+        "contributing_asn_list.go",
         "neighbor.go",
         "rib_interface.go",
         "table.go",
@@ -25,6 +26,7 @@ go_test(
     name = "go_default_test",
     srcs = [
         "client_manager_test.go",
+        "contributing_asn_list_test.go",
         "table_test.go",
         "trie_test.go",
         "update_helper_test.go",

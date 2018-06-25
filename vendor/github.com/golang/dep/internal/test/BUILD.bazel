@@ -6,7 +6,7 @@ go_library(
         "test.go",
         "writer.go",
     ],
-    importmap = "vendor/github.com/golang/dep/internal/test",
+    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/golang/dep/internal/test",
     importpath = "github.com/golang/dep/internal/test",
     visibility = ["//vendor/github.com/golang/dep:__subpackages__"],
     deps = ["//vendor/github.com/pkg/errors:go_default_library"],

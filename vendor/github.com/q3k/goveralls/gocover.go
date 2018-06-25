@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"golang.org/x/tools/cover"
@@ -60,6 +61,33 @@ func mergeProfs(pfss [][]*cover.Profile) []*cover.Profile {
 		}
 		ret = append(ret, profile)
 	}
+	return ret
+}
+
+// joinProfs merges profiles for different target packages.
+func joinProfs(pfss [][]*cover.Profile) []*cover.Profile {
+	// skip empty profiles ([no test files])
+	for i := 0; i < len(pfss); i++ {
+		if len(pfss[i]) > 0 {
+			pfss = pfss[i:]
+			break
+		}
+	}
+	if len(pfss) == 0 {
+		return nil
+	} else if len(pfss) == 1 {
+		return pfss[0]
+	}
+
+	ret := []*cover.Profile{}
+	for _, profiles := range pfss {
+		for _, profile := range profiles {
+			ret = append(ret, profile)
+		}
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].FileName < ret[j].FileName
+	})
 	return ret
 }
 
@@ -122,10 +150,19 @@ func parseCover(fn string) ([]*SourceFile, error) {
 		pfss = append(pfss, profs)
 	}
 
-	sourceFiles, err := toSF(mergeProfs(pfss))
-	if err != nil {
-		return nil, err
-	}
+	if *merge {
+		sourceFiles, err := toSF(mergeProfs(pfss))
+		if err != nil {
+			return nil, err
+		}
 
-	return sourceFiles, nil
+		return sourceFiles, nil
+	} else {
+		sourceFiles, err := toSF(joinProfs(pfss))
+		if err != nil {
+			return nil, err
+		}
+
+		return sourceFiles, nil
+	}
 }

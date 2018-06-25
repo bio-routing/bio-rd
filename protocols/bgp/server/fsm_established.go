@@ -3,14 +3,14 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"net"
 
-	tnet "github.com/bio-routing/bio-rd/net"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
-	"github.com/bio-routing/bio-rd/routingtable/adjRIBOutAddPath"
 )
 
 type establishedState struct {
@@ -25,7 +25,10 @@ func newEstablishedState(fsm *FSM) *establishedState {
 
 func (s establishedState) run() (state, string) {
 	if !s.fsm.ribsInitialized {
-		s.init()
+		err := s.init()
+		if err != nil {
+			return newCeaseState(), fmt.Sprintf("Init failed: %v", err)
+		}
 	}
 
 	for {
@@ -51,45 +54,55 @@ func (s establishedState) run() (state, string) {
 	}
 }
 
-func (s *establishedState) init() {
-	s.fsm.adjRIBIn = adjRIBIn.New()
+func (s *establishedState) init() error {
+	contributingASNs := s.fsm.rib.GetContributingASNs()
 
-	s.fsm.peer.importFilter.Register(s.fsm.rib)
-	s.fsm.adjRIBIn.Register(s.fsm.peer.importFilter)
+	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs)
+	contributingASNs.Add(s.fsm.peer.localASN)
+	s.fsm.adjRIBIn.Register(s.fsm.rib)
 
-	n := &routingtable.Neighbor{
-		Type:     route.BGPPathType,
-		Address:  tnet.IPv4ToUint32(s.fsm.peer.addr),
-		IBGP:     s.fsm.peer.localASN == s.fsm.peer.peerASN,
-		LocalASN: s.fsm.peer.localASN,
+	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
+	if err != nil {
+		return fmt.Errorf("Unable to get local address: %v", err)
+	}
+	hostIP := net.ParseIP(host)
+	if hostIP == nil {
+		return fmt.Errorf("Unable to parse address: %v", err)
 	}
 
+	n := &routingtable.Neighbor{
+		Type:              route.BGPPathType,
+		Address:           bnet.IPv4ToUint32(s.fsm.peer.addr),
+		IBGP:              s.fsm.peer.localASN == s.fsm.peer.peerASN,
+		LocalASN:          s.fsm.peer.localASN,
+		RouteServerClient: s.fsm.peer.routeServerClient,
+		LocalAddress:      bnet.IPv4ToUint32(hostIP),
+		CapAddPathRX:      s.fsm.capAddPathSend,
+	}
+
+	s.fsm.adjRIBOut = adjRIBOut.New(n, s.fsm.peer.exportFilter)
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
 	}
 	if s.fsm.capAddPathSend {
 		s.fsm.updateSender = newUpdateSenderAddPath(s.fsm)
-		s.fsm.adjRIBOut = adjRIBOutAddPath.New(n)
 		clientOptions = s.fsm.peer.addPathSend
 	} else {
 		s.fsm.updateSender = newUpdateSender(s.fsm)
-		s.fsm.adjRIBOut = adjRIBOut.New(n)
 	}
 
 	s.fsm.adjRIBOut.Register(s.fsm.updateSender)
-	s.fsm.peer.exportFilter.Register(s.fsm.adjRIBOut)
-	s.fsm.rib.RegisterWithOptions(s.fsm.peer.exportFilter, clientOptions)
+	s.fsm.rib.RegisterWithOptions(s.fsm.adjRIBOut, clientOptions)
 
 	s.fsm.ribsInitialized = true
+	return nil
 }
 
 func (s *establishedState) uninit() {
-	s.fsm.adjRIBIn.Unregister(s.fsm.peer.importFilter)
-	s.fsm.peer.importFilter.Unregister(s.fsm.rib)
-
-	s.fsm.rib.Unregister(s.fsm.peer.exportFilter)
-	s.fsm.peer.exportFilter.Unregister(s.fsm.adjRIBOut)
-	s.fsm.updateSender.Unregister(s.fsm.adjRIBOut)
+	s.fsm.rib.GetContributingASNs().Remove(s.fsm.peer.localASN)
+	s.fsm.adjRIBIn.Unregister(s.fsm.rib)
+	s.fsm.rib.Unregister(s.fsm.adjRIBOut)
+	s.fsm.adjRIBOut.Unregister(s.fsm.updateSender)
 
 	s.fsm.adjRIBIn = nil
 	s.fsm.adjRIBOut = nil
@@ -145,7 +158,7 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 }
 
 func (s *establishedState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data))
+	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -190,19 +203,19 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 
 func (s *establishedState) withdraws(u *packet.BGPUpdate) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
-		pfx := tnet.NewPfx(r.IP, r.Pfxlen)
+		pfx := bnet.NewPfx(r.IP, r.Pfxlen)
 		s.fsm.adjRIBIn.RemovePath(pfx, nil)
 	}
 }
 
 func (s *establishedState) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
-		pfx := tnet.NewPfx(r.IP, r.Pfxlen)
+		pfx := bnet.NewPfx(r.IP, r.Pfxlen)
 
 		path := &route.Path{
 			Type: route.BGPPathType,
 			BGPPath: &route.BGPPath{
-				Source: tnet.IPv4ToUint32(s.fsm.peer.addr),
+				Source: bnet.IPv4ToUint32(s.fsm.peer.addr),
 			},
 		}
 

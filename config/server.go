@@ -9,7 +9,7 @@ import (
 )
 
 type Global struct {
-	LocalAS          uint32
+	LocalASN         uint32
 	RouterID         uint32
 	Port             uint16
 	LocalAddressList []net.IP
