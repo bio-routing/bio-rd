@@ -690,24 +690,6 @@ func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
 	}, nil
 }
 
-func CommunityAttributeForString(s string) (*PathAttribute, error) {
-	strs := strings.Split(s, " ")
-	coms := make([]uint32, len(strs))
-
-	var err error
-	for i, str := range strs {
-		coms[i], err = ParseCommunityString(str)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &PathAttribute{
-		TypeCode: CommunitiesAttr,
-		Value:    coms,
-	}, nil
-}
-
 func isBeginOfASSet(asPathPart string) bool {
 	return strings.Contains(asPathPart, "(")
 }

@@ -21,7 +21,7 @@ type BGPPath struct {
 	EBGP             bool
 	BGPIdentifier    uint32
 	Source           uint32
-	Communities      string
+	Communities      []uint32
 	LargeCommunities string
 }
 

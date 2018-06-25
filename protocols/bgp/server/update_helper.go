@@ -49,11 +49,10 @@ func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error
 	current := parent
 
 	if len(p.BGPPath.Communities) > 0 {
-		communities, err := packet.CommunityAttributeForString(p.BGPPath.Communities)
-		if err != nil {
-			return fmt.Errorf("Could not create communities attribute: %v", err)
+		communities := &packet.PathAttribute{
+			TypeCode: packet.CommunitiesAttr,
+			Value:    p.BGPPath.Communities,
 		}
-
 		current.Next = communities
 		current = communities
 	}
