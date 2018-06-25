@@ -587,40 +587,6 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	return length
 }
 
-/*func (pa *PathAttribute) PrependASPath(prepend []uint32) {
-	if pa.TypeCode != ASPathAttr {
-		return
-	}
-
-	asPath := pa.Value.(ASPath)
-	asPathSegementCount := len(asPath)
-	currentSegment := asPathSegementCount - 1
-
-	newSegmentNeeded := false
-	if asPath[asPathSegementCount-1].Type == ASSequence {
-		newSegmentNeeded = true
-	} else {
-		if len(asPath[asPathSegementCount-1].ASNs) >= MaxASNsSegment {
-			newSegmentNeeded = true
-		}
-	}
-
-	for _, asn := range prepend {
-		if newSegmentNeeded {
-			segment := ASPathSegment{
-				Type: ASSequence,
-				ASNs: make([]uint32, 0),
-			},
-		}
-
-		asPath[currentSegment].ASNs = append(asPath[currentSegment].ASNs, asn)
-		if len(asPath[asPathSegementCount-1].ASNs) >= MaxASNsSegment {
-			newSegmentNeeded = true
-		}
-	}
-
-}*/
-
 // ParseASPathStr converts an AS path from string representation info an PathAttribute object
 func ParseASPathStr(asPathString string) (*PathAttribute, error) {
 	asPath := ASPath{}
