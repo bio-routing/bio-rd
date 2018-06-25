@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
@@ -11,22 +10,22 @@ import (
 )
 
 func pathAttribues(p *route.Path) (*packet.PathAttribute, error) {
-	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(p.BGPPath.ASPath, " "))
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse AS path: %v", err)
+	asPath := &packet.PathAttribute{
+		TypeCode: packet.ASPathAttr,
+		Value:    p.BGPPath.ASPath,
 	}
 
 	origin := &packet.PathAttribute{
 		TypeCode: packet.OriginAttr,
 		Value:    p.BGPPath.Origin,
-		Next:     asPathPA,
 	}
+	asPath.Next = origin
 
 	nextHop := &packet.PathAttribute{
 		TypeCode: packet.NextHopAttr,
 		Value:    p.BGPPath.NextHop,
 	}
-	asPathPA.Next = nextHop
+	origin.Next = nextHop
 
 	localPref := &packet.PathAttribute{
 		TypeCode: packet.LocalPrefAttr,

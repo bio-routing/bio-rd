@@ -3,9 +3,9 @@ package route
 import (
 	"crypto/sha256"
 	"fmt"
-	"strconv"
 	"strings"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -14,7 +14,7 @@ type BGPPath struct {
 	PathIdentifier   uint32
 	NextHop          uint32
 	LocalPref        uint32
-	ASPath           string
+	ASPath           packet.ASPath
 	ASPathLen        uint16
 	Origin           uint8
 	MED              uint32
@@ -155,7 +155,7 @@ func (b *BGPPath) Print() string {
 	}
 	ret := fmt.Sprintf("\t\tLocal Pref: %d\n", b.LocalPref)
 	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
-	ret += fmt.Sprintf("\t\tAS Path: %s\n", b.ASPath)
+	ret += fmt.Sprintf("\t\tAS Path: %s\n")
 	nh := uint32To4Byte(b.NextHop)
 	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
@@ -172,16 +172,31 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 		return
 	}
 
-	asnStr := strconv.FormatUint(uint64(asn), 10)
-
-	path := make([]string, times+1)
-	for i := 0; uint16(i) < times; i++ {
-		path[i] = asnStr
+	first := b.ASPath[0]
+	if len(b.ASPath) == 0 || first.Type == packet.ASSet {
+		b.insertNewASSequence()
 	}
-	path[times] = b.ASPath
 
-	b.ASPath = strings.TrimSuffix(strings.Join(path, " "), " ")
-	b.ASPathLen = b.ASPathLen + times
+	for i := 0; i < int(times); i++ {
+		if len(b.ASPath) == packet.MaxASNsSegment {
+			b.insertNewASSequence()
+		}
+
+	}
+
+	b.ASPathLen = b.ASPath.Length()
+}
+
+func (b *BGPPath) insertNewASSequence() packet.ASPath {
+	pa := make(packet.ASPath, len(b.ASPath)+1)
+	copy(pa[1:], b.ASPath)
+	pa[0] = packet.ASPathSegment{
+		ASNs:  make([]uint32, 0),
+		Count: 0,
+		Type:  packet.ASSequence,
+	}
+
+	return pa
 }
 
 func (p *BGPPath) Copy() *BGPPath {

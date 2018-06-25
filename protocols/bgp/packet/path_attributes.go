@@ -3,7 +3,6 @@ package packet
 import (
 	"bytes"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/taktv6/tflow2/convert"
@@ -344,39 +343,6 @@ func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	return bytesRead, nil
 }
 
-func (pa *PathAttribute) ASPathString() (ret string) {
-	for _, p := range pa.Value.(ASPath) {
-		if p.Type == ASSet {
-			ret += " ("
-		}
-		n := len(p.ASNs)
-		for i, asn := range p.ASNs {
-			if i < n-1 {
-				ret += fmt.Sprintf("%d ", asn)
-				continue
-			}
-			ret += fmt.Sprintf("%d", asn)
-		}
-		if p.Type == ASSet {
-			ret += ")"
-		}
-	}
-
-	return
-}
-
-func (pa *PathAttribute) ASPathLen() (ret uint16) {
-	for _, p := range pa.Value.(ASPath) {
-		if p.Type == ASSet {
-			ret++
-			continue
-		}
-		ret += uint16(len(p.ASNs))
-	}
-
-	return
-}
-
 func (a *PathAttribute) CommunityString() string {
 	s := ""
 	for _, com := range a.Value.([]uint32) {
@@ -587,57 +553,6 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	return length
 }
 
-// ParseASPathStr converts an AS path from string representation info an PathAttribute object
-func ParseASPathStr(asPathString string) (*PathAttribute, error) {
-	asPath := ASPath{}
-
-	currentType := ASSequence
-	newSegmentNeeded := true
-	currentSegment := -1
-	for _, asn := range strings.Split(asPathString, " ") {
-		if asn == "" {
-			continue
-		}
-
-		if isBeginOfASSet(asn) {
-			currentType = ASSet
-			newSegmentNeeded = true
-			asn = strings.Replace(asn, "(", "", 1)
-		}
-
-		if newSegmentNeeded {
-			seg := ASPathSegment{
-				Type: uint8(currentType),
-				ASNs: make([]uint32, 0),
-			}
-			asPath = append(asPath, seg)
-			currentSegment++
-			newSegmentNeeded = false
-		}
-
-		if isEndOfASSset(asn) {
-			currentType = ASSequence
-			newSegmentNeeded = true
-			asn = strings.Replace(asn, ")", "", 1)
-		}
-
-		numericASN, err := strconv.Atoi(asn)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to convert ASN: %v", err)
-		}
-		asPath[currentSegment].ASNs = append(asPath[currentSegment].ASNs, uint32(numericASN))
-
-		if len(asPath[currentSegment].ASNs) == MaxASNsSegment {
-			newSegmentNeeded = true
-		}
-	}
-
-	return &PathAttribute{
-		TypeCode: ASPathAttr,
-		Value:    asPath,
-	}, nil
-}
-
 func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
 	strs := strings.Split(s, " ")
 	coms := make([]LargeCommunity, len(strs))
@@ -654,14 +569,6 @@ func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
 		TypeCode: LargeCommunitiesAttr,
 		Value:    coms,
 	}, nil
-}
-
-func isBeginOfASSet(asPathPart string) bool {
-	return strings.Contains(asPathPart, "(")
-}
-
-func isEndOfASSset(asPathPart string) bool {
-	return strings.Contains(asPathPart, ")")
 }
 
 func fourBytesToUint32(address [4]byte) uint32 {

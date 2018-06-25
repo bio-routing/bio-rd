@@ -230,8 +230,8 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 			case packet.NextHopAttr:
 				path.BGPPath.NextHop = pa.Value.(uint32)
 			case packet.ASPathAttr:
-				path.BGPPath.ASPath = pa.ASPathString()
-				path.BGPPath.ASPathLen = pa.ASPathLen()
+				path.BGPPath.ASPath = pa.Value.(packet.ASPath)
+				path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
 			case packet.CommunitiesAttr:
 				path.BGPPath.Communities = pa.Value.([]uint32)
 			case packet.LargeCommunitiesAttr:

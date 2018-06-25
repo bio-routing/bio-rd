@@ -52,7 +52,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 
 	p = p.Copy()
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
-		p.BGPPath.ASPath = fmt.Sprintf("%d %s", a.neighbor.LocalASN, p.BGPPath.ASPath)
+		p.BGPPath.Prepend(a.neighbor.LocalASN, 1)
 	}
 
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
