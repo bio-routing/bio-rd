@@ -4,25 +4,31 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 	log "github.com/sirupsen/logrus"
 )
 
-// AdjRIBOut represents an Adjacency RIB In as described in RFC4271
+// AdjRIBOut represents an Adjacency RIB Out with BGP add path
 type AdjRIBOut struct {
 	routingtable.ClientManager
-	rt       *routingtable.RoutingTable
-	neighbor *routingtable.Neighbor
-	mu       sync.RWMutex
+	rt            *routingtable.RoutingTable
+	neighbor      *routingtable.Neighbor
+	pathIDManager *pathIDManager
+	mu            sync.RWMutex
+	exportFilter  *filter.Filter
 }
 
-// New creates a new Adjacency RIB In
-func New(neighbor *routingtable.Neighbor) *AdjRIBOut {
+// New creates a new Adjacency RIB Out with BGP add path
+func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter) *AdjRIBOut {
 	a := &AdjRIBOut{
-		rt:       routingtable.NewRoutingTable(),
-		neighbor: neighbor,
+		rt:            routingtable.NewRoutingTable(),
+		neighbor:      neighbor,
+		pathIDManager: newPathIDManager(),
+		exportFilter:  exportFilter,
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -33,30 +39,64 @@ func (a *AdjRIBOut) UpdateNewClient(client routingtable.RouteTableClient) error 
 	return nil
 }
 
-// AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
-func (a *AdjRIBOut) AddPath(pfx net.Prefix, p *route.Path) error {
+// AddPath adds path p to prefix `pfx`
+func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
+		return nil
+	}
+
+	// Don't export routes learned via iBGP to an iBGP neighbor
+	if !p.BGPPath.EBGP && a.neighbor.IBGP {
+		return nil
+	}
+
+	p = p.Copy()
+	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
+		p.BGPPath.ASPath = fmt.Sprintf("%d %s", a.neighbor.LocalASN, p.BGPPath.ASPath)
+	}
+
+	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
+		p.BGPPath.NextHop = a.neighbor.LocalAddress
+	}
+
+	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	if reject {
 		return nil
 	}
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	oldPaths := a.rt.ReplacePath(pfx, p)
-	a.removePathsFromClients(pfx, oldPaths)
+	if !a.neighbor.CapAddPathRX {
+		oldPaths := a.rt.ReplacePath(pfx, p)
+		a.removePathsFromClients(pfx, oldPaths)
+	}
+
+	pathID, err := a.pathIDManager.addPath(p)
+	if err != nil {
+		return fmt.Errorf("Unable to get path ID: %v", err)
+	}
+
+	p.BGPPath.PathIdentifier = pathID
+	a.rt.AddPath(pfx, p)
 
 	for _, client := range a.ClientManager.Clients() {
 		err := client.AddPath(pfx, p)
 		if err != nil {
-			log.WithField("Sender", "AdjRIBOut").WithError(err).Error("Could not send update to client")
+			log.WithField("Sender", "AdjRIBOutAddPath").WithError(err).Error("Could not send update to client")
 		}
 	}
 	return nil
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
+		return false
+	}
+
+	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	if reject {
 		return false
 	}
 
@@ -68,20 +108,41 @@ func (a *AdjRIBOut) RemovePath(pfx net.Prefix, p *route.Path) bool {
 		return false
 	}
 
-	oldPaths := r.Paths()
-	for _, path := range oldPaths {
-		a.rt.RemovePath(pfx, path)
+	a.rt.RemovePath(pfx, p)
+	pathID, err := a.pathIDManager.releasePath(p)
+	if err != nil {
+		log.Warningf("Unable to release path: %v", err)
+		return true
 	}
 
-	a.removePathsFromClients(pfx, oldPaths)
+	p = p.Copy()
+	p.BGPPath.PathIdentifier = pathID
+	a.removePathFromClients(pfx, p)
 	return true
 }
 
-func (a *AdjRIBOut) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
-	for _, path := range paths {
-		for _, client := range a.ClientManager.Clients() {
-			client.RemovePath(pfx, path)
-		}
+func (a *AdjRIBOut) isOwnPath(p *route.Path) bool {
+	if p.Type != a.neighbor.Type {
+		return false
+	}
+
+	switch p.Type {
+	case route.BGPPathType:
+		return p.BGPPath.Source == a.neighbor.Address
+	}
+
+	return false
+}
+
+func (a *AdjRIBOut) removePathsFromClients(pfx bnet.Prefix, paths []*route.Path) {
+	for _, p := range paths {
+		a.removePathFromClients(pfx, p)
+	}
+}
+
+func (a *AdjRIBOut) removePathFromClients(pfx bnet.Prefix, path *route.Path) {
+	for _, client := range a.ClientManager.Clients() {
+		client.RemovePath(pfx, path)
 	}
 }
 

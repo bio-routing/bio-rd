@@ -9,16 +9,26 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
-type Peer struct {
-	server            *BGPServer
-	addr              net.IP
-	peerASN           uint32
-	localASN          uint32
-	fsms              []*FSM
-	fsmsMu            sync.Mutex
-	rib               routingtable.RouteTableClient
+type PeerInfo struct {
+	PeerAddr net.IP
+	PeerASN  uint32
+	LocalASN uint32
+}
+
+type peer struct {
+	server   *bgpServer
+	addr     net.IP
+	peerASN  uint32
+	localASN uint32
+
+	// guarded by fsmsMu
+	fsms   []*FSM
+	fsmsMu sync.Mutex
+
+	rib               *locRIB.LocRIB
 	routerID          uint32
 	addPathSend       routingtable.ClientOptions
 	addPathRecv       bool
@@ -28,9 +38,18 @@ type Peer struct {
 	optOpenParams     []packet.OptParam
 	importFilter      *filter.Filter
 	exportFilter      *filter.Filter
+	routeServerClient bool
 }
 
-func (p *Peer) collisionHandling(callingFSM *FSM) bool {
+func (p *peer) snapshot() PeerInfo {
+	return PeerInfo{
+		PeerAddr: p.addr,
+		PeerASN:  p.peerASN,
+		LocalASN: p.localASN,
+	}
+}
+
+func (p *peer) collisionHandling(callingFSM *FSM) bool {
 	p.fsmsMu.Lock()
 	defer p.fsmsMu.Unlock()
 
@@ -82,8 +101,11 @@ func isEstablishedState(s state) bool {
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer) (*Peer, error) {
-	p := &Peer{
+func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error) {
+	if c.LocalAS == 0 {
+		c.LocalAS = server.localASN
+	}
+	p := &peer{
 		server:            server,
 		addr:              c.PeerAddress,
 		peerASN:           c.PeerAS,
@@ -98,29 +120,18 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 		optOpenParams:     make([]packet.OptParam, 0),
 		importFilter:      filterOrDefault(c.ImportFilter),
 		exportFilter:      filterOrDefault(c.ExportFilter),
+		routeServerClient: c.RouteServerClient,
 	}
 	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
 	caps := make([]packet.Capability, 0)
 
-	addPath := uint8(0)
-	if c.AddPathRecv {
-		addPath += packet.AddPathReceive
-	}
-	if !c.AddPathSend.BestOnly {
-		addPath += packet.AddPathSend
+	addPathEnabled, addPathCap := handleAddPathCapability(c)
+	if addPathEnabled {
+		caps = append(caps, addPathCap)
 	}
 
-	if addPath > 0 {
-		caps = append(caps, packet.Capability{
-			Code: packet.AddPathCapabilityCode,
-			Value: packet.AddPathCapability{
-				AFI:         packet.IPv4AFI,
-				SAFI:        packet.UnicastSAFI,
-				SendReceive: addPath,
-			},
-		})
-	}
+	caps = append(caps, asn4Capability(c))
 
 	for _, cap := range caps {
 		p.optOpenParams = append(p.optOpenParams, packet.OptParam{
@@ -132,6 +143,38 @@ func NewPeer(c config.Peer, rib routingtable.RouteTableClient, server *BGPServer
 	return p, nil
 }
 
+func asn4Capability(c config.Peer) packet.Capability {
+	return packet.Capability{
+		Code: packet.ASN4CapabilityCode,
+		Value: packet.ASN4Capability{
+			ASN4: c.LocalAS,
+		},
+	}
+}
+
+func handleAddPathCapability(c config.Peer) (bool, packet.Capability) {
+	addPath := uint8(0)
+	if c.AddPathRecv {
+		addPath += packet.AddPathReceive
+	}
+	if !c.AddPathSend.BestOnly {
+		addPath += packet.AddPathSend
+	}
+
+	if addPath == 0 {
+		return false, packet.Capability{}
+	}
+
+	return true, packet.Capability{
+		Code: packet.AddPathCapabilityCode,
+		Value: packet.AddPathCapability{
+			AFI:         packet.IPv4AFI,
+			SAFI:        packet.UnicastSAFI,
+			SendReceive: addPath,
+		},
+	}
+}
+
 func filterOrDefault(f *filter.Filter) *filter.Filter {
 	if f != nil {
 		return f
@@ -141,10 +184,10 @@ func filterOrDefault(f *filter.Filter) *filter.Filter {
 }
 
 // GetAddr returns the IP address of the peer
-func (p *Peer) GetAddr() net.IP {
+func (p *peer) GetAddr() net.IP {
 	return p.addr
 }
 
-func (p *Peer) Start() {
+func (p *peer) Start() {
 	p.fsms[0].start()
 }

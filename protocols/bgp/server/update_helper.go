@@ -10,8 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func pathAttribues(p *route.Path, fsm *FSM) (*packet.PathAttribute, error) {
-	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(fmt.Sprintf("%d %s", fsm.peer.localASN, p.BGPPath.ASPath), " "))
+func pathAttribues(p *route.Path) (*packet.PathAttribute, error) {
+	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(p.BGPPath.ASPath, " "))
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse AS path: %v", err)
 	}
@@ -72,11 +72,11 @@ func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error
 }
 
 type serializeAbleUpdate interface {
-	SerializeUpdate() ([]byte, error)
+	SerializeUpdate(opt *packet.Options) ([]byte, error)
 }
 
-func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate) error {
-	updateBytes, err := update.SerializeUpdate()
+func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *packet.Options) error {
+	updateBytes, err := update.SerializeUpdate(opt)
 	if err != nil {
 		log.Errorf("Unable to serialize BGP Update: %v", err)
 		return nil

@@ -14,17 +14,32 @@ import (
 // LocRIB represents a routing information base
 type LocRIB struct {
 	routingtable.ClientManager
-	rt *routingtable.RoutingTable
-	mu sync.RWMutex
+	rt               *routingtable.RoutingTable
+	mu               sync.RWMutex
+	contributingASNs *routingtable.ContributingASNs
 }
 
 // New creates a new routing information base
 func New() *LocRIB {
 	a := &LocRIB{
-		rt: routingtable.NewRoutingTable(),
+		rt:               routingtable.NewRoutingTable(),
+		contributingASNs: routingtable.NewContributingASNs(),
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
+}
+
+// GetContributingASNs returns a pointer to the list of contributing ASNs
+func (a *LocRIB) GetContributingASNs() *routingtable.ContributingASNs {
+	return a.contributingASNs
+}
+
+//Count routes from the LocRIP
+func (a *LocRIB) Count() uint64 {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	return uint64(len(a.rt.Dump()))
 }
 
 // UpdateNewClient sends current state to a new client

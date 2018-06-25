@@ -25,7 +25,7 @@ func newUpdateSenderAddPath(fsm *FSM) *UpdateSenderAddPath {
 
 // AddPath serializes a new path and sends out a BGP update message
 func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
-	pathAttrs, err := pathAttribues(p, u.fsm)
+	pathAttrs, err := pathAttribues(p)
 
 	if err != nil {
 		log.Errorf("Unable to create BGP Update: %v", err)
@@ -39,12 +39,12 @@ func (u *UpdateSenderAddPath) AddPath(pfx net.Prefix, p *route.Path) error {
 			Pfxlen:         pfx.Pfxlen(),
 		},
 	}
-	return serializeAndSendUpdate(u.fsm.con, update)
+	return serializeAndSendUpdate(u.fsm.con, update, u.fsm.options)
 }
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSenderAddPath) RemovePath(pfx net.Prefix, p *route.Path) bool {
-	err := withDrawPrefixesAddPath(u.fsm.con, pfx, p)
+	err := withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
 	return err == nil
 }
 

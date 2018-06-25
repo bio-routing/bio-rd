@@ -10,13 +10,13 @@ import (
 )
 
 // Decode decodes a BGP message
-func Decode(buf *bytes.Buffer) (*BGPMessage, error) {
+func Decode(buf *bytes.Buffer, opt *Options) (*BGPMessage, error) {
 	hdr, err := decodeHeader(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to decode header: %v", err)
 	}
 
-	body, err := decodeMsgBody(buf, hdr.Type, hdr.Length-MinLen)
+	body, err := decodeMsgBody(buf, hdr.Type, hdr.Length-MinLen, opt)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to decode message: %v", err)
 	}
@@ -27,12 +27,12 @@ func Decode(buf *bytes.Buffer) (*BGPMessage, error) {
 	}, nil
 }
 
-func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16) (interface{}, error) {
+func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *Options) (interface{}, error) {
 	switch msgType {
 	case OpenMsg:
 		return decodeOpenMsg(buf)
 	case UpdateMsg:
-		return decodeUpdateMsg(buf, l)
+		return decodeUpdateMsg(buf, l, opt)
 	case KeepaliveMsg:
 		return nil, nil // Nothing to decode in Keepalive message
 	case NotificationMsg:
@@ -41,7 +41,7 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16) (interface{}, err
 	return nil, fmt.Errorf("Unknown message type: %d", msgType)
 }
 
-func decodeUpdateMsg(buf *bytes.Buffer, l uint16) (*BGPUpdate, error) {
+func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *Options) (*BGPUpdate, error) {
 	msg := &BGPUpdate{}
 
 	err := decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
@@ -59,7 +59,7 @@ func decodeUpdateMsg(buf *bytes.Buffer, l uint16) (*BGPUpdate, error) {
 		return msg, err
 	}
 
-	msg.PathAttributes, err = decodePathAttrs(buf, msg.TotalPathAttrLen)
+	msg.PathAttributes, err = decodePathAttrs(buf, msg.TotalPathAttrLen, opt)
 	if err != nil {
 		return msg, err
 	}
@@ -141,7 +141,7 @@ func _decodeOpenMsg(buf *bytes.Buffer) (interface{}, error) {
 
 	fields := []interface{}{
 		&msg.Version,
-		&msg.AS,
+		&msg.ASN,
 		&msg.HoldTime,
 		&msg.BGPIdentifier,
 		&msg.OptParmLen,
@@ -238,6 +238,12 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 			return cap, fmt.Errorf("Unable to decode add path capability")
 		}
 		cap.Value = addPathCap
+	case ASN4CapabilityCode:
+		asn4Cap, err := decodeASN4Capability(buf)
+		if err != nil {
+			return cap, fmt.Errorf("Unable to decode 4 octet ASN capability")
+		}
+		cap.Value = asn4Cap
 	default:
 		for i := uint8(0); i < cap.Length; i++ {
 			_, err := buf.ReadByte()
@@ -264,6 +270,20 @@ func decodeAddPathCapability(buf *bytes.Buffer) (AddPathCapability, error) {
 	}
 
 	return addPathCap, nil
+}
+
+func decodeASN4Capability(buf *bytes.Buffer) (ASN4Capability, error) {
+	asn4Cap := ASN4Capability{}
+	fields := []interface{}{
+		&asn4Cap.ASN4,
+	}
+
+	err := decode(buf, fields)
+	if err != nil {
+		return asn4Cap, err
+	}
+
+	return asn4Cap, nil
 }
 
 func validateOpen(msg *BGPOpen) error {

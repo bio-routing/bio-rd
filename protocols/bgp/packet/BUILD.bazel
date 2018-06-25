@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "bgp.go",
+        "community.go",
+        "decoder.go",
+        "encoder.go",
+        "large_community.go",
+        "nlri.go",
+        "options.go",
+        "parameters.go",
+        "path_attribute_flags.go",
+        "path_attributes.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/protocols/bgp/packet",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/taktv6/tflow2/convert:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "community_test.go",
+        "decoder_test.go",
+        "encoder_test.go",
+        "large_community_benchmark_test.go",
+        "large_community_test.go",
+        "nlri_test.go",
+        "path_attributes_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//net:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
+    ],
+)

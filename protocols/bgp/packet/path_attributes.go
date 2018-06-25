@@ -9,7 +9,7 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
-func decodePathAttrs(buf *bytes.Buffer, tpal uint16) (*PathAttribute, error) {
+func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *Options) (*PathAttribute, error) {
 	var ret *PathAttribute
 	var eol *PathAttribute
 	var pa *PathAttribute
@@ -18,7 +18,7 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16) (*PathAttribute, error) {
 
 	p := uint16(0)
 	for p < tpal {
-		pa, consumed, err = decodePathAttr(buf)
+		pa, consumed, err = decodePathAttr(buf, opt)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode path attr: %v", err)
 		}
@@ -36,7 +36,7 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16) (*PathAttribute, error) {
 	return ret, nil
 }
 
-func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err error) {
+func decodePathAttr(buf *bytes.Buffer, opt *Options) (pa *PathAttribute, consumed uint16, err error) {
 	pa = &PathAttribute{}
 
 	err = decodePathAttrFlags(buf, pa)
@@ -63,8 +63,17 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 			return nil, consumed, fmt.Errorf("Failed to decode Origin: %v", err)
 		}
 	case ASPathAttr:
-		if err := pa.decodeASPath(buf); err != nil {
+		asnLength := uint8(2)
+		if opt.Supports4OctetASN {
+			asnLength = 4
+		}
+
+		if err := pa.decodeASPath(buf, asnLength); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode AS Path: %v", err)
+		}
+	case AS4PathAttr:
+		if err := pa.decodeASPath(buf, 4); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to decode AS4 Path: %v", err)
 		}
 	case NextHopAttr:
 		if err := pa.decodeNextHop(buf); err != nil {
@@ -87,10 +96,6 @@ func decodePathAttr(buf *bytes.Buffer) (pa *PathAttribute, consumed uint16, err 
 	case CommunitiesAttr:
 		if err := pa.decodeCommunities(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode Community: %v", err)
-		}
-	case AS4PathAttr:
-		if err := pa.decodeAS4Path(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Path: %v", err)
 		}
 	case AS4AggregatorAttr:
 		if err := pa.decodeAS4Aggregator(buf); err != nil {
@@ -139,14 +144,11 @@ func (pa *PathAttribute) decodeOrigin(buf *bytes.Buffer) error {
 	return dumpNBytes(buf, pa.Length-p)
 }
 
-func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer) error {
+func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer, asnLength uint8) error {
 	pa.Value = make(ASPath, 0)
-
 	p := uint16(0)
 	for p < pa.Length {
-		segment := ASPathSegment{
-			ASNs: make([]uint32, 0),
-		}
+		segment := ASPathSegment{}
 
 		err := decode(buf, []interface{}{&segment.Type, &segment.Count})
 		if err != nil {
@@ -162,21 +164,49 @@ func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer) error {
 			return fmt.Errorf("Invalid AS Path segment length: %d", segment.Count)
 		}
 
+		segment.ASNs = make([]uint32, segment.Count)
 		for i := uint8(0); i < segment.Count; i++ {
-			asn := uint16(0)
-
-			err := decode(buf, []interface{}{&asn})
+			asn, err := pa.decodeASN(buf, asnLength)
 			if err != nil {
 				return err
 			}
-			p += 2
+			p += uint16(asnLength)
 
-			segment.ASNs = append(segment.ASNs, uint32(asn))
+			segment.ASNs[i] = asn
 		}
+
 		pa.Value = append(pa.Value.(ASPath), segment)
 	}
 
 	return nil
+}
+
+func (pa *PathAttribute) decodeASN(buf *bytes.Buffer, asnSize uint8) (asn uint32, err error) {
+	if asnSize == 4 {
+		return pa.decode4ByteASN(buf)
+	}
+
+	return pa.decode2ByteASN(buf)
+}
+
+func (pa *PathAttribute) decode4ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
+	asn4 := uint32(0)
+	err = decode(buf, []interface{}{&asn4})
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(asn4), nil
+}
+
+func (pa *PathAttribute) decode2ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
+	asn4 := uint16(0)
+	err = decode(buf, []interface{}{&asn4})
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(asn4), nil
 }
 
 func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
@@ -271,10 +301,6 @@ func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 
 	pa.Value = coms
 	return nil
-}
-
-func (pa *PathAttribute) decodeAS4Path(buf *bytes.Buffer) error {
-	return pa.decodeUint32(buf, "AS4Path")
 }
 
 func (pa *PathAttribute) decodeAS4Aggregator(buf *bytes.Buffer) error {
@@ -383,14 +409,14 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 	return nil
 }
 
-func (pa *PathAttribute) serialize(buf *bytes.Buffer) uint8 {
+func (pa *PathAttribute) serialize(buf *bytes.Buffer, opt *Options) uint8 {
 	pathAttrLen := uint8(0)
 
 	switch pa.TypeCode {
 	case OriginAttr:
 		pathAttrLen = pa.serializeOrigin(buf)
 	case ASPathAttr:
-		pathAttrLen = pa.serializeASPath(buf)
+		pathAttrLen = pa.serializeASPath(buf, opt)
 	case NextHopAttr:
 		pathAttrLen = pa.serializeNextHop(buf)
 	case MEDAttr:
@@ -421,21 +447,32 @@ func (pa *PathAttribute) serializeOrigin(buf *bytes.Buffer) uint8 {
 	return 4
 }
 
-func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer) uint8 {
+func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *Options) uint8 {
 	attrFlags := uint8(0)
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(ASPathAttr)
+
+	asnLength := uint8(2)
+	if opt.Supports4OctetASN {
+		asnLength = 4
+	}
 
 	length := uint8(0)
 	segmentsBuf := bytes.NewBuffer(nil)
 	for _, segment := range pa.Value.(ASPath) {
 		segmentsBuf.WriteByte(segment.Type)
 		segmentsBuf.WriteByte(uint8(len(segment.ASNs)))
+
 		for _, asn := range segment.ASNs {
-			segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
+			if asnLength == 2 {
+				segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
+			} else {
+				segmentsBuf.Write(convert.Uint32Byte(asn))
+			}
 		}
-		length += 2 + uint8(len(segment.ASNs))*2
+		fmt.Println(segment.ASNs)
+		length += 2 + uint8(len(segment.ASNs))*asnLength
 	}
 
 	buf.WriteByte(length)

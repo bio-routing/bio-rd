@@ -158,6 +158,10 @@ func (b *BGPPath) Print() string {
 	nh := uint32To4Byte(b.NextHop)
 	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
+	ret += fmt.Sprintf("\t\tPath ID: %d\n", b.PathIdentifier)
+	ret += fmt.Sprintf("\t\tSource: %d\n", b.Source)
+	ret += fmt.Sprintf("\t\tCommunities: %s\n", b.Communities)
+	ret += fmt.Sprintf("\t\tLargeCommunities: %s\n", b.LargeCommunities)
 
 	return ret
 }
