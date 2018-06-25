@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
 type PeerInfo struct {
@@ -27,7 +28,7 @@ type peer struct {
 	fsms   []*FSM
 	fsmsMu sync.Mutex
 
-	rib               routingtable.RouteTableClient
+	rib               *locRIB.LocRIB
 	routerID          uint32
 	addPathSend       routingtable.ClientOptions
 	addPathRecv       bool
@@ -100,7 +101,7 @@ func isEstablishedState(s state) bool {
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func newPeer(c config.Peer, rib routingtable.RouteTableClient, server *bgpServer) (*peer, error) {
+func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error) {
 	if c.LocalASN == 0 {
 		c.LocalASN = server.localASN
 	}
@@ -125,24 +126,12 @@ func newPeer(c config.Peer, rib routingtable.RouteTableClient, server *bgpServer
 
 	caps := make([]packet.Capability, 0)
 
-	addPath := uint8(0)
-	if c.AddPathRecv {
-		addPath += packet.AddPathReceive
-	}
-	if !c.AddPathSend.BestOnly {
-		addPath += packet.AddPathSend
+	addPathEnabled, addPathCap := handleAddPathCapability(c)
+	if addPathEnabled {
+		caps = append(caps, addPathCap)
 	}
 
-	if addPath > 0 {
-		caps = append(caps, packet.Capability{
-			Code: packet.AddPathCapabilityCode,
-			Value: packet.AddPathCapability{
-				AFI:         packet.IPv4AFI,
-				SAFI:        packet.UnicastSAFI,
-				SendReceive: addPath,
-			},
-		})
-	}
+	caps = append(caps, asn4Capability(c))
 
 	for _, cap := range caps {
 		p.optOpenParams = append(p.optOpenParams, packet.OptParam{
@@ -152,6 +141,38 @@ func newPeer(c config.Peer, rib routingtable.RouteTableClient, server *bgpServer
 	}
 
 	return p, nil
+}
+
+func asn4Capability(c config.Peer) packet.Capability {
+	return packet.Capability{
+		Code: packet.ASN4CapabilityCode,
+		Value: packet.ASN4Capability{
+			ASN4: c.LocalAS,
+		},
+	}
+}
+
+func handleAddPathCapability(c config.Peer) (bool, packet.Capability) {
+	addPath := uint8(0)
+	if c.AddPathRecv {
+		addPath += packet.AddPathReceive
+	}
+	if !c.AddPathSend.BestOnly {
+		addPath += packet.AddPathSend
+	}
+
+	if addPath == 0 {
+		return false, packet.Capability{}
+	}
+
+	return true, packet.Capability{
+		Code: packet.AddPathCapabilityCode,
+		Value: packet.AddPathCapability{
+			AFI:         packet.IPv4AFI,
+			SAFI:        packet.UnicastSAFI,
+			SendReceive: addPath,
+		},
+	}
 }
 
 func filterOrDefault(f *filter.Filter) *filter.Filter {

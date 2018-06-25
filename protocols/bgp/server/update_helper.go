@@ -72,11 +72,11 @@ func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error
 }
 
 type serializeAbleUpdate interface {
-	SerializeUpdate() ([]byte, error)
+	SerializeUpdate(opt *packet.Options) ([]byte, error)
 }
 
-func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate) error {
-	updateBytes, err := update.SerializeUpdate()
+func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *packet.Options) error {
+	updateBytes, err := update.SerializeUpdate(opt)
 	if err != nil {
 		log.Errorf("Unable to serialize BGP Update: %v", err)
 		return nil
