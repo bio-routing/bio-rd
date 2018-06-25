@@ -45,6 +45,11 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		return nil
 	}
 
+	// Don't export routes learned via iBGP to an iBGP neighbor
+	if !p.BGPPath.EBGP && a.neighbor.IBGP {
+		return nil
+	}
+
 	p = p.Copy()
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.ASPath = fmt.Sprintf("%d %s", a.neighbor.LocalASN, p.BGPPath.ASPath)
@@ -67,12 +72,10 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		a.removePathsFromClients(pfx, oldPaths)
 	}
 
-	fmt.Printf("Adding path: %s\n", p.Print())
 	pathID, err := a.pathIDManager.addPath(p)
 	if err != nil {
 		return fmt.Errorf("Unable to get path ID: %v", err)
 	}
-	fmt.Printf("New path ID: %d\n", pathID)
 
 	p.BGPPath.PathIdentifier = pathID
 	a.rt.AddPath(pfx, p)

@@ -115,7 +115,7 @@ func TestAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter())
+		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs())
 		mc := NewRTMockClient()
 		adjRIBIn.ClientManager.Register(mc)
 
@@ -206,7 +206,7 @@ func TestRemovePath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter())
+		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs())
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
 		}

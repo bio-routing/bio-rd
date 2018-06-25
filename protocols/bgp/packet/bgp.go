@@ -92,9 +92,11 @@ const (
 	UnicastSAFI           = 1
 	CapabilitiesParamType = 2
 	AddPathCapabilityCode = 69
+	ASN4CapabilityCode    = 65
 	AddPathReceive        = 1
 	AddPathSend           = 2
 	AddPathSendReceive    = 3
+	ASTransASN            = 23456
 )
 
 type BGPError struct {
@@ -119,7 +121,7 @@ type BGPHeader struct {
 
 type BGPOpen struct {
 	Version       uint8
-	AS            uint16
+	ASN           uint16
 	HoldTime      uint16
 	BGPIdentifier uint32
 	OptParmLen    uint8

@@ -40,9 +40,9 @@ func main() {
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
-		LocalAS:           6695,
+		LocalAS:           65200,
 		PeerAS:            65300,
-		PeerAddress:       net.IP([]byte{169, 254, 200, 1}),
+		PeerAddress:       net.IP([]byte{172, 17, 0, 3}),
 		LocalAddress:      net.IP([]byte{169, 254, 200, 0}),
 		ReconnectInterval: time.Second * 15,
 		HoldTime:          time.Second * 90,
@@ -59,9 +59,9 @@ func main() {
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
-		LocalAS:           6695,
+		LocalAS:           65200,
 		PeerAS:            65100,
-		PeerAddress:       net.IP([]byte{169, 254, 100, 0}),
+		PeerAddress:       net.IP([]byte{172, 17, 0, 2}),
 		LocalAddress:      net.IP([]byte{169, 254, 100, 1}),
 		ReconnectInterval: time.Second * 15,
 		HoldTime:          time.Second * 90,
@@ -79,7 +79,7 @@ func main() {
 
 	go func() {
 		for {
-			fmt.Print(rib.Print())
+			fmt.Printf("LocRIB count: %d\n", rib.Count())
 			time.Sleep(time.Second * 10)
 		}
 	}()

@@ -11,23 +11,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
-func TestBgpServerConfigCheck(t *testing.T) {
-	s := NewBgpServer()
-
-	err := s.Start(&config.Global{})
-	if err == nil {
-		t.Fatalf("server with empty config should not start")
-	}
-
-	err = s.Start(&config.Global{
-		LocalASN: 204880,
-		RouterID: 2137,
-	})
-	if err != nil {
-		t.Fatalf("server should have started, got err: %v", err)
-	}
-}
-
 func TestBgpServerPeerSnapshot(t *testing.T) {
 	s := NewBgpServer()
 	err := s.Start(&config.Global{

@@ -50,7 +50,7 @@ func TestDecodePathAttrs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)))
+		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -173,7 +173,7 @@ func TestDecodePathAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _, err := decodePathAttr(bytes.NewBuffer(test.input))
+		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -264,6 +264,7 @@ func TestDecodeASPath(t *testing.T) {
 		input          []byte
 		wantFail       bool
 		explicitLength uint16
+		use4OctetASNs  bool
 		expected       *PathAttribute
 	}{
 		{
@@ -309,6 +310,28 @@ func TestDecodeASPath(t *testing.T) {
 			},
 		},
 		{
+			name: "32 bit ASNs in AS_PATH",
+			input: []byte{
+				1, // AS_SEQUENCE
+				3, // Path Length
+				0, 0, 0, 100, 0, 0, 0, 222, 0, 0, 0, 240,
+			},
+			wantFail:      false,
+			use4OctetASNs: true,
+			expected: &PathAttribute{
+				Length: 14,
+				Value: ASPath{
+					ASPathSegment{
+						Type:  1,
+						Count: 3,
+						ASNs: []uint32{
+							100, 222, 240,
+						},
+					},
+				},
+			},
+		},
+		{
 			name:           "Empty input",
 			input:          []byte{},
 			explicitLength: 5,
@@ -326,28 +349,36 @@ func TestDecodeASPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		l := uint16(len(test.input))
-		if test.explicitLength != 0 {
-			l = test.explicitLength
-		}
-		pa := &PathAttribute{
-			Length: l,
-		}
-		err := pa.decodeASPath(bytes.NewBuffer(test.input))
+		t.Run(test.name, func(t *testing.T) {
+			l := uint16(len(test.input))
+			if test.explicitLength != 0 {
+				l = test.explicitLength
+			}
+			pa := &PathAttribute{
+				Length: l,
+			}
 
-		if test.wantFail && err == nil {
-			t.Errorf("Expected error did not happen for test %q", test.name)
-		}
+			asnLength := uint8(2)
+			if test.use4OctetASNs {
+				asnLength = 4
+			}
 
-		if !test.wantFail && err != nil {
-			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
-		}
+			err := pa.decodeASPath(bytes.NewBuffer(test.input), asnLength)
 
-		if err != nil {
-			continue
-		}
+			if test.wantFail && err == nil {
+				t.Errorf("Expected error did not happen for test %q", test.name)
+			}
 
-		assert.Equal(t, test.expected, pa)
+			if !test.wantFail && err != nil {
+				t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, test.expected, pa)
+		})
 	}
 }
 
@@ -1239,6 +1270,7 @@ func TestSerializeASPath(t *testing.T) {
 		input       *PathAttribute
 		expected    []byte
 		expectedLen uint8
+		use32BitASN bool
 	}{
 		{
 			name: "Test #1",
@@ -1265,17 +1297,49 @@ func TestSerializeASPath(t *testing.T) {
 			},
 			expectedLen: 10,
 		},
+		{
+			name: "32bit ASN",
+			input: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					{
+						Type: 2, // Sequence
+						ASNs: []uint32{
+							100, 200, 210,
+						},
+					},
+				},
+			},
+			expected: []byte{
+				64,           // Attribute flags
+				2,            // Type
+				14,           // Length
+				2,            // AS_SEQUENCE
+				3,            // ASN count
+				0, 0, 0, 100, // ASN 100
+				0, 0, 0, 200, // ASN 200
+				0, 0, 0, 210, // ASN 210
+			},
+			expectedLen: 16,
+			use32BitASN: true,
+		},
 	}
 
-	for _, test := range tests {
-		buf := bytes.NewBuffer(nil)
-		n := test.input.serializeASPath(buf)
-		if n != test.expectedLen {
-			t.Errorf("Unexpected length for test %q: %d", test.name, n)
-			continue
-		}
+	t.Parallel()
 
-		assert.Equal(t, test.expected, buf.Bytes())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := bytes.NewBuffer(nil)
+			opt := &Options{
+				Supports4OctetASN: test.use32BitASN,
+			}
+			n := test.input.serializeASPath(buf, opt)
+			if n != test.expectedLen {
+				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
 	}
 }
 
@@ -1561,7 +1625,8 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &Options{}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -1767,7 +1832,8 @@ func TestSerializeAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &Options{}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
