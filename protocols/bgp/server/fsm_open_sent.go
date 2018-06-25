@@ -134,7 +134,8 @@ func (s *openSentState) handleOpenMessage(openMsg *packet.BGPOpen) (state, strin
 	s.processOpenOptions(openMsg.OptParams)
 
 	if s.peerASNRcvd != s.fsm.peer.peerASN {
-		return newCeaseState(), fmt.Sprintf("Expected session from %d, got open message with ASN %d", s.fsm.peer.peerASN, s.peerASNRcvd)
+		s.fsm.sendNotification(packet.OpenMessageError, packet.BadPeerAS)
+		return newCeaseState(), fmt.Sprintf("Bad Peer AS %d, expected: %d", s.peerASNRcvd, s.fsm.peer.peerASN)
 	}
 
 	return newOpenConfirmState(s.fsm), "Received OPEN message"
