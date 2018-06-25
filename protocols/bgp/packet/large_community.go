@@ -12,7 +12,7 @@ type LargeCommunity struct {
 	DataPart2           uint32
 }
 
-func (c LargeCommunity) String() string {
+func (c *LargeCommunity) String() string {
 	return fmt.Sprintf("(%d,%d,%d)", c.GlobalAdministrator, c.DataPart1, c.DataPart2)
 }
 

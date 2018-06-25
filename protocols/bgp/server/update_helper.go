@@ -57,11 +57,10 @@ func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error
 	}
 
 	if len(p.BGPPath.LargeCommunities) > 0 {
-		largeCommunities, err := packet.LargeCommunityAttributeForString(p.BGPPath.LargeCommunities)
-		if err != nil {
-			return fmt.Errorf("Could not create large communities attribute: %v", err)
+		largeCommunities := &packet.PathAttribute{
+			TypeCode: packet.LargeCommunitiesAttr,
+			Value:    p.BGPPath.LargeCommunities,
 		}
-
 		current.Next = largeCommunities
 		current = largeCommunities
 	}

@@ -3,6 +3,8 @@ package actions
 import (
 	"testing"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +25,13 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 0",
 			times: 0,
 			bgpPath: &route.BGPPath{
-				ASPath:    "12345 12345",
+				ASPath: packet.ASPath{
+					packet.ASPathSegment{
+						Count: 2,
+						Type:  packet.ASSequence,
+						ASNs:  []uint32{12345, 12345},
+					},
+				},
 				ASPathLen: 2,
 			},
 			expectedPath:   "12345 12345",
@@ -33,7 +41,13 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 3",
 			times: 3,
 			bgpPath: &route.BGPPath{
-				ASPath:    "12345 15169",
+				ASPath: packet.ASPath{
+					packet.ASPathSegment{
+						Count: 2,
+						Type:  packet.ASSequence,
+						ASNs:  []uint32{12345, 15169},
+					},
+				},
 				ASPathLen: 2,
 			},
 			expectedPath:   "12345 12345 12345 12345 15169",
@@ -52,7 +66,7 @@ func TestAppendPath(t *testing.T) {
 				return
 			}
 
-			assert.Equal(te, test.expectedPath, p.BGPPath.ASPath, "ASPath")
+			assert.Equal(te, test.expectedPath, p.BGPPath.ASPath.String(), "ASPath")
 			assert.Equal(te, test.expectedLength, p.BGPPath.ASPathLen, "ASPathLen")
 		})
 	}

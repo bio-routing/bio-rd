@@ -235,7 +235,7 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 			case packet.CommunitiesAttr:
 				path.BGPPath.Communities = pa.Value.([]uint32)
 			case packet.LargeCommunitiesAttr:
-				path.BGPPath.LargeCommunities = pa.LargeCommunityString()
+				path.BGPPath.LargeCommunities = pa.Value.([]packet.LargeCommunity)
 			}
 		}
 		s.fsm.adjRIBIn.AddPath(pfx, path)

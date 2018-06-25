@@ -3,7 +3,6 @@ package packet
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/taktv6/tflow2/convert"
 )
@@ -343,24 +342,6 @@ func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	return bytesRead, nil
 }
 
-func (a *PathAttribute) CommunityString() string {
-	s := ""
-	for _, com := range a.Value.([]uint32) {
-		s += CommunityStringForUint32(com) + " "
-	}
-
-	return strings.TrimRight(s, " ")
-}
-
-func (a *PathAttribute) LargeCommunityString() string {
-	s := ""
-	for _, com := range a.Value.([]LargeCommunity) {
-		s += com.String() + " "
-	}
-
-	return strings.TrimRight(s, " ")
-}
-
 // dumpNBytes is used to dump n bytes of buf. This is useful in case an path attributes
 // length doesn't match a fixed length's attributes length (e.g. ORIGIN is always an octet)
 func dumpNBytes(buf *bytes.Buffer, n uint16) error {
@@ -551,24 +532,6 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	}
 
 	return length
-}
-
-func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
-	strs := strings.Split(s, " ")
-	coms := make([]LargeCommunity, len(strs))
-
-	var err error
-	for i, str := range strs {
-		coms[i], err = ParseLargeCommunityString(str)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &PathAttribute{
-		TypeCode: LargeCommunitiesAttr,
-		Value:    coms,
-	}, nil
 }
 
 func fourBytesToUint32(address [4]byte) uint32 {

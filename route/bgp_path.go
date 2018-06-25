@@ -22,7 +22,7 @@ type BGPPath struct {
 	BGPIdentifier    uint32
 	Source           uint32
 	Communities      []uint32
-	LargeCommunities string
+	LargeCommunities []packet.LargeCommunity
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
@@ -155,14 +155,14 @@ func (b *BGPPath) Print() string {
 	}
 	ret := fmt.Sprintf("\t\tLocal Pref: %d\n", b.LocalPref)
 	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
-	ret += fmt.Sprintf("\t\tAS Path: %s\n")
+	ret += fmt.Sprintf("\t\tAS Path: %v\n", b.ASPath)
 	nh := uint32To4Byte(b.NextHop)
 	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
 	ret += fmt.Sprintf("\t\tPath ID: %d\n", b.PathIdentifier)
 	ret += fmt.Sprintf("\t\tSource: %d\n", b.Source)
-	ret += fmt.Sprintf("\t\tCommunities: %s\n", b.Communities)
-	ret += fmt.Sprintf("\t\tLargeCommunities: %s\n", b.LargeCommunities)
+	ret += fmt.Sprintf("\t\tCommunities: %v\n", b.Communities)
+	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
 	return ret
 }
@@ -182,6 +182,11 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 			b.insertNewASSequence()
 		}
 
+		old := b.ASPath[0].ASNs
+		asns := make([]uint32, len(old)+1)
+		copy(asns[1:], old)
+		asns[0] = asn
+		b.ASPath[0].ASNs = asns
 	}
 
 	b.ASPathLen = b.ASPath.Length()
@@ -210,7 +215,7 @@ func (p *BGPPath) Copy() *BGPPath {
 
 // ComputeHash computes an hash over all attributes of the path
 func (b *BGPPath) ComputeHash() string {
-	s := fmt.Sprintf("%d\t%d\t%s\t%d\t%d\t%v\t%d\t%d\t%s\t%s\t%d",
+	s := fmt.Sprintf("%d\t%d\t%v\t%d\t%d\t%v\t%d\t%d\t%v\t%v\t%d",
 		b.NextHop,
 		b.LocalPref,
 		b.ASPath,
@@ -228,6 +233,26 @@ func (b *BGPPath) ComputeHash() string {
 	r.WriteTo(h)
 
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// CommunitiesString returns the formated communities
+func (b *BGPPath) CommunitiesString() string {
+	str := ""
+	for _, com := range b.Communities {
+		str += packet.CommunityStringForUint32(com) + " "
+	}
+
+	return strings.TrimRight(str, " ")
+}
+
+// LargeCommunitiesString returns the formated communities
+func (b *BGPPath) LargeCommunitiesString() string {
+	str := ""
+	for _, com := range b.LargeCommunities {
+		str += com.String() + " "
+	}
+
+	return strings.TrimRight(str, " ")
 }
 
 func uint32To4Byte(addr uint32) [4]byte {
