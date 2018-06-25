@@ -56,6 +56,7 @@ go_test(
         "//routingtable:go_default_library",
         "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
+        "//testing:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )
