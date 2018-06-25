@@ -1,6 +1,7 @@
 package route
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"strconv"
 	"strings"
@@ -190,6 +191,28 @@ func (p *BGPPath) Copy() *BGPPath {
 
 	cp := *p
 	return &cp
+}
+
+// ComputeHash computes an hash over all attributes of the path
+func (b *BGPPath) ComputeHash() string {
+	s := fmt.Sprintf("%d\t%d\t%s\t%d\t%d\t%v\t%d\t%d\t%s\t%s\t%d",
+		b.NextHop,
+		b.LocalPref,
+		b.ASPath,
+		b.Origin,
+		b.MED,
+		b.EBGP,
+		b.BGPIdentifier,
+		b.Source,
+		b.Communities,
+		b.LargeCommunities,
+		b.PathIdentifier)
+
+	r := strings.NewReader(s)
+	h := sha256.New()
+	r.WriteTo(h)
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func uint32To4Byte(addr uint32) [4]byte {

@@ -7,7 +7,7 @@ import (
 
 // BGPPathManager is a component used to deduplicate BGP Path objects
 type BGPPathManager struct {
-	paths map[BGPPath]*BGPPathCounter
+	paths map[string]*BGPPathCounter
 	mu    sync.Mutex
 }
 
@@ -24,7 +24,7 @@ func NewBGPPathManager() *BGPPathManager {
 }
 
 func (m *BGPPathManager) lookup(p BGPPath) *BGPPath {
-	pathCounter, ok := m.paths[p]
+	pathCounter, ok := m.paths[p.ComputeHash()]
 	if !ok {
 		return nil
 	}
@@ -37,15 +37,17 @@ func (m *BGPPathManager) AddPath(p BGPPath) *BGPPath {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	hash := p.ComputeHash()
+
 	q := m.lookup(p)
 	if q == nil {
-		m.paths[p] = &BGPPathCounter{
+		m.paths[hash] = &BGPPathCounter{
 			path: &p,
 		}
 	}
 
-	m.paths[p].usageCount++
-	return m.paths[p].path
+	m.paths[hash].usageCount++
+	return m.paths[hash].path
 }
 
 // RemovePath notifies us that there is one user less for path p
@@ -58,8 +60,10 @@ func (m *BGPPathManager) RemovePath(p BGPPath) {
 		return
 	}
 
-	m.paths[p].usageCount--
-	if m.paths[p].usageCount == 0 {
-		delete(m.paths, p)
+	hash := p.ComputeHash()
+
+	m.paths[hash].usageCount--
+	if m.paths[hash].usageCount == 0 {
+		delete(m.paths, hash)
 	}
 }
