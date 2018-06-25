@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_path", "go_vet_test")
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/bio-routing/bio-rd
@@ -28,4 +28,16 @@ go_binary(
     name = "bio-rd",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
+)
+
+go_path(
+    name = "all_srcs",
+    deps = [
+        "//:bio-rd",
+    ],
+)
+
+go_vet_test(
+    name = "vet",
+    data = [":all_srcs"],
 )
