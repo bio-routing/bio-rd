@@ -11,7 +11,7 @@ go_library(
         "forward_assertions.go",
         "http_assertions.go",
     ],
-    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/stretchr/testify/assert",
+    importmap = "vendor/github.com/stretchr/testify/assert",
     importpath = "github.com/stretchr/testify/assert",
     visibility = ["//visibility:public"],
     deps = [

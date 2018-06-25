@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	btesting "github.com/bio-routing/bio-rd/testing"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,6 +69,7 @@ func TestOpenMsgReceived(t *testing.T) {
 			fsm := newFSM2(&peer{
 				peerASN: test.asn,
 			})
+			fsm.con = &btesting.MockConn{}
 
 			s := &openSentState{
 				fsm: fsm,
