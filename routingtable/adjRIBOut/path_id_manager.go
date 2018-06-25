@@ -61,6 +61,7 @@ func (fm *pathIDManager) releasePath(p *route.Path) (uint32, error) {
 		delete(fm.ids, fm.idByPath[*p.BGPPath])
 		delete(fm.idByPath, *p.BGPPath)
 	}
+	fm.used--
 
 	return id, nil
 }
