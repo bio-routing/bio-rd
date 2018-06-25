@@ -215,7 +215,7 @@ func (fsm *FSM) msgReceiver(ctx context.Context) {
 	defer close(errCh)
 
 	for {
-		go recvMsg(fsm.con, msgCh, errCh)
+		go recvMsg(ctx, fsm.con, msgCh, errCh)
 
 		select {
 		case m := <-msgCh:

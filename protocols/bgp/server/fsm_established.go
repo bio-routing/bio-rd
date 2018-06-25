@@ -251,5 +251,6 @@ func (s *establishedState) unexpectedMessage() (state, string) {
 	stopTimer(s.fsm.connectRetryTimer)
 	s.fsm.con.Close()
 	s.fsm.connectRetryCounter++
+
 	return newIdleState(s.fsm), "FSM Error"
 }
