@@ -34,7 +34,6 @@ func TestFSM(t *testing.T) {
 			nextState, reason := fsmA.state.run()
 			fsmA.state = nextState
 			stateName := stateName(nextState)
-			fmt.Printf("New state: %s\n", stateName)
 			switch stateName {
 			case "idle":
 				wg.Done()
@@ -55,7 +54,7 @@ func TestFSM(t *testing.T) {
 	}()
 
 	for i := uint8(0); i < 255; i++ {
-		fsmA.msgRecvCh <- []byte{
+		update := []byte{
 			255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 			0, 53,
 			2,
@@ -84,12 +83,39 @@ func TestFSM(t *testing.T) {
 			10, 11, 12, 13, // Next Hop
 			24, 169, 254, i,
 		}
+
+		fsmA.msgRecvCh <- update
+	}
+
+	ribRouteCount := fsmA.rib.RouteCount()
+	if ribRouteCount != 255 {
+		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
+	}
+
+	fmt.Printf("Route count in RIB: %d\n", fsmA.rib.RouteCount())
+
+	for i := uint8(0); i < 255; i++ {
+		update := []byte{
+			255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+			0, 27,
+			2,
+			0, 4,
+			24, 169, 254, i,
+			0, 0,
+		}
+		fsmA.msgRecvCh <- update
+	}
+	time.Sleep(time.Second)
+
+	ribRouteCount = fsmA.rib.RouteCount()
+	if ribRouteCount != 0 {
+		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
 	}
 
 	fmt.Printf("Route count in RIB: %d\n", fsmA.rib.RouteCount())
 
 	fmt.Printf("Stopping FSM\n")
 	fsmA.eventCh <- ManualStop
-	fmt.Printf("WAINTING\n")
+	fmt.Printf("WAITING\n")
 	wg.Wait()
 }

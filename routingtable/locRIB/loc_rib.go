@@ -48,8 +48,9 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 	return nil
 }
 
+// RouteCount returns the number of stored routes
 func (a *LocRIB) RouteCount() int64 {
-	return a.rt.
+	return a.rt.GetRouteCount()
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.

@@ -52,6 +52,11 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 	return nil
 }
 
+// RouteCount returns the number of stored routes
+func (a *AdjRIBIn) RouteCount() int64 {
+	return a.rt.GetRouteCount()
+}
+
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
 func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()

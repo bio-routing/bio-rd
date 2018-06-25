@@ -39,6 +39,11 @@ func (a *AdjRIBOut) UpdateNewClient(client routingtable.RouteTableClient) error 
 	return nil
 }
 
+// RouteCount returns the number of stored routes
+func (a *AdjRIBOut) RouteCount() int64 {
+	return a.rt.GetRouteCount()
+}
+
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
