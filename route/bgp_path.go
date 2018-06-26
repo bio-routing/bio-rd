@@ -232,8 +232,7 @@ func (b *BGPPath) ComputeHash() string {
 		b.LargeCommunities,
 		b.PathIdentifier)
 
-	h := sha256.New()
-	return fmt.Sprintf("%x", h.Sum([]byte(s)))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 }
 
 // CommunitiesString returns the formated communities
