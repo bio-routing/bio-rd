@@ -368,28 +368,28 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 	return nil
 }
 
-func (pa *PathAttribute) serialize(buf *bytes.Buffer, opt *Options) uint8 {
-	pathAttrLen := uint8(0)
+func (pa *PathAttribute) serialize(buf *bytes.Buffer, opt *Options) uint16 {
+	pathAttrLen := uint16(0)
 
 	switch pa.TypeCode {
 	case OriginAttr:
-		pathAttrLen = pa.serializeOrigin(buf)
+		pathAttrLen = uint16(pa.serializeOrigin(buf))
 	case ASPathAttr:
-		pathAttrLen = pa.serializeASPath(buf, opt)
+		pathAttrLen = uint16(pa.serializeASPath(buf, opt))
 	case NextHopAttr:
-		pathAttrLen = pa.serializeNextHop(buf)
+		pathAttrLen = uint16(pa.serializeNextHop(buf))
 	case MEDAttr:
-		pathAttrLen = pa.serializeMED(buf)
+		pathAttrLen = uint16(pa.serializeMED(buf))
 	case LocalPrefAttr:
-		pathAttrLen = pa.serializeLocalpref(buf)
+		pathAttrLen = uint16(pa.serializeLocalpref(buf))
 	case AtomicAggrAttr:
-		pathAttrLen = pa.serializeAtomicAggregate(buf)
+		pathAttrLen = uint16(pa.serializeAtomicAggregate(buf))
 	case AggregatorAttr:
-		pathAttrLen = pa.serializeAggregator(buf)
+		pathAttrLen = uint16(pa.serializeAggregator(buf))
 	case CommunitiesAttr:
-		pathAttrLen = pa.serializeCommunities(buf)
+		pathAttrLen = uint16(pa.serializeCommunities(buf))
 	case LargeCommunitiesAttr:
-		pathAttrLen = pa.serializeLargeCommunities(buf)
+		pathAttrLen = uint16(pa.serializeLargeCommunities(buf))
 	default:
 		pathAttrLen = pa.serializeUnknownAttribute(buf)
 	}
@@ -548,10 +548,13 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	return length
 }
 
-func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint8 {
+func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint16 {
 	attrFlags := uint8(0)
 	if pa.Optional {
 		attrFlags = setOptional(attrFlags)
+	}
+	if pa.ExtendedLength {
+		attrFlags = setExtendedLength(attrFlags)
 	}
 	attrFlags = setTransitive(attrFlags)
 
@@ -559,10 +562,16 @@ func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(pa.TypeCode)
 
 	b := pa.Value.([]byte)
-	buf.WriteByte(uint8(len(b)))
+	if pa.ExtendedLength {
+		l := len(b)
+		buf.WriteByte(uint8(l >> 8))
+		buf.WriteByte(uint8(l & 0x0000FFFF))
+	} else {
+		buf.WriteByte(uint8(len(b)))
+	}
 	buf.Write(b)
 
-	return uint8(len(b) + 2)
+	return uint16(len(b) + 2)
 }
 
 func fourBytesToUint32(address [4]byte) uint32 {
