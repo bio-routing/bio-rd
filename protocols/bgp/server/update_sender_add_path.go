@@ -53,3 +53,9 @@ func (u *UpdateSenderAddPath) UpdateNewClient(client routingtable.RouteTableClie
 	log.Warningf("BGP Update Sender: UpdateNewClient not implemented")
 	return nil
 }
+
+// RouteCount returns the number of stored routes
+func (u *UpdateSenderAddPath) RouteCount() int64 {
+	log.Warningf("BGP Update Sender: RouteCount not implemented")
+	return 0
+}

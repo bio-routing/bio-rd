@@ -13,4 +13,5 @@ type RouteTableClient interface {
 	Register(RouteTableClient)
 	RegisterWithOptions(RouteTableClient, ClientOptions)
 	Unregister(RouteTableClient)
+	RouteCount() int64
 }

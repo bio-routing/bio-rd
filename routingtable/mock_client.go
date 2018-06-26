@@ -50,3 +50,7 @@ func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	m.removePathParams.Path = p
 	return true
 }
+
+func (m *RTMockClient) RouteCount() int64 {
+	return 0
+}

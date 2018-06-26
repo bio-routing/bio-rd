@@ -118,47 +118,50 @@ func (n *node) get(pfx net.Prefix) *node {
 	return n.h.get(pfx)
 }
 
-func (n *node) addPath(pfx net.Prefix, p *route.Path) *node {
+func (n *node) addPath(pfx net.Prefix, p *route.Path) (*node, bool) {
 	currentPfx := n.route.Prefix()
 	if currentPfx == pfx {
 		n.route.AddPath(p)
 		n.dummy = false
-		return n
+		return n, true
 	}
 
 	// is pfx NOT a subnet of this node?
 	if !currentPfx.Contains(pfx) {
 		if pfx.Contains(currentPfx) {
-			return n.insertBefore(pfx, p, n.route.Pfxlen()-n.skip-1)
+			return n.insertBefore(pfx, p, n.route.Pfxlen()-n.skip-1), true
 		}
 
-		return n.newSuperNode(pfx, p)
+		return n.newSuperNode(pfx, p), true
 	}
 
 	// pfx is a subnet of this node
 	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)
+
 	if !b {
 		return n.insertLow(pfx, p, currentPfx.Pfxlen())
 	}
 	return n.insertHigh(pfx, p, n.route.Pfxlen())
 }
 
-func (n *node) insertLow(pfx net.Prefix, p *route.Path, parentPfxLen uint8) *node {
+func (n *node) insertLow(pfx net.Prefix, p *route.Path, parentPfxLen uint8) (*node, bool) {
 	if n.l == nil {
 		n.l = newNode(pfx, p, pfx.Pfxlen()-parentPfxLen-1, false)
-		return n
+		return n, true
 	}
-	n.l = n.l.addPath(pfx, p)
-	return n
+	newRoot, isNew := n.l.addPath(pfx, p)
+	n.l = newRoot
+	return n, isNew
 }
 
-func (n *node) insertHigh(pfx net.Prefix, p *route.Path, parentPfxLen uint8) *node {
+func (n *node) insertHigh(pfx net.Prefix, p *route.Path, parentPfxLen uint8) (*node, bool) {
 	if n.h == nil {
 		n.h = newNode(pfx, p, pfx.Pfxlen()-parentPfxLen-1, false)
-		return n
+		return n, true
 	}
-	n.h = n.h.addPath(pfx, p)
-	return n
+	newRoot, isNew := n.h.addPath(pfx, p)
+	n.h = newRoot
+	return n, isNew
 }
 
 func (n *node) newSuperNode(pfx net.Prefix, p *route.Path) *node {
@@ -223,5 +226,6 @@ func (n *node) dump(res []*route.Route) []*route.Route {
 
 	res = n.l.dump(res)
 	res = n.h.dump(res)
+
 	return res
 }

@@ -55,104 +55,96 @@ X:
 func TestReleasePath(t *testing.T) {
 	tests := []struct {
 		name     string
-		pm       *pathIDManager
+		adds     []*route.Path
 		release  *route.Path
-		expected *pathIDManager
+		expected []*route.Path
 		wantFail bool
 	}{
 		{
 			name: "Release existent",
-			pm: &pathIDManager{
-				ids: map[uint32]uint64{
-					0: 1,
-					1: 1,
-					2: 1,
-				},
-				idByPath: map[route.BGPPath]uint32{
-					route.BGPPath{
+			adds: []*route.Path{
+				{
+					BGPPath: &route.BGPPath{
 						LocalPref: 0,
-					}: 0,
-					route.BGPPath{
-						LocalPref: 1,
-					}: 1,
-					route.BGPPath{
-						LocalPref: 2,
-					}: 2,
+					},
 				},
-				last: 2,
-				used: 3,
+				{
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				},
+				{
+					BGPPath: &route.BGPPath{
+						LocalPref: 2,
+					},
+				},
 			},
 			release: &route.Path{BGPPath: &route.BGPPath{
 				LocalPref: 2,
 			}},
-			expected: &pathIDManager{
-				ids: map[uint32]uint64{
-					0: 1,
-					1: 1,
-				},
-				idByPath: map[route.BGPPath]uint32{
-					route.BGPPath{
+			expected: []*route.Path{
+				{
+					BGPPath: &route.BGPPath{
 						LocalPref: 0,
-					}: 0,
-					route.BGPPath{
-						LocalPref: 1,
-					}: 1,
+					},
 				},
-				last: 2,
-				used: 2,
+				{
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				},
 			},
 		},
 		{
 			name: "Release non-existent",
-			pm: &pathIDManager{
-				ids: map[uint32]uint64{
-					0: 1,
-					1: 1,
-					2: 1,
-				},
-				idByPath: map[route.BGPPath]uint32{
-					route.BGPPath{
+			adds: []*route.Path{
+				{
+					BGPPath: &route.BGPPath{
 						LocalPref: 0,
-					}: 0,
-					route.BGPPath{
-						LocalPref: 1,
-					}: 1,
-					route.BGPPath{
-						LocalPref: 2,
-					}: 2,
+					},
 				},
-				last: 2,
-				used: 3,
+				{
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				},
+				{
+					BGPPath: &route.BGPPath{
+						LocalPref: 2,
+					},
+				},
 			},
 			release: &route.Path{BGPPath: &route.BGPPath{
-				LocalPref: 4,
+				LocalPref: 5,
 			}},
-			expected: &pathIDManager{
-				ids: map[uint32]uint64{
-					0: 1,
-					1: 1,
-					2: 1,
-				},
-				idByPath: map[route.BGPPath]uint32{
-					route.BGPPath{
+			expected: []*route.Path{
+				{
+					BGPPath: &route.BGPPath{
 						LocalPref: 0,
-					}: 0,
-					route.BGPPath{
-						LocalPref: 1,
-					}: 1,
-					route.BGPPath{
-						LocalPref: 2,
-					}: 2,
+					},
 				},
-				last: 2,
-				used: 3,
+				{
+					BGPPath: &route.BGPPath{
+						LocalPref: 1,
+					},
+				},
+				{
+					BGPPath: &route.BGPPath{
+						LocalPref: 2,
+					},
+				},
 			},
 			wantFail: true,
 		},
 	}
 
 	for _, test := range tests {
-		_, err := test.pm.releasePath(test.release)
+		pm := newPathIDManager()
+		for _, add := range test.adds {
+			pm.addPath(add)
+		}
+
+		_, err := pm.releasePath(test.release)
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -167,7 +159,12 @@ func TestReleasePath(t *testing.T) {
 			continue
 		}
 
-		assert.Equalf(t, test.expected, test.pm, "%s", test.name)
+		expectedPM := newPathIDManager()
+		for _, x := range test.expected {
+			expectedPM.addPath(x)
+		}
+		expectedPM.last++
+
+		assert.Equalf(t, expectedPM, pm, "%s", test.name)
 	}
 }
-

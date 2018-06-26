@@ -179,6 +179,18 @@ func TestContains(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "Test 7",
+			a: Prefix{
+				addr:   strAddr("169.0.0.0"),
+				pfxlen: 25,
+			},
+			b: Prefix{
+				addr:   strAddr("169.1.1.0"),
+				pfxlen: 26,
+			},
+			expected: false,
+		},
 	}
 
 	for _, test := range tests {
@@ -331,4 +343,9 @@ func TestStrToAddr(t *testing.T) {
 
 		assert.Equal(t, test.expected, res)
 	}
+}
+
+func strAddr(s string) uint32 {
+	ret, _ := StrToAddr(s)
+	return ret
 }

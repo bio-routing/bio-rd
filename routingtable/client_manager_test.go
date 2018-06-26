@@ -34,6 +34,10 @@ func (m MockClient) Unregister(RouteTableClient) {
 	return
 }
 
+func (m MockClient) RouteCount() int64 {
+	return 0
+}
+
 func TestClients(t *testing.T) {
 	tests := []struct {
 		name     string
