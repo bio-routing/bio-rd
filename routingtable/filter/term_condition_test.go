@@ -107,7 +107,7 @@ func TestMatches(t *testing.T) {
 			name:   "community matches",
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			bgpPath: &route.BGPPath{
-				Communities: "(1,2) (3,4) (5,6)",
+				Communities: []uint32{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
 			},
 			communityFilters: []*CommunityFilter{
 				&CommunityFilter{196612}, // (3,4)
@@ -118,7 +118,7 @@ func TestMatches(t *testing.T) {
 			name:   "community does not match",
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			bgpPath: &route.BGPPath{
-				Communities: "(1,2) (3,4) (5,6)",
+				Communities: []uint32{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
 			},
 			communityFilters: []*CommunityFilter{
 				&CommunityFilter{196608}, // (3,0)
@@ -137,11 +137,22 @@ func TestMatches(t *testing.T) {
 			name:   "large community matches",
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			bgpPath: &route.BGPPath{
-				LargeCommunities: "(1,2,0) (1,2,3)",
+				LargeCommunities: []packet.LargeCommunity{
+					packet.LargeCommunity{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           3,
+					},
+					packet.LargeCommunity{
+						GlobalAdministrator: 1,
+						DataPart1:           2,
+						DataPart2:           0,
+					},
+				},
 			},
 			largeCommunityFilters: []*LargeCommunityFilter{
 				{
-					&packet.LargeCommunity{
+					packet.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,
@@ -156,7 +167,7 @@ func TestMatches(t *testing.T) {
 			bgpPath: &route.BGPPath{},
 			largeCommunityFilters: []*LargeCommunityFilter{
 				{
-					&packet.LargeCommunity{
+					packet.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,
@@ -170,7 +181,7 @@ func TestMatches(t *testing.T) {
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			largeCommunityFilters: []*LargeCommunityFilter{
 				{
-					&packet.LargeCommunity{
+					packet.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,

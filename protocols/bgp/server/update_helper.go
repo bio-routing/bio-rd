@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
@@ -11,22 +10,22 @@ import (
 )
 
 func pathAttribues(p *route.Path) (*packet.PathAttribute, error) {
-	asPathPA, err := packet.ParseASPathStr(strings.TrimRight(p.BGPPath.ASPath, " "))
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse AS path: %v", err)
+	asPath := &packet.PathAttribute{
+		TypeCode: packet.ASPathAttr,
+		Value:    p.BGPPath.ASPath,
 	}
 
 	origin := &packet.PathAttribute{
 		TypeCode: packet.OriginAttr,
 		Value:    p.BGPPath.Origin,
-		Next:     asPathPA,
 	}
+	asPath.Next = origin
 
 	nextHop := &packet.PathAttribute{
 		TypeCode: packet.NextHopAttr,
 		Value:    p.BGPPath.NextHop,
 	}
-	asPathPA.Next = nextHop
+	origin.Next = nextHop
 
 	localPref := &packet.PathAttribute{
 		TypeCode: packet.LocalPrefAttr,
@@ -42,28 +41,26 @@ func pathAttribues(p *route.Path) (*packet.PathAttribute, error) {
 		}
 	}
 
-	return origin, nil
+	return asPath, nil
 }
 
 func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error {
 	current := parent
 
 	if len(p.BGPPath.Communities) > 0 {
-		communities, err := packet.CommunityAttributeForString(p.BGPPath.Communities)
-		if err != nil {
-			return fmt.Errorf("Could not create communities attribute: %v", err)
+		communities := &packet.PathAttribute{
+			TypeCode: packet.CommunitiesAttr,
+			Value:    p.BGPPath.Communities,
 		}
-
 		current.Next = communities
 		current = communities
 	}
 
 	if len(p.BGPPath.LargeCommunities) > 0 {
-		largeCommunities, err := packet.LargeCommunityAttributeForString(p.BGPPath.LargeCommunities)
-		if err != nil {
-			return fmt.Errorf("Could not create large communities attribute: %v", err)
+		largeCommunities := &packet.PathAttribute{
+			TypeCode: packet.LargeCommunitiesAttr,
+			Value:    p.BGPPath.LargeCommunities,
 		}
-
 		current.Next = largeCommunities
 		current = largeCommunities
 	}

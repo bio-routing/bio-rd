@@ -3,7 +3,6 @@ package adjRIBIn
 import (
 	"sync"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -80,10 +79,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 }
 
 func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
-	// Don't accept path via iBGP which contain our ASN
-	ASPathAttr, _ := packet.ParseASPathStr(p.BGPPath.ASPath)
-
-	for _, pathSegment := range ASPathAttr.Value.(packet.ASPath) {
+	for _, pathSegment := range p.BGPPath.ASPath {
 		for _, asn := range pathSegment.ASNs {
 			if a.contributingASNs.IsContributingASN(asn) {
 				return true

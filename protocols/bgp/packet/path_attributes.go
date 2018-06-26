@@ -3,8 +3,6 @@ package packet
 import (
 	"bytes"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/taktv6/tflow2/convert"
 )
@@ -344,57 +342,6 @@ func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	return bytesRead, nil
 }
 
-func (pa *PathAttribute) ASPathString() (ret string) {
-	for _, p := range pa.Value.(ASPath) {
-		if p.Type == ASSet {
-			ret += " ("
-		}
-		n := len(p.ASNs)
-		for i, asn := range p.ASNs {
-			if i < n-1 {
-				ret += fmt.Sprintf("%d ", asn)
-				continue
-			}
-			ret += fmt.Sprintf("%d", asn)
-		}
-		if p.Type == ASSet {
-			ret += ")"
-		}
-	}
-
-	return
-}
-
-func (pa *PathAttribute) ASPathLen() (ret uint16) {
-	for _, p := range pa.Value.(ASPath) {
-		if p.Type == ASSet {
-			ret++
-			continue
-		}
-		ret += uint16(len(p.ASNs))
-	}
-
-	return
-}
-
-func (a *PathAttribute) CommunityString() string {
-	s := ""
-	for _, com := range a.Value.([]uint32) {
-		s += CommunityStringForUint32(com) + " "
-	}
-
-	return strings.TrimRight(s, " ")
-}
-
-func (a *PathAttribute) LargeCommunityString() string {
-	s := ""
-	for _, com := range a.Value.([]LargeCommunity) {
-		s += com.String() + " "
-	}
-
-	return strings.TrimRight(s, " ")
-}
-
 // dumpNBytes is used to dump n bytes of buf. This is useful in case an path attributes
 // length doesn't match a fixed length's attributes length (e.g. ORIGIN is always an octet)
 func dumpNBytes(buf *bytes.Buffer, n uint16) error {
@@ -585,135 +532,6 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	}
 
 	return length
-}
-
-/*func (pa *PathAttribute) PrependASPath(prepend []uint32) {
-	if pa.TypeCode != ASPathAttr {
-		return
-	}
-
-	asPath := pa.Value.(ASPath)
-	asPathSegementCount := len(asPath)
-	currentSegment := asPathSegementCount - 1
-
-	newSegmentNeeded := false
-	if asPath[asPathSegementCount-1].Type == ASSequence {
-		newSegmentNeeded = true
-	} else {
-		if len(asPath[asPathSegementCount-1].ASNs) >= MaxASNsSegment {
-			newSegmentNeeded = true
-		}
-	}
-
-	for _, asn := range prepend {
-		if newSegmentNeeded {
-			segment := ASPathSegment{
-				Type: ASSequence,
-				ASNs: make([]uint32, 0),
-			},
-		}
-
-		asPath[currentSegment].ASNs = append(asPath[currentSegment].ASNs, asn)
-		if len(asPath[asPathSegementCount-1].ASNs) >= MaxASNsSegment {
-			newSegmentNeeded = true
-		}
-	}
-
-}*/
-
-// ParseASPathStr converts an AS path from string representation info an PathAttribute object
-func ParseASPathStr(asPathString string) (*PathAttribute, error) {
-	asPath := ASPath{}
-
-	currentType := ASSequence
-	newSegmentNeeded := true
-	currentSegment := -1
-	for _, asn := range strings.Split(asPathString, " ") {
-		if asn == "" {
-			continue
-		}
-
-		if isBeginOfASSet(asn) {
-			currentType = ASSet
-			newSegmentNeeded = true
-			asn = strings.Replace(asn, "(", "", 1)
-		}
-
-		if newSegmentNeeded {
-			seg := ASPathSegment{
-				Type: uint8(currentType),
-				ASNs: make([]uint32, 0),
-			}
-			asPath = append(asPath, seg)
-			currentSegment++
-			newSegmentNeeded = false
-		}
-
-		if isEndOfASSset(asn) {
-			currentType = ASSequence
-			newSegmentNeeded = true
-			asn = strings.Replace(asn, ")", "", 1)
-		}
-
-		numericASN, err := strconv.Atoi(asn)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to convert ASN: %v", err)
-		}
-		asPath[currentSegment].ASNs = append(asPath[currentSegment].ASNs, uint32(numericASN))
-
-		if len(asPath[currentSegment].ASNs) == MaxASNsSegment {
-			newSegmentNeeded = true
-		}
-	}
-
-	return &PathAttribute{
-		TypeCode: ASPathAttr,
-		Value:    asPath,
-	}, nil
-}
-
-func LargeCommunityAttributeForString(s string) (*PathAttribute, error) {
-	strs := strings.Split(s, " ")
-	coms := make([]LargeCommunity, len(strs))
-
-	var err error
-	for i, str := range strs {
-		coms[i], err = ParseLargeCommunityString(str)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &PathAttribute{
-		TypeCode: LargeCommunitiesAttr,
-		Value:    coms,
-	}, nil
-}
-
-func CommunityAttributeForString(s string) (*PathAttribute, error) {
-	strs := strings.Split(s, " ")
-	coms := make([]uint32, len(strs))
-
-	var err error
-	for i, str := range strs {
-		coms[i], err = ParseCommunityString(str)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &PathAttribute{
-		TypeCode: CommunitiesAttr,
-		Value:    coms,
-	}, nil
-}
-
-func isBeginOfASSet(asPathPart string) bool {
-	return strings.Contains(asPathPart, "(")
-}
-
-func isEndOfASSset(asPathPart string) bool {
-	return strings.Contains(asPathPart, ")")
 }
 
 func fourBytesToUint32(address [4]byte) uint32 {

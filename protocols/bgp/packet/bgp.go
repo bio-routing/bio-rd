@@ -173,13 +173,6 @@ type NLRIAddPath struct {
 	Next           *NLRIAddPath
 }
 
-type ASPath []ASPathSegment
-type ASPathSegment struct {
-	Type  uint8
-	Count uint8
-	ASNs  []uint32
-}
-
 type Aggretator struct {
 	Addr uint32
 	ASN  uint16

@@ -1,18 +1,16 @@
 package actions
 
 import (
-	"strings"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 )
 
 type AddLargeCommunityAction struct {
-	communities []*packet.LargeCommunity
+	communities []packet.LargeCommunity
 }
 
-func NewAddLargeCommunityAction(coms []*packet.LargeCommunity) *AddLargeCommunityAction {
+func NewAddLargeCommunityAction(coms []packet.LargeCommunity) *AddLargeCommunityAction {
 	return &AddLargeCommunityAction{
 		communities: coms,
 	}
@@ -24,11 +22,7 @@ func (a *AddLargeCommunityAction) Do(p net.Prefix, pa *route.Path) (modPath *rou
 	}
 
 	modified := pa.Copy()
-
-	for _, com := range a.communities {
-		modified.BGPPath.LargeCommunities = modified.BGPPath.LargeCommunities + " " + com.String()
-	}
-	modified.BGPPath.LargeCommunities = strings.TrimLeft(modified.BGPPath.LargeCommunities, " ")
+	modified.BGPPath.LargeCommunities = append(modified.BGPPath.LargeCommunities, a.communities...)
 
 	return modified, false
 }

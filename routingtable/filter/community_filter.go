@@ -1,15 +1,15 @@
 package filter
 
-import (
-	"strings"
-
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-)
-
 type CommunityFilter struct {
 	community uint32
 }
 
-func (f *CommunityFilter) Matches(communityString string) bool {
-	return strings.Contains(communityString, packet.CommunityStringForUint32(f.community))
+func (f *CommunityFilter) Matches(coms []uint32) bool {
+	for _, com := range coms {
+		if com == f.community {
+			return true
+		}
+	}
+
+	return false
 }
