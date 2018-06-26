@@ -390,6 +390,8 @@ func (pa *PathAttribute) serialize(buf *bytes.Buffer, opt *Options) uint8 {
 		pathAttrLen = pa.serializeCommunities(buf)
 	case LargeCommunitiesAttr:
 		pathAttrLen = pa.serializeLargeCommunities(buf)
+	default:
+		pathAttrLen = pa.serializeUnknownAttribute(buf)
 	}
 
 	return pathAttrLen
@@ -544,6 +546,23 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	}
 
 	return length
+}
+
+func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	if pa.Optional {
+		attrFlags = setOptional(attrFlags)
+	}
+	attrFlags = setTransitive(attrFlags)
+
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(pa.TypeCode)
+
+	b := pa.Value.([]byte)
+	buf.WriteByte(uint8(len(b)))
+	buf.Write(b)
+
+	return uint8(len(b) + 2)
 }
 
 func fourBytesToUint32(address [4]byte) uint32 {
