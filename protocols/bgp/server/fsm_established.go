@@ -55,7 +55,10 @@ func (s establishedState) run() (state, string) {
 }
 
 func (s *establishedState) init() error {
-	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter)
+	contributingASNs := s.fsm.rib.GetContributingASNs()
+
+	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs)
+	contributingASNs.Add(s.fsm.peer.localASN)
 	s.fsm.adjRIBIn.Register(s.fsm.rib)
 
 	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
@@ -96,6 +99,7 @@ func (s *establishedState) init() error {
 }
 
 func (s *establishedState) uninit() {
+	s.fsm.rib.GetContributingASNs().Remove(s.fsm.peer.localASN)
 	s.fsm.adjRIBIn.Unregister(s.fsm.rib)
 	s.fsm.rib.Unregister(s.fsm.adjRIBOut)
 	s.fsm.adjRIBOut.Unregister(s.fsm.updateSender)
@@ -154,7 +158,7 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 }
 
 func (s *establishedState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data))
+	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -167,6 +171,7 @@ func (s *establishedState) msgReceived(data []byte) (state, string) {
 	}
 	switch msg.Header.Type {
 	case packet.NotificationMsg:
+		fmt.Println(data)
 		return s.notification()
 	case packet.UpdateMsg:
 		return s.update(msg)
@@ -226,12 +231,12 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 			case packet.NextHopAttr:
 				path.BGPPath.NextHop = pa.Value.(uint32)
 			case packet.ASPathAttr:
-				path.BGPPath.ASPath = pa.ASPathString()
-				path.BGPPath.ASPathLen = pa.ASPathLen()
+				path.BGPPath.ASPath = pa.Value.(packet.ASPath)
+				path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
 			case packet.CommunitiesAttr:
-				path.BGPPath.Communities = pa.CommunityString()
+				path.BGPPath.Communities = pa.Value.([]uint32)
 			case packet.LargeCommunitiesAttr:
-				path.BGPPath.LargeCommunities = pa.LargeCommunityString()
+				path.BGPPath.LargeCommunities = pa.Value.([]packet.LargeCommunity)
 			}
 		}
 		s.fsm.adjRIBIn.AddPath(pfx, path)

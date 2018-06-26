@@ -50,7 +50,7 @@ func TestDecodePathAttrs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)))
+		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -173,7 +173,7 @@ func TestDecodePathAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _, err := decodePathAttr(bytes.NewBuffer(test.input))
+		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -264,6 +264,7 @@ func TestDecodeASPath(t *testing.T) {
 		input          []byte
 		wantFail       bool
 		explicitLength uint16
+		use4OctetASNs  bool
 		expected       *PathAttribute
 	}{
 		{
@@ -309,6 +310,28 @@ func TestDecodeASPath(t *testing.T) {
 			},
 		},
 		{
+			name: "32 bit ASNs in AS_PATH",
+			input: []byte{
+				1, // AS_SEQUENCE
+				3, // Path Length
+				0, 0, 0, 100, 0, 0, 0, 222, 0, 0, 0, 240,
+			},
+			wantFail:      false,
+			use4OctetASNs: true,
+			expected: &PathAttribute{
+				Length: 14,
+				Value: ASPath{
+					ASPathSegment{
+						Type:  1,
+						Count: 3,
+						ASNs: []uint32{
+							100, 222, 240,
+						},
+					},
+				},
+			},
+		},
+		{
 			name:           "Empty input",
 			input:          []byte{},
 			explicitLength: 5,
@@ -326,28 +349,36 @@ func TestDecodeASPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		l := uint16(len(test.input))
-		if test.explicitLength != 0 {
-			l = test.explicitLength
-		}
-		pa := &PathAttribute{
-			Length: l,
-		}
-		err := pa.decodeASPath(bytes.NewBuffer(test.input))
+		t.Run(test.name, func(t *testing.T) {
+			l := uint16(len(test.input))
+			if test.explicitLength != 0 {
+				l = test.explicitLength
+			}
+			pa := &PathAttribute{
+				Length: l,
+			}
 
-		if test.wantFail && err == nil {
-			t.Errorf("Expected error did not happen for test %q", test.name)
-		}
+			asnLength := uint8(2)
+			if test.use4OctetASNs {
+				asnLength = 4
+			}
 
-		if !test.wantFail && err != nil {
-			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
-		}
+			err := pa.decodeASPath(bytes.NewBuffer(test.input), asnLength)
 
-		if err != nil {
-			continue
-		}
+			if test.wantFail && err == nil {
+				t.Errorf("Expected error did not happen for test %q", test.name)
+			}
 
-		assert.Equal(t, test.expected, pa)
+			if !test.wantFail && err != nil {
+				t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, test.expected, pa)
+		})
 	}
 }
 
@@ -841,107 +872,6 @@ func TestDecodeUint32(t *testing.T) {
 	}
 }
 
-func TestASPathString(t *testing.T) {
-	tests := []struct {
-		name     string
-		pa       *PathAttribute
-		expected string
-	}{
-		{
-			name: "Test #1",
-			pa: &PathAttribute{
-				Value: ASPath{
-					{
-						Type: ASSequence,
-						ASNs: []uint32{10, 20, 30},
-					},
-				},
-			},
-			expected: "10 20 30",
-		},
-		{
-			name: "Test #2",
-			pa: &PathAttribute{
-				Value: ASPath{
-					{
-						Type: ASSequence,
-						ASNs: []uint32{10, 20, 30},
-					},
-					{
-						Type: ASSet,
-						ASNs: []uint32{200, 300},
-					},
-				},
-			},
-			expected: "10 20 30 (200 300)",
-		},
-	}
-
-	for _, test := range tests {
-		res := test.pa.ASPathString()
-		assert.Equal(t, test.expected, res)
-	}
-}
-
-func TestLargeCommunityString(t *testing.T) {
-	tests := []struct {
-		name     string
-		pa       *PathAttribute
-		expected string
-	}{
-		{
-			name: "two attributes",
-			pa: &PathAttribute{
-				Value: []LargeCommunity{
-					{
-						GlobalAdministrator: 1,
-						DataPart1:           2,
-						DataPart2:           3,
-					},
-					{
-						GlobalAdministrator: 4,
-						DataPart1:           5,
-						DataPart2:           6,
-					},
-				},
-			},
-			expected: "(1,2,3) (4,5,6)",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
-			res := test.pa.LargeCommunityString()
-			assert.Equal(te, test.expected, res)
-		})
-	}
-}
-
-func TestCommunityString(t *testing.T) {
-	tests := []struct {
-		name     string
-		pa       *PathAttribute
-		expected string
-	}{
-		{
-			name: "two attributes",
-			pa: &PathAttribute{
-				Value: []uint32{
-					131080, 16778241,
-				},
-			},
-			expected: "(2,8) (256,1025)",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
-			res := test.pa.CommunityString()
-			assert.Equal(te, test.expected, res)
-		})
-	}
-}
-
 func TestSetOptional(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1239,6 +1169,7 @@ func TestSerializeASPath(t *testing.T) {
 		input       *PathAttribute
 		expected    []byte
 		expectedLen uint8
+		use32BitASN bool
 	}{
 		{
 			name: "Test #1",
@@ -1265,17 +1196,49 @@ func TestSerializeASPath(t *testing.T) {
 			},
 			expectedLen: 10,
 		},
+		{
+			name: "32bit ASN",
+			input: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: ASPath{
+					{
+						Type: 2, // Sequence
+						ASNs: []uint32{
+							100, 200, 210,
+						},
+					},
+				},
+			},
+			expected: []byte{
+				64,           // Attribute flags
+				2,            // Type
+				14,           // Length
+				2,            // AS_SEQUENCE
+				3,            // ASN count
+				0, 0, 0, 100, // ASN 100
+				0, 0, 0, 200, // ASN 200
+				0, 0, 0, 210, // ASN 210
+			},
+			expectedLen: 16,
+			use32BitASN: true,
+		},
 	}
 
-	for _, test := range tests {
-		buf := bytes.NewBuffer(nil)
-		n := test.input.serializeASPath(buf)
-		if n != test.expectedLen {
-			t.Errorf("Unexpected length for test %q: %d", test.name, n)
-			continue
-		}
+	t.Parallel()
 
-		assert.Equal(t, test.expected, buf.Bytes())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := bytes.NewBuffer(nil)
+			opt := &Options{
+				Supports4OctetASN: test.use32BitASN,
+			}
+			n := test.input.serializeASPath(buf, opt)
+			if n != test.expectedLen {
+				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
 	}
 }
 
@@ -1561,7 +1524,8 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &Options{}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -1767,7 +1731,8 @@ func TestSerializeAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &Options{}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -1783,108 +1748,6 @@ func TestSerializeAddPath(t *testing.T) {
 		}
 
 		assert.Equalf(t, test.expected, res, "%s", test.name)
-	}
-}
-
-func TestParseASPathStr(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		wantFail bool
-		expected *PathAttribute
-	}{
-		{
-			name:     "Empty AS Path",
-			input:    "",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value:    ASPath{},
-			},
-		},
-		{
-			name:     "Simple AS_SEQUENCE",
-			input:    "3320 15169",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{3320, 15169},
-					},
-				},
-			},
-		},
-		{
-			name:     "AS_SEQUENCE with more than 255 elements",
-			input:    "123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123},
-					},
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{123, 123, 123, 123, 123},
-					},
-				},
-			},
-		},
-		{
-			name:     "AS_SET only",
-			input:    "(3320 201701 15169)",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSet,
-						ASNs: []uint32{3320, 201701, 15169},
-					},
-				},
-			},
-		},
-		{
-			name:     "Mixed AS Path",
-			input:    "199714 51324 (3320 201701 15169)",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{199714, 51324},
-					},
-					ASPathSegment{
-						Type: ASSet,
-						ASNs: []uint32{3320, 201701, 15169},
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		res, err := ParseASPathStr(test.input)
-		if err != nil {
-			if test.wantFail {
-				continue
-			}
-
-			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
-			continue
-		}
-
-		if test.wantFail {
-			t.Errorf("Unexpected success for test %q", test.name)
-			continue
-		}
-
-		assert.Equal(t, test.expected, res)
 	}
 }
 
