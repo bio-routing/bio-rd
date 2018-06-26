@@ -34,17 +34,14 @@ func pathAttribues(p *route.Path) (*packet.PathAttribute, error) {
 	nextHop.Next = localPref
 
 	if p.BGPPath != nil {
-		err := addOptionalPathAttribues(p, localPref)
-
-		if err != nil {
-			return nil, err
-		}
+		optionals := addOptionalPathAttribues(p, localPref)
+		optionals.Next = p.BGPPath.UnknownAttributes
 	}
 
 	return asPath, nil
 }
 
-func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error {
+func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) *packet.PathAttribute {
 	current := parent
 
 	if len(p.BGPPath.Communities) > 0 {
@@ -65,7 +62,7 @@ func addOptionalPathAttribues(p *route.Path, parent *packet.PathAttribute) error
 		current = largeCommunities
 	}
 
-	return nil
+	return current
 }
 
 type serializeAbleUpdate interface {

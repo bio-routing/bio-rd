@@ -11,18 +11,19 @@ import (
 
 // BGPPath represents a set of BGP path attributes
 type BGPPath struct {
-	PathIdentifier   uint32
-	NextHop          uint32
-	LocalPref        uint32
-	ASPath           packet.ASPath
-	ASPathLen        uint16
-	Origin           uint8
-	MED              uint32
-	EBGP             bool
-	BGPIdentifier    uint32
-	Source           uint32
-	Communities      []uint32
-	LargeCommunities []packet.LargeCommunity
+	PathIdentifier    uint32
+	NextHop           uint32
+	LocalPref         uint32
+	ASPath            packet.ASPath
+	ASPathLen         uint16
+	Origin            uint8
+	MED               uint32
+	EBGP              bool
+	BGPIdentifier     uint32
+	Source            uint32
+	Communities       []uint32
+	LargeCommunities  []packet.LargeCommunity
+	UnknownAttributes *packet.PathAttribute
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
