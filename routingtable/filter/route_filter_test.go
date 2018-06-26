@@ -34,7 +34,7 @@ func TestInRange(t *testing.T) {
 		},
 		{
 			name:     "matches end of range (22-24)",
-			prefix:   net.NewPfx(strAddr("1.2.128.0"), 24),
+			prefix:   net.NewPfx(strAddr("1.2.3.0"), 24),
 			pattern:  net.NewPfx(strAddr("1.2.0.0"), 22),
 			begin:    22,
 			end:      24,

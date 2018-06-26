@@ -40,7 +40,11 @@ func (rt *RoutingTable) addPath(pfx net.Prefix, p *route.Path) error {
 		return nil
 	}
 
-	rt.root = rt.root.addPath(pfx, p)
+	root, isNew := rt.root.addPath(pfx, p)
+	rt.root = root
+	if isNew {
+		atomic.AddInt64(&rt.routeCount, 1)
+	}
 	return nil
 }
 
