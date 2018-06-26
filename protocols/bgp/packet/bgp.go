@@ -133,22 +133,6 @@ type BGPNotification struct {
 	ErrorSubcode uint8
 }
 
-type BGPUpdate struct {
-	WithdrawnRoutesLen uint16
-	WithdrawnRoutes    *NLRI
-	TotalPathAttrLen   uint16
-	PathAttributes     *PathAttribute
-	NLRI               *NLRI
-}
-
-type BGPUpdateAddPath struct {
-	WithdrawnRoutesLen uint16
-	WithdrawnRoutes    *NLRIAddPath
-	TotalPathAttrLen   uint16
-	PathAttributes     *PathAttribute
-	NLRI               *NLRIAddPath
-}
-
 type PathAttribute struct {
 	Length         uint16
 	Optional       bool
@@ -158,19 +142,6 @@ type PathAttribute struct {
 	TypeCode       uint8
 	Value          interface{}
 	Next           *PathAttribute
-}
-
-type NLRI struct {
-	IP     uint32
-	Pfxlen uint8
-	Next   *NLRI
-}
-
-type NLRIAddPath struct {
-	PathIdentifier uint32
-	IP             uint32
-	Pfxlen         uint8
-	Next           *NLRIAddPath
 }
 
 type Aggretator struct {

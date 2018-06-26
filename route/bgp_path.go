@@ -26,15 +26,27 @@ type BGPPath struct {
 	UnknownAttributes *packet.PathAttribute
 }
 
-// Legth get's the length of serialized path
-func (b *BGPPath) Legth() uint16 {
+// Length get's the length of serialized path
+func (b *BGPPath) Length() uint16 {
 	asPathLen := uint16(3)
 	for _, segment := range b.ASPath {
 		asPathLen++
 		asPathLen += uint16(4 * len(segment.ASNs))
 	}
 
-	return uint16(len(b.Communities))*7 + uint16(len(b.LargeCommunities))*15 + 4*7 + 4 + asPathLen
+	return uint16(len(b.Communities))*7 + uint16(len(b.LargeCommunities))*15 + 4*7 + 4 + asPathLen + b.unknownAttributesLength()
+}
+
+// unknownAttributesLength calculates the length of unknown attributes
+func (b *BGPPath) unknownAttributesLength() (length uint16) {
+	for a := b.UnknownAttributes; a != nil; a = a.Next {
+		length += a.Length + 3
+		if a.ExtendedLength {
+			length++
+		}
+	}
+
+	return length
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP

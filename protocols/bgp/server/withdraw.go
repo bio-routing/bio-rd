@@ -48,8 +48,8 @@ func withDrawPrefixesAddPath(out io.Writer, opt *packet.Options, pfx net.Prefix,
 	if p.BGPPath == nil {
 		return errors.New("got nil BGPPath")
 	}
-	update := &packet.BGPUpdateAddPath{
-		WithdrawnRoutes: &packet.NLRIAddPath{
+	update := &packet.BGPUpdate{
+		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
 			IP:             pfx.Addr(),
 			Pfxlen:         pfx.Pfxlen(),

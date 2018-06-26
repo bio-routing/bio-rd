@@ -54,9 +54,6 @@ type FSM struct {
 	msgRecvFailCh chan error
 	stopMsgRecvCh chan struct{}
 
-	capAddPathSend bool
-	capAddPathRecv bool
-
 	options *packet.Options
 
 	local net.IP
@@ -65,7 +62,7 @@ type FSM struct {
 	adjRIBIn        routingtable.RouteTableClient
 	adjRIBOut       routingtable.RouteTableClient
 	rib             *locRIB.LocRIB
-	updateSender    routingtable.RouteTableClient
+	updateSender    *UpdateSender
 
 	neighborID uint32
 	state      state

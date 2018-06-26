@@ -77,20 +77,21 @@ func (s *establishedState) init() error {
 		LocalASN:          s.fsm.peer.localASN,
 		RouteServerClient: s.fsm.peer.routeServerClient,
 		LocalAddress:      bnet.IPv4ToUint32(hostIP),
-		CapAddPathRX:      s.fsm.capAddPathSend,
+		CapAddPathRX:      s.fsm.options.AddPathRX,
 	}
 
 	s.fsm.adjRIBOut = adjRIBOut.New(n, s.fsm.peer.exportFilter)
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
 	}
-	if s.fsm.capAddPathSend {
+	if s.fsm.options.AddPathRX {
 		s.fsm.updateSender = newUpdateSenderAddPath(s.fsm)
 		clientOptions = s.fsm.peer.addPathSend
 	} else {
 		s.fsm.updateSender = newUpdateSender(s.fsm)
 	}
 
+	s.fsm.updateSender.Start()
 	s.fsm.adjRIBOut.Register(s.fsm.updateSender)
 	s.fsm.rib.RegisterWithOptions(s.fsm.adjRIBOut, clientOptions)
 
@@ -103,6 +104,7 @@ func (s *establishedState) uninit() {
 	s.fsm.adjRIBIn.Unregister(s.fsm.rib)
 	s.fsm.rib.Unregister(s.fsm.adjRIBOut)
 	s.fsm.adjRIBOut.Unregister(s.fsm.updateSender)
+	s.fsm.updateSender.Destroy()
 
 	s.fsm.adjRIBIn = nil
 	s.fsm.adjRIBOut = nil
