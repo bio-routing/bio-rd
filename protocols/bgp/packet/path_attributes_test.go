@@ -1345,6 +1345,41 @@ func TestSerializeCommunities(t *testing.T) {
 	}
 }
 
+func TestSerializeUnknownAttribute(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Arbritary attribute",
+			input: &PathAttribute{
+				TypeCode:   200,
+				Value:      []byte{1, 2, 3, 4},
+				Transitive: true,
+			},
+			expected: []byte{
+				64,         // Attribute flags
+				200,        // Type
+				4,          // Length
+				1, 2, 3, 4, // Payload
+			},
+			expectedLen: 6,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := bytes.NewBuffer(nil)
+			n := test.input.serializeUnknownAttribute(buf)
+
+			assert.Equal(t, test.expectedLen, n)
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
+	}
+}
+
 func TestSerialize(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -58,9 +58,6 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	p = p.Copy()
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.Prepend(a.neighbor.LocalASN, 1)
-	}
-
-	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.NextHop = a.neighbor.LocalAddress
 	}
 
@@ -114,14 +111,19 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	}
 
 	a.rt.RemovePath(pfx, p)
-	pathID, err := a.pathIDManager.releasePath(p)
-	if err != nil {
-		log.Warningf("Unable to release path: %v", err)
-		return true
+
+	// If the neighbar has AddPath capabilities, try to find the PathID
+	if a.neighbor.CapAddPathRX {
+		pathID, err := a.pathIDManager.releasePath(p)
+		if err != nil {
+			log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
+			return true
+		}
+
+		p = p.Copy()
+		p.BGPPath.PathIdentifier = pathID
 	}
 
-	p = p.Copy()
-	p.BGPPath.PathIdentifier = pathID
 	a.removePathFromClients(pfx, p)
 	return true
 }
