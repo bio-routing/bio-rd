@@ -69,7 +69,7 @@ func (pfx Prefix) Contains(x Prefix) bool {
 		return false
 	}
 
-	mask := (uint32(1) << (32 - pfx.pfxlen))
+	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
 	return (pfx.addr & mask) == (x.addr & mask)
 }
 

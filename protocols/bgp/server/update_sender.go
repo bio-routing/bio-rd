@@ -57,6 +57,12 @@ func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) err
 	return nil
 }
 
+// RouteCount does nothing
+func (u *UpdateSender) RouteCount() int64 {
+	log.Warningf("BGP Update Sender: RouteCount() not supported")
+	return 0
+}
+
 func asPathString(iBGP bool, localASN uint16, asPath string) string {
 	ret := ""
 	if iBGP {
