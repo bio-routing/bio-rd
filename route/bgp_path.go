@@ -225,16 +225,16 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 	b.ASPathLen = b.ASPath.Length()
 }
 
-func (b *BGPPath) insertNewASSequence() packet.ASPath {
+func (b *BGPPath) insertNewASSequence() {
 	pa := make(packet.ASPath, len(b.ASPath)+1)
-	copy(pa[1:], b.ASPath)
+	copy(b.ASPath, pa[1:])
 	pa[0] = packet.ASPathSegment{
 		ASNs:  make([]uint32, 0),
 		Count: 0,
 		Type:  packet.ASSequence,
 	}
 
-	return pa
+	b.ASPath = pa
 }
 
 func (p *BGPPath) Copy() *BGPPath {
