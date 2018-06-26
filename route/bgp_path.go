@@ -172,8 +172,12 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 		return
 	}
 
+	if len(b.ASPath) == 0 {
+		b.insertNewASSequence()
+	}
+
 	first := b.ASPath[0]
-	if len(b.ASPath) == 0 || first.Type == packet.ASSet {
+	if first.Type == packet.ASSet {
 		b.insertNewASSequence()
 	}
 
@@ -228,11 +232,8 @@ func (b *BGPPath) ComputeHash() string {
 		b.LargeCommunities,
 		b.PathIdentifier)
 
-	r := strings.NewReader(s)
 	h := sha256.New()
-	r.WriteTo(h)
-
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return fmt.Sprintf("%x", h.Sum([]byte(s)))
 }
 
 // CommunitiesString returns the formated communities
