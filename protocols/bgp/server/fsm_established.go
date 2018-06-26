@@ -234,7 +234,6 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 				path.BGPPath.LargeCommunities = pa.LargeCommunityString()
 			}
 		}
-		fmt.Printf("Adding path for pfx: %s\n", pfx.String())
 		s.fsm.adjRIBIn.AddPath(pfx, path)
 	}
 }

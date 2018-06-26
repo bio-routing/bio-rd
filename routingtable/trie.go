@@ -137,6 +137,7 @@ func (n *node) addPath(pfx net.Prefix, p *route.Path) (*node, bool) {
 
 	// pfx is a subnet of this node
 	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)
+
 	if !b {
 		return n.insertLow(pfx, p, currentPfx.Pfxlen())
 	}
@@ -225,5 +226,6 @@ func (n *node) dump(res []*route.Route) []*route.Route {
 
 	res = n.l.dump(res)
 	res = n.h.dump(res)
+
 	return res
 }

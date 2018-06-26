@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -13,7 +12,8 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
-func TestFSM(t *testing.T) {
+// TestFSM100Updates emulates receiving 100 BGP updates and withdraws. Checks route counts.
+func TestFSM100Updates2(t *testing.T) {
 	fsmA := newFSM2(&peer{
 		addr:         net.ParseIP("169.254.100.100"),
 		rib:          locRIB.New(),
@@ -54,9 +54,12 @@ func TestFSM(t *testing.T) {
 	}()
 
 	for i := uint8(0); i < 255; i++ {
+		a := i % 10
+		b := i % 8
+
 		update := []byte{
 			255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-			0, 53,
+			0, 54,
 			2,
 			0, 0,
 			0, 26,
@@ -81,41 +84,40 @@ func TestFSM(t *testing.T) {
 			3,              // Attribute Type code (Next Hop)
 			4,              // Length
 			10, 11, 12, 13, // Next Hop
-			24, 169, 254, i,
+			b + 25, 169, a, i, 0,
 		}
 
 		fsmA.msgRecvCh <- update
 	}
 
+	time.Sleep(time.Second)
 	ribRouteCount := fsmA.rib.RouteCount()
 	if ribRouteCount != 255 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
 	}
 
-	fmt.Printf("Route count in RIB: %d\n", fsmA.rib.RouteCount())
-
 	for i := uint8(0); i < 255; i++ {
+		a := i % 10
+		b := i % 8
+
 		update := []byte{
 			255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-			0, 27,
+			0, 28,
 			2,
-			0, 4,
-			24, 169, 254, i,
+			0, 5,
+			b + 25, 169, a, i, 0,
 			0, 0,
 		}
 		fsmA.msgRecvCh <- update
+		ribRouteCount = fsmA.rib.RouteCount()
 	}
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 1)
 
 	ribRouteCount = fsmA.rib.RouteCount()
 	if ribRouteCount != 0 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
 	}
 
-	fmt.Printf("Route count in RIB: %d\n", fsmA.rib.RouteCount())
-
-	fmt.Printf("Stopping FSM\n")
 	fsmA.eventCh <- ManualStop
-	fmt.Printf("WAITING\n")
 	wg.Wait()
 }
