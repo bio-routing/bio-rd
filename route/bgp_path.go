@@ -40,9 +40,7 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
-	/*
-	 * 9.1.2.2.  Breaking Ties (Phase 2)
-	 */
+	// 9.1.2.2.  Breaking Ties (Phase 2)
 
 	// a)
 	if c.ASPathLen > b.ASPathLen {
