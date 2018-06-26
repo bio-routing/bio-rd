@@ -342,6 +342,18 @@ func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	return bytesRead, nil
 }
 
+func (pa *PathAttribute) Copy() *PathAttribute {
+	return &PathAttribute{
+		ExtendedLength: pa.ExtendedLength,
+		Length:         pa.Length,
+		Optional:       pa.Optional,
+		Partial:        pa.Partial,
+		Transitive:     pa.Transitive,
+		TypeCode:       pa.TypeCode,
+		Value:          pa.Value,
+	}
+}
+
 // dumpNBytes is used to dump n bytes of buf. This is useful in case an path attributes
 // length doesn't match a fixed length's attributes length (e.g. ORIGIN is always an octet)
 func dumpNBytes(buf *bytes.Buffer, n uint16) error {

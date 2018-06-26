@@ -220,27 +220,51 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 			},
 		}
 
-		for pa := u.PathAttributes; pa != nil; pa = pa.Next {
-			switch pa.TypeCode {
-			case packet.OriginAttr:
-				path.BGPPath.Origin = pa.Value.(uint8)
-			case packet.LocalPrefAttr:
-				path.BGPPath.LocalPref = pa.Value.(uint32)
-			case packet.MEDAttr:
-				path.BGPPath.MED = pa.Value.(uint32)
-			case packet.NextHopAttr:
-				path.BGPPath.NextHop = pa.Value.(uint32)
-			case packet.ASPathAttr:
-				path.BGPPath.ASPath = pa.Value.(packet.ASPath)
-				path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
-			case packet.CommunitiesAttr:
-				path.BGPPath.Communities = pa.Value.([]uint32)
-			case packet.LargeCommunitiesAttr:
-				path.BGPPath.LargeCommunities = pa.Value.([]packet.LargeCommunity)
-			}
-		}
+		s.processAttributes(u.PathAttributes, path)
+
 		s.fsm.adjRIBIn.AddPath(pfx, path)
 	}
+}
+
+func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *route.Path) {
+	var unknownAttributes *packet.PathAttribute
+	var currentUnknown *packet.PathAttribute
+
+	for pa := attrs; pa != nil; pa = pa.Next {
+		switch pa.TypeCode {
+		case packet.OriginAttr:
+			path.BGPPath.Origin = pa.Value.(uint8)
+		case packet.LocalPrefAttr:
+			path.BGPPath.LocalPref = pa.Value.(uint32)
+		case packet.MEDAttr:
+			path.BGPPath.MED = pa.Value.(uint32)
+		case packet.NextHopAttr:
+			path.BGPPath.NextHop = pa.Value.(uint32)
+		case packet.ASPathAttr:
+			path.BGPPath.ASPath = pa.Value.(packet.ASPath)
+			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
+		case packet.CommunitiesAttr:
+			path.BGPPath.Communities = pa.Value.([]uint32)
+		case packet.LargeCommunitiesAttr:
+			path.BGPPath.LargeCommunities = pa.Value.([]packet.LargeCommunity)
+		default:
+			if !pa.Transitive {
+				continue
+			}
+
+			p := pa.Copy()
+			if unknownAttributes == nil {
+				unknownAttributes = p
+				currentUnknown = unknownAttributes
+				continue
+			}
+
+			currentUnknown.Next = p
+			currentUnknown = p
+		}
+	}
+
+	path.BGPPath.UnknownAttributes = unknownAttributes
 }
 
 func (s *establishedState) keepaliveReceived() (state, string) {
