@@ -69,18 +69,20 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	if !a.neighbor.CapAddPathRX {
+	// AddPathRX capable neighbor
+	if a.neighbor.CapAddPathRX {
+		pathID, err := a.pathIDManager.addPath(p)
+		if err != nil {
+			return fmt.Errorf("Unable to get path ID: %v", err)
+		}
+
+		p.BGPPath.PathIdentifier = pathID
+		a.rt.AddPath(pfx, p)
+	} else {
+		// rt.ReplacePath will add this path to the rt in any case, so no rt.AddPath here!
 		oldPaths := a.rt.ReplacePath(pfx, p)
 		a.removePathsFromClients(pfx, oldPaths)
 	}
-
-	pathID, err := a.pathIDManager.addPath(p)
-	if err != nil {
-		return fmt.Errorf("Unable to get path ID: %v", err)
-	}
-
-	p.BGPPath.PathIdentifier = pathID
-	a.rt.AddPath(pfx, p)
 
 	for _, client := range a.ClientManager.Clients() {
 		err := client.AddPath(pfx, p)
@@ -162,6 +164,20 @@ func (a *AdjRIBOut) Print() string {
 	routes := a.rt.Dump()
 	for _, r := range routes {
 		ret += fmt.Sprintf("%s\n", r.Prefix().String())
+	}
+
+	return ret
+}
+
+// Dump all routes present in this AdjRIBOut
+func (a *AdjRIBOut) Dump() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	ret := fmt.Sprintf("DUMPING ADJ-RIB-OUT:\n")
+	routes := a.rt.Dump()
+	for _, r := range routes {
+		ret += fmt.Sprintf("%s\n", r.Print())
 	}
 
 	return ret
