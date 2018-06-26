@@ -22,7 +22,7 @@ func TestRead(t *testing.T) {
 	m.Bytes = payload
 
 	buffer := make([]byte, 4)
-	m.Read(buffer)
+	n, _ := m.Read(buffer)
 
-	assert.Equal(t, payload, buffer[:3])
+	assert.Equal(t, payload, buffer[:n])
 }
