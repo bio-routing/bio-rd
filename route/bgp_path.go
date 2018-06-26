@@ -40,6 +40,9 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
+	// 9.1.2.2.  Breaking Ties (Phase 2)
+
+	// a)
 	if c.ASPathLen > b.ASPathLen {
 		return 1
 	}
@@ -48,6 +51,7 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
+	// b)
 	if c.Origin > b.Origin {
 		return 1
 	}
@@ -56,6 +60,7 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
+	// c)
 	if c.MED > b.MED {
 		return 1
 	}
@@ -64,6 +69,18 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
+	// d)
+	if c.EBGP && !b.EBGP {
+		return -1
+	}
+
+	if !c.EBGP && b.EBGP {
+		return 1
+	}
+
+	// e) TODO: interiour cost (hello IS-IS and OSPF)
+
+	// f)
 	if c.BGPIdentifier < b.BGPIdentifier {
 		return 1
 	}
@@ -72,6 +89,7 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return -1
 	}
 
+	// g)
 	if c.Source < b.Source {
 		return 1
 	}
@@ -143,6 +161,7 @@ func (b *BGPPath) better(c *BGPPath) bool {
 	return false
 }
 
+// Print all known information about a route in human readable form
 func (b *BGPPath) Print() string {
 	origin := ""
 	switch b.Origin {
@@ -153,20 +172,29 @@ func (b *BGPPath) Print() string {
 	case 2:
 		origin = "IGP"
 	}
+
+	bgpType := "internal"
+	if b.EBGP {
+		bgpType = "external"
+	}
+
 	ret := fmt.Sprintf("\t\tLocal Pref: %d\n", b.LocalPref)
 	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
 	ret += fmt.Sprintf("\t\tAS Path: %v\n", b.ASPath)
+	ret += fmt.Sprintf("\t\tBGP type: %s\n", bgpType)
 	nh := uint32To4Byte(b.NextHop)
 	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
 	ret += fmt.Sprintf("\t\tPath ID: %d\n", b.PathIdentifier)
-	ret += fmt.Sprintf("\t\tSource: %d\n", b.Source)
+	src := uint32To4Byte(b.Source)
+	ret += fmt.Sprintf("\t\tSource: %d.%d.%d.%d\n", src[0], src[1], src[2], src[3])
 	ret += fmt.Sprintf("\t\tCommunities: %v\n", b.Communities)
 	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
 	return ret
 }
 
+// Prepend the given BGPPath with the given ASN given times
 func (b *BGPPath) Prepend(asn uint32, times uint16) {
 	if times == 0 {
 		return

@@ -217,6 +217,7 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 			Type: route.BGPPathType,
 			BGPPath: &route.BGPPath{
 				Source: bnet.IPv4ToUint32(s.fsm.peer.addr),
+				EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
 			},
 		}
 
