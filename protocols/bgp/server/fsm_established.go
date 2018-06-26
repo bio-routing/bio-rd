@@ -227,7 +227,6 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 }
 
 func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *route.Path) {
-	var unknownAttributes *packet.PathAttribute
 	var currentUnknown *packet.PathAttribute
 
 	for pa := attrs; pa != nil; pa = pa.Next {
@@ -248,23 +247,26 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 		case packet.LargeCommunitiesAttr:
 			path.BGPPath.LargeCommunities = pa.Value.([]packet.LargeCommunity)
 		default:
-			if !pa.Transitive {
-				continue
+			currentUnknown = s.processUnknownAttribute(pa, currentUnknown)
+			if path.BGPPath.UnknownAttributes == nil {
+				path.BGPPath.UnknownAttributes = currentUnknown
 			}
-
-			p := pa.Copy()
-			if unknownAttributes == nil {
-				unknownAttributes = p
-				currentUnknown = unknownAttributes
-				continue
-			}
-
-			currentUnknown.Next = p
-			currentUnknown = p
 		}
 	}
+}
 
-	path.BGPPath.UnknownAttributes = unknownAttributes
+func (s *establishedState) processUnknownAttribute(attr, current *packet.PathAttribute) *packet.PathAttribute {
+	if !attr.Transitive {
+		return current
+	}
+
+	p := attr.Copy()
+	if current == nil {
+		return p
+	}
+
+	current.Next = p
+	return p
 }
 
 func (s *establishedState) keepaliveReceived() (state, string) {
