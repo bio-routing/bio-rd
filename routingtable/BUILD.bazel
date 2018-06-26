@@ -6,6 +6,7 @@ go_library(
         "client_interface.go",
         "client_manager.go",
         "contributing_asn_list.go",
+        "mock_client.go",
         "neighbor.go",
         "rib_interface.go",
         "table.go",
