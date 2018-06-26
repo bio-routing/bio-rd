@@ -25,6 +25,17 @@ type BGPPath struct {
 	LargeCommunities []packet.LargeCommunity
 }
 
+// Legth get's the length of serialized path
+func (b *BGPPath) Legth() uint16 {
+	asPathLen := uint16(3)
+	for _, segment := range b.ASPath {
+		asPathLen++
+		asPathLen += uint16(4 * len(segment.ASNs))
+	}
+
+	return uint16(len(b.Communities))*7 + uint16(len(b.LargeCommunities))*15 + 4*7 + 4 + asPathLen
+}
+
 // ECMP determines if routes b and c are euqal in terms of ECMP
 func (b *BGPPath) ECMP(c *BGPPath) bool {
 	return b.LocalPref == c.LocalPref && b.ASPathLen == c.ASPathLen && b.MED == c.MED && b.Origin == c.Origin
