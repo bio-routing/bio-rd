@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -67,7 +67,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 					continue
 				}
 
-				com, err := packet.ParseCommunityString(s)
+				com, err := types.ParseCommunityString(s)
 				if err != nil {
 					t.Fatalf("test failed: %s", err)
 				}

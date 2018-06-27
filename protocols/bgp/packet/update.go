@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -15,7 +16,8 @@ type BGPUpdate struct {
 	NLRI               *NLRI
 }
 
-func (b *BGPUpdate) SerializeUpdate(opt *Options) ([]byte, error) {
+// SerializeUpdate serializes an BGPUpdate to wire format
+func (b *BGPUpdate) SerializeUpdate(opt *types.Options) ([]byte, error) {
 	budget := MaxLen - MinLen
 	nlriLen := 0
 	buf := bytes.NewBuffer(nil)
@@ -46,9 +48,9 @@ func (b *BGPUpdate) SerializeUpdate(opt *Options) ([]byte, error) {
 	nlriBuf := bytes.NewBuffer(nil)
 	for nlri := b.NLRI; nlri != nil; nlri = nlri.Next {
 		if opt.AddPathRX {
-			nlriLen = int(nlri.serializeAddPath(withdrawBuf))
+			nlriLen = int(nlri.serializeAddPath(nlriBuf))
 		} else {
-			nlriLen = int(nlri.serialize(withdrawBuf))
+			nlriLen = int(nlri.serialize(nlriBuf))
 		}
 
 		budget -= nlriLen
@@ -85,7 +87,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *Options) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (b *BGPUpdate) SerializeUpdateAddPath(opt *Options) ([]byte, error) {
+func (b *BGPUpdate) SerializeUpdateAddPath(opt *types.Options) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
 

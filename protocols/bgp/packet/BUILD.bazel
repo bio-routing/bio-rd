@@ -7,7 +7,6 @@ go_library(
         "decoder.go",
         "encoder.go",
         "nlri.go",
-        "options.go",
         "parameters.go",
         "path_attribute_flags.go",
         "path_attributes.go",
@@ -33,6 +32,7 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//net:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
         "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
     ],

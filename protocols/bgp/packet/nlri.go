@@ -90,7 +90,7 @@ func (n *NLRI) serializeAddPath(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(n.Pfxlen)
 	buf.Write(addr[:nBytes])
 
-	return nBytes + 1
+	return nBytes + 4
 }
 
 // BytesInAddr gets the amount of bytes needed to encode an NLRI of prefix length pfxlen

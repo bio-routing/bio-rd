@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProcessAttribues(t *testing.T) {
+func TestProcessAttributes(t *testing.T) {
 	unknown3 := &packet.PathAttribute{
 		Transitive: true,
 		TypeCode:   100,
@@ -33,11 +34,10 @@ func TestProcessAttribues(t *testing.T) {
 	asPath := &packet.PathAttribute{
 		Transitive: true,
 		TypeCode:   packet.ASPathAttr,
-		Value: packet.ASPath{
-			packet.ASPathSegment{
-				Count: 0,
-				Type:  packet.ASSequence,
-				ASNs:  []uint32{},
+		Value: types.ASPath{
+			types.ASPathSegment{
+				Type: types.ASSequence,
+				ASNs: []uint32{},
 			},
 		},
 		Next: unknown1,
@@ -54,12 +54,12 @@ func TestProcessAttribues(t *testing.T) {
 	expectedValues := [][]byte{[]byte{5, 6}, []byte{1, 2, 3, 4}}
 
 	i := 0
-	for attr := p.BGPPath.UnknownAttributes; attr != nil; attr = attr.Next {
+	for _, attr := range p.BGPPath.UnknownAttributes {
 		assert.Equal(t, true, attr.Transitive, "Transitive")
 		assert.Equal(t, expectedCodes[i], attr.TypeCode, "Code")
 		assert.Equal(t, expectedValues[i], attr.Value, "Value")
 		i++
 	}
 
-	assert.Equal(t, i, 2, "Count")
+	assert.Equal(t, 2, i, "Count")
 }

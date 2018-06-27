@@ -117,6 +117,7 @@ func (u *UpdateSender) sender() {
 			u.sendUpdates(pathAttrs, updatesPrefixes, pathNLRIs.path.BGPPath.PathIdentifier)
 			u.toSendMu.Lock()
 		}
+		u.toSendMu.Unlock()
 	}
 }
 

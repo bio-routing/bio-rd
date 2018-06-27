@@ -9,7 +9,7 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
-func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *Options) (*PathAttribute, error) {
+func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *types.Options) (*PathAttribute, error) {
 	var ret *PathAttribute
 	var eol *PathAttribute
 	var pa *PathAttribute
@@ -36,7 +36,7 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *Options) (*PathAttribu
 	return ret, nil
 }
 
-func decodePathAttr(buf *bytes.Buffer, opt *Options) (pa *PathAttribute, consumed uint16, err error) {
+func decodePathAttr(buf *bytes.Buffer, opt *types.Options) (pa *PathAttribute, consumed uint16, err error) {
 	pa = &PathAttribute{}
 
 	err = decodePathAttrFlags(buf, pa)
@@ -373,7 +373,7 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 }
 
 // Serialize serializes a path attribute
-func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *Options) uint8 {
+func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *types.Options) uint8 {
 	pathAttrLen := uint8(0)
 
 	switch pa.TypeCode {
@@ -413,7 +413,7 @@ func (pa *PathAttribute) serializeOrigin(buf *bytes.Buffer) uint8 {
 	return 4
 }
 
-func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *Options) uint8 {
+func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *types.Options) uint8 {
 	attrFlags := uint8(0)
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
@@ -437,7 +437,6 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *Options) uint8 
 				segmentsBuf.Write(convert.Uint32Byte(asn))
 			}
 		}
-		fmt.Println(segment.ASNs)
 		length += 2 + uint8(len(segment.ASNs))*asnLength
 	}
 

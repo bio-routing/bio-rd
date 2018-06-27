@@ -1,10 +1,9 @@
 package route
 
 import (
-	"bytes"
 	"testing"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,12 +34,12 @@ func TestCommunitiesString(t *testing.T) {
 func TestLargeCommunitiesString(t *testing.T) {
 	tests := []struct {
 		name     string
-		comms    []packet.LargeCommunity
+		comms    []types.LargeCommunity
 		expected string
 	}{
 		{
 			name: "two attributes",
-			comms: []packet.LargeCommunity{
+			comms: []types.LargeCommunity{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
@@ -70,37 +69,67 @@ func TestLength(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     *BGPPath
-		options  packet.Options
-		wantFail bool
+		expected uint16
 	}{
 		{
-			name: "Test 1",
-			path: &BGPPath{},
+			name: "No communities",
+			path: &BGPPath{
+				ASPath: []types.ASPathSegment{
+					{
+						Type: types.ASSequence,
+						ASNs: []uint32{15169, 199714},
+					},
+				},
+				LargeCommunities: []types.LargeCommunity{},
+				Communities:      []uint32{},
+			},
+			expected: 44,
+		},
+		{
+			name: "communities",
+			path: &BGPPath{
+				ASPath: []types.ASPathSegment{
+					{
+						Type: types.ASSequence,
+						ASNs: []uint32{15169, 199714},
+					},
+				},
+				LargeCommunities: []types.LargeCommunity{},
+				Communities:      []uint32{10, 20, 30},
+			},
+			expected: 59,
+		},
+		{
+			name: "large communities",
+			path: &BGPPath{
+				ASPath: []types.ASPathSegment{
+					{
+						Type: types.ASSequence,
+						ASNs: []uint32{15169, 199714},
+					},
+				},
+				LargeCommunities: []types.LargeCommunity{
+					{
+						GlobalAdministrator: 199714,
+						DataPart1:           100,
+						DataPart2:           200,
+					},
+					{
+						GlobalAdministrator: 199714,
+						DataPart1:           100,
+						DataPart2:           201,
+					},
+				},
+			},
+			expected: 71,
 		},
 	}
 
 	for _, test := range tests {
 		calcLen := test.path.Length()
-		pa, err := test.path.PathAttributes()
-		if err != nil {
-			if test.wantFail {
-				continue
-			}
 
-			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
-			continue
-		}
-
-		if test.wantFail {
-			t.Errorf("Unexpected success for test %q", test.name)
-			continue
-		}
-
-		buf := bytes.Buffer(nil)
-		pa.Serialize(buf, test.options)
-		realLen := len(buf.Bytes())
-		if realLen != calcLen {
-			t.Errorf("Unexpected result for test %q: Expected: %d Got: %d", test.name, realLen, calcLen)
+		if calcLen != test.expected {
+			t.Errorf("Unexpected result for test %q: Expected: %d Got: %d", test.name, test.expected, calcLen)
 		}
 	}
 }

@@ -251,7 +251,7 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 		default:
 			unknownAttr := s.processUnknownAttribute(pa)
 			if unknownAttr != nil {
-				path.BGPPath.UnknownAttributes = append(path.BGPPath.UnknownAttributes)
+				path.BGPPath.UnknownAttributes = append(path.BGPPath.UnknownAttributes, *unknownAttr)
 			}
 		}
 	}
