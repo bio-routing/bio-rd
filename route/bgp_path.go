@@ -251,15 +251,15 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 	b.ASPathLen = b.ASPath.Length()
 }
 
-func (b *BGPPath) insertNewASSequence() types.ASPath {
+func (b *BGPPath) insertNewASSequence() {
 	pa := make(types.ASPath, len(b.ASPath)+1)
 	copy(pa[1:], b.ASPath)
 	pa[0] = types.ASPathSegment{
-		ASNs: make([]uint32, 0),
-		Type: types.ASSequence,
+		ASNs:  make([]uint32, 0),
+		Type:  packet.ASSequence,
 	}
 
-	return pa
+	b.ASPath = pa
 }
 
 // Copy creates a deep copy of a BGPPath
