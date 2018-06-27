@@ -1586,7 +1586,7 @@ func TestSerializeAddPath(t *testing.T) {
 		expected []byte
 		wantFail bool
 	}{
-		/*{
+		{
 			name: "Withdraw only",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
@@ -1645,7 +1645,7 @@ func TestSerializeAddPath(t *testing.T) {
 				1,  // Length
 				0,  // Value
 			},
-		},*/
+		},
 		{
 			name: "Full test",
 			msg: &BGPUpdate{
