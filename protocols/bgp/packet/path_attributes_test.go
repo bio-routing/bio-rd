@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,7 +51,7 @@ func TestDecodePathAttrs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &Options{})
+		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &types.Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -173,7 +174,7 @@ func TestDecodePathAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &Options{})
+		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &types.Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -277,10 +278,9 @@ func TestDecodeASPath(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 10,
-				Value: ASPath{
-					ASPathSegment{
-						Type:  2,
-						Count: 4,
+				Value: types.ASPath{
+					types.ASPathSegment{
+						Type: 2,
 						ASNs: []uint32{
 							100, 200, 222, 240,
 						},
@@ -298,10 +298,9 @@ func TestDecodeASPath(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 8,
-				Value: ASPath{
-					ASPathSegment{
-						Type:  1,
-						Count: 3,
+				Value: types.ASPath{
+					types.ASPathSegment{
+						Type: 1,
 						ASNs: []uint32{
 							100, 222, 240,
 						},
@@ -320,10 +319,9 @@ func TestDecodeASPath(t *testing.T) {
 			use4OctetASNs: true,
 			expected: &PathAttribute{
 				Length: 14,
-				Value: ASPath{
-					ASPathSegment{
-						Type:  1,
-						Count: 3,
+				Value: types.ASPath{
+					types.ASPathSegment{
+						Type: 1,
 						ASNs: []uint32{
 							100, 222, 240,
 						},
@@ -636,7 +634,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 24,
-				Value: []LargeCommunity{
+				Value: []types.LargeCommunity{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -656,7 +654,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  []LargeCommunity{},
+				Value:  []types.LargeCommunity{},
 			},
 		},
 	}
@@ -1175,7 +1173,7 @@ func TestSerializeASPath(t *testing.T) {
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: ASPathAttr,
-				Value: ASPath{
+				Value: types.ASPath{
 					{
 						Type: 2, // Sequence
 						ASNs: []uint32{
@@ -1200,7 +1198,7 @@ func TestSerializeASPath(t *testing.T) {
 			name: "32bit ASN",
 			input: &PathAttribute{
 				TypeCode: ASPathAttr,
-				Value: ASPath{
+				Value: types.ASPath{
 					{
 						Type: 2, // Sequence
 						ASNs: []uint32{
@@ -1229,7 +1227,7 @@ func TestSerializeASPath(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := bytes.NewBuffer(nil)
-			opt := &Options{
+			opt := &types.Options{
 				Supports4OctetASN: test.use32BitASN,
 			}
 			n := test.input.serializeASPath(buf, opt)
@@ -1253,7 +1251,7 @@ func TestSerializeLargeCommunities(t *testing.T) {
 			name: "2 large communities",
 			input: &PathAttribute{
 				TypeCode: LargeCommunitiesAttr,
-				Value: []LargeCommunity{
+				Value: []types.LargeCommunity{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -1278,7 +1276,7 @@ func TestSerializeLargeCommunities(t *testing.T) {
 			name: "empty list of communities",
 			input: &PathAttribute{
 				TypeCode: LargeCommunitiesAttr,
-				Value:    []LargeCommunity{},
+				Value:    []types.LargeCommunity{},
 			},
 			expected:    []byte{},
 			expectedLen: 0,
@@ -1459,7 +1457,7 @@ func TestSerialize(t *testing.T) {
 					Value:    uint8(0),
 					Next: &PathAttribute{
 						TypeCode: ASPathAttr,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{100, 155, 200},
@@ -1559,7 +1557,9 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		opt := &Options{}
+		opt := &types.Options{
+			AddPathRX: false,
+		}
 		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
@@ -1582,14 +1582,14 @@ func TestSerialize(t *testing.T) {
 func TestSerializeAddPath(t *testing.T) {
 	tests := []struct {
 		name     string
-		msg      *BGPUpdateAddPath
+		msg      *BGPUpdate
 		expected []byte
 		wantFail bool
 	}{
 		{
 			name: "Withdraw only",
-			msg: &BGPUpdateAddPath{
-				WithdrawnRoutes: &NLRIAddPath{
+			msg: &BGPUpdate{
+				WithdrawnRoutes: &NLRI{
 					PathIdentifier: 257,
 					IP:             strAddr("100.110.120.0"),
 					Pfxlen:         24,
@@ -1607,8 +1607,8 @@ func TestSerializeAddPath(t *testing.T) {
 		},
 		{
 			name: "NLRI only",
-			msg: &BGPUpdateAddPath{
-				NLRI: &NLRIAddPath{
+			msg: &BGPUpdate{
+				NLRI: &NLRI{
 					PathIdentifier: 257,
 					IP:             strAddr("100.110.128.0"),
 					Pfxlen:         17,
@@ -1626,7 +1626,7 @@ func TestSerializeAddPath(t *testing.T) {
 		},
 		{
 			name: "Path Attributes only",
-			msg: &BGPUpdateAddPath{
+			msg: &BGPUpdate{
 				PathAttributes: &PathAttribute{
 					Optional:   true,
 					Transitive: true,
@@ -1648,11 +1648,11 @@ func TestSerializeAddPath(t *testing.T) {
 		},
 		{
 			name: "Full test",
-			msg: &BGPUpdateAddPath{
-				WithdrawnRoutes: &NLRIAddPath{
+			msg: &BGPUpdate{
+				WithdrawnRoutes: &NLRI{
 					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
-					Next: &NLRIAddPath{
+					Next: &NLRI{
 						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
@@ -1662,7 +1662,7 @@ func TestSerializeAddPath(t *testing.T) {
 					Value:    uint8(0),
 					Next: &PathAttribute{
 						TypeCode: ASPathAttr,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{100, 155, 200},
@@ -1693,10 +1693,10 @@ func TestSerializeAddPath(t *testing.T) {
 						},
 					},
 				},
-				NLRI: &NLRIAddPath{
+				NLRI: &NLRI{
 					IP:     strAddr("8.8.8.0"),
 					Pfxlen: 24,
-					Next: &NLRIAddPath{
+					Next: &NLRI{
 						IP:     strAddr("185.65.240.0"),
 						Pfxlen: 22,
 					},
@@ -1766,7 +1766,9 @@ func TestSerializeAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		opt := &Options{}
+		opt := &types.Options{
+			AddPathRX: true,
+		}
 		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {

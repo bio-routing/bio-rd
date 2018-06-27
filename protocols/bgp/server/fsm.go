@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
@@ -54,10 +55,7 @@ type FSM struct {
 	msgRecvFailCh chan error
 	stopMsgRecvCh chan struct{}
 
-	capAddPathSend bool
-	capAddPathRecv bool
-
-	options *packet.Options
+	options *types.Options
 
 	local net.IP
 
@@ -65,7 +63,7 @@ type FSM struct {
 	adjRIBIn        routingtable.RouteTableClient
 	adjRIBOut       routingtable.RouteTableClient
 	rib             *locRIB.LocRIB
-	updateSender    routingtable.RouteTableClient
+	updateSender    *UpdateSender
 
 	neighborID uint32
 	state      state
@@ -102,7 +100,7 @@ func newFSM2(peer *peer) *FSM {
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
 		rib:              peer.rib,
-		options:          &packet.Options{},
+		options:          &types.Options{},
 	}
 }
 

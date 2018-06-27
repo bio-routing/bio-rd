@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/taktv6/tflow2/convert"
 )
@@ -71,7 +72,7 @@ func BenchmarkDecodeUpdateMsg(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		buf := bytes.NewBuffer(input)
-		_, err := decodeUpdateMsg(buf, uint16(len(input)), &Options{})
+		_, err := decodeUpdateMsg(buf, uint16(len(input)), &types.Options{})
 		if err != nil {
 			fmt.Printf("decodeUpdateMsg failed: %v\n", err)
 		}
@@ -252,7 +253,7 @@ func TestDecode(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		msg, err := Decode(buf, &Options{})
+		msg, err := Decode(buf, &types.Options{})
 
 		if err != nil && !test.wantFail {
 			t.Errorf("Unexpected error in test %d: %v", test.testNum, err)
@@ -519,10 +520,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         6,
 						TypeCode:       2,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
-								Type:  2,
-								Count: 2,
+								Type: 2,
 								ASNs: []uint32{
 									15169,
 									3320,
@@ -623,18 +623,16 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
-								Type:  2,
-								Count: 2,
+								Type: 2,
 								ASNs: []uint32{
 									15169,
 									3320,
 								},
 							},
 							{
-								Type:  1,
-								Count: 2,
+								Type: 1,
 								ASNs: []uint32{
 									15169,
 									3320,
@@ -702,18 +700,16 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
-								Type:  2,
-								Count: 2,
+								Type: 2,
 								ASNs: []uint32{
 									15169,
 									3320,
 								},
 							},
 							{
-								Type:  1,
-								Count: 2,
+								Type: 1,
 								ASNs: []uint32{
 									15169,
 									3320,
@@ -794,18 +790,16 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
-								Type:  2,
-								Count: 2,
+								Type: 2,
 								ASNs: []uint32{
 									15169,
 									3320,
 								},
 							},
 							{
-								Type:  1,
-								Count: 2,
+								Type: 1,
 								ASNs: []uint32{
 									15169,
 									3320,
@@ -899,18 +893,16 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
-								Type:  2,
-								Count: 2,
+								Type: 2,
 								ASNs: []uint32{
 									15169,
 									3320,
 								},
 							},
 							{
-								Type:  1,
-								Count: 2,
+								Type: 1,
 								ASNs: []uint32{
 									15169,
 									3320,
@@ -1017,18 +1009,16 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
-								Type:  2,
-								Count: 2,
+								Type: 2,
 								ASNs: []uint32{
 									15169,
 									3320,
 								},
 							},
 							{
-								Type:  1,
-								Count: 2,
+								Type: 1,
 								ASNs: []uint32{
 									15169,
 									3320,
@@ -1151,18 +1141,16 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
-								Type:  2,
-								Count: 2,
+								Type: 2,
 								ASNs: []uint32{
 									15169,
 									3320,
 								},
 							},
 							{
-								Type:  1,
-								Count: 2,
+								Type: 1,
 								ASNs: []uint32{
 									15169,
 									3320,
@@ -1425,11 +1413,10 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         6,
 						TypeCode:       17,
-						Value: ASPath{
-							ASPathSegment{
-								Type:  2,
-								Count: 1,
-								ASNs:  []uint32{202739},
+						Value: types.ASPath{
+							types.ASPathSegment{
+								Type: 2,
+								ASNs: []uint32{202739},
 							},
 						},
 						Next: &PathAttribute{
@@ -1465,7 +1452,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			if l == 0 {
 				l = uint16(len(test.input))
 			}
-			msg, err := decodeUpdateMsg(buf, l, &Options{})
+			msg, err := decodeUpdateMsg(buf, l, &types.Options{})
 
 			if err != nil && !test.wantFail {
 				t.Fatalf("Unexpected error in test %d: %v", test.testNum, err)
@@ -1501,7 +1488,7 @@ func TestDecodeMsgBody(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodeMsgBody(test.buffer, test.msgType, test.length, &Options{})
+		res, err := decodeMsgBody(test.buffer, test.msgType, test.length, &types.Options{})
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error dit not happen in test %q", test.name)
 		}

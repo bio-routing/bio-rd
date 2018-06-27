@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -14,7 +14,7 @@ type BGPPath struct {
 	PathIdentifier    uint32
 	NextHop           uint32
 	LocalPref         uint32
-	ASPath            packet.ASPath
+	ASPath            types.ASPath
 	ASPathLen         uint16
 	Origin            uint8
 	MED               uint32
@@ -22,8 +22,34 @@ type BGPPath struct {
 	BGPIdentifier     uint32
 	Source            uint32
 	Communities       []uint32
-	LargeCommunities  []packet.LargeCommunity
-	UnknownAttributes *packet.PathAttribute
+	LargeCommunities  []types.LargeCommunity
+	UnknownAttributes []types.UnknownPathAttribute
+}
+
+// Length get's the length of serialized path
+func (b *BGPPath) Length() uint16 {
+	asPathLen := uint16(3)
+	for _, segment := range b.ASPath {
+		asPathLen++
+		asPathLen += uint16(4 * len(segment.ASNs))
+	}
+
+	communitiesLen := uint16(0)
+	if len(b.Communities) != 0 {
+		communitiesLen += 3 + uint16(len(b.Communities)*4)
+	}
+
+	largeCommunitiesLen := uint16(0)
+	if len(b.LargeCommunities) != 0 {
+		largeCommunitiesLen += 3 + uint16(len(b.LargeCommunities)*12)
+	}
+
+	unknownAttributesLen := uint16(0)
+	for _, unknownAttr := range b.UnknownAttributes {
+		unknownAttributesLen += unknownAttr.WireLength()
+	}
+
+	return communitiesLen + largeCommunitiesLen + 4*7 + 4 + asPathLen + unknownAttributesLen
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
@@ -206,12 +232,12 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 	}
 
 	first := b.ASPath[0]
-	if first.Type == packet.ASSet {
+	if first.Type == types.ASSet {
 		b.insertNewASSequence()
 	}
 
 	for i := 0; i < int(times); i++ {
-		if len(b.ASPath) == packet.MaxASNsSegment {
+		if len(b.ASPath) == types.MaxASNsSegment {
 			b.insertNewASSequence()
 		}
 
@@ -226,23 +252,33 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 }
 
 func (b *BGPPath) insertNewASSequence() {
-	pa := make(packet.ASPath, len(b.ASPath)+1)
-	copy(b.ASPath, pa[1:])
-	pa[0] = packet.ASPathSegment{
+	pa := make(types.ASPath, len(b.ASPath)+1)
+	copy(pa[1:], b.ASPath)
+	pa[0] = types.ASPathSegment{
 		ASNs:  make([]uint32, 0),
-		Count: 0,
 		Type:  packet.ASSequence,
 	}
 
 	b.ASPath = pa
 }
 
-func (p *BGPPath) Copy() *BGPPath {
-	if p == nil {
+// Copy creates a deep copy of a BGPPath
+func (b *BGPPath) Copy() *BGPPath {
+	if b == nil {
 		return nil
 	}
 
-	cp := *p
+	cp := *b
+
+	cp.ASPath = make(types.ASPath, len(cp.ASPath))
+	copy(cp.ASPath, b.ASPath)
+
+	cp.Communities = make([]uint32, len(cp.Communities))
+	copy(cp.Communities, b.Communities)
+
+	cp.LargeCommunities = make([]types.LargeCommunity, len(cp.LargeCommunities))
+	copy(cp.LargeCommunities, b.LargeCommunities)
+
 	return &cp
 }
 
@@ -268,7 +304,7 @@ func (b *BGPPath) ComputeHash() string {
 func (b *BGPPath) CommunitiesString() string {
 	str := ""
 	for _, com := range b.Communities {
-		str += packet.CommunityStringForUint32(com) + " "
+		str += types.CommunityStringForUint32(com) + " "
 	}
 
 	return strings.TrimRight(str, " ")

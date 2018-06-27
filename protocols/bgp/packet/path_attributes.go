@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/taktv6/tflow2/convert"
 )
 
-func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *Options) (*PathAttribute, error) {
+func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *types.Options) (*PathAttribute, error) {
 	var ret *PathAttribute
 	var eol *PathAttribute
 	var pa *PathAttribute
@@ -34,7 +36,7 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *Options) (*PathAttribu
 	return ret, nil
 }
 
-func decodePathAttr(buf *bytes.Buffer, opt *Options) (pa *PathAttribute, consumed uint16, err error) {
+func decodePathAttr(buf *bytes.Buffer, opt *types.Options) (pa *PathAttribute, consumed uint16, err error) {
 	pa = &PathAttribute{}
 
 	err = decodePathAttrFlags(buf, pa)
@@ -143,27 +145,28 @@ func (pa *PathAttribute) decodeOrigin(buf *bytes.Buffer) error {
 }
 
 func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer, asnLength uint8) error {
-	pa.Value = make(ASPath, 0)
+	pa.Value = make(types.ASPath, 0)
 	p := uint16(0)
 	for p < pa.Length {
-		segment := ASPathSegment{}
+		segment := types.ASPathSegment{}
+		count := uint8(0)
 
-		err := decode(buf, []interface{}{&segment.Type, &segment.Count})
+		err := decode(buf, []interface{}{&segment.Type, &count})
 		if err != nil {
 			return err
 		}
 		p += 2
 
-		if segment.Type != ASSet && segment.Type != ASSequence {
+		if segment.Type != types.ASSet && segment.Type != types.ASSequence {
 			return fmt.Errorf("Invalid AS Path segment type: %d", segment.Type)
 		}
 
-		if segment.Count == 0 {
-			return fmt.Errorf("Invalid AS Path segment length: %d", segment.Count)
+		if count == 0 {
+			return fmt.Errorf("Invalid AS Path segment length: %d", count)
 		}
 
-		segment.ASNs = make([]uint32, segment.Count)
-		for i := uint8(0); i < segment.Count; i++ {
+		segment.ASNs = make([]uint32, count)
+		for i := uint8(0); i < count; i++ {
 			asn, err := pa.decodeASN(buf, asnLength)
 			if err != nil {
 				return err
@@ -173,7 +176,7 @@ func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer, asnLength uint8) error 
 			segment.ASNs[i] = asn
 		}
 
-		pa.Value = append(pa.Value.(ASPath), segment)
+		pa.Value = append(pa.Value.(types.ASPath), segment)
 	}
 
 	return nil
@@ -271,10 +274,10 @@ func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 	}
 
 	count := pa.Length / LargeCommunityLen
-	coms := make([]LargeCommunity, count)
+	coms := make([]types.LargeCommunity, count)
 
 	for i := uint16(0); i < count; i++ {
-		com := LargeCommunity{}
+		com := types.LargeCommunity{}
 
 		v, err := read4BytesAsUint32(buf)
 		if err != nil {
@@ -342,6 +345,7 @@ func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	return bytesRead, nil
 }
 
+// Copy create a copy of a path attribute
 func (pa *PathAttribute) Copy() *PathAttribute {
 	return &PathAttribute{
 		ExtendedLength: pa.ExtendedLength,
@@ -368,7 +372,8 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 	return nil
 }
 
-func (pa *PathAttribute) serialize(buf *bytes.Buffer, opt *Options) uint8 {
+// Serialize serializes a path attribute
+func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *types.Options) uint8 {
 	pathAttrLen := uint8(0)
 
 	switch pa.TypeCode {
@@ -408,7 +413,7 @@ func (pa *PathAttribute) serializeOrigin(buf *bytes.Buffer) uint8 {
 	return 4
 }
 
-func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *Options) uint8 {
+func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *types.Options) uint8 {
 	attrFlags := uint8(0)
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
@@ -421,7 +426,7 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *Options) uint8 
 
 	length := uint8(0)
 	segmentsBuf := bytes.NewBuffer(nil)
-	for _, segment := range pa.Value.(ASPath) {
+	for _, segment := range pa.Value.(types.ASPath) {
 		segmentsBuf.WriteByte(segment.Type)
 		segmentsBuf.WriteByte(uint8(len(segment.ASNs)))
 
@@ -432,7 +437,6 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *Options) uint8 
 				segmentsBuf.Write(convert.Uint32Byte(asn))
 			}
 		}
-		fmt.Println(segment.ASNs)
 		length += 2 + uint8(len(segment.ASNs))*asnLength
 	}
 
@@ -523,7 +527,7 @@ func (pa *PathAttribute) serializeCommunities(buf *bytes.Buffer) uint8 {
 }
 
 func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
-	coms := pa.Value.([]LargeCommunity)
+	coms := pa.Value.([]types.LargeCommunity)
 	if len(coms) == 0 {
 		return 0
 	}
@@ -580,4 +584,71 @@ func read4BytesAsUint32(buf *bytes.Buffer) (uint32, error) {
 	}
 
 	return fourBytesToUint32(b), nil
+}
+
+// AddOptionalPathAttributes adds optional path attributes to linked list pa
+func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute {
+	current := pa
+
+	if len(p.BGPPath.Communities) > 0 {
+		communities := &PathAttribute{
+			TypeCode: CommunitiesAttr,
+			Value:    p.BGPPath.Communities,
+		}
+		current.Next = communities
+		current = communities
+	}
+
+	if len(p.BGPPath.LargeCommunities) > 0 {
+		largeCommunities := &PathAttribute{
+			TypeCode: LargeCommunitiesAttr,
+			Value:    p.BGPPath.LargeCommunities,
+		}
+		current.Next = largeCommunities
+		current = largeCommunities
+	}
+
+	return current
+}
+
+// PathAttributes converts a path object into a linked list of path attributes
+func PathAttributes(p *route.Path) (*PathAttribute, error) {
+	asPath := &PathAttribute{
+		TypeCode: ASPathAttr,
+		Value:    p.BGPPath.ASPath,
+	}
+
+	origin := &PathAttribute{
+		TypeCode: OriginAttr,
+		Value:    p.BGPPath.Origin,
+	}
+	asPath.Next = origin
+
+	nextHop := &PathAttribute{
+		TypeCode: NextHopAttr,
+		Value:    p.BGPPath.NextHop,
+	}
+	origin.Next = nextHop
+
+	localPref := &PathAttribute{
+		TypeCode: LocalPrefAttr,
+		Value:    p.BGPPath.LocalPref,
+	}
+	nextHop.Next = localPref
+
+	optionals := localPref.AddOptionalPathAttributes(p)
+
+	last := optionals
+	for _, unknownAttr := range p.BGPPath.UnknownAttributes {
+		last.Next = &PathAttribute{
+			TypeCode:   unknownAttr.TypeCode,
+			Optional:   unknownAttr.Optional,
+			Transitive: unknownAttr.Transitive,
+			Partial:    unknownAttr.Partial,
+			Value:      unknownAttr.Value,
+		}
+		last = last.Next
+	}
+
+	return asPath, nil
 }

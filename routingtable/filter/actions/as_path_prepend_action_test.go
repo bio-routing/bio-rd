@@ -3,7 +3,7 @@ package actions
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
@@ -25,11 +25,10 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 0",
 			times: 0,
 			bgpPath: &route.BGPPath{
-				ASPath: packet.ASPath{
-					packet.ASPathSegment{
-						Count: 2,
-						Type:  packet.ASSequence,
-						ASNs:  []uint32{12345, 12345},
+				ASPath: types.ASPath{
+					types.ASPathSegment{
+						Type: types.ASSequence,
+						ASNs: []uint32{12345, 12345},
 					},
 				},
 				ASPathLen: 2,
@@ -41,11 +40,10 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 3",
 			times: 3,
 			bgpPath: &route.BGPPath{
-				ASPath: packet.ASPath{
-					packet.ASPathSegment{
-						Count: 2,
-						Type:  packet.ASSequence,
-						ASNs:  []uint32{12345, 15169},
+				ASPath: types.ASPath{
+					types.ASPathSegment{
+						Type: types.ASSequence,
+						ASNs: []uint32{12345, 15169},
 					},
 				},
 				ASPathLen: 2,

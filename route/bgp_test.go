@@ -3,18 +3,16 @@ package route
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestComputeHash(t *testing.T) {
 	p := &BGPPath{
-		ASPath: packet.ASPath{
-			packet.ASPathSegment{
-				ASNs:  []uint32{123, 456},
-				Count: 2,
-				Type:  packet.ASSequence,
+		ASPath: types.ASPath{
+			types.ASPathSegment{
+				ASNs: []uint32{123, 456},
+				Type: types.ASSequence,
 			},
 		},
 		BGPIdentifier: 1,
@@ -22,8 +20,8 @@ func TestComputeHash(t *testing.T) {
 			123, 456,
 		},
 		EBGP: false,
-		LargeCommunities: []packet.LargeCommunity{
-			packet.LargeCommunity{
+		LargeCommunities: []types.LargeCommunity{
+			types.LargeCommunity{
 				DataPart1:           1,
 				DataPart2:           2,
 				GlobalAdministrator: 3,
