@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/taktv6/tflow2/convert"
 )
@@ -12,7 +13,7 @@ import (
 // BGPPath represents a set of BGP path attributes
 type BGPPath struct {
 	PathIdentifier    uint32
-	NextHop           uint32
+	NextHop           bnet.IP
 	LocalPref         uint32
 	ASPath            packet.ASPath
 	ASPathLen         uint16
