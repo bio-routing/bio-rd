@@ -74,10 +74,6 @@ const (
 	EGP        = 1
 	INCOMPLETE = 2
 
-	// ASPath Segment Types
-	ASSet      = 1
-	ASSequence = 2
-
 	// NOTIFICATION Cease error SubCodes (RFC4486)
 	MaxPrefReached                = 1
 	AdminShut                     = 2

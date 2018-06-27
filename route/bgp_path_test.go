@@ -1,6 +1,7 @@
 package route
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -62,5 +63,44 @@ func TestLargeCommunitiesString(t *testing.T) {
 			}
 			assert.Equal(te, test.expected, p.LargeCommunitiesString())
 		})
+	}
+}
+
+func TestLength(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     *BGPPath
+		options  packet.Options
+		wantFail bool
+	}{
+		{
+			name: "Test 1",
+			path: &BGPPath{},
+		},
+	}
+
+	for _, test := range tests {
+		calcLen := test.path.Length()
+		pa, err := test.path.PathAttributes()
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		buf := bytes.Buffer(nil)
+		pa.Serialize(buf, test.options)
+		realLen := len(buf.Bytes())
+		if realLen != calcLen {
+			t.Errorf("Unexpected result for test %q: Expected: %d Got: %d", test.name, realLen, calcLen)
+		}
 	}
 }

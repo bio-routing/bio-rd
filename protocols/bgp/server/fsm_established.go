@@ -7,6 +7,7 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
@@ -230,8 +231,6 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 }
 
 func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *route.Path) {
-	var currentUnknown *packet.PathAttribute
-
 	for pa := attrs; pa != nil; pa = pa.Next {
 		switch pa.TypeCode {
 		case packet.OriginAttr:
@@ -243,33 +242,35 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 		case packet.NextHopAttr:
 			path.BGPPath.NextHop = pa.Value.(uint32)
 		case packet.ASPathAttr:
-			path.BGPPath.ASPath = pa.Value.(packet.ASPath)
+			path.BGPPath.ASPath = pa.Value.(types.ASPath)
 			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
 		case packet.CommunitiesAttr:
 			path.BGPPath.Communities = pa.Value.([]uint32)
 		case packet.LargeCommunitiesAttr:
-			path.BGPPath.LargeCommunities = pa.Value.([]packet.LargeCommunity)
+			path.BGPPath.LargeCommunities = pa.Value.([]types.LargeCommunity)
 		default:
-			currentUnknown = s.processUnknownAttribute(pa, currentUnknown)
-			if path.BGPPath.UnknownAttributes == nil {
-				path.BGPPath.UnknownAttributes = currentUnknown
+			unknownAttr := s.processUnknownAttribute(pa)
+			if unknownAttr != nil {
+				path.BGPPath.UnknownAttributes = append(path.BGPPath.UnknownAttributes)
 			}
 		}
 	}
 }
 
-func (s *establishedState) processUnknownAttribute(attr, current *packet.PathAttribute) *packet.PathAttribute {
+func (s *establishedState) processUnknownAttribute(attr *packet.PathAttribute) *types.UnknownPathAttribute {
 	if !attr.Transitive {
-		return current
+		return nil
 	}
 
-	p := attr.Copy()
-	if current == nil {
-		return p
+	u := &types.UnknownPathAttribute{
+		Transitive: true,
+		Optional:   attr.Optional,
+		Partial:    attr.Partial,
+		TypeCode:   attr.TypeCode,
+		Value:      attr.Value.([]byte),
 	}
 
-	current.Next = p
-	return p
+	return u
 }
 
 func (s *establishedState) keepaliveReceived() (state, string) {

@@ -1,4 +1,4 @@
-package packet
+package types
 
 import (
 	"fmt"
@@ -7,10 +7,13 @@ import (
 )
 
 const (
-	WellKnownCommunityNoExport    = 0xFFFFFF01
+	// WellKnownCommunityNoExport is the well known no export BGP community (RFC1997)
+	WellKnownCommunityNoExport = 0xFFFFFF01
+	// WellKnownCommunityNoAdvertise is the well known no advertise BGP community (RFC1997)
 	WellKnownCommunityNoAdvertise = 0xFFFFFF02
 )
 
+// CommunityStringForUint32 transforms a community into a human readable representation
 func CommunityStringForUint32(v uint32) string {
 	e1 := v >> 16
 	e2 := v & 0x0000FFFF
@@ -18,6 +21,7 @@ func CommunityStringForUint32(v uint32) string {
 	return fmt.Sprintf("(%d,%d)", e1, e2)
 }
 
+// ParseCommunityString parses human readable community representation
 func ParseCommunityString(s string) (uint32, error) {
 	s = strings.Trim(s, "()")
 	t := strings.Split(s, ",")

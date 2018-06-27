@@ -36,7 +36,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *Options) ([]byte, error) {
 
 	pathAttributesBuf := bytes.NewBuffer(nil)
 	for pa := b.PathAttributes; pa != nil; pa = pa.Next {
-		paLen := int(pa.serialize(pathAttributesBuf, opt))
+		paLen := int(pa.Serialize(pathAttributesBuf, opt))
 		budget -= paLen
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
@@ -100,7 +100,7 @@ func (b *BGPUpdate) SerializeUpdateAddPath(opt *Options) ([]byte, error) {
 
 	pathAttributesBuf := bytes.NewBuffer(nil)
 	for pa := b.PathAttributes; pa != nil; pa = pa.Next {
-		paLen := int(pa.serialize(pathAttributesBuf, opt))
+		paLen := int(pa.Serialize(pathAttributesBuf, opt))
 		budget -= paLen
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")

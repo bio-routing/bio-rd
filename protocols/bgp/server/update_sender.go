@@ -93,7 +93,7 @@ func (u *UpdateSender) sender() {
 
 		for key, pathNLRIs := range u.toSend {
 			budget = packet.MaxLen - int(pathNLRIs.path.BGPPath.Length())
-			pathAttrs, err = pathAttribues(pathNLRIs.path)
+			pathAttrs, err = packet.PathAttributes(pathNLRIs.path)
 			if err != nil {
 				log.Errorf("Unable to get path attributes: %v", err)
 				continue
