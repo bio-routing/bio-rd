@@ -6,12 +6,14 @@ type IP struct {
 	lower  uint64
 }
 
+// IPv4 returns a new `IP` representing an IPv4 address
 func IPv4(val uint32) IP {
 	return IP{
 		lower: uint64(val),
 	}
 }
 
+// IPv6 returns a new `IP` representing an IPv6 address
 func IPv6(higher, lower uint64) IP {
 	return IP{
 		higher: higher,
