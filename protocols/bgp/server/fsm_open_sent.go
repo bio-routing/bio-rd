@@ -183,18 +183,18 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 	switch addPathCap.SendReceive {
 	case packet.AddPathReceive:
 		if !s.fsm.peer.addPathSend.BestOnly {
-			s.fsm.capAddPathSend = true
+			s.fsm.options.AddPathRX = true
 		}
 	case packet.AddPathSend:
 		if s.fsm.peer.addPathRecv {
-			s.fsm.capAddPathRecv = true
+			s.fsm.options.AddPathRX = true
 		}
 	case packet.AddPathSendReceive:
 		if !s.fsm.peer.addPathSend.BestOnly {
-			s.fsm.capAddPathSend = true
+			s.fsm.options.AddPathRX = true
 		}
 		if s.fsm.peer.addPathRecv {
-			s.fsm.capAddPathRecv = true
+			s.fsm.options.AddPathRX = true
 		}
 	}
 }
