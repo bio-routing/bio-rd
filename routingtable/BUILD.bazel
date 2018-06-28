@@ -28,7 +28,6 @@ go_test(
         "client_manager_test.go",
         "contributing_asn_list_test.go",
         "table_test.go",
-        "trie_test.go",
         "update_helper_test.go",
     ],
     embed = [":go_default_library"],
