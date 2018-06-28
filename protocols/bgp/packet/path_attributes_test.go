@@ -1348,7 +1348,7 @@ func TestSerializeUnknownAttribute(t *testing.T) {
 		name        string
 		input       *PathAttribute
 		expected    []byte
-		expectedLen uint8
+		expectedLen uint16
 	}{
 		{
 			name: "Arbritary attribute",
@@ -1364,6 +1364,36 @@ func TestSerializeUnknownAttribute(t *testing.T) {
 				1, 2, 3, 4, // Payload
 			},
 			expectedLen: 6,
+		},
+		{
+			name: "Extended length",
+			input: &PathAttribute{
+				TypeCode:       200,
+				Value:          make([]byte, 256),
+				Transitive:     true,
+				ExtendedLength: true,
+			},
+			expected: []byte{
+				80,   // Attribute flags
+				200,  // Type
+				1, 0, // Length
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // Payload
+			},
+			expectedLen: 258,
 		},
 	}
 

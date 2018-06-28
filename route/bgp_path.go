@@ -255,8 +255,8 @@ func (b *BGPPath) insertNewASSequence() {
 	pa := make(types.ASPath, len(b.ASPath)+1)
 	copy(pa[1:], b.ASPath)
 	pa[0] = types.ASPathSegment{
-		ASNs:  make([]uint32, 0),
-		Type:  packet.ASSequence,
+		ASNs: make([]uint32, 0),
+		Type: types.ASSequence,
 	}
 
 	b.ASPath = pa
