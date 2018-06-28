@@ -2,6 +2,7 @@ package net
 
 import (
 	"fmt"
+	"net"
 )
 
 // IP represents an IPv4 or IPv6 address
@@ -45,9 +46,14 @@ func (ip *IP) ToUint32() uint32 {
 	return uint32(^uint64(0) >> 32 & ip.lower)
 }
 
+// Equal returns true if ip is equal to other
+func (ip IP) Equal(other IP) bool {
+	return ip == other
+}
+
 // Compare compares two IP addresses (returns 0 if equal, -1 if `ip` is smaller than `other`, 1 if `ip` is greater than `other`)
 func (ip IP) Compare(other IP) int {
-	if ip == other {
+	if ip.Equal(other) {
 		return 0
 	}
 
@@ -132,4 +138,9 @@ func (ip IP) bytesIPv6() []byte {
 		byte(ip.lower & 0x000000000000FF00 >> 8),
 		byte(ip.lower & 0x00000000000000FF),
 	}
+}
+
+// ToNetIP converts the IP address in a `net.IP`
+func (ip IP) ToNetIP() net.IP {
+	return net.IP(ip.Bytes())
 }

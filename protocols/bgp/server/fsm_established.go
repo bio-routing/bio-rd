@@ -73,7 +73,7 @@ func (s *establishedState) init() error {
 
 	n := &routingtable.Neighbor{
 		Type:              route.BGPPathType,
-		Address:           bnet.IPv4(bnet.IPv4ToUint32(s.fsm.peer.addr)),
+		Address:           s.fsm.peer.addr,
 		IBGP:              s.fsm.peer.localASN == s.fsm.peer.peerASN,
 		LocalASN:          s.fsm.peer.localASN,
 		RouteServerClient: s.fsm.peer.routeServerClient,
@@ -219,7 +219,7 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 		path := &route.Path{
 			Type: route.BGPPathType,
 			BGPPath: &route.BGPPath{
-				Source: bnet.IPv4(bnet.IPv4ToUint32(s.fsm.peer.addr)),
+				Source: s.fsm.peer.addr,
 				EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
 			},
 		}

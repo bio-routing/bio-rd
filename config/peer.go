@@ -1,20 +1,21 @@
 package config
 
 import (
-	"net"
 	"time"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
+// Peer defines the configuration for a BGP session
 type Peer struct {
 	AdminEnabled      bool
 	ReconnectInterval time.Duration
 	KeepAlive         time.Duration
 	HoldTime          time.Duration
-	LocalAddress      net.IP
-	PeerAddress       net.IP
+	LocalAddress      bnet.IP
+	PeerAddress       bnet.IP
 	LocalAS           uint32
 	PeerAS            uint32
 	Passive           bool

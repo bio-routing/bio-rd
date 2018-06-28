@@ -1,11 +1,11 @@
 package server
 
 import (
-	"net"
 	"sync"
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -13,14 +13,14 @@ import (
 )
 
 type PeerInfo struct {
-	PeerAddr net.IP
+	PeerAddr bnet.IP
 	PeerASN  uint32
 	LocalASN uint32
 }
 
 type peer struct {
 	server   *bgpServer
-	addr     net.IP
+	addr     bnet.IP
 	peerASN  uint32
 	localASN uint32
 
@@ -184,7 +184,7 @@ func filterOrDefault(f *filter.Filter) *filter.Filter {
 }
 
 // GetAddr returns the IP address of the peer
-func (p *peer) GetAddr() net.IP {
+func (p *peer) GetAddr() bnet.IP {
 	return p.addr
 }
 

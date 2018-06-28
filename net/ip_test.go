@@ -2,6 +2,7 @@ package net
 
 import (
 	"math"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -251,6 +252,39 @@ func TestIPv6FromBlocks(t *testing.T) {
 				test.blocks[5],
 				test.blocks[6],
 				test.blocks[7]))
+		})
+	}
+}
+
+func TestToNetIP(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected net.IP
+	}{
+		{
+			name:     "IPv4",
+			ip:       IPv4FromOctets(192, 168, 1, 1),
+			expected: net.IP{192, 168, 1, 1},
+		},
+		{
+			name: "IPv6",
+			ip: IPv6FromBlocks(
+				0x2001,
+				0x678,
+				0x1e0,
+				0x1234,
+				0x5678,
+				0xdead,
+				0xbeef,
+				0xcafe),
+			expected: net.IP{32, 1, 6, 120, 1, 224, 18, 52, 86, 120, 222, 173, 190, 239, 202, 254},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, test.ip.ToNetIP())
 		})
 	}
 }
