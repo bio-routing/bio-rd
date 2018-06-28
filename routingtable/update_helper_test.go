@@ -73,7 +73,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 				comms = append(comms, com)
 			}
 
-			pfx := bnet.NewPfx(0, 32)
+			pfx := bnet.NewPfx(bnet.IPv4(0), 32)
 			pa := &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
