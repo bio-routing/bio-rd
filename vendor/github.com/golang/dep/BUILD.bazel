@@ -11,7 +11,7 @@ go_library(
         "project.go",
         "txn_writer.go",
     ],
-    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/golang/dep",
+    importmap = "vendor/github.com/golang/dep",
     importpath = "github.com/golang/dep",
     visibility = ["//visibility:public"],
     deps = [

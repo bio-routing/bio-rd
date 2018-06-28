@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "helper.go",
+        "ip.go",
         "prefix.go",
     ],
     importpath = "github.com/bio-routing/bio-rd/net",
@@ -15,6 +16,7 @@ go_test(
     name = "go_default_test",
     srcs = [
         "helper_test.go",
+        "ip_test.go",
         "prefix_test.go",
     ],
     embed = [":go_default_library"],
