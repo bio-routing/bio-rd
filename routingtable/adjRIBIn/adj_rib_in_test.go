@@ -22,17 +22,17 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Add route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 100,
 					},
 				}),
 			},
-			removePfx:  net.NewPfx(0, 0),
+			removePfx:  net.NewPfx(net.IPv4(0), 0),
 			removePath: nil,
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 100,
@@ -43,20 +43,20 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Overwrite routes",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 100,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 200,
 					},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -64,7 +64,7 @@ func TestAddPath(t *testing.T) {
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 200,
@@ -105,30 +105,30 @@ func TestRemovePath(t *testing.T) {
 		{
 			name: "Remove an existing route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type:    route.BGPPathType,
 				BGPPath: &route.BGPPath{},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
@@ -138,26 +138,26 @@ func TestRemovePath(t *testing.T) {
 		{
 			name: "Remove non existing route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type:    route.BGPPathType,
 				BGPPath: &route.BGPPath{},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
@@ -184,16 +184,11 @@ func TestRemovePath(t *testing.T) {
 			assert.Equal(t, test.removePath, removePathParams.Path)
 		} else {
 			removePathParams := mc.GetRemovePathParams()
-			if removePathParams.Pfx != net.NewPfx(0, 0) {
+			if removePathParams.Pfx != net.NewPfx(net.IPv4(0), 0) {
 				t.Errorf("Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
 			}
 		}
 
 		assert.Equal(t, test.expected, adjRIBIn.rt.Dump())
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := net.StrToAddr(s)
-	return ret
 }

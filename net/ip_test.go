@@ -260,3 +260,33 @@ func TestToNetIP(t *testing.T) {
 		})
 	}
 }
+
+func TestBitAtPosition(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    IP
+		position uint8
+		expected bool
+	}{
+		{
+			name:     "Bit 8 from 1.0.0.0 -> 0",
+			input:    IPv4FromOctets(10, 0, 0, 0),
+			position: 8,
+			expected: false,
+		},
+		{
+			name:     "Bit 8 from 11.0.0.0 -> 1",
+			input:    IPv4FromOctets(11, 0, 0, 0),
+			position: 8,
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		b := test.input.BitAtPosition(test.position)
+		if b != test.expected {
+			t.Errorf("%s: Unexpected failure: Bit %d of %d is %v. Expected %v",
+				test.name, test.position, test.input, b, test.expected)
+		}
+	}
+}

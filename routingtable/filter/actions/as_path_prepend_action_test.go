@@ -3,9 +3,9 @@ package actions
 import (
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 
-	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,7 +56,7 @@ func TestAppendPath(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
 			a := NewASPathPrependAction(12345, test.times)
-			p, _ := a.Do(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+			p, _ := a.Do(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 
