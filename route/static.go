@@ -1,8 +1,10 @@
 package route
 
+import bnet "github.com/bio-routing/bio-rd/net"
+
 // StaticPath represents a static path of a route
 type StaticPath struct {
-	NextHop uint32
+	NextHop bnet.IP
 }
 
 func (r *Route) staticPathSelection() {

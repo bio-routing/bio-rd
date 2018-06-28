@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func TestContainsPfxPath(t *testing.T) {
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
-							NextHop: 2,
+							NextHop: bnet.IPv4(2),
 						},
 					},
 				},
@@ -57,7 +58,7 @@ func TestContainsPfxPath(t *testing.T) {
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
-							NextHop: 2,
+							NextHop: bnet.IPv4(2),
 						},
 					},
 				},
@@ -67,7 +68,7 @@ func TestContainsPfxPath(t *testing.T) {
 				path: &route.Path{
 					Type: route.StaticPathType,
 					StaticPath: &route.StaticPath{
-						NextHop: 2,
+						NextHop: bnet.IPv4(2),
 					},
 				},
 			},
@@ -91,7 +92,7 @@ func TestLocRIB_RemovePathUnknown(t *testing.T) {
 		&route.Path{
 			Type: route.StaticPathType,
 			StaticPath: &route.StaticPath{
-				NextHop: 2,
+				NextHop: bnet.IPv4(2),
 			},
 		}))
 }
