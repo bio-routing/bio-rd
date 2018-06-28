@@ -344,3 +344,12 @@ func TestStrToAddr(t *testing.T) {
 		assert.Equal(t, test.expected, res)
 	}
 }
+
+func TestEqualOperator(t *testing.T) {
+	p1 := NewPfx(IPv4(100), 4)
+	p2 := NewPfx(IPv4(100), 4)
+
+	if p1 != p2 {
+		assert.Fail(t, "p1 != p2 (even if attributes are equal)")
+	}
+}

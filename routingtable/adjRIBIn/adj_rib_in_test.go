@@ -29,7 +29,7 @@ func TestAddPath(t *testing.T) {
 					},
 				}),
 			},
-			removePfx:  net.NewPfx(net.IPv4(0), 0),
+			removePfx:  net.Prefix{},
 			removePath: nil,
 			expected: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
@@ -184,7 +184,8 @@ func TestRemovePath(t *testing.T) {
 			assert.Equal(t, test.removePath, removePathParams.Path)
 		} else {
 			removePathParams := mc.GetRemovePathParams()
-			if removePathParams.Pfx != net.NewPfx(net.IPv4(0), 0) {
+			uninitialized := net.Prefix{}
+			if removePathParams.Pfx != uninitialized {
 				t.Errorf("Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
 			}
 		}
