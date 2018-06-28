@@ -2,15 +2,15 @@ package actions
 
 import (
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 )
 
 type AddLargeCommunityAction struct {
-	communities []packet.LargeCommunity
+	communities []types.LargeCommunity
 }
 
-func NewAddLargeCommunityAction(coms []packet.LargeCommunity) *AddLargeCommunityAction {
+func NewAddLargeCommunityAction(coms []types.LargeCommunity) *AddLargeCommunityAction {
 	return &AddLargeCommunityAction{
 		communities: coms,
 	}

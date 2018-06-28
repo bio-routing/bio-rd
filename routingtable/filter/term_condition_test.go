@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -137,13 +137,13 @@ func TestMatches(t *testing.T) {
 			name:   "large community matches",
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			bgpPath: &route.BGPPath{
-				LargeCommunities: []packet.LargeCommunity{
-					packet.LargeCommunity{
+				LargeCommunities: []types.LargeCommunity{
+					types.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,
 					},
-					packet.LargeCommunity{
+					types.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           0,
@@ -152,7 +152,7 @@ func TestMatches(t *testing.T) {
 			},
 			largeCommunityFilters: []*LargeCommunityFilter{
 				{
-					packet.LargeCommunity{
+					types.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,
@@ -167,7 +167,7 @@ func TestMatches(t *testing.T) {
 			bgpPath: &route.BGPPath{},
 			largeCommunityFilters: []*LargeCommunityFilter{
 				{
-					packet.LargeCommunity{
+					types.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,
@@ -181,7 +181,7 @@ func TestMatches(t *testing.T) {
 			prefix: net.NewPfx(strAddr("10.0.0.0"), 24),
 			largeCommunityFilters: []*LargeCommunityFilter{
 				{
-					packet.LargeCommunity{
+					types.LargeCommunity{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,

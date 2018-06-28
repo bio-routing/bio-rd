@@ -88,6 +88,7 @@ func TestFSM100Updates(t *testing.T) {
 		}
 
 		fsmA.msgRecvCh <- update
+
 	}
 
 	time.Sleep(time.Second)
