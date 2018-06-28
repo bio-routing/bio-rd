@@ -73,11 +73,11 @@ func (s *establishedState) init() error {
 
 	n := &routingtable.Neighbor{
 		Type:              route.BGPPathType,
-		Address:           bnet.IPv4ToUint32(s.fsm.peer.addr),
+		Address:           bnet.IPv4(bnet.IPv4ToUint32(s.fsm.peer.addr)),
 		IBGP:              s.fsm.peer.localASN == s.fsm.peer.peerASN,
 		LocalASN:          s.fsm.peer.localASN,
 		RouteServerClient: s.fsm.peer.routeServerClient,
-		LocalAddress:      bnet.IPv4ToUint32(hostIP),
+		LocalAddress:      bnet.IPv4(bnet.IPv4ToUint32(hostIP)),
 		CapAddPathRX:      s.fsm.options.AddPathRX,
 	}
 
@@ -219,7 +219,7 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 		path := &route.Path{
 			Type: route.BGPPathType,
 			BGPPath: &route.BGPPath{
-				Source: bnet.IPv4ToUint32(s.fsm.peer.addr),
+				Source: bnet.IPv4(bnet.IPv4ToUint32(s.fsm.peer.addr)),
 				EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
 			},
 		}
@@ -240,7 +240,7 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 		case packet.MEDAttr:
 			path.BGPPath.MED = pa.Value.(uint32)
 		case packet.NextHopAttr:
-			path.BGPPath.NextHop = pa.Value.(uint32)
+			path.BGPPath.NextHop = pa.Value.(bnet.IP)
 		case packet.ASPathAttr:
 			path.BGPPath.ASPath = pa.Value.(types.ASPath)
 			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()

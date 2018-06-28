@@ -210,12 +210,10 @@ func (b *BGPPath) Print() string {
 	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
 	ret += fmt.Sprintf("\t\tAS Path: %v\n", b.ASPath)
 	ret += fmt.Sprintf("\t\tBGP type: %s\n", bgpType)
-	nh := uint32To4Byte(b.NextHop.ToUint32())
-	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
+	ret += fmt.Sprintf("\t\tNEXT HOP: %s\n", b.NextHop)
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
 	ret += fmt.Sprintf("\t\tPath ID: %d\n", b.PathIdentifier)
-	src := uint32To4Byte(b.Source)
-	ret += fmt.Sprintf("\t\tSource: %d.%d.%d.%d\n", src[0], src[1], src[2], src[3])
+	ret += fmt.Sprintf("\t\tSource: %s\n", b.Source)
 	ret += fmt.Sprintf("\t\tCommunities: %v\n", b.Communities)
 	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
@@ -285,7 +283,7 @@ func (b *BGPPath) Copy() *BGPPath {
 
 // ComputeHash computes an hash over all attributes of the path
 func (b *BGPPath) ComputeHash() string {
-	s := fmt.Sprintf("%d\t%d\t%v\t%d\t%d\t%v\t%d\t%d\t%v\t%v\t%d",
+	s := fmt.Sprintf("%s\t%d\t%v\t%d\t%d\t%v\t%d\t%s\t%v\t%v\t%d",
 		b.NextHop,
 		b.LocalPref,
 		b.ASPath,

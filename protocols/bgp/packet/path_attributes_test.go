@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +36,7 @@ func TestDecodePathAttrs(t *testing.T) {
 				Next: &PathAttribute{
 					TypeCode: 3,
 					Length:   4,
-					Value:    strAddr("10.20.30.40"),
+					Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
 				},
 			},
 		},
@@ -396,7 +397,7 @@ func TestDecodeNextHop(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 4,
-				Value:  strAddr("10.20.30.40"),
+				Value:  bnet.IPv4FromOctets(10, 20, 30, 40),
 			},
 		},
 		{
@@ -1004,7 +1005,7 @@ func TestSerializeNextHop(t *testing.T) {
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: NextHopAttr,
-				Value:    strAddr("100.110.120.130"),
+				Value:    bnet.IPv4FromOctets(100, 110, 120, 130),
 			},
 			expected:    []byte{64, 3, 4, 100, 110, 120, 130},
 			expectedLen: 7,
@@ -1499,7 +1500,7 @@ func TestSerialize(t *testing.T) {
 						},
 						Next: &PathAttribute{
 							TypeCode: NextHopAttr,
-							Value:    strAddr("10.20.30.40"),
+							Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
 							Next: &PathAttribute{
 								TypeCode: MEDAttr,
 								Value:    uint32(100),
@@ -1704,7 +1705,7 @@ func TestSerializeAddPath(t *testing.T) {
 						},
 						Next: &PathAttribute{
 							TypeCode: NextHopAttr,
-							Value:    strAddr("10.20.30.40"),
+							Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
 							Next: &PathAttribute{
 								TypeCode: MEDAttr,
 								Value:    uint32(100),

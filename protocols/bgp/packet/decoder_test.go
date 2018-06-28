@@ -10,6 +10,8 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/taktv6/tflow2/convert"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 type test struct {
@@ -723,7 +725,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          strAddr("10.11.12.13"),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
 						},
 					},
 				},
@@ -813,7 +815,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          strAddr("10.11.12.13"),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -916,7 +918,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          strAddr("10.11.12.13"),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -1032,7 +1034,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          strAddr("10.11.12.13"),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -1164,7 +1166,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          strAddr("10.11.12.13"),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,

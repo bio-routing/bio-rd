@@ -1,7 +1,6 @@
 package routingtable
 
 import (
-	"net"
 	"strings"
 	"testing"
 
@@ -27,7 +26,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 			communities: "(1,2)",
 			neighbor: Neighbor{
 				Type:    route.BGPPathType,
-				Address: bnet.IPv4ToUint32(net.ParseIP("192.168.1.1")),
+				Address: bnet.IPv4FromOctets(192, 168, 1, 1),
 			},
 			expected: false,
 		},
@@ -79,7 +78,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
 					Communities: comms,
-					Source:      bnet.IPv4ToUint32(net.ParseIP("192.168.1.1")),
+					Source:      bnet.IPv4FromOctets(192, 168, 1, 1),
 				},
 			}
 

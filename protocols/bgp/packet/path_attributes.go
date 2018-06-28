@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/taktv6/tflow2/convert"
@@ -211,7 +212,14 @@ func (pa *PathAttribute) decode2ByteASN(buf *bytes.Buffer) (asn uint32, err erro
 }
 
 func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
-	return pa.decodeUint32(buf, "next hop")
+	nextHop := uint32(0)
+	err := decode(buf, []interface{}{&nextHop})
+	if err != nil {
+		return fmt.Errorf("Unable to decode next hop: %v", err)
+	}
+
+	pa.Value = bnet.IPv4(nextHop)
+	return nil
 }
 
 func (pa *PathAttribute) decodeMED(buf *bytes.Buffer) error {
@@ -453,8 +461,8 @@ func (pa *PathAttribute) serializeNextHop(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(NextHopAttr)
 	length := uint8(4)
 	buf.WriteByte(length)
-	addr := pa.Value.(uint32)
-	buf.Write(convert.Uint32Byte(addr))
+	addr := pa.Value.(bnet.IP)
+	buf.Write(addr.Bytes())
 	return 7
 }
 

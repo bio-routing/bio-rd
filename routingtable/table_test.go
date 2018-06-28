@@ -482,14 +482,14 @@ func TestReplacePath(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}),
 				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -511,13 +511,13 @@ func TestReplacePath(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}, &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -542,14 +542,14 @@ func TestReplacePath(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}),
 				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -571,13 +571,13 @@ func TestReplacePath(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}, &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -642,7 +642,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -659,7 +659,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -679,7 +679,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -696,7 +696,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -716,7 +716,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -733,7 +733,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -758,7 +758,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -768,7 +768,7 @@ func TestRemovePrefix(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
