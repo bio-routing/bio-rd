@@ -21,7 +21,7 @@ type BGPPath struct {
 	MED               uint32
 	EBGP              bool
 	BGPIdentifier     uint32
-	Source            uint32
+	Source            bnet.IP
 	Communities       []uint32
 	LargeCommunities  []packet.LargeCommunity
 	UnknownAttributes *packet.PathAttribute
@@ -92,19 +92,19 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 	}
 
 	// g)
-	if c.Source < b.Source {
+	if c.Source.Compare(b.Source) == -1 {
 		return 1
 	}
 
-	if c.Source > b.Source {
+	if c.Source.Compare(b.Source) == 1 {
 		return -1
 	}
 
-	if c.NextHop < b.NextHop {
+	if c.NextHop.Compare(b.NextHop) == -1 {
 		return 1
 	}
 
-	if c.NextHop > b.NextHop {
+	if c.NextHop.Compare(b.NextHop) == 1 {
 		return -1
 	}
 
@@ -156,7 +156,7 @@ func (b *BGPPath) better(c *BGPPath) bool {
 		return true
 	}
 
-	if c.Source < b.Source {
+	if c.Source.Compare(b.Source) == -1 {
 		return true
 	}
 
@@ -184,7 +184,7 @@ func (b *BGPPath) Print() string {
 	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
 	ret += fmt.Sprintf("\t\tAS Path: %v\n", b.ASPath)
 	ret += fmt.Sprintf("\t\tBGP type: %s\n", bgpType)
-	nh := uint32To4Byte(b.NextHop)
+	nh := uint32To4Byte(b.NextHop.ToUint32())
 	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
 	ret += fmt.Sprintf("\t\tPath ID: %d\n", b.PathIdentifier)

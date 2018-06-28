@@ -37,17 +37,17 @@ func TestToUint32(t *testing.T) {
 func TestCompare(t *testing.T) {
 	tests := []struct {
 		name     string
-		ip       *IP
-		other    *IP
+		ip       IP
+		other    IP
 		expected int
 	}{
 		{
 			name: "equal",
-			ip: &IP{
+			ip: IP{
 				lower:  100,
 				higher: 200,
 			},
-			other: &IP{
+			other: IP{
 				lower:  100,
 				higher: 200,
 			},
@@ -55,11 +55,11 @@ func TestCompare(t *testing.T) {
 		},
 		{
 			name: "greater higher word",
-			ip: &IP{
+			ip: IP{
 				lower:  123,
 				higher: 200,
 			},
-			other: &IP{
+			other: IP{
 				lower:  456,
 				higher: 100,
 			},
@@ -67,11 +67,11 @@ func TestCompare(t *testing.T) {
 		},
 		{
 			name: "lesser higher word",
-			ip: &IP{
+			ip: IP{
 				lower:  123,
 				higher: 100,
 			},
-			other: &IP{
+			other: IP{
 				lower:  456,
 				higher: 200,
 			},
@@ -79,11 +79,11 @@ func TestCompare(t *testing.T) {
 		},
 		{
 			name: "equal higher word but lesser lower word",
-			ip: &IP{
+			ip: IP{
 				lower:  456,
 				higher: 100,
 			},
-			other: &IP{
+			other: IP{
 				lower:  123,
 				higher: 100,
 			},
@@ -91,11 +91,11 @@ func TestCompare(t *testing.T) {
 		},
 		{
 			name: "equal higher word but lesser lower word",
-			ip: &IP{
+			ip: IP{
 				lower:  123,
 				higher: 100,
 			},
-			other: &IP{
+			other: IP{
 				lower:  456,
 				higher: 100,
 			},
@@ -107,5 +107,41 @@ func TestCompare(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.expected, test.ip.Compare(test.other))
 		})
+	}
+}
+
+func TestIPString(t *testing.T) {
+	tests := []struct {
+		ip       IP
+		expected string
+	}{
+		{
+			ip:       IPv4(strAddr("192.168.0.1")),
+			expected: "192.168.0.1",
+		},
+		{
+			ip:       IPv4(strAddr("0.0.0.0")),
+			expected: "0.0.0.0",
+		},
+		{
+			ip:       IPv4(strAddr("255.255.255.255")),
+			expected: "255.255.255.255",
+		},
+		{
+			ip:       IPv6(0, 0),
+			expected: "0:0:0:0:0:0:0:0",
+		},
+		{
+			ip:       IPv6(2306131596687708724, 6230974922281175806),
+			expected: "2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
+		},
+		{
+			ip:       IPv6(^uint64(0), ^uint64(0)),
+			expected: "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expected, test.ip.String())
 	}
 }
