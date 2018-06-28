@@ -90,15 +90,15 @@ func TestIPString(t *testing.T) {
 		expected string
 	}{
 		{
-			ip:       IPv4(strAddr("192.168.0.1")),
+			ip:       IPv4FromOctets(192, 168, 0, 1),
 			expected: "192.168.0.1",
 		},
 		{
-			ip:       IPv4(strAddr("0.0.0.0")),
+			ip:       IPv4FromOctets(0, 0, 0, 0),
 			expected: "0.0.0.0",
 		},
 		{
-			ip:       IPv4(strAddr("255.255.255.255")),
+			ip:       IPv4FromOctets(255, 255, 255, 255),
 			expected: "255.255.255.255",
 		},
 		{

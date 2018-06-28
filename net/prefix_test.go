@@ -7,8 +7,8 @@ import (
 )
 
 func TestNewPfx(t *testing.T) {
-	p := NewPfx(123, 11)
-	if p.addr != 123 || p.pfxlen != 11 {
+	p := NewPfx(IPv4(123), 11)
+	if p.addr != IPv4(123) || p.pfxlen != 11 {
 		t.Errorf("NewPfx() failed: Unexpected values")
 	}
 }
@@ -17,12 +17,12 @@ func TestAddr(t *testing.T) {
 	tests := []struct {
 		name     string
 		pfx      Prefix
-		expected uint32
+		expected IP
 	}{
 		{
 			name:     "Test 1",
-			pfx:      NewPfx(100, 5),
-			expected: 100,
+			pfx:      NewPfx(IPv4(100), 5),
+			expected: IPv4(100),
 		},
 	}
 
@@ -42,7 +42,7 @@ func TestPfxlen(t *testing.T) {
 	}{
 		{
 			name:     "Test 1",
-			pfx:      NewPfx(100, 5),
+			pfx:      NewPfx(IPv4(100), 5),
 			expected: 5,
 		},
 	}
@@ -65,30 +65,30 @@ func TestGetSupernet(t *testing.T) {
 		{
 			name: "Test 1",
 			a: Prefix{
-				addr:   167772160, // 10.0.0.0/8
+				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 8,
 			},
 			b: Prefix{
-				addr:   191134464, // 11.100.123.0/24
+				addr:   IPv4FromOctets(11, 100, 123, 0),
 				pfxlen: 24,
 			},
 			expected: Prefix{
-				addr:   167772160, // 10.0.0.0/7
+				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 7,
 			},
 		},
 		{
 			name: "Test 2",
 			a: Prefix{
-				addr:   167772160, // 10.0.0.0/8
+				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 8,
 			},
 			b: Prefix{
-				addr:   3232235520, // 192.168.0.0/24
+				addr:   IPv4FromOctets(192, 168, 0, 0),
 				pfxlen: 24,
 			},
 			expected: Prefix{
-				addr:   0, // 0.0.0.0/0
+				addr:   IPv4(0), // 0.0.0.0/0
 				pfxlen: 0,
 			},
 		},
@@ -110,11 +110,11 @@ func TestContains(t *testing.T) {
 		{
 			name: "Test 1",
 			a: Prefix{
-				addr:   0,
+				addr:   IPv4(0),
 				pfxlen: 0,
 			},
 			b: Prefix{
-				addr:   100,
+				addr:   IPv4(100),
 				pfxlen: 24,
 			},
 			expected: true,
@@ -122,11 +122,11 @@ func TestContains(t *testing.T) {
 		{
 			name: "Test 2",
 			a: Prefix{
-				addr:   100,
+				addr:   IPv4(100),
 				pfxlen: 24,
 			},
 			b: Prefix{
-				addr:   0,
+				addr:   IPv4(0),
 				pfxlen: 0,
 			},
 			expected: false,
@@ -134,11 +134,11 @@ func TestContains(t *testing.T) {
 		{
 			name: "Test 3",
 			a: Prefix{
-				addr:   167772160,
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: Prefix{
-				addr:   167772160,
+				addr:   IPv4(167772160),
 				pfxlen: 9,
 			},
 			expected: true,
@@ -146,11 +146,11 @@ func TestContains(t *testing.T) {
 		{
 			name: "Test 4",
 			a: Prefix{
-				addr:   167772160,
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: Prefix{
-				addr:   174391040,
+				addr:   IPv4(174391040),
 				pfxlen: 24,
 			},
 			expected: true,
@@ -158,11 +158,11 @@ func TestContains(t *testing.T) {
 		{
 			name: "Test 5",
 			a: Prefix{
-				addr:   167772160,
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: Prefix{
-				addr:   184549377,
+				addr:   IPv4(184549377),
 				pfxlen: 24,
 			},
 			expected: false,
@@ -170,11 +170,11 @@ func TestContains(t *testing.T) {
 		{
 			name: "Test 6",
 			a: Prefix{
-				addr:   167772160,
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: Prefix{
-				addr:   191134464,
+				addr:   IPv4(191134464),
 				pfxlen: 24,
 			},
 			expected: false,
@@ -182,11 +182,11 @@ func TestContains(t *testing.T) {
 		{
 			name: "Test 7",
 			a: Prefix{
-				addr:   strAddr("169.0.0.0"),
+				addr:   IPv4FromOctets(169, 0, 0, 0),
 				pfxlen: 25,
 			},
 			b: Prefix{
-				addr:   strAddr("169.1.1.0"),
+				addr:   IPv4FromOctets(169, 1, 1, 0),
 				pfxlen: 26,
 			},
 			expected: false,
@@ -245,14 +245,14 @@ func TestEqual(t *testing.T) {
 	}{
 		{
 			name:     "Equal PFXs",
-			a:        NewPfx(100, 8),
-			b:        NewPfx(100, 8),
+			a:        NewPfx(IPv4(100), 8),
+			b:        NewPfx(IPv4(100), 8),
 			expected: true,
 		},
 		{
 			name:     "Unequal PFXs",
-			a:        NewPfx(100, 8),
-			b:        NewPfx(200, 8),
+			a:        NewPfx(IPv4(100), 8),
+			b:        NewPfx(IPv4(200), 8),
 			expected: false,
 		},
 	}
@@ -273,12 +273,12 @@ func TestString(t *testing.T) {
 	}{
 		{
 			name:     "Test 1",
-			pfx:      NewPfx(167772160, 8), // 10.0.0.0/8
+			pfx:      NewPfx(IPv4FromOctets(10, 0, 0, 0), 8),
 			expected: "10.0.0.0/8",
 		},
 		{
 			name:     "Test 2",
-			pfx:      NewPfx(167772160, 16), // 10.0.0.0/8
+			pfx:      NewPfx(IPv4FromOctets(10, 0, 0, 0), 16),
 			expected: "10.0.0.0/16",
 		},
 	}
@@ -343,9 +343,4 @@ func TestStrToAddr(t *testing.T) {
 
 		assert.Equal(t, test.expected, res)
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := StrToAddr(s)
-	return ret
 }

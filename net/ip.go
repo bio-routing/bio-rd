@@ -105,13 +105,17 @@ func (ip IP) Bytes() []byte {
 }
 
 func (ip IP) bytesIPv4() []byte {
-	u := uint32(^uint64(0) >> 32 & ip.lower)
+	u := ip.toUint32()
 	return []byte{
 		byte(u & 0xFF000000 >> 24),
 		byte(u & 0x00FF0000 >> 16),
 		byte(u & 0x0000FF00 >> 8),
 		byte(u & 0x000000FF),
 	}
+}
+
+func (ip IP) toUint32() uint32 {
+	return uint32(^uint64(0) >> 32 & ip.lower)
 }
 
 func (ip IP) bytesIPv6() []byte {
@@ -138,4 +142,29 @@ func (ip IP) bytesIPv6() []byte {
 // ToNetIP converts the IP address in a `net.IP`
 func (ip IP) ToNetIP() net.IP {
 	return net.IP(ip.Bytes())
+}
+
+// BitAtPosition returns the bit at position pos
+func (ip IP) BitAtPosition(pos uint8) bool {
+	if ip.ipVersion == 6 {
+		return ip.bitAtPositionIPv6(pos)
+	}
+
+	return ip.bitAtPositionIPv4(pos)
+}
+
+func (ip IP) bitAtPositionIPv4(pos uint8) bool {
+	if pos > 32 {
+		return false
+	}
+
+	return false
+}
+
+func (ip IP) bitAtPositionIPv6(pos uint8) bool {
+	if pos > 128 {
+		return false
+	}
+
+	return false
 }
