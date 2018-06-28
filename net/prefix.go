@@ -75,7 +75,7 @@ func (pfx Prefix) Contains(x Prefix) bool {
 
 func (pfx Prefix) containsIPv4(x Prefix) bool {
 	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
-	return (pfx.addr.toUint32() & mask) == (x.addr.toUint32() & mask)
+	return (pfx.addr.ToUint32() & mask) == (x.addr.ToUint32() & mask)
 }
 
 // Equal checks if pfx and x are equal
@@ -94,8 +94,8 @@ func (pfx Prefix) GetSupernet(x Prefix) Prefix {
 
 func (pfx Prefix) supernetIPv4(x Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
-	a := pfx.addr.toUint32() >> (32 - maxPfxLen)
-	b := x.addr.toUint32() >> (32 - maxPfxLen)
+	a := pfx.addr.ToUint32() >> (32 - maxPfxLen)
+	b := x.addr.ToUint32() >> (32 - maxPfxLen)
 
 	for i := 0; a != b; i++ {
 		a = a >> 1

@@ -14,10 +14,6 @@ type node struct {
 	h     *node
 }
 
-func getBitUint32(x uint32, pos uint8) bool {
-	return ((x) & (1 << (32 - pos))) != 0
-}
-
 func newNode(pfx net.Prefix, path *route.Path, skip uint8, dummy bool) *node {
 	n := &node{
 		route: route.NewRoute(pfx, path),

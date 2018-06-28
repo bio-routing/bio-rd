@@ -17,13 +17,13 @@ func TestNewRoute(t *testing.T) {
 	}{
 		{
 			name: "BGP Path",
-			pfx:  bnet.NewPfx(strAddr("10.0.0.0"), 8),
+			pfx:  bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 			path: &Path{
 				Type:    BGPPathType,
 				BGPPath: &BGPPath{},
 			},
 			expected: &Route{
-				pfx: bnet.NewPfx(strAddr("10.0.0.0"), 8),
+				pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 				paths: []*Path{
 					&Path{
 						Type:    BGPPathType,
@@ -34,9 +34,9 @@ func TestNewRoute(t *testing.T) {
 		},
 		{
 			name: "Empty Path",
-			pfx:  bnet.NewPfx(strAddr("10.0.0.0"), 8),
+			pfx:  bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 			expected: &Route{
-				pfx:   bnet.NewPfx(strAddr("10.0.0.0"), 8),
+				pfx:   bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 				paths: []*Path{},
 			},
 		},
@@ -57,9 +57,9 @@ func TestPrefix(t *testing.T) {
 		{
 			name: "Prefix",
 			route: &Route{
-				pfx: bnet.NewPfx(strAddr("10.0.0.0"), 8),
+				pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 			},
-			expected: bnet.NewPfx(strAddr("10.0.0.0"), 8),
+			expected: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 		},
 	}
 
@@ -73,14 +73,14 @@ func TestAddr(t *testing.T) {
 	tests := []struct {
 		name     string
 		route    *Route
-		expected uint32
+		expected bnet.IP
 	}{
 		{
 			name: "Prefix",
 			route: &Route{
-				pfx: bnet.NewPfx(strAddr("10.0.0.0"), 8),
+				pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 			},
-			expected: 0xa000000,
+			expected: bnet.IPv4(0xa000000),
 		},
 	}
 
@@ -99,7 +99,7 @@ func TestPfxlen(t *testing.T) {
 		{
 			name: "Prefix",
 			route: &Route{
-				pfx: bnet.NewPfx(strAddr("10.0.0.0"), 8),
+				pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 			},
 			expected: 8,
 		},
@@ -120,7 +120,7 @@ func TestAddPath(t *testing.T) {
 	}{
 		{
 			name: "Regular BGP path",
-			route: NewRoute(bnet.NewPfx(strAddr("10.0.0.0"), 8), &Path{
+			route: NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &Path{
 				Type:    BGPPathType,
 				BGPPath: &BGPPath{},
 			}),
@@ -129,7 +129,7 @@ func TestAddPath(t *testing.T) {
 				BGPPath: &BGPPath{},
 			},
 			expected: &Route{
-				pfx: bnet.NewPfx(strAddr("10.0.0.0"), 8),
+				pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 				paths: []*Path{
 					{
 						Type:    BGPPathType,
@@ -144,13 +144,13 @@ func TestAddPath(t *testing.T) {
 		},
 		{
 			name: "Nil path",
-			route: NewRoute(bnet.NewPfx(strAddr("10.0.0.0"), 8), &Path{
+			route: NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &Path{
 				Type:    BGPPathType,
 				BGPPath: &BGPPath{},
 			}),
 			newPath: nil,
 			expected: &Route{
-				pfx: bnet.NewPfx(strAddr("10.0.0.0"), 8),
+				pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 				paths: []*Path{
 					{
 						Type:    BGPPathType,
@@ -271,7 +271,7 @@ func TestCopy(t *testing.T) {
 		{
 			name: "",
 			route: &Route{
-				pfx:       bnet.NewPfx(1000, 8),
+				pfx:       bnet.NewPfx(bnet.IPv4(1000), 8),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -280,7 +280,7 @@ func TestCopy(t *testing.T) {
 				},
 			},
 			expected: &Route{
-				pfx:       bnet.NewPfx(1000, 8),
+				pfx:       bnet.NewPfx(bnet.IPv4(1000), 8),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -396,9 +396,4 @@ func TestECMPPaths(t *testing.T) {
 	for _, tc := range tests {
 		assert.Equal(t, tc.expected, tc.route.ECMPPaths())
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := bnet.StrToAddr(s)
-	return ret
 }

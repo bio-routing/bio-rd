@@ -207,14 +207,14 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 
 func (s *establishedState) withdraws(u *packet.BGPUpdate) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(r.IP, r.Pfxlen)
+		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
 		s.fsm.adjRIBIn.RemovePath(pfx, nil)
 	}
 }
 
 func (s *establishedState) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(r.IP, r.Pfxlen)
+		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
 
 		path := &route.Path{
 			Type: route.BGPPathType,

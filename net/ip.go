@@ -105,7 +105,7 @@ func (ip IP) Bytes() []byte {
 }
 
 func (ip IP) bytesIPv4() []byte {
-	u := ip.toUint32()
+	u := ip.ToUint32()
 	return []byte{
 		byte(u & 0xFF000000 >> 24),
 		byte(u & 0x00FF0000 >> 16),
@@ -114,7 +114,8 @@ func (ip IP) bytesIPv4() []byte {
 	}
 }
 
-func (ip IP) toUint32() uint32 {
+// ToUint32 return the rightmost 32 bits of an 'IP'
+func (ip IP) ToUint32() uint32 {
 	return uint32(^uint64(0) >> 32 & ip.lower)
 }
 
@@ -158,7 +159,7 @@ func (ip IP) bitAtPositionIPv4(pos uint8) bool {
 		return false
 	}
 
-	return false
+	return (ip.ToUint32() & (1 << (32 - pos))) != 0
 }
 
 func (ip IP) bitAtPositionIPv6(pos uint8) bool {
