@@ -8,34 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToUint32(t *testing.T) {
-	tests := []struct {
-		name     string
-		val      uint64
-		expected uint32
-	}{
-		{
-			name:     "IP: 172.24.5.1",
-			val:      2887255297,
-			expected: 2887255297,
-		},
-		{
-			name:     "bigger than IPv4 address",
-			val:      2887255295 + 17179869184,
-			expected: 2887255295,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			ip := IP{
-				lower: test.val,
-			}
-			assert.Equal(t, test.expected, ip.ToUint32())
-		})
-	}
-}
-
 func TestCompare(t *testing.T) {
 	tests := []struct {
 		name     string

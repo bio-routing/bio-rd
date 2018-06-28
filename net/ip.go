@@ -41,11 +41,6 @@ func IPv6FromBlocks(b1, b2, b3, b4, b5, b6, b7, b8 uint16) IP {
 		uint64(uint64(b5)<<48+uint64(b6)<<32+uint64(b7)<<16+uint64(b8)))
 }
 
-// ToUint32 returns the uint32 representation of an IP address
-func (ip *IP) ToUint32() uint32 {
-	return uint32(^uint64(0) >> 32 & ip.lower)
-}
-
 // Equal returns true if ip is equal to other
 func (ip IP) Equal(other IP) bool {
 	return ip == other
@@ -110,7 +105,7 @@ func (ip IP) Bytes() []byte {
 }
 
 func (ip IP) bytesIPv4() []byte {
-	u := ip.ToUint32()
+	u := uint32(^uint64(0) >> 32 & ip.lower)
 	return []byte{
 		byte(u & 0xFF000000 >> 24),
 		byte(u & 0x00FF0000 >> 16),
