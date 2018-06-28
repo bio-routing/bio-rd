@@ -39,6 +39,7 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 		fsm:       fsm,
 		iBGP:      fsm.peer.localASN == fsm.peer.peerASN,
 		destroyCh: make(chan struct{}),
+		toSend:    make(map[string]*pathPfxs),
 	}
 }
 
@@ -80,7 +81,6 @@ func (u *UpdateSender) sender() {
 	var err error
 	var pathAttrs *packet.PathAttribute
 	var budget int
-	var nlri *packet.NLRI
 
 	for {
 		select {
@@ -102,7 +102,7 @@ func (u *UpdateSender) sender() {
 			updatesPrefixes := make([][]bnet.Prefix, 1)
 			prefixes := make([]bnet.Prefix, 1)
 			for _, pfx := range pathNLRIs.pfxs {
-				budget -= int(packet.BytesInAddr(nlri.Pfxlen)) - 5
+				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) - 5
 				if budget < 0 {
 					updatesPrefixes = append(updatesPrefixes, prefixes)
 					prefixes = make([]bnet.Prefix, 1)
