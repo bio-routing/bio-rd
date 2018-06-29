@@ -76,8 +76,6 @@ func (ip IP) String() string {
 }
 
 func (ip IP) stringIPv6() string {
-	fmt.Println(ip.higher & 0xFFFF000000000000 >> 48)
-
 	return fmt.Sprintf("%X:%X:%X:%X:%X:%X:%X:%X",
 		ip.higher&0xFFFF000000000000>>48,
 		ip.higher&0x0000FFFF00000000>>32,
