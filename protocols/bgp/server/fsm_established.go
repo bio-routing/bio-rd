@@ -86,6 +86,9 @@ func (s *establishedState) init() error {
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
 	}
+	if s.fsm.options.AddPathRX {
+		clientOptions = s.fsm.peer.addPathSend
+	}
 
 	s.fsm.updateSender = newUpdateSender(s.fsm)
 	s.fsm.updateSender.Start(time.Millisecond * 5)
