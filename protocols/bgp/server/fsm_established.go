@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -86,13 +87,12 @@ func (s *establishedState) init() error {
 		BestOnly: true,
 	}
 	if s.fsm.options.AddPathRX {
-		s.fsm.updateSender = newUpdateSenderAddPath(s.fsm)
 		clientOptions = s.fsm.peer.addPathSend
-	} else {
-		s.fsm.updateSender = newUpdateSender(s.fsm)
 	}
 
-	s.fsm.updateSender.Start()
+	s.fsm.updateSender = newUpdateSender(s.fsm)
+	s.fsm.updateSender.Start(time.Millisecond * 5)
+
 	s.fsm.adjRIBOut.Register(s.fsm.updateSender)
 	s.fsm.rib.RegisterWithOptions(s.fsm.adjRIBOut, clientOptions)
 
@@ -244,6 +244,11 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 		case packet.ASPathAttr:
 			path.BGPPath.ASPath = pa.Value.(types.ASPath)
 			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
+		case packet.AggregatorAttr:
+			aggr := pa.Value.(types.Aggregator)
+			path.BGPPath.Aggregator = &aggr
+		case packet.AtomicAggrAttr:
+			path.BGPPath.AtomicAggregate = true
 		case packet.CommunitiesAttr:
 			path.BGPPath.Communities = pa.Value.([]uint32)
 		case packet.LargeCommunitiesAttr:

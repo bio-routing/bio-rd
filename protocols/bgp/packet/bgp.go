@@ -10,6 +10,7 @@ const (
 	HeaderLen         = 19
 	MinLen            = 19
 	MaxLen            = 4096
+	MinUpdateLen      = 4
 	NLRIMaxLen        = 5
 	CommunityLen      = 4
 	LargeCommunityLen = 12
@@ -138,9 +139,4 @@ type PathAttribute struct {
 	TypeCode       uint8
 	Value          interface{}
 	Next           *PathAttribute
-}
-
-type Aggretator struct {
-	Addr uint32
-	ASN  uint16
 }

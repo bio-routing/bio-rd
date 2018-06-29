@@ -1197,9 +1197,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 											ExtendedLength: false,
 											Length:         6,
 											TypeCode:       7,
-											Value: Aggretator{
-												ASN:  uint16(258),
-												Addr: strAddr("10.11.12.13"),
+											Value: types.Aggregator{
+												ASN:     uint16(258),
+												Address: strAddr("10.11.12.13"),
 											},
 										},
 									},
@@ -1357,91 +1357,6 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			},
 			wantFail: true,
 			expected: nil,
-		},
-		{
-			// 2 withdraws with four path attributes (Communities + AS4Path +AS4Aggregator + Origin), valid update
-			testNum: 20,
-			input: []byte{0, 5, 8, 10, 16, 192, 168,
-				0, 32, // Total Path Attribute Length
-
-				0,          // Attribute flags
-				8,          // Attribute Type code (Community)
-				8,          // Length
-				0, 0, 1, 0, // Arbitrary Community
-				0, 0, 1, 1, // Arbitrary Community
-
-				128,                    // Attribute flags
-				17,                     // Attribute Type code (AS4Path)
-				6,                      // Length
-				2,                      // AS_SEQUENCE
-				1,                      // Number of ASNs
-				0x00, 0x03, 0x17, 0xf3, // 202739
-
-				128,        // Attribute flags
-				18,         // Attribute Type code (AS4Aggregator)
-				4,          // Length
-				0, 0, 2, 3, // Arbitrary Bytes
-
-				255,  // Attribute flags
-				1,    // Attribute Type code (ORIGIN)
-				0, 1, // Length
-				2, // INCOMPLETE
-
-			},
-			wantFail: false,
-			expected: &BGPUpdate{
-				WithdrawnRoutesLen: 5,
-				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
-					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
-					},
-				},
-				TotalPathAttrLen: 32,
-				PathAttributes: &PathAttribute{
-					Optional:       false,
-					Transitive:     false,
-					Partial:        false,
-					ExtendedLength: false,
-					Length:         8,
-					TypeCode:       8,
-					Value:          []uint32{256, 257},
-					Next: &PathAttribute{
-						Optional:       true,
-						Transitive:     false,
-						Partial:        false,
-						ExtendedLength: false,
-						Length:         6,
-						TypeCode:       17,
-						Value: types.ASPath{
-							types.ASPathSegment{
-								Type: 2,
-								ASNs: []uint32{202739},
-							},
-						},
-						Next: &PathAttribute{
-							Optional:       true,
-							Transitive:     false,
-							Partial:        false,
-							ExtendedLength: false,
-							Length:         4,
-							TypeCode:       18,
-							Value:          uint32(515),
-							Next: &PathAttribute{
-								Optional:       true,
-								Transitive:     true,
-								Partial:        true,
-								ExtendedLength: true,
-								Length:         1,
-								TypeCode:       1,
-								Value:          uint8(2),
-							},
-						},
-					},
-				},
-			},
 		},
 	}
 

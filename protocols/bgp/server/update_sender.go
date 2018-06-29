@@ -4,12 +4,12 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+
+	bnet "github.com/bio-routing/bio-rd/net"
+	log "github.com/sirupsen/logrus"
 )
 
 // UpdateSender converts table changes into BGP update messages
@@ -17,7 +17,6 @@ type UpdateSender struct {
 	routingtable.ClientManager
 	fsm       *FSM
 	iBGP      bool
-	addPath   bool
 	toSendMu  sync.Mutex
 	toSend    map[string]*pathPfxs
 	destroyCh chan struct{}
@@ -26,12 +25,6 @@ type UpdateSender struct {
 type pathPfxs struct {
 	path *route.Path
 	pfxs []bnet.Prefix
-}
-
-func newUpdateSenderAddPath(fsm *FSM) *UpdateSender {
-	u := newUpdateSender(fsm)
-	u.addPath = true
-	return u
 }
 
 func newUpdateSender(fsm *FSM) *UpdateSender {
@@ -44,8 +37,8 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 }
 
 // Start starts the update sender
-func (u *UpdateSender) Start() {
-	go u.sender()
+func (u *UpdateSender) Start(aggrTime time.Duration) {
+	go u.sender(aggrTime)
 }
 
 // Destroy destroys everything (with greetings to Hatebreed)
@@ -76,8 +69,8 @@ func (u *UpdateSender) AddPath(pfx bnet.Prefix, p *route.Path) error {
 }
 
 // sender serializes BGP update messages
-func (u *UpdateSender) sender() {
-	ticker := time.NewTicker(time.Millisecond * 5)
+func (u *UpdateSender) sender(aggrTime time.Duration) {
+	ticker := time.NewTicker(aggrTime)
 	var err error
 	var pathAttrs *packet.PathAttribute
 	var budget int
@@ -92,23 +85,27 @@ func (u *UpdateSender) sender() {
 		u.toSendMu.Lock()
 
 		for key, pathNLRIs := range u.toSend {
-			budget = packet.MaxLen - int(pathNLRIs.path.BGPPath.Length())
-			pathAttrs, err = packet.PathAttributes(pathNLRIs.path)
+			budget = packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length())
+			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP)
 			if err != nil {
 				log.Errorf("Unable to get path attributes: %v", err)
 				continue
 			}
 
-			updatesPrefixes := make([][]bnet.Prefix, 1)
-			prefixes := make([]bnet.Prefix, 1)
+			updatesPrefixes := make([][]bnet.Prefix, 0, 1)
+			prefixes := make([]bnet.Prefix, 0, 1)
 			for _, pfx := range pathNLRIs.pfxs {
-				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) - 5
+				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
 				if budget < 0 {
 					updatesPrefixes = append(updatesPrefixes, prefixes)
-					prefixes = make([]bnet.Prefix, 1)
+					prefixes = make([]bnet.Prefix, 0, 1)
+					budget = packet.MaxLen - int(pathNLRIs.path.BGPPath.Length())
 				}
 
 				prefixes = append(prefixes, pfx)
+			}
+			if len(prefixes) > 0 {
+				updatesPrefixes = append(updatesPrefixes, prefixes)
 			}
 
 			delete(u.toSend, key)
@@ -150,7 +147,11 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	err := withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
-	return err == nil
+	if err != nil {
+		log.Errorf("Unable to withdraw prefix: %v", err)
+		return false
+	}
+	return true
 }
 
 // UpdateNewClient does nothing
