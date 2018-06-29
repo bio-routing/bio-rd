@@ -1,6 +1,8 @@
 package testing
 
-import "net"
+import (
+	"net"
+)
 
 // MockConn mock an connection
 type MockConn struct {
@@ -27,6 +29,6 @@ func (m *MockConn) Read(b []byte) (n int, err error) {
 		count = len(m.Bytes)
 	}
 
-	copy(m.Bytes[0:count], b)
+	copy(b, m.Bytes[0:count])
 	return count, nil
 }

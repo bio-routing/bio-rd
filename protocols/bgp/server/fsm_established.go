@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -85,14 +86,10 @@ func (s *establishedState) init() error {
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
 	}
-	if s.fsm.options.AddPathRX {
-		s.fsm.updateSender = newUpdateSenderAddPath(s.fsm)
-		clientOptions = s.fsm.peer.addPathSend
-	} else {
-		s.fsm.updateSender = newUpdateSender(s.fsm)
-	}
 
-	s.fsm.updateSender.Start()
+	s.fsm.updateSender = newUpdateSender(s.fsm)
+	s.fsm.updateSender.Start(time.Millisecond * 5)
+
 	s.fsm.adjRIBOut.Register(s.fsm.updateSender)
 	s.fsm.rib.RegisterWithOptions(s.fsm.adjRIBOut, clientOptions)
 
