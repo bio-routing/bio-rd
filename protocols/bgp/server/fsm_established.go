@@ -245,7 +245,8 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 			path.BGPPath.ASPath = pa.Value.(types.ASPath)
 			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
 		case packet.AggregatorAttr:
-			path.BGPPath.Aggregator = pa.Value.(types.Aggregator)
+			aggr := pa.Value.(types.Aggregator)
+			path.BGPPath.Aggregator = &aggr
 		case packet.AtomicAggrAttr:
 			path.BGPPath.AtomicAggregate = true
 		case packet.CommunitiesAttr:

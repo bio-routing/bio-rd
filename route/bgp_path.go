@@ -21,7 +21,7 @@ type BGPPath struct {
 	MED               uint32
 	EBGP              bool
 	AtomicAggregate   bool
-	Aggregator        types.Aggregator
+	Aggregator        *types.Aggregator
 	BGPIdentifier     uint32
 	Source            bnet.IP
 	Communities       []uint32

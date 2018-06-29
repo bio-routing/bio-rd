@@ -1138,15 +1138,19 @@ func TestSerializeAggregator(t *testing.T) {
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: AggregatorAttr,
-				Value:    uint16(174),
+				Value: types.Aggregator{
+					ASN:     174,
+					Address: strAddr("10.20.30.40"),
+				},
 			},
 			expected: []byte{
 				192,    // Attribute flags
 				7,      // Type
-				2,      // Length
+				6,      // Length
 				0, 174, // Value = 174
+				10, 20, 30, 40,
 			},
-			expectedLen: 5,
+			expectedLen: 9,
 		},
 	}
 
@@ -1511,7 +1515,10 @@ func TestSerialize(t *testing.T) {
 										TypeCode: AtomicAggrAttr,
 										Next: &PathAttribute{
 											TypeCode: AggregatorAttr,
-											Value:    uint16(200),
+											Value: types.Aggregator{
+												ASN:     200,
+												Address: strAddr("10.20.30.40"),
+											},
 										},
 									},
 								},
@@ -1530,7 +1537,7 @@ func TestSerialize(t *testing.T) {
 			},
 			expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0, 86, // Length
+				0, 90, // Length
 				2, // Msg Type
 
 				// Withdraws
@@ -1538,7 +1545,7 @@ func TestSerialize(t *testing.T) {
 				8, 10, // Withdraw 10/8
 				16, 192, 168, // Withdraw 192.168/16
 
-				0, 50, // Total Path Attribute Length
+				0, 54, // Total Path Attribute Length
 
 				// ORIGIN
 				64, // Attr. Flags
@@ -1577,8 +1584,9 @@ func TestSerialize(t *testing.T) {
 				// Aggregator
 				192,    // Attr. Flags
 				7,      // Attr. Type Code
-				2,      // Length
+				6,      // Length
 				0, 200, // Aggregator ASN = 200
+				10, 20, 30, 40, // Aggregator Address
 
 				// NLRI
 				24, 8, 8, 8, // 8.8.8.0/24
@@ -1716,7 +1724,10 @@ func TestSerializeAddPath(t *testing.T) {
 										TypeCode: AtomicAggrAttr,
 										Next: &PathAttribute{
 											TypeCode: AggregatorAttr,
-											Value:    uint16(200),
+											Value: types.Aggregator{
+												ASN:     200,
+												Address: strAddr("10.20.30.40"),
+											},
 										},
 									},
 								},
@@ -1735,7 +1746,7 @@ func TestSerializeAddPath(t *testing.T) {
 			},
 			expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0, 102, // Length
+				0, 106, // Length
 				2, // Msg Type
 
 				// Withdraws
@@ -1745,7 +1756,7 @@ func TestSerializeAddPath(t *testing.T) {
 				0, 0, 0, 0, // Path Identifier
 				16, 192, 168, // Withdraw 192.168/16
 
-				0, 50, // Total Path Attribute Length
+				0, 54, // Total Path Attribute Length
 
 				// ORIGIN
 				64, // Attr. Flags
@@ -1784,8 +1795,9 @@ func TestSerializeAddPath(t *testing.T) {
 				// Aggregator
 				192,    // Attr. Flags
 				7,      // Attr. Type Code
-				2,      // Length
+				6,      // Length
 				0, 200, // Aggregator ASN = 200
+				10, 20, 30, 40, // Aggregator Address
 
 				// NLRI
 				0, 0, 0, 0, // Path Identifier
