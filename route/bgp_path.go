@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/taktv6/tflow2/convert"
 )
@@ -12,7 +13,7 @@ import (
 // BGPPath represents a set of BGP path attributes
 type BGPPath struct {
 	PathIdentifier    uint32
-	NextHop           uint32
+	NextHop           bnet.IP
 	LocalPref         uint32
 	ASPath            types.ASPath
 	ASPathLen         uint16
@@ -22,7 +23,7 @@ type BGPPath struct {
 	AtomicAggregate   bool
 	Aggregator        *types.Aggregator
 	BGPIdentifier     uint32
-	Source            uint32
+	Source            bnet.IP
 	Communities       []uint32
 	LargeCommunities  []types.LargeCommunity
 	UnknownAttributes []types.UnknownPathAttribute
@@ -119,19 +120,19 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 	}
 
 	// g)
-	if c.Source < b.Source {
+	if c.Source.Compare(b.Source) == -1 {
 		return 1
 	}
 
-	if c.Source > b.Source {
+	if c.Source.Compare(b.Source) == 1 {
 		return -1
 	}
 
-	if c.NextHop < b.NextHop {
+	if c.NextHop.Compare(b.NextHop) == -1 {
 		return 1
 	}
 
-	if c.NextHop > b.NextHop {
+	if c.NextHop.Compare(b.NextHop) == 1 {
 		return -1
 	}
 
@@ -183,7 +184,7 @@ func (b *BGPPath) better(c *BGPPath) bool {
 		return true
 	}
 
-	if c.Source < b.Source {
+	if c.Source.Compare(b.Source) == -1 {
 		return true
 	}
 
@@ -211,12 +212,10 @@ func (b *BGPPath) Print() string {
 	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
 	ret += fmt.Sprintf("\t\tAS Path: %v\n", b.ASPath)
 	ret += fmt.Sprintf("\t\tBGP type: %s\n", bgpType)
-	nh := uint32To4Byte(b.NextHop)
-	ret += fmt.Sprintf("\t\tNEXT HOP: %d.%d.%d.%d\n", nh[0], nh[1], nh[2], nh[3])
+	ret += fmt.Sprintf("\t\tNEXT HOP: %s\n", b.NextHop)
 	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
 	ret += fmt.Sprintf("\t\tPath ID: %d\n", b.PathIdentifier)
-	src := uint32To4Byte(b.Source)
-	ret += fmt.Sprintf("\t\tSource: %d.%d.%d.%d\n", src[0], src[1], src[2], src[3])
+	ret += fmt.Sprintf("\t\tSource: %s\n", b.Source)
 	ret += fmt.Sprintf("\t\tCommunities: %v\n", b.Communities)
 	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
@@ -286,7 +285,7 @@ func (b *BGPPath) Copy() *BGPPath {
 
 // ComputeHash computes an hash over all attributes of the path
 func (b *BGPPath) ComputeHash() string {
-	s := fmt.Sprintf("%d\t%d\t%v\t%d\t%d\t%v\t%d\t%d\t%v\t%v\t%d",
+	s := fmt.Sprintf("%s\t%d\t%v\t%d\t%d\t%v\t%d\t%s\t%v\t%v\t%d",
 		b.NextHop,
 		b.LocalPref,
 		b.ASPath,

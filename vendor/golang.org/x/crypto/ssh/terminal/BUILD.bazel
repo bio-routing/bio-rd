@@ -11,7 +11,7 @@ go_library(
         "util_solaris.go",
         "util_windows.go",
     ],
-    importmap = "github.com/bio-routing/bio-rd/vendor/golang.org/x/crypto/ssh/terminal",
+    importmap = "vendor/golang.org/x/crypto/ssh/terminal",
     importpath = "golang.org/x/crypto/ssh/terminal",
     visibility = ["//visibility:public"],
     deps = select({

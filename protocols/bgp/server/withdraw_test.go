@@ -23,7 +23,7 @@ func TestWithDrawPrefixes(t *testing.T) {
 	}{
 		{
 			Name:   "One withdraw",
-			Prefix: []net.Prefix{net.NewPfx(1413010532, 24)},
+			Prefix: []net.Prefix{net.NewPfx(net.IPv4(1413010532), 24)},
 			Expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
 				0x00, 0x1b, // BGP Message Length
@@ -37,7 +37,7 @@ func TestWithDrawPrefixes(t *testing.T) {
 		},
 		{
 			Name:   "two withdraws",
-			Prefix: []net.Prefix{net.NewPfx(1413010532, 24), net.NewPfx(1413010534, 25)},
+			Prefix: []net.Prefix{net.NewPfx(net.IPv4(1413010532), 24), net.NewPfx(net.IPv4(1413010534), 25)},
 			Expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
 				0x00, 0x20, // BGP Message Length
@@ -71,7 +71,7 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 	}{
 		{
 			Name:   "Normal withdraw",
-			Prefix: net.NewPfx(1413010532, 24),
+			Prefix: net.NewPfx(net.IPv4(1413010532), 24),
 			Path: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -92,7 +92,7 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 		},
 		{
 			Name:   "Non bgp withdraw",
-			Prefix: net.NewPfx(1413010532, 24),
+			Prefix: net.NewPfx(net.IPv4(1413010532), 24),
 			Path: &route.Path{
 				Type: route.StaticPathType,
 			},
@@ -101,7 +101,7 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 		},
 		{
 			Name:   "Nil BGPPathType",
-			Prefix: net.NewPfx(1413010532, 24),
+			Prefix: net.NewPfx(net.IPv4(1413010532), 24),
 			Path: &route.Path{
 				Type: route.BGPPathType,
 			},

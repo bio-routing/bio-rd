@@ -21,13 +21,13 @@ func withDrawPrefixes(out io.Writer, opt *types.Options, prefixes ...net.Prefix)
 	for _, pfx := range prefixes {
 		if rootNLRI == nil {
 			rootNLRI = &packet.NLRI{
-				IP:     pfx.Addr(),
+				IP:     pfx.Addr().ToUint32(),
 				Pfxlen: pfx.Pfxlen(),
 			}
 			currentNLRI = rootNLRI
 		} else {
 			currentNLRI.Next = &packet.NLRI{
-				IP:     pfx.Addr(),
+				IP:     pfx.Addr().ToUint32(),
 				Pfxlen: pfx.Pfxlen(),
 			}
 			currentNLRI = currentNLRI.Next
@@ -52,7 +52,7 @@ func withDrawPrefixesAddPath(out io.Writer, opt *types.Options, pfx net.Prefix, 
 	update := &packet.BGPUpdate{
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
-			IP:             pfx.Addr(),
+			IP:             pfx.Addr().ToUint32(),
 			Pfxlen:         pfx.Pfxlen(),
 		},
 	}

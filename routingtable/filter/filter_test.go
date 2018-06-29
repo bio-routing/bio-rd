@@ -20,7 +20,7 @@ func TestProcessTerms(t *testing.T) {
 	}{
 		{
 			name:   "accept",
-			prefix: net.NewPfx(0, 0),
+			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
 				then: []FilterAction{
@@ -32,7 +32,7 @@ func TestProcessTerms(t *testing.T) {
 		},
 		{
 			name:   "reject",
-			prefix: net.NewPfx(0, 0),
+			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
 				then: []FilterAction{
@@ -44,7 +44,7 @@ func TestProcessTerms(t *testing.T) {
 		},
 		{
 			name:   "modified",
-			prefix: net.NewPfx(0, 0),
+			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
 				then: []FilterAction{

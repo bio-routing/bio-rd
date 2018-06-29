@@ -3,21 +3,18 @@ package net
 import (
 	"fmt"
 	"math"
-	"net"
 	"strconv"
 	"strings"
-
-	"github.com/taktv6/tflow2/convert"
 )
 
 // Prefix represents an IPv4 prefix
 type Prefix struct {
-	addr   uint32
+	addr   IP
 	pfxlen uint8
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr uint32, pfxlen uint8) Prefix {
+func NewPfx(addr IP, pfxlen uint8) Prefix {
 	return Prefix{
 		addr:   addr,
 		pfxlen: pfxlen,
@@ -49,7 +46,7 @@ func StrToAddr(x string) (uint32, error) {
 }
 
 // Addr returns the address of the prefix
-func (pfx Prefix) Addr() uint32 {
+func (pfx Prefix) Addr() IP {
 	return pfx.addr
 }
 
@@ -60,7 +57,7 @@ func (pfx Prefix) Pfxlen() uint8 {
 
 // String returns a string representation of pfx
 func (pfx Prefix) String() string {
-	return fmt.Sprintf("%s/%d", net.IP(convert.Uint32Byte(pfx.addr)), pfx.pfxlen)
+	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
 }
 
 // Contains checks if x is a subnet of or equal to pfx
@@ -69,8 +66,16 @@ func (pfx Prefix) Contains(x Prefix) bool {
 		return false
 	}
 
+	if pfx.addr.ipVersion == 4 {
+		return pfx.containsIPv4(x)
+	}
+
+	panic("No IPv6 support yet!")
+}
+
+func (pfx Prefix) containsIPv4(x Prefix) bool {
 	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
-	return (pfx.addr & mask) == (x.addr & mask)
+	return (pfx.addr.ToUint32() & mask) == (x.addr.ToUint32() & mask)
 }
 
 // Equal checks if pfx and x are equal
@@ -80,9 +85,17 @@ func (pfx Prefix) Equal(x Prefix) bool {
 
 // GetSupernet gets the next common supernet of pfx and x
 func (pfx Prefix) GetSupernet(x Prefix) Prefix {
+	if pfx.addr.ipVersion == 4 {
+		return pfx.supernetIPv4(x)
+	}
+
+	panic("No IPv6 support yet!")
+}
+
+func (pfx Prefix) supernetIPv4(x Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
-	a := pfx.addr >> (32 - maxPfxLen)
-	b := x.addr >> (32 - maxPfxLen)
+	a := pfx.addr.ToUint32() >> (32 - maxPfxLen)
+	b := x.addr.ToUint32() >> (32 - maxPfxLen)
 
 	for i := 0; a != b; i++ {
 		a = a >> 1
@@ -91,7 +104,7 @@ func (pfx Prefix) GetSupernet(x Prefix) Prefix {
 	}
 
 	return Prefix{
-		addr:   a << (32 - maxPfxLen),
+		addr:   IPv4(a << (32 - maxPfxLen)),
 		pfxlen: maxPfxLen,
 	}
 }

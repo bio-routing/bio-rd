@@ -1,7 +1,6 @@
 package server
 
 import (
-	"net"
 	"sync"
 	"testing"
 	"time"
@@ -10,12 +9,14 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/stretchr/testify/assert"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 // TestFSM100Updates emulates receiving 100 BGP updates and withdraws. Checks route counts.
 func TestFSM100Updates(t *testing.T) {
 	fsmA := newFSM2(&peer{
-		addr:         net.ParseIP("169.254.100.100"),
+		addr:         bnet.IPv4FromOctets(169, 254, 100, 100),
 		rib:          locRIB.New(),
 		importFilter: filter.NewAcceptAllFilter(),
 		exportFilter: filter.NewAcceptAllFilter(),

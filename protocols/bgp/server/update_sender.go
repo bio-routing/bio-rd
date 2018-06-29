@@ -130,7 +130,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 		for _, pfx := range updatePrefix {
 			nlri = &packet.NLRI{
 				PathIdentifier: pathID,
-				IP:             pfx.Addr(),
+				IP:             pfx.Addr().ToUint32(),
 				Pfxlen:         pfx.Pfxlen(),
 				Next:           update.NLRI,
 			}

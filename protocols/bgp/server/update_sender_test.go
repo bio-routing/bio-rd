@@ -1,7 +1,6 @@
 package server
 
 import (
-	"net"
 	"reflect"
 	"testing"
 	"time"
@@ -35,10 +34,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{10, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{11, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{12, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{13, 0, 0, 0})), 32),
+						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(13, 0, 0, 0), 32),
 					},
 				},
 				{
@@ -49,10 +48,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{20, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{21, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{22, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{23, 0, 0, 0})), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(23, 0, 0, 0), 8),
 					},
 				},
 			},
@@ -97,10 +96,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{10, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{11, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{12, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{13, 0, 0, 0})), 32),
+						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(13, 0, 0, 0), 32),
 					},
 				},
 				{
@@ -111,10 +110,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{20, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{21, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{22, 0, 0, 0})), 8),
-						bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{23, 0, 0, 0})), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0), 8),
+						bnet.NewPfx(bnet.IPv4FromOctets(23, 0, 0, 0), 8),
 					},
 				},
 			},
@@ -334,7 +333,7 @@ func TestSender(t *testing.T) {
 
 	for _, test := range tests {
 		fsmA := newFSM2(&peer{
-			addr:         net.ParseIP("169.254.100.100"),
+			addr:         bnet.IPv4FromOctets(169, 254, 100, 100),
 			rib:          locRIB.New(),
 			importFilter: filter.NewAcceptAllFilter(),
 			exportFilter: filter.NewAcceptAllFilter(),
@@ -362,7 +361,7 @@ func TestSender(t *testing.T) {
 				for i := uint64(0); i < test.generateNLRIs; i++ {
 					x := i / 256
 					y := i - x
-					pfx := bnet.NewPfx(bnet.IPv4ToUint32(net.IP([]byte{10, 0, uint8(x), uint8(y)})), 32)
+					pfx := bnet.NewPfx(bnet.IPv4FromOctets(10, 0, uint8(x), uint8(y)), 32)
 					updateSender.AddPath(pfx, pathPfx.path)
 				}
 			}

@@ -5,6 +5,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func TestComputeHash(t *testing.T) {
@@ -29,14 +31,14 @@ func TestComputeHash(t *testing.T) {
 		},
 		LocalPref:      100,
 		MED:            1,
-		NextHop:        100,
+		NextHop:        bnet.IPv4(100),
 		PathIdentifier: 5,
-		Source:         4,
+		Source:         bnet.IPv4(4),
 	}
 
-	assert.Equal(t, "45e238420552b88043edb8cb402034466b08d53b49f8e0fedc680747014ddeff", p.ComputeHash())
+	assert.Equal(t, "98d68e69d993f8807c561cc7d63de759f7edc732887f88a7ebf42f61b9e54821", p.ComputeHash())
 
 	p.LocalPref = 150
 
-	assert.NotEqual(t, "45e238420552b88043edb8cb402034466b08d53b49f8e0fedc680747014ddeff", p.ComputeHash())
+	assert.NotEqual(t, "98d68e69d993f8807c561cc7d63de759f7edc732887f88a7ebf42f61b9e54821", p.ComputeHash())
 }

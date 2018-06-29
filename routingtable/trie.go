@@ -14,10 +14,6 @@ type node struct {
 	h     *node
 }
 
-func getBitUint32(x uint32, pos uint8) bool {
-	return ((x) & (1 << (32 - pos))) != 0
-}
-
 func newNode(pfx net.Prefix, path *route.Path, skip uint8, dummy bool) *node {
 	n := &node{
 		route: route.NewRoute(pfx, path),
@@ -46,7 +42,7 @@ func (n *node) removePath(pfx net.Prefix, p *route.Path) (final bool) {
 		return nPathsAfterDel == 0
 	}
 
-	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)
+	b := pfx.Addr().BitAtPosition(n.route.Pfxlen() + 1)
 	if !b {
 		return n.l.removePath(pfx, p)
 	}
@@ -111,7 +107,7 @@ func (n *node) get(pfx net.Prefix) *node {
 		return nil
 	}
 
-	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)
+	b := pfx.Addr().BitAtPosition(n.route.Pfxlen() + 1)
 	if !b {
 		return n.l.get(pfx)
 	}
@@ -136,7 +132,7 @@ func (n *node) addPath(pfx net.Prefix, p *route.Path) (*node, bool) {
 	}
 
 	// pfx is a subnet of this node
-	b := getBitUint32(pfx.Addr(), n.route.Pfxlen()+1)
+	b := pfx.Addr().BitAtPosition(n.route.Pfxlen() + 1)
 
 	if !b {
 		return n.insertLow(pfx, p, currentPfx.Pfxlen())
@@ -177,7 +173,7 @@ func (n *node) newSuperNode(pfx net.Prefix, p *route.Path) *node {
 
 func (n *node) insertChildren(old *node, newPfx net.Prefix, newPath *route.Path) {
 	// Place the old node
-	b := getBitUint32(old.route.Prefix().Addr(), n.route.Pfxlen()+1)
+	b := old.route.Prefix().Addr().BitAtPosition(n.route.Pfxlen() + 1)
 	if !b {
 		n.l = old
 		n.l.skip = old.route.Pfxlen() - n.route.Pfxlen() - 1
@@ -188,7 +184,7 @@ func (n *node) insertChildren(old *node, newPfx net.Prefix, newPath *route.Path)
 
 	// Place the new Prefix
 	newNode := newNode(newPfx, newPath, newPfx.Pfxlen()-n.route.Pfxlen()-1, false)
-	b = getBitUint32(newPfx.Addr(), n.route.Pfxlen()+1)
+	b = newPfx.Addr().BitAtPosition(n.route.Pfxlen() + 1)
 	if !b {
 		n.l = newNode
 	} else {
@@ -203,7 +199,7 @@ func (n *node) insertBefore(pfx net.Prefix, p *route.Path, parentPfxLen uint8) *
 	skip := n.skip - pfxLenDiff
 	new := newNode(pfx, p, skip, false)
 
-	b := getBitUint32(pfx.Addr(), parentPfxLen)
+	b := pfx.Addr().BitAtPosition(parentPfxLen)
 	if !b {
 		new.l = tmp
 		new.l.skip = tmp.route.Pfxlen() - pfx.Pfxlen() - 1

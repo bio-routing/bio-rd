@@ -170,7 +170,7 @@ func (fsm *FSM) tcpConnector() error {
 	for {
 		select {
 		case <-fsm.initiateCon:
-			c, err := net.DialTCP("tcp", &net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr, Port: BGPPORT})
+			c, err := net.DialTCP("tcp", &net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr.ToNetIP(), Port: BGPPORT})
 			if err != nil {
 				select {
 				case fsm.conErrCh <- err:

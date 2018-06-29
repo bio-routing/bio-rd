@@ -63,7 +63,7 @@ func (r *Route) Prefix() net.Prefix {
 }
 
 // Addr gets a routes address
-func (r *Route) Addr() uint32 {
+func (r *Route) Addr() net.IP {
 	return r.pfx.Addr()
 }
 
