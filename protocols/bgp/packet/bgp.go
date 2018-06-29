@@ -142,8 +142,3 @@ type PathAttribute struct {
 	Value          interface{}
 	Next           *PathAttribute
 }
-
-type Aggretator struct {
-	Addr uint32
-	ASN  uint16
-}

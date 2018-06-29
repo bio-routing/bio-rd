@@ -244,6 +244,11 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 		case packet.ASPathAttr:
 			path.BGPPath.ASPath = pa.Value.(types.ASPath)
 			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
+		case packet.AggregatorAttr:
+			aggr := pa.Value.(types.Aggregator)
+			path.BGPPath.Aggregator = &aggr
+		case packet.AtomicAggrAttr:
+			path.BGPPath.AtomicAggregate = true
 		case packet.CommunitiesAttr:
 			path.BGPPath.Communities = pa.Value.([]uint32)
 		case packet.LargeCommunitiesAttr:

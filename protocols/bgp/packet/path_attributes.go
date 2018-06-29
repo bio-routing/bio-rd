@@ -232,28 +232,15 @@ func (pa *PathAttribute) decodeLocalPref(buf *bytes.Buffer) error {
 }
 
 func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
-	aggr := Aggretator{}
+	aggr := types.Aggregator{}
 	p := uint16(0)
 
-	err := decode(buf, []interface{}{&aggr.ASN})
+	err := decode(buf, []interface{}{&aggr.ASN, &aggr.Address})
 	if err != nil {
 		return err
 	}
-	p += 2
-
-	addr := [4]byte{}
-	n, err := buf.Read(addr[:])
-	if err != nil {
-		return err
-	}
-	if n != 4 {
-		return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
-	}
-	aggr.Addr = fourBytesToUint32(addr)
-
+	p += 6
 	pa.Value = aggr
-	p += 4
-
 	return dumpNBytes(buf, pa.Length-p)
 }
 
@@ -505,10 +492,14 @@ func (pa *PathAttribute) serializeAggregator(buf *bytes.Buffer) uint8 {
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(AggregatorAttr)
-	length := uint8(2)
+	length := uint8(6)
 	buf.WriteByte(length)
-	buf.Write(convert.Uint16Byte(pa.Value.(uint16)))
-	return 5
+
+	aggregator := pa.Value.(types.Aggregator)
+	buf.Write(convert.Uint16Byte(aggregator.ASN))
+	buf.Write(convert.Uint32Byte(aggregator.Address))
+
+	return 9
 }
 
 func (pa *PathAttribute) serializeCommunities(buf *bytes.Buffer) uint8 {
@@ -630,33 +621,56 @@ func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute
 }
 
 // PathAttributes converts a path object into a linked list of path attributes
-func PathAttributes(p *route.Path) (*PathAttribute, error) {
+func PathAttributes(p *route.Path, iBGP bool) (*PathAttribute, error) {
 	asPath := &PathAttribute{
 		TypeCode: ASPathAttr,
 		Value:    p.BGPPath.ASPath,
 	}
+	last := asPath
 
 	origin := &PathAttribute{
 		TypeCode: OriginAttr,
 		Value:    p.BGPPath.Origin,
 	}
-	asPath.Next = origin
+	last.Next = origin
+	last = origin
 
 	nextHop := &PathAttribute{
 		TypeCode: NextHopAttr,
 		Value:    p.BGPPath.NextHop,
 	}
-	origin.Next = nextHop
+	last.Next = nextHop
+	last = nextHop
 
-	localPref := &PathAttribute{
-		TypeCode: LocalPrefAttr,
-		Value:    p.BGPPath.LocalPref,
+	if p.BGPPath.AtomicAggregate {
+		atomicAggr := &PathAttribute{
+			TypeCode: AtomicAggrAttr,
+		}
+		last.Next = atomicAggr
+		last = atomicAggr
 	}
-	nextHop.Next = localPref
 
-	optionals := localPref.AddOptionalPathAttributes(p)
+	if p.BGPPath.Aggregator != nil {
+		aggregator := &PathAttribute{
+			TypeCode: AggregatorAttr,
+			Value:    p.BGPPath.Aggregator,
+		}
+		last.Next = aggregator
+		last = aggregator
+	}
 
-	last := optionals
+	if iBGP {
+		localPref := &PathAttribute{
+			TypeCode: LocalPrefAttr,
+			Value:    p.BGPPath.LocalPref,
+		}
+		last.Next = localPref
+		last = localPref
+	}
+
+	optionals := last.AddOptionalPathAttributes(p)
+
+	last = optionals
 	for _, unknownAttr := range p.BGPPath.UnknownAttributes {
 		last.Next = &PathAttribute{
 			TypeCode:   unknownAttr.TypeCode,
