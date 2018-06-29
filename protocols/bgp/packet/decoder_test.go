@@ -1822,6 +1822,19 @@ func TestDecodeCapability(t *testing.T) {
 			wantFail: false,
 		},
 		{
+			name:  "MP Capability (IPv6)",
+			input: []byte{1, 4, 0, 2, 0, 1},
+			expected: Capability{
+				Code:   MultiProtocolCapabilityCode,
+				Length: 4,
+				Value: MultiProtocolCapability{
+					AFI:  IPv6AFI,
+					SAFI: UnicastSAFI,
+				},
+			},
+			wantFail: false,
+		},
+		{
 			name:     "Fail",
 			input:    []byte{69, 4, 0, 1},
 			wantFail: true,
