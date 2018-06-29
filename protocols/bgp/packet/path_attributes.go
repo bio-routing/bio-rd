@@ -224,7 +224,7 @@ func (pa *PathAttribute) decodeLocalPref(buf *bytes.Buffer) error {
 }
 
 func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
-	aggr := Aggretator{}
+	aggr := types.Aggregator{}
 	p := uint16(0)
 
 	err := decode(buf, []interface{}{&aggr.ASN})
@@ -241,7 +241,7 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 	if n != 4 {
 		return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
 	}
-	aggr.Addr = fourBytesToUint32(addr)
+	aggr.Address = fourBytesToUint32(addr)
 
 	pa.Value = aggr
 	p += 4
@@ -622,33 +622,39 @@ func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute
 }
 
 // PathAttributes converts a path object into a linked list of path attributes
-func PathAttributes(p *route.Path) (*PathAttribute, error) {
+func PathAttributes(p *route.Path, iBGP bool) (*PathAttribute, error) {
 	asPath := &PathAttribute{
 		TypeCode: ASPathAttr,
 		Value:    p.BGPPath.ASPath,
 	}
+	last := asPath
 
 	origin := &PathAttribute{
 		TypeCode: OriginAttr,
 		Value:    p.BGPPath.Origin,
 	}
-	asPath.Next = origin
+	last.Next = origin
+	last = origin
 
 	nextHop := &PathAttribute{
 		TypeCode: NextHopAttr,
 		Value:    p.BGPPath.NextHop,
 	}
-	origin.Next = nextHop
+	last.Next = nextHop
+	last = nextHop
 
-	localPref := &PathAttribute{
-		TypeCode: LocalPrefAttr,
-		Value:    p.BGPPath.LocalPref,
+	if iBGP {
+		localPref := &PathAttribute{
+			TypeCode: LocalPrefAttr,
+			Value:    p.BGPPath.LocalPref,
+		}
+		last.Next = localPref
+		last = localPref
 	}
-	nextHop.Next = localPref
 
-	optionals := localPref.AddOptionalPathAttributes(p)
+	optionals := last.AddOptionalPathAttributes(p)
 
-	last := optionals
+	last = optionals
 	for _, unknownAttr := range p.BGPPath.UnknownAttributes {
 		last.Next = &PathAttribute{
 			TypeCode:   unknownAttr.TypeCode,

@@ -563,9 +563,9 @@ func TestDecodeAggregator(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 6,
-				Value: Aggretator{
-					ASN:  222,
-					Addr: strAddr("10.20.30.40"),
+				Value: types.Aggregator{
+					ASN:     222,
+					Address: strAddr("10.20.30.40"),
 				},
 			},
 		},
