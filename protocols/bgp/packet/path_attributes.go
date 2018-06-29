@@ -72,10 +72,11 @@ func decodePathAttr(buf *bytes.Buffer, opt *types.Options) (pa *PathAttribute, c
 		if err := pa.decodeASPath(buf, asnLength); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode AS Path: %v", err)
 		}
+	/* Don't decodeAS4Paths yet: The rest of the software does not support it right yet!
 	case AS4PathAttr:
 		if err := pa.decodeASPath(buf, 4); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode AS4 Path: %v", err)
-		}
+		}*/
 	case NextHopAttr:
 		if err := pa.decodeNextHop(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode Next-Hop: %v", err)
