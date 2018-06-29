@@ -19,6 +19,8 @@ type BGPPath struct {
 	Origin            uint8
 	MED               uint32
 	EBGP              bool
+	AtomicAggregate   bool
+	Aggregator        *types.Aggregator
 	BGPIdentifier     uint32
 	Source            uint32
 	Communities       []uint32

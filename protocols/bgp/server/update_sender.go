@@ -86,7 +86,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 
 		for key, pathNLRIs := range u.toSend {
 			budget = packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length())
-			pathAttrs, err = packet.PathAttributes(pathNLRIs.path)
+			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP)
 			if err != nil {
 				log.Errorf("Unable to get path attributes: %v", err)
 				continue

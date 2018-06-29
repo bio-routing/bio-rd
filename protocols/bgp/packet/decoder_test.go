@@ -1195,9 +1195,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 											ExtendedLength: false,
 											Length:         6,
 											TypeCode:       7,
-											Value: Aggretator{
-												ASN:  uint16(258),
-												Addr: strAddr("10.11.12.13"),
+											Value: types.Aggregator{
+												ASN:     uint16(258),
+												Address: strAddr("10.11.12.13"),
 											},
 										},
 									},
