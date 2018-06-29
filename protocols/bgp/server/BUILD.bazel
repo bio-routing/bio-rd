@@ -47,6 +47,7 @@ go_test(
         "fsm_test.go",
         "server_test.go",
         "update_helper_test.go",
+        "update_sender_test.go",
         "withdraw_test.go",
     ],
     embed = [":go_default_library"],
