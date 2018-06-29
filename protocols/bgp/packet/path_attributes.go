@@ -227,25 +227,12 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 	aggr := types.Aggregator{}
 	p := uint16(0)
 
-	err := decode(buf, []interface{}{&aggr.ASN})
+	err := decode(buf, []interface{}{&aggr.ASN, &aggr.Address})
 	if err != nil {
 		return err
 	}
-	p += 2
-
-	addr := [4]byte{}
-	n, err := buf.Read(addr[:])
-	if err != nil {
-		return err
-	}
-	if n != 4 {
-		return fmt.Errorf("Unable to read next hop: buf.Read read %d bytes", n)
-	}
-	aggr.Address = fourBytesToUint32(addr)
-
+	p += 6
 	pa.Value = aggr
-	p += 4
-
 	return dumpNBytes(buf, pa.Length-p)
 }
 
@@ -497,10 +484,14 @@ func (pa *PathAttribute) serializeAggregator(buf *bytes.Buffer) uint8 {
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(AggregatorAttr)
-	length := uint8(2)
+	length := uint8(6)
 	buf.WriteByte(length)
-	buf.Write(convert.Uint16Byte(pa.Value.(uint16)))
-	return 5
+
+	aggregator := pa.Value.(types.Aggregator)
+	buf.Write(convert.Uint16Byte(aggregator.ASN))
+	buf.Write(convert.Uint32Byte(aggregator.Address))
+
+	return 9
 }
 
 func (pa *PathAttribute) serializeCommunities(buf *bytes.Buffer) uint8 {
@@ -642,6 +633,23 @@ func PathAttributes(p *route.Path, iBGP bool) (*PathAttribute, error) {
 	}
 	last.Next = nextHop
 	last = nextHop
+
+	if p.BGPPath.AtomicAggregate {
+		atomicAggr := &PathAttribute{
+			TypeCode: AtomicAggrAttr,
+		}
+		last.Next = atomicAggr
+		last = atomicAggr
+	}
+
+	if p.BGPPath.Aggregator != nil {
+		aggregator := &PathAttribute{
+			TypeCode: AggregatorAttr,
+			Value:    p.BGPPath.Aggregator,
+		}
+		last.Next = aggregator
+		last = aggregator
+	}
 
 	if iBGP {
 		localPref := &PathAttribute{
