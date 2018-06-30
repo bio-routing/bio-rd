@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "accept_action.go",
+        "add_community_action.go",
+        "add_large_community_action.go",
+        "as_path_prepend_action.go",
+        "filter_action.go",
+        "reject_action.go",
+        "set_local_pref_action.go",
+        "set_nexthop_action.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/routingtable/filter/actions",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//net:go_default_library",
+        "//protocols/bgp/types:go_default_library",
+        "//route:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "add_community_action_test.go",
+        "add_large_community_action_test.go",
+        "as_path_prepend_action_test.go",
+        "set_local_pref_action_test.go",
+        "set_nexthop_action_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//net:go_default_library",
+        "//protocols/bgp/types:go_default_library",
+        "//route:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
+    ],
+)

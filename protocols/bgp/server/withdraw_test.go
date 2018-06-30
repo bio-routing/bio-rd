@@ -3,6 +3,8 @@ package server
 import (
 	"testing"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+
 	"errors"
 
 	"bytes"
@@ -21,7 +23,7 @@ func TestWithDrawPrefixes(t *testing.T) {
 	}{
 		{
 			Name:   "One withdraw",
-			Prefix: []net.Prefix{net.NewPfx(1413010532, 24)},
+			Prefix: []net.Prefix{net.NewPfx(net.IPv4(1413010532), 24)},
 			Expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
 				0x00, 0x1b, // BGP Message Length
@@ -35,7 +37,7 @@ func TestWithDrawPrefixes(t *testing.T) {
 		},
 		{
 			Name:   "two withdraws",
-			Prefix: []net.Prefix{net.NewPfx(1413010532, 24), net.NewPfx(1413010534, 25)},
+			Prefix: []net.Prefix{net.NewPfx(net.IPv4(1413010532), 24), net.NewPfx(net.IPv4(1413010534), 25)},
 			Expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
 				0x00, 0x20, // BGP Message Length
@@ -52,7 +54,8 @@ func TestWithDrawPrefixes(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		buf := bytes.NewBuffer([]byte{})
-		err := withDrawPrefixes(buf, tc.Prefix...)
+		opt := &types.Options{}
+		err := withDrawPrefixes(buf, opt, tc.Prefix...)
 		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
 		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
 	}
@@ -68,7 +71,7 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 	}{
 		{
 			Name:   "Normal withdraw",
-			Prefix: net.NewPfx(1413010532, 24),
+			Prefix: net.NewPfx(net.IPv4(1413010532), 24),
 			Path: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -89,7 +92,7 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 		},
 		{
 			Name:   "Non bgp withdraw",
-			Prefix: net.NewPfx(1413010532, 24),
+			Prefix: net.NewPfx(net.IPv4(1413010532), 24),
 			Path: &route.Path{
 				Type: route.StaticPathType,
 			},
@@ -98,7 +101,7 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 		},
 		{
 			Name:   "Nil BGPPathType",
-			Prefix: net.NewPfx(1413010532, 24),
+			Prefix: net.NewPfx(net.IPv4(1413010532), 24),
 			Path: &route.Path{
 				Type: route.BGPPathType,
 			},
@@ -108,7 +111,10 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		buf := bytes.NewBuffer([]byte{})
-		err := withDrawPrefixesAddPath(buf, tc.Prefix, tc.Path)
+		opt := &types.Options{
+			AddPathRX: true,
+		}
+		err := withDrawPrefixesAddPath(buf, opt, tc.Prefix, tc.Path)
 		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
 		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
 	}

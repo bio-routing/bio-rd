@@ -1,14 +1,13 @@
 package server
 
 import (
+	"bytes"
+	"errors"
 	"io"
 	"testing"
 
-	"bytes"
-
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-
-	"errors"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ import (
 
 type failingUpdate struct{}
 
-func (f *failingUpdate) SerializeUpdate() ([]byte, error) {
+func (f *failingUpdate) SerializeUpdate(opt *types.Options) ([]byte, error) {
 	return nil, errors.New("general error")
 }
 
@@ -94,12 +93,12 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := serializeAndSendUpdate(test.buf, test.testUpdate)
+			opt := &types.Options{}
+			err := serializeAndSendUpdate(test.buf, test.testUpdate, opt)
 			assert.Equal(t, test.err, err)
 
 			assert.Equal(t, test.expected, test.buf.Bytes())
 		})
-
 	}
 }
 

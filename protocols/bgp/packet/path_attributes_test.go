@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,7 +36,7 @@ func TestDecodePathAttrs(t *testing.T) {
 				Next: &PathAttribute{
 					TypeCode: 3,
 					Length:   4,
-					Value:    strAddr("10.20.30.40"),
+					Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
 				},
 			},
 		},
@@ -50,7 +52,7 @@ func TestDecodePathAttrs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)))
+		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &types.Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -173,7 +175,7 @@ func TestDecodePathAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _, err := decodePathAttr(bytes.NewBuffer(test.input))
+		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &types.Options{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -264,6 +266,7 @@ func TestDecodeASPath(t *testing.T) {
 		input          []byte
 		wantFail       bool
 		explicitLength uint16
+		use4OctetASNs  bool
 		expected       *PathAttribute
 	}{
 		{
@@ -276,10 +279,9 @@ func TestDecodeASPath(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 10,
-				Value: ASPath{
-					ASPathSegment{
-						Type:  2,
-						Count: 4,
+				Value: types.ASPath{
+					types.ASPathSegment{
+						Type: 2,
 						ASNs: []uint32{
 							100, 200, 222, 240,
 						},
@@ -297,10 +299,30 @@ func TestDecodeASPath(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 8,
-				Value: ASPath{
-					ASPathSegment{
-						Type:  1,
-						Count: 3,
+				Value: types.ASPath{
+					types.ASPathSegment{
+						Type: 1,
+						ASNs: []uint32{
+							100, 222, 240,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "32 bit ASNs in AS_PATH",
+			input: []byte{
+				1, // AS_SEQUENCE
+				3, // Path Length
+				0, 0, 0, 100, 0, 0, 0, 222, 0, 0, 0, 240,
+			},
+			wantFail:      false,
+			use4OctetASNs: true,
+			expected: &PathAttribute{
+				Length: 14,
+				Value: types.ASPath{
+					types.ASPathSegment{
+						Type: 1,
 						ASNs: []uint32{
 							100, 222, 240,
 						},
@@ -326,28 +348,36 @@ func TestDecodeASPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		l := uint16(len(test.input))
-		if test.explicitLength != 0 {
-			l = test.explicitLength
-		}
-		pa := &PathAttribute{
-			Length: l,
-		}
-		err := pa.decodeASPath(bytes.NewBuffer(test.input))
+		t.Run(test.name, func(t *testing.T) {
+			l := uint16(len(test.input))
+			if test.explicitLength != 0 {
+				l = test.explicitLength
+			}
+			pa := &PathAttribute{
+				Length: l,
+			}
 
-		if test.wantFail && err == nil {
-			t.Errorf("Expected error did not happen for test %q", test.name)
-		}
+			asnLength := uint8(2)
+			if test.use4OctetASNs {
+				asnLength = 4
+			}
 
-		if !test.wantFail && err != nil {
-			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
-		}
+			err := pa.decodeASPath(bytes.NewBuffer(test.input), asnLength)
 
-		if err != nil {
-			continue
-		}
+			if test.wantFail && err == nil {
+				t.Errorf("Expected error did not happen for test %q", test.name)
+			}
 
-		assert.Equal(t, test.expected, pa)
+			if !test.wantFail && err != nil {
+				t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, test.expected, pa)
+		})
 	}
 }
 
@@ -367,7 +397,7 @@ func TestDecodeNextHop(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 4,
-				Value:  strAddr("10.20.30.40"),
+				Value:  bnet.IPv4FromOctets(10, 20, 30, 40),
 			},
 		},
 		{
@@ -534,9 +564,9 @@ func TestDecodeAggregator(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 6,
-				Value: Aggretator{
-					ASN:  222,
-					Addr: strAddr("10.20.30.40"),
+				Value: types.Aggregator{
+					ASN:     222,
+					Address: strAddr("10.20.30.40"),
 				},
 			},
 		},
@@ -605,7 +635,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 24,
-				Value: []LargeCommunity{
+				Value: []types.LargeCommunity{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -625,7 +655,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  []LargeCommunity{},
+				Value:  []types.LargeCommunity{},
 			},
 		},
 	}
@@ -841,107 +871,6 @@ func TestDecodeUint32(t *testing.T) {
 	}
 }
 
-func TestASPathString(t *testing.T) {
-	tests := []struct {
-		name     string
-		pa       *PathAttribute
-		expected string
-	}{
-		{
-			name: "Test #1",
-			pa: &PathAttribute{
-				Value: ASPath{
-					{
-						Type: ASSequence,
-						ASNs: []uint32{10, 20, 30},
-					},
-				},
-			},
-			expected: "10 20 30",
-		},
-		{
-			name: "Test #2",
-			pa: &PathAttribute{
-				Value: ASPath{
-					{
-						Type: ASSequence,
-						ASNs: []uint32{10, 20, 30},
-					},
-					{
-						Type: ASSet,
-						ASNs: []uint32{200, 300},
-					},
-				},
-			},
-			expected: "10 20 30 (200 300)",
-		},
-	}
-
-	for _, test := range tests {
-		res := test.pa.ASPathString()
-		assert.Equal(t, test.expected, res)
-	}
-}
-
-func TestLargeCommunityString(t *testing.T) {
-	tests := []struct {
-		name     string
-		pa       *PathAttribute
-		expected string
-	}{
-		{
-			name: "two attributes",
-			pa: &PathAttribute{
-				Value: []LargeCommunity{
-					{
-						GlobalAdministrator: 1,
-						DataPart1:           2,
-						DataPart2:           3,
-					},
-					{
-						GlobalAdministrator: 4,
-						DataPart1:           5,
-						DataPart2:           6,
-					},
-				},
-			},
-			expected: "(1,2,3) (4,5,6)",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
-			res := test.pa.LargeCommunityString()
-			assert.Equal(te, test.expected, res)
-		})
-	}
-}
-
-func TestCommunityString(t *testing.T) {
-	tests := []struct {
-		name     string
-		pa       *PathAttribute
-		expected string
-	}{
-		{
-			name: "two attributes",
-			pa: &PathAttribute{
-				Value: []uint32{
-					131080, 16778241,
-				},
-			},
-			expected: "(2,8) (256,1025)",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
-			res := test.pa.CommunityString()
-			assert.Equal(te, test.expected, res)
-		})
-	}
-}
-
 func TestSetOptional(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1076,7 +1005,7 @@ func TestSerializeNextHop(t *testing.T) {
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: NextHopAttr,
-				Value:    strAddr("100.110.120.130"),
+				Value:    bnet.IPv4FromOctets(100, 110, 120, 130),
 			},
 			expected:    []byte{64, 3, 4, 100, 110, 120, 130},
 			expectedLen: 7,
@@ -1209,15 +1138,19 @@ func TestSerializeAggregator(t *testing.T) {
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: AggregatorAttr,
-				Value:    uint16(174),
+				Value: types.Aggregator{
+					ASN:     174,
+					Address: strAddr("10.20.30.40"),
+				},
 			},
 			expected: []byte{
 				192,    // Attribute flags
 				7,      // Type
-				2,      // Length
+				6,      // Length
 				0, 174, // Value = 174
+				10, 20, 30, 40,
 			},
-			expectedLen: 5,
+			expectedLen: 9,
 		},
 	}
 
@@ -1239,12 +1172,13 @@ func TestSerializeASPath(t *testing.T) {
 		input       *PathAttribute
 		expected    []byte
 		expectedLen uint8
+		use32BitASN bool
 	}{
 		{
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: ASPathAttr,
-				Value: ASPath{
+				Value: types.ASPath{
 					{
 						Type: 2, // Sequence
 						ASNs: []uint32{
@@ -1265,17 +1199,49 @@ func TestSerializeASPath(t *testing.T) {
 			},
 			expectedLen: 10,
 		},
+		{
+			name: "32bit ASN",
+			input: &PathAttribute{
+				TypeCode: ASPathAttr,
+				Value: types.ASPath{
+					{
+						Type: 2, // Sequence
+						ASNs: []uint32{
+							100, 200, 210,
+						},
+					},
+				},
+			},
+			expected: []byte{
+				64,           // Attribute flags
+				2,            // Type
+				14,           // Length
+				2,            // AS_SEQUENCE
+				3,            // ASN count
+				0, 0, 0, 100, // ASN 100
+				0, 0, 0, 200, // ASN 200
+				0, 0, 0, 210, // ASN 210
+			},
+			expectedLen: 16,
+			use32BitASN: true,
+		},
 	}
 
-	for _, test := range tests {
-		buf := bytes.NewBuffer(nil)
-		n := test.input.serializeASPath(buf)
-		if n != test.expectedLen {
-			t.Errorf("Unexpected length for test %q: %d", test.name, n)
-			continue
-		}
+	t.Parallel()
 
-		assert.Equal(t, test.expected, buf.Bytes())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := bytes.NewBuffer(nil)
+			opt := &types.Options{
+				Supports4OctetASN: test.use32BitASN,
+			}
+			n := test.input.serializeASPath(buf, opt)
+			if n != test.expectedLen {
+				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
 	}
 }
 
@@ -1290,7 +1256,7 @@ func TestSerializeLargeCommunities(t *testing.T) {
 			name: "2 large communities",
 			input: &PathAttribute{
 				TypeCode: LargeCommunitiesAttr,
-				Value: []LargeCommunity{
+				Value: []types.LargeCommunity{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -1315,7 +1281,7 @@ func TestSerializeLargeCommunities(t *testing.T) {
 			name: "empty list of communities",
 			input: &PathAttribute{
 				TypeCode: LargeCommunitiesAttr,
-				Value:    []LargeCommunity{},
+				Value:    []types.LargeCommunity{},
 			},
 			expected:    []byte{},
 			expectedLen: 0,
@@ -1377,6 +1343,71 @@ func TestSerializeCommunities(t *testing.T) {
 				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
 			}
 
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
+	}
+}
+
+func TestSerializeUnknownAttribute(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint16
+	}{
+		{
+			name: "Arbritary attribute",
+			input: &PathAttribute{
+				TypeCode:   200,
+				Value:      []byte{1, 2, 3, 4},
+				Transitive: true,
+			},
+			expected: []byte{
+				64,         // Attribute flags
+				200,        // Type
+				4,          // Length
+				1, 2, 3, 4, // Payload
+			},
+			expectedLen: 6,
+		},
+		{
+			name: "Extended length",
+			input: &PathAttribute{
+				TypeCode:       200,
+				Value:          make([]byte, 256),
+				Transitive:     true,
+				ExtendedLength: true,
+			},
+			expected: []byte{
+				80,   // Attribute flags
+				200,  // Type
+				1, 0, // Length
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // Payload
+			},
+			expectedLen: 258,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := bytes.NewBuffer(nil)
+			n := test.input.serializeUnknownAttribute(buf)
+
+			assert.Equal(t, test.expectedLen, n)
 			assert.Equal(t, test.expected, buf.Bytes())
 		})
 	}
@@ -1461,7 +1492,7 @@ func TestSerialize(t *testing.T) {
 					Value:    uint8(0),
 					Next: &PathAttribute{
 						TypeCode: ASPathAttr,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{100, 155, 200},
@@ -1473,7 +1504,7 @@ func TestSerialize(t *testing.T) {
 						},
 						Next: &PathAttribute{
 							TypeCode: NextHopAttr,
-							Value:    strAddr("10.20.30.40"),
+							Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
 							Next: &PathAttribute{
 								TypeCode: MEDAttr,
 								Value:    uint32(100),
@@ -1484,7 +1515,10 @@ func TestSerialize(t *testing.T) {
 										TypeCode: AtomicAggrAttr,
 										Next: &PathAttribute{
 											TypeCode: AggregatorAttr,
-											Value:    uint16(200),
+											Value: types.Aggregator{
+												ASN:     200,
+												Address: strAddr("10.20.30.40"),
+											},
 										},
 									},
 								},
@@ -1503,7 +1537,7 @@ func TestSerialize(t *testing.T) {
 			},
 			expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0, 86, // Length
+				0, 90, // Length
 				2, // Msg Type
 
 				// Withdraws
@@ -1511,7 +1545,7 @@ func TestSerialize(t *testing.T) {
 				8, 10, // Withdraw 10/8
 				16, 192, 168, // Withdraw 192.168/16
 
-				0, 50, // Total Path Attribute Length
+				0, 54, // Total Path Attribute Length
 
 				// ORIGIN
 				64, // Attr. Flags
@@ -1550,8 +1584,9 @@ func TestSerialize(t *testing.T) {
 				// Aggregator
 				192,    // Attr. Flags
 				7,      // Attr. Type Code
-				2,      // Length
+				6,      // Length
 				0, 200, // Aggregator ASN = 200
+				10, 20, 30, 40, // Aggregator Address
 
 				// NLRI
 				24, 8, 8, 8, // 8.8.8.0/24
@@ -1561,7 +1596,10 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &types.Options{
+			AddPathRX: false,
+		}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -1583,14 +1621,14 @@ func TestSerialize(t *testing.T) {
 func TestSerializeAddPath(t *testing.T) {
 	tests := []struct {
 		name     string
-		msg      *BGPUpdateAddPath
+		msg      *BGPUpdate
 		expected []byte
 		wantFail bool
 	}{
 		{
 			name: "Withdraw only",
-			msg: &BGPUpdateAddPath{
-				WithdrawnRoutes: &NLRIAddPath{
+			msg: &BGPUpdate{
+				WithdrawnRoutes: &NLRI{
 					PathIdentifier: 257,
 					IP:             strAddr("100.110.120.0"),
 					Pfxlen:         24,
@@ -1608,8 +1646,8 @@ func TestSerializeAddPath(t *testing.T) {
 		},
 		{
 			name: "NLRI only",
-			msg: &BGPUpdateAddPath{
-				NLRI: &NLRIAddPath{
+			msg: &BGPUpdate{
+				NLRI: &NLRI{
 					PathIdentifier: 257,
 					IP:             strAddr("100.110.128.0"),
 					Pfxlen:         17,
@@ -1627,7 +1665,7 @@ func TestSerializeAddPath(t *testing.T) {
 		},
 		{
 			name: "Path Attributes only",
-			msg: &BGPUpdateAddPath{
+			msg: &BGPUpdate{
 				PathAttributes: &PathAttribute{
 					Optional:   true,
 					Transitive: true,
@@ -1649,11 +1687,11 @@ func TestSerializeAddPath(t *testing.T) {
 		},
 		{
 			name: "Full test",
-			msg: &BGPUpdateAddPath{
-				WithdrawnRoutes: &NLRIAddPath{
+			msg: &BGPUpdate{
+				WithdrawnRoutes: &NLRI{
 					IP:     strAddr("10.0.0.0"),
 					Pfxlen: 8,
-					Next: &NLRIAddPath{
+					Next: &NLRI{
 						IP:     strAddr("192.168.0.0"),
 						Pfxlen: 16,
 					},
@@ -1663,7 +1701,7 @@ func TestSerializeAddPath(t *testing.T) {
 					Value:    uint8(0),
 					Next: &PathAttribute{
 						TypeCode: ASPathAttr,
-						Value: ASPath{
+						Value: types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{100, 155, 200},
@@ -1675,7 +1713,7 @@ func TestSerializeAddPath(t *testing.T) {
 						},
 						Next: &PathAttribute{
 							TypeCode: NextHopAttr,
-							Value:    strAddr("10.20.30.40"),
+							Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
 							Next: &PathAttribute{
 								TypeCode: MEDAttr,
 								Value:    uint32(100),
@@ -1686,7 +1724,10 @@ func TestSerializeAddPath(t *testing.T) {
 										TypeCode: AtomicAggrAttr,
 										Next: &PathAttribute{
 											TypeCode: AggregatorAttr,
-											Value:    uint16(200),
+											Value: types.Aggregator{
+												ASN:     200,
+												Address: strAddr("10.20.30.40"),
+											},
 										},
 									},
 								},
@@ -1694,10 +1735,10 @@ func TestSerializeAddPath(t *testing.T) {
 						},
 					},
 				},
-				NLRI: &NLRIAddPath{
+				NLRI: &NLRI{
 					IP:     strAddr("8.8.8.0"),
 					Pfxlen: 24,
-					Next: &NLRIAddPath{
+					Next: &NLRI{
 						IP:     strAddr("185.65.240.0"),
 						Pfxlen: 22,
 					},
@@ -1705,7 +1746,7 @@ func TestSerializeAddPath(t *testing.T) {
 			},
 			expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0, 102, // Length
+				0, 106, // Length
 				2, // Msg Type
 
 				// Withdraws
@@ -1715,7 +1756,7 @@ func TestSerializeAddPath(t *testing.T) {
 				0, 0, 0, 0, // Path Identifier
 				16, 192, 168, // Withdraw 192.168/16
 
-				0, 50, // Total Path Attribute Length
+				0, 54, // Total Path Attribute Length
 
 				// ORIGIN
 				64, // Attr. Flags
@@ -1754,8 +1795,9 @@ func TestSerializeAddPath(t *testing.T) {
 				// Aggregator
 				192,    // Attr. Flags
 				7,      // Attr. Type Code
-				2,      // Length
+				6,      // Length
 				0, 200, // Aggregator ASN = 200
+				10, 20, 30, 40, // Aggregator Address
 
 				// NLRI
 				0, 0, 0, 0, // Path Identifier
@@ -1767,7 +1809,10 @@ func TestSerializeAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate()
+		opt := &types.Options{
+			AddPathRX: true,
+		}
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -1783,108 +1828,6 @@ func TestSerializeAddPath(t *testing.T) {
 		}
 
 		assert.Equalf(t, test.expected, res, "%s", test.name)
-	}
-}
-
-func TestParseASPathStr(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		wantFail bool
-		expected *PathAttribute
-	}{
-		{
-			name:     "Empty AS Path",
-			input:    "",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value:    ASPath{},
-			},
-		},
-		{
-			name:     "Simple AS_SEQUENCE",
-			input:    "3320 15169",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{3320, 15169},
-					},
-				},
-			},
-		},
-		{
-			name:     "AS_SEQUENCE with more than 255 elements",
-			input:    "123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123 123",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123, 123},
-					},
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{123, 123, 123, 123, 123},
-					},
-				},
-			},
-		},
-		{
-			name:     "AS_SET only",
-			input:    "(3320 201701 15169)",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSet,
-						ASNs: []uint32{3320, 201701, 15169},
-					},
-				},
-			},
-		},
-		{
-			name:     "Mixed AS Path",
-			input:    "199714 51324 (3320 201701 15169)",
-			wantFail: false,
-			expected: &PathAttribute{
-				TypeCode: ASPathAttr,
-				Value: ASPath{
-					ASPathSegment{
-						Type: ASSequence,
-						ASNs: []uint32{199714, 51324},
-					},
-					ASPathSegment{
-						Type: ASSet,
-						ASNs: []uint32{3320, 201701, 15169},
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		res, err := ParseASPathStr(test.input)
-		if err != nil {
-			if test.wantFail {
-				continue
-			}
-
-			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
-			continue
-		}
-
-		if test.wantFail {
-			t.Errorf("Unexpected success for test %q", test.name)
-			continue
-		}
-
-		assert.Equal(t, test.expected, res)
 	}
 }
 

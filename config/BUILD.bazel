@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "peer.go",
+        "server.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/config",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//net:go_default_library",
+        "//routingtable:go_default_library",
+        "//routingtable/filter:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["server_test.go"],
+    embed = [":go_default_library"],
+)

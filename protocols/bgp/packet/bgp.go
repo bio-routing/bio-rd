@@ -10,6 +10,7 @@ const (
 	HeaderLen         = 19
 	MinLen            = 19
 	MaxLen            = 4096
+	MinUpdateLen      = 4
 	NLRIMaxLen        = 5
 	CommunityLen      = 4
 	LargeCommunityLen = 12
@@ -74,10 +75,6 @@ const (
 	EGP        = 1
 	INCOMPLETE = 2
 
-	// ASPath Segment Types
-	ASSet      = 1
-	ASSequence = 2
-
 	// NOTIFICATION Cease error SubCodes (RFC4486)
 	MaxPrefReached                = 1
 	AdminShut                     = 2
@@ -92,9 +89,11 @@ const (
 	UnicastSAFI           = 1
 	CapabilitiesParamType = 2
 	AddPathCapabilityCode = 69
+	ASN4CapabilityCode    = 65
 	AddPathReceive        = 1
 	AddPathSend           = 2
 	AddPathSendReceive    = 3
+	ASTransASN            = 23456
 )
 
 type BGPError struct {
@@ -119,7 +118,7 @@ type BGPHeader struct {
 
 type BGPOpen struct {
 	Version       uint8
-	AS            uint16
+	ASN           uint16
 	HoldTime      uint16
 	BGPIdentifier uint32
 	OptParmLen    uint8
@@ -131,22 +130,6 @@ type BGPNotification struct {
 	ErrorSubcode uint8
 }
 
-type BGPUpdate struct {
-	WithdrawnRoutesLen uint16
-	WithdrawnRoutes    *NLRI
-	TotalPathAttrLen   uint16
-	PathAttributes     *PathAttribute
-	NLRI               *NLRI
-}
-
-type BGPUpdateAddPath struct {
-	WithdrawnRoutesLen uint16
-	WithdrawnRoutes    *NLRIAddPath
-	TotalPathAttrLen   uint16
-	PathAttributes     *PathAttribute
-	NLRI               *NLRIAddPath
-}
-
 type PathAttribute struct {
 	Length         uint16
 	Optional       bool
@@ -156,29 +139,4 @@ type PathAttribute struct {
 	TypeCode       uint8
 	Value          interface{}
 	Next           *PathAttribute
-}
-
-type NLRI struct {
-	IP     uint32
-	Pfxlen uint8
-	Next   *NLRI
-}
-
-type NLRIAddPath struct {
-	PathIdentifier uint32
-	IP             uint32
-	Pfxlen         uint8
-	Next           *NLRIAddPath
-}
-
-type ASPath []ASPathSegment
-type ASPathSegment struct {
-	Type  uint8
-	Count uint8
-	ASNs  []uint32
-}
-
-type Aggretator struct {
-	Addr uint32
-	ASN  uint16
 }

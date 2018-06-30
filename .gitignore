@@ -16,5 +16,10 @@
 # IDE specific files
 .idea/
 *.iml
+.vscode
 
+# 'go build' binary
 bio-rd
+
+# bazel directories
+/bazel-*

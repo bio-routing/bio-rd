@@ -2,6 +2,7 @@ package routingtable
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
@@ -9,13 +10,19 @@ import (
 
 // RoutingTable is a binary trie that stores prefixes and their paths
 type RoutingTable struct {
-	root *node
-	mu   sync.RWMutex
+	routeCount int64
+	root       *node
+	mu         sync.RWMutex
 }
 
 // NewRoutingTable creates a new routing table
 func NewRoutingTable() *RoutingTable {
 	return &RoutingTable{}
+}
+
+// GetRouteCount gets the amount of stored routes
+func (rt *RoutingTable) GetRouteCount() int64 {
+	return atomic.LoadInt64(&rt.routeCount)
 }
 
 // AddPath adds a path to the routing table
@@ -29,10 +36,15 @@ func (rt *RoutingTable) AddPath(pfx net.Prefix, p *route.Path) error {
 func (rt *RoutingTable) addPath(pfx net.Prefix, p *route.Path) error {
 	if rt.root == nil {
 		rt.root = newNode(pfx, p, pfx.Pfxlen(), false)
+		atomic.AddInt64(&rt.routeCount, 1)
 		return nil
 	}
 
-	rt.root = rt.root.addPath(pfx, p)
+	root, isNew := rt.root.addPath(pfx, p)
+	rt.root = root
+	if isNew {
+		atomic.AddInt64(&rt.routeCount, 1)
+	}
 	return nil
 }
 
@@ -55,11 +67,13 @@ func (rt *RoutingTable) ReplacePath(pfx net.Prefix, p *route.Path) []*route.Path
 }
 
 // RemovePath removes a path from the trie
-func (rt *RoutingTable) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (rt *RoutingTable) RemovePath(pfx net.Prefix, p *route.Path) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	return rt.removePath(pfx, p)
+	if rt.removePath(pfx, p) {
+		atomic.AddInt64(&rt.routeCount, -1)
+	}
 }
 
 func (rt *RoutingTable) removePath(pfx net.Prefix, p *route.Path) bool {
