@@ -222,14 +222,7 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
 		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
 
-		path := &route.Path{
-			Type: route.BGPPathType,
-			BGPPath: &route.BGPPath{
-				Source: s.fsm.peer.addr,
-				EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
-			},
-		}
-
+		path := s.newRoutePath()
 		s.processAttributes(u.PathAttributes, path)
 
 		s.fsm.adjRIBIn.AddPath(pfx, path)
@@ -237,14 +230,11 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 }
 
 func (s *establishedState) multiProtocolUpdates(u *packet.BGPUpdate) {
-	path := &route.Path{
-		Type: route.BGPPathType,
-		BGPPath: &route.BGPPath{
-			Source: s.fsm.peer.addr,
-			EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
-		},
+	if !s.fsm.options.SupportsMultiProtocol {
+		return
 	}
 
+	path := s.newRoutePath()
 	s.processAttributes(u.PathAttributes, path)
 
 	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
@@ -254,6 +244,16 @@ func (s *establishedState) multiProtocolUpdates(u *packet.BGPUpdate) {
 		case packet.MultiProtocolUnreachNLRICode:
 			s.multiProtocolWithdraw(path, pa.Value.(packet.MultiProtocolUnreachNLRI))
 		}
+	}
+}
+
+func (s *establishedState) newRoutePath() *route.Path {
+	return &route.Path{
+		Type: route.BGPPathType,
+		BGPPath: &route.BGPPath{
+			Source: s.fsm.peer.addr,
+			EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
+		},
 	}
 }
 
