@@ -46,23 +46,26 @@ func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, er
 		return n, nil
 	}
 
-	idx := uint8(0)
-	for idx < uint8(len(prefix)) {
-		l := numberOfBytesForPrefixLength(prefix[idx])
-		start := idx + 1
-		end := idx + 1 + l
-		r := uint8(len(prefix)) - idx - 1
-		if r < l {
-			return MultiProtocolUnreachNLRI{}, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", l, r)
+	idx := uint16(0)
+	for idx < uint16(len(prefix)) {
+		pfxLen := prefix[idx]
+		numBytes := uint16(numberOfBytesForPrefixLength(pfxLen))
+		idx++
+
+		r := uint16(len(prefix)) - idx
+		if r < numBytes {
+			return MultiProtocolUnreachNLRI{}, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", numBytes, r)
 		}
 
-		pfx, err := deserializePrefix(prefix[start:end], prefix[idx], n.AFI)
+		start := idx
+		end := idx + numBytes
+		pfx, err := deserializePrefix(prefix[start:end], pfxLen, n.AFI)
 		if err != nil {
 			return MultiProtocolUnreachNLRI{}, err
 		}
 		n.Prefixes = append(n.Prefixes, pfx)
 
-		idx = idx + l + 1
+		idx = idx + numBytes
 	}
 
 	return n, nil
