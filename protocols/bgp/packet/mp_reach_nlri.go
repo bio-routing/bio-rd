@@ -58,12 +58,23 @@ func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error)
 
 	variable = variable[1+nextHopLength:]
 
-	idx := uint8(0)
 	n.Prefixes = make([]bnet.Prefix, 0)
+
+	if len(variable) == 0 {
+		return n, nil
+	}
+
+	idx := uint8(0)
 	for idx < uint8(len(variable)) {
 		l := numberOfBytesForPrefixLength(variable[idx])
+		start := idx + 1
+		end := idx + 1 + l
+		r := uint8(len(variable)) - idx - 1
+		if r < l {
+			return MultiProtocolReachNLRI{}, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", l, r)
+		}
 
-		pfx, err := deserializePrefix(variable[idx+1:idx+1+l], variable[idx], n.AFI)
+		pfx, err := deserializePrefix(variable[start:end], variable[idx], n.AFI)
 		if err != nil {
 			return MultiProtocolReachNLRI{}, err
 		}

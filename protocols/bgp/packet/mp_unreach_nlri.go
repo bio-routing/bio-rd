@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/taktv6/tflow2/convert"
@@ -41,12 +42,21 @@ func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, er
 		return MultiProtocolUnreachNLRI{}, err
 	}
 
+	if len(prefix) == 0 {
+		return n, nil
+	}
+
 	idx := uint8(0)
-	n.Prefixes = make([]bnet.Prefix, 0)
 	for idx < uint8(len(prefix)) {
 		l := numberOfBytesForPrefixLength(prefix[idx])
+		start := idx + 1
+		end := idx + 1 + l
+		r := uint8(len(prefix)) - idx - 1
+		if r < l {
+			return MultiProtocolUnreachNLRI{}, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", l, r)
+		}
 
-		pfx, err := deserializePrefix(prefix[idx+1:idx+1+l], prefix[idx], n.AFI)
+		pfx, err := deserializePrefix(prefix[start:end], prefix[idx], n.AFI)
 		if err != nil {
 			return MultiProtocolUnreachNLRI{}, err
 		}
