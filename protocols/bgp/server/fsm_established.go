@@ -167,7 +167,6 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 func (s *establishedState) msgReceived(data []byte) (state, string) {
 	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
 	if err != nil {
-		fmt.Println(err)
 		switch bgperr := err.(type) {
 		case packet.BGPError:
 			s.fsm.sendNotification(bgperr.ErrorCode, bgperr.ErrorSubCode)
