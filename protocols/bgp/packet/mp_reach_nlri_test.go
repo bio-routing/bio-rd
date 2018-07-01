@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSerializeMultiProtocolNLRI(t *testing.T) {
+func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 	tests := []struct {
 		name     string
 		nlri     MultiProtocolReachNLRI
