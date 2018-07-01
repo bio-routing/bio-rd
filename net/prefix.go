@@ -70,12 +70,26 @@ func (pfx Prefix) Contains(x Prefix) bool {
 		return pfx.containsIPv4(x)
 	}
 
-	panic("No IPv6 support yet!")
+	return pfx.containsIPv6(x)
 }
 
 func (pfx Prefix) containsIPv4(x Prefix) bool {
 	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
 	return (pfx.addr.ToUint32() & mask) == (x.addr.ToUint32() & mask)
+}
+
+func (pfx Prefix) containsIPv6(x Prefix) bool {
+	var maskHigh, maskLow uint64
+	if pfx.pfxlen <= 64 {
+		maskHigh = math.MaxUint32 << (64 - pfx.pfxlen)
+		maskLow = uint64(0)
+	} else {
+		maskHigh = math.MaxUint32
+		maskLow = math.MaxUint32 << (128 - pfx.pfxlen)
+	}
+
+	return pfx.addr.higher&maskHigh&maskHigh == x.addr.higher&maskHigh&maskHigh &&
+		pfx.addr.lower&maskHigh&maskLow == x.addr.lower&maskHigh&maskLow
 }
 
 // Equal checks if pfx and x are equal

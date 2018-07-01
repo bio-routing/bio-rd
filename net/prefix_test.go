@@ -240,6 +240,30 @@ func TestContains(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "IPv6: 2001:678:1e0:100::/56 is subnet of 2001:678:1e0::/48",
+			a: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
+				pfxlen: 48,
+			},
+			expected: true,
+			b: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
+				pfxlen: 56,
+			},
+		},
+		{
+			name: "IPv6: 2001:678:1e0:100::/56 is subnet of 2001:678:1e0::/48",
+			a: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0),
+				pfxlen: 56,
+			},
+			b: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
+				pfxlen: 64,
+			},
+			expected: false,
+		},
 	}
 
 	for _, test := range tests {
