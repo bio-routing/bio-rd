@@ -182,5 +182,13 @@ func (ip IP) bitAtPositionIPv4(pos uint8) bool {
 }
 
 func (ip IP) bitAtPositionIPv6(pos uint8) bool {
-	panic("No IPv6 support yet!")
+	if pos > 128 {
+		return false
+	}
+
+	if pos <= 64 {
+		return (ip.higher & (1 << (64 - pos))) != 0
+	}
+
+	return (ip.lower & (1 << (128 - pos))) != 0
 }
