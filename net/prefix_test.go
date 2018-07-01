@@ -63,7 +63,7 @@ func TestGetSupernet(t *testing.T) {
 		expected Prefix
 	}{
 		{
-			name: "Test 1",
+			name: "Supernet of 10.0.0.0 and 11.100.123.0 -> 10.0.0.0/7",
 			a: Prefix{
 				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 8,
@@ -78,7 +78,7 @@ func TestGetSupernet(t *testing.T) {
 			},
 		},
 		{
-			name: "Test 2",
+			name: "Supernet of 10.0.0.0 and 192.168.0.0 -> 0.0.0.0/0",
 			a: Prefix{
 				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 8,
@@ -88,15 +88,64 @@ func TestGetSupernet(t *testing.T) {
 				pfxlen: 24,
 			},
 			expected: Prefix{
-				addr:   IPv4(0), // 0.0.0.0/0
+				addr:   IPv4(0),
+				pfxlen: 0,
+			},
+		},
+		{
+			name: "Supernet of 2001:678:1e0:100:23::/64 and 2001:678:1e0:1ff::/64 -> 2001:678:1e0:100::/56",
+			a: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0x23, 0, 0, 0),
+				pfxlen: 64,
+			},
+			b: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x1ff, 0, 0, 0, 0),
+				pfxlen: 64,
+			},
+			expected: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
+				pfxlen: 56,
+			},
+		},
+		{
+			name: "Supernet of 2001:678:1e0::/128 and 2001:678:1e0::1/128 -> 2001:678:1e0:100::/127",
+			a: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
+				pfxlen: 128,
+			},
+			b: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 1),
+				pfxlen: 128,
+			},
+			expected: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
+				pfxlen: 127,
+			},
+		},
+		{
+			name: "Supernet of all ones and all zeros -> ::/0",
+			a: Prefix{
+				addr:   IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF),
+				pfxlen: 128,
+			},
+			b: Prefix{
+				addr:   IPv6(0, 0),
+				pfxlen: 128,
+			},
+			expected: Prefix{
+				addr:   IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0),
 				pfxlen: 0,
 			},
 		},
 	}
 
+	t.Parallel()
+
 	for _, test := range tests {
-		s := test.a.GetSupernet(test.b)
-		assert.Equal(t, s, test.expected)
+		t.Run(test.name, func(t *testing.T) {
+			s := test.a.GetSupernet(test.b)
+			assert.Equal(t, test.expected, s)
+		})
 	}
 }
 

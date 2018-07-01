@@ -313,6 +313,12 @@ func TestBitAtPosition(t *testing.T) {
 		expected bool
 	}{
 		{
+			name:     "IPv4: all ones -> 0",
+			input:    IPv4FromOctets(255, 255, 255, 255),
+			position: 1,
+			expected: true,
+		},
+		{
 			name:     "IPv4: Bit 8 from 1.0.0.0 -> 0",
 			input:    IPv4FromOctets(10, 0, 0, 0),
 			position: 8,
@@ -347,6 +353,12 @@ func TestBitAtPosition(t *testing.T) {
 			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
 			position: 115,
 			expected: false,
+		},
+		{
+			name:     "IPv6: all ones -> 1",
+			input:    IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF),
+			position: 1,
+			expected: true,
 		},
 	}
 
