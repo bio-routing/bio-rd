@@ -47,6 +47,9 @@ func (a *AdjRIBOut) RouteCount() int64 {
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
+		if a.neighbor.CapAddPathRX {
+			a.removePathsForPrefix(pfx)
+		}
 		return nil
 	}
 
@@ -55,6 +58,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		return nil
 	}
 
+	// If the neighbor is an eBGP peer and not a Route Server client modify ASPath and Next Hop
 	p = p.Copy()
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.Prepend(a.neighbor.LocalASN, 1)
@@ -127,6 +131,25 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	}
 
 	a.removePathFromClients(pfx, p)
+	return true
+}
+
+func (a *AdjRIBOut) removePathsForPrefix(pfx bnet.Prefix) bool {
+	// We were called before a.AddPath() had a lock, so we need to lock here and release it
+	// after the get to prevent a dead lock as RemovePath() will acquire a lock itself!
+	a.mu.Lock()
+	r := a.rt.Get(pfx)
+	a.mu.Unlock()
+
+	// If no path with this prefix is present, we're done
+	if r == nil {
+		return false
+	}
+
+	for _, path := range r.Paths() {
+		a.RemovePath(pfx, path)
+	}
+
 	return true
 }
 
