@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/taktv6/tflow2/convert"
 
@@ -30,4 +31,33 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer) uint8 {
 	buf.Write(tempBuf.Bytes())
 
 	return uint8(tempBuf.Len())
+}
+
+func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error) {
+	n := MultiProtocolReachNLRI{}
+	nextHopLength := uint8(0)
+	variable := make([]byte, len(b)-4)
+
+	fields := []interface{}{
+		&n.AFI,
+		&n.SAFI,
+		&nextHopLength,
+		&variable,
+	}
+	err := decode(bytes.NewBuffer(b), fields)
+	if err != nil {
+		return MultiProtocolReachNLRI{}, err
+	}
+
+	n.NextHop, err = bnet.IPFromBytes(variable[:nextHopLength])
+	if err != nil {
+		return MultiProtocolReachNLRI{}, fmt.Errorf("Failed to decode next hop IP: %v", err)
+	}
+
+	n.Prefix, err = deserializePrefix(variable[nextHopLength+2:], variable[nextHopLength+1], n.AFI)
+	if err != nil {
+		return MultiProtocolReachNLRI{}, err
+	}
+
+	return n, nil
 }

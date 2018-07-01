@@ -228,6 +228,50 @@ func TestIPv6FromBlocks(t *testing.T) {
 	}
 }
 
+func TestIPFromBytes(t *testing.T) {
+	tests := []struct {
+		name     string
+		bytes    []byte
+		expected IP
+		wantFail bool
+	}{
+		{
+			name:  "IPV4: 172.217.16.195",
+			bytes: []byte{172, 217, 16, 195},
+			expected: IP{
+				higher:    0,
+				lower:     2899906755,
+				ipVersion: 4,
+			},
+		},
+		{
+			name:  "IPV6: IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
+			bytes: []byte{0x20, 0x01, 0x06, 0x78, 0x01, 0xE0, 0x12, 0x34, 0x56, 0x78, 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE},
+			expected: IP{
+				higher:    2306131596687708724,
+				lower:     6230974922281175806,
+				ipVersion: 6,
+			},
+		},
+		{
+			name:     "invalid length",
+			bytes:    []byte{172, 217, 123, 231, 95},
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ip, err := IPFromBytes(test.bytes)
+			if err == nil && test.wantFail {
+				t.Fatalf("Expected test to fail, but did not")
+			}
+
+			assert.Equal(t, test.expected, ip)
+		})
+	}
+}
+
 func TestToNetIP(t *testing.T) {
 	tests := []struct {
 		name     string

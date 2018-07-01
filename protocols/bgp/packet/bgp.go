@@ -85,17 +85,26 @@ const (
 	ConnectionCollisionResolution = 7
 	OutOfResoutces                = 8
 
-	IPv4AFI                     = 1
-	IPv6AFI                     = 2
-	UnicastSAFI                 = 1
-	CapabilitiesParamType       = 2
-	MultiProtocolCapabilityCode = 1
-	AddPathCapabilityCode       = 69
-	ASN4CapabilityCode          = 65
-	AddPathReceive              = 1
-	AddPathSend                 = 2
-	AddPathSendReceive          = 3
-	ASTransASN                  = 23456
+	IPv4AFI                      = 1
+	IPv6AFI                      = 2
+	UnicastSAFI                  = 1
+	CapabilitiesParamType        = 2
+	MultiProtocolCapabilityCode  = 1
+	MultiProtocolReachNLRICode   = 14
+	MultiProtocolUnreachNLRICode = 15
+	AddPathCapabilityCode        = 69
+	ASN4CapabilityCode           = 65
+	AddPathReceive               = 1
+	AddPathSend                  = 2
+	AddPathSendReceive           = 3
+	ASTransASN                   = 23456
+)
+
+var (
+	afiAddrLenBytes = map[uint16]uint8{
+		1: 4,
+		2: 16,
+	}
 )
 
 type BGPError struct {

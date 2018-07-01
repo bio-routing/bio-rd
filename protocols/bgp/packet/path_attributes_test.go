@@ -746,6 +746,133 @@ func TestDecodeCommunity(t *testing.T) {
 	}
 }
 
+func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          []byte
+		wantFail       bool
+		explicitLength uint16
+		expected       *PathAttribute
+	}{
+		{
+			name:           "incomplete",
+			input:          []byte{0, 0, 0, 0},
+			wantFail:       true,
+			explicitLength: 32,
+		},
+		{
+			name: "valid MP_REACH_NLRI",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                                                                                 // SAFI
+				0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, // NextHop
+				0x00,                                     // RESERVED
+				0x30, 0x26, 0x00, 0x00, 0x06, 0xff, 0x05, // Prefix
+			},
+			expected: &PathAttribute{
+				Length: 28,
+				Value: MultiProtocolReachNLRI{
+					AFI:     IPv6AFI,
+					SAFI:    UnicastSAFI,
+					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2),
+					Prefix:  bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48),
+				},
+			},
+		},
+	}
+
+	t.Parallel()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			l := uint16(len(test.input))
+			if test.explicitLength != 0 {
+				l = test.explicitLength
+			}
+
+			pa := &PathAttribute{
+				Length: l,
+			}
+			err := pa.decodeMultiProtocolReachNLRI(bytes.NewBuffer(test.input))
+
+			if test.wantFail {
+				if err != nil {
+					return
+				}
+				t.Fatalf("Expected error did not happen for test %q", test.name)
+			}
+
+			if err != nil {
+				t.Fatalf("Unexpected failure for test %q: %v", test.name, err)
+			}
+
+			assert.Equal(t, test.expected, pa)
+		})
+	}
+}
+
+func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          []byte
+		wantFail       bool
+		explicitLength uint16
+		expected       *PathAttribute
+	}{
+		{
+			name:           "incomplete",
+			input:          []byte{0, 0, 0, 0},
+			wantFail:       true,
+			explicitLength: 32,
+		},
+		{
+			name: "valid MP_UNREACH_NLRI",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                     // SAFI
+				0x2c, 0x26, 0x20, 0x01, 0x10, 0x90, 0x00, // Prefix
+			},
+			expected: &PathAttribute{
+				Length: 10,
+				Value: MultiProtocolUnreachNLRI{
+					AFI:    IPv6AFI,
+					SAFI:   UnicastSAFI,
+					Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+				},
+			},
+		},
+	}
+
+	t.Parallel()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			l := uint16(len(test.input))
+			if test.explicitLength != 0 {
+				l = test.explicitLength
+			}
+
+			pa := &PathAttribute{
+				Length: l,
+			}
+			err := pa.decodeMultiProtocolUnreachNLRI(bytes.NewBuffer(test.input))
+
+			if test.wantFail {
+				if err != nil {
+					return
+				}
+				t.Fatalf("Expected error did not happen for test %q", test.name)
+			}
+
+			if err != nil {
+				t.Fatalf("Unexpected failure for test %q: %v", test.name, err)
+			}
+
+			assert.Equal(t, test.expected, pa)
+		})
+	}
+}
+
 func TestSetLength(t *testing.T) {
 	tests := []struct {
 		name             string

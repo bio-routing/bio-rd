@@ -41,6 +41,27 @@ func IPv6FromBlocks(b1, b2, b3, b4, b5, b6, b7, b8 uint16) IP {
 		uint64(uint64(b5)<<48+uint64(b6)<<32+uint64(b7)<<16+uint64(b8)))
 }
 
+// IPFromBytes returns an IP address for a byte slice
+func IPFromBytes(b []byte) (IP, error) {
+	if len(b) == 4 {
+		return IPv4FromOctets(b[0], b[1], b[2], b[3]), nil
+	}
+
+	if len(b) == 16 {
+		return IPv6FromBlocks(
+			uint16(b[0])<<8+uint16(b[1]),
+			uint16(b[2])<<8+uint16(b[3]),
+			uint16(b[4])<<8+uint16(b[5]),
+			uint16(b[6])<<8+uint16(b[7]),
+			uint16(b[8])<<8+uint16(b[9]),
+			uint16(b[10])<<8+uint16(b[11]),
+			uint16(b[12])<<8+uint16(b[13]),
+			uint16(b[14])<<8+uint16(b[15])), nil
+	}
+
+	return IP{}, fmt.Errorf("byte slice has an invalid legth. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
+}
+
 // Equal returns true if ip is equal to other
 func (ip IP) Equal(other IP) bool {
 	return ip == other
