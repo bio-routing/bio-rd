@@ -118,8 +118,10 @@ func (n *node) addPath(pfx net.Prefix, p *route.Path) (*node, bool) {
 	currentPfx := n.route.Prefix()
 	if currentPfx == pfx {
 		n.route.AddPath(p)
+		// Store previous dummy-ness to check it this node became new
+		dummy := n.dummy
 		n.dummy = false
-		return n, true
+		return n, dummy == true
 	}
 
 	// is pfx NOT a subnet of this node?
