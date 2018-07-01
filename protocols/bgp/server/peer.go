@@ -133,6 +133,10 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 
 	caps = append(caps, asn4Capability(c))
 
+	if c.IPv6 {
+		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
+	}
+
 	p.optOpenParams = append(p.optOpenParams, packet.OptParam{
 		Type:  packet.CapabilitiesParamType,
 		Value: caps,
@@ -146,6 +150,16 @@ func asn4Capability(c config.Peer) packet.Capability {
 		Code: packet.ASN4CapabilityCode,
 		Value: packet.ASN4Capability{
 			ASN4: c.LocalAS,
+		},
+	}
+}
+
+func multiProtocolCapability(afi uint16) packet.Capability {
+	return packet.Capability{
+		Code: packet.MultiProtocolCapabilityCode,
+		Value: packet.MultiProtocolCapability{
+			AFI:  afi,
+			SAFI: packet.UnicastSAFI,
 		},
 	}
 }

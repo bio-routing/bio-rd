@@ -169,7 +169,13 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 		s.processAddPathCapability(cap.Value.(packet.AddPathCapability))
 	case packet.ASN4CapabilityCode:
 		s.processASN4Capability(cap.Value.(packet.ASN4Capability))
+	case packet.MultiProtocolCapabilityCode:
+		s.processMultiProtocolCapability(cap.Value.(packet.MultiProtocolCapability))
 	}
+}
+
+func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolCapability) {
+	s.fsm.options.SupportsMultiProtocol = true
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {

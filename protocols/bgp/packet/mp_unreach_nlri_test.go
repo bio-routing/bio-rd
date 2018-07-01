@@ -17,9 +17,11 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 		{
 			name: "Simple IPv6 prefix",
 			nlri: MultiProtocolUnreachNLRI{
-				AFI:    IPv6AFI,
-				SAFI:   UnicastSAFI,
-				Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+				AFI:  IPv6AFI,
+				SAFI: UnicastSAFI,
+				Prefixes: []bnet.Prefix{
+					bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+				},
 			},
 			expected: []byte{
 				0x00, 0x02, // AFI

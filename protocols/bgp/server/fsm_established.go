@@ -69,6 +69,10 @@ func (s *establishedState) init() error {
 	}
 	hostIP := net.ParseIP(host)
 	if hostIP == nil {
+		return fmt.Errorf("Unable to parse address")
+	}
+	localAddr, err := bnet.IPFromBytes(hostIP)
+	if err != nil {
 		return fmt.Errorf("Unable to parse address: %v", err)
 	}
 
@@ -78,7 +82,7 @@ func (s *establishedState) init() error {
 		IBGP:              s.fsm.peer.localASN == s.fsm.peer.peerASN,
 		LocalASN:          s.fsm.peer.localASN,
 		RouteServerClient: s.fsm.peer.routeServerClient,
-		LocalAddress:      bnet.IPv4(bnet.IPv4ToUint32(hostIP)),
+		LocalAddress:      localAddr,
 		CapAddPathRX:      s.fsm.options.AddPathRX,
 	}
 
@@ -163,6 +167,7 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 func (s *establishedState) msgReceived(data []byte) (state, string) {
 	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
 	if err != nil {
+		fmt.Println(err)
 		switch bgperr := err.(type) {
 		case packet.BGPError:
 			s.fsm.sendNotification(bgperr.ErrorCode, bgperr.ErrorSubCode)
@@ -201,6 +206,7 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	u := msg.Body.(*packet.BGPUpdate)
 	s.withdraws(u)
 	s.updates(u)
+	s.multiProtocolUpdates(u)
 
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
@@ -227,6 +233,39 @@ func (s *establishedState) updates(u *packet.BGPUpdate) {
 		s.processAttributes(u.PathAttributes, path)
 
 		s.fsm.adjRIBIn.AddPath(pfx, path)
+	}
+}
+
+func (s *establishedState) multiProtocolUpdates(u *packet.BGPUpdate) {
+	path := &route.Path{
+		Type: route.BGPPathType,
+		BGPPath: &route.BGPPath{
+			Source: s.fsm.peer.addr,
+			EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
+		},
+	}
+
+	s.processAttributes(u.PathAttributes, path)
+
+	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
+		switch pa.TypeCode {
+		case packet.MultiProtocolReachNLRICode:
+			s.multiProtocolUpdate(path, pa.Value.(packet.MultiProtocolReachNLRI))
+		case packet.MultiProtocolUnreachNLRICode:
+			s.multiProtocolWithdraw(path, pa.Value.(packet.MultiProtocolUnreachNLRI))
+		}
+	}
+}
+
+func (s *establishedState) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) {
+	for _, pfx := range nlri.Prefixes {
+		s.fsm.adjRIBIn.AddPath(pfx, path)
+	}
+}
+
+func (s *establishedState) multiProtocolWithdraw(path *route.Path, nlri packet.MultiProtocolUnreachNLRI) {
+	for _, pfx := range nlri.Prefixes {
+		s.fsm.adjRIBIn.RemovePath(pfx, path)
 	}
 }
 

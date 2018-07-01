@@ -9,16 +9,18 @@ import (
 
 // MultiProtocolUnreachNLRI represents network layer withdraw information for one prefix of an IP address family (rfc4760)
 type MultiProtocolUnreachNLRI struct {
-	AFI    uint16
-	SAFI   uint8
-	Prefix bnet.Prefix
+	AFI      uint16
+	SAFI     uint8
+	Prefixes []bnet.Prefix
 }
 
 func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer) uint8 {
 	tempBuf := bytes.NewBuffer(nil)
 	tempBuf.Write(convert.Uint16Byte(n.AFI))
 	tempBuf.WriteByte(n.SAFI)
-	tempBuf.Write(serializePrefix(n.Prefix))
+	for _, pfx := range n.Prefixes {
+		tempBuf.Write(serializePrefix(pfx))
+	}
 
 	buf.Write(tempBuf.Bytes())
 
@@ -39,9 +41,18 @@ func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, er
 		return MultiProtocolUnreachNLRI{}, err
 	}
 
-	n.Prefix, err = deserializePrefix(prefix[1:], prefix[0], n.AFI)
-	if err != nil {
-		return MultiProtocolUnreachNLRI{}, err
+	idx := uint8(0)
+	n.Prefixes = make([]bnet.Prefix, 0)
+	for idx < uint8(len(prefix)) {
+		l := numberOfBytesForPrefixLength(prefix[idx])
+
+		pfx, err := deserializePrefix(prefix[idx+1:idx+1+l], prefix[idx], n.AFI)
+		if err != nil {
+			return MultiProtocolUnreachNLRI{}, err
+		}
+		n.Prefixes = append(n.Prefixes, pfx)
+
+		idx = idx + l + 1
 	}
 
 	return n, nil

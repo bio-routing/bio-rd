@@ -775,7 +775,9 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 					AFI:     IPv6AFI,
 					SAFI:    UnicastSAFI,
 					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2),
-					Prefix:  bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48),
+					Prefixes: []bnet.Prefix{
+						bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48),
+					},
 				},
 			},
 		},
@@ -835,9 +837,11 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 			expected: &PathAttribute{
 				Length: 10,
 				Value: MultiProtocolUnreachNLRI{
-					AFI:    IPv6AFI,
-					SAFI:   UnicastSAFI,
-					Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+					AFI:  IPv6AFI,
+					SAFI: UnicastSAFI,
+					Prefixes: []bnet.Prefix{
+						bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+					},
 				},
 			},
 		},

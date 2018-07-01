@@ -12,7 +12,7 @@ func serializePrefix(pfx bnet.Prefix) []byte {
 		return []byte{}
 	}
 
-	numBytes := uint8(math.Ceil(float64(pfx.Pfxlen()) / 8))
+	numBytes := numberOfBytesForPrefixLength(pfx.Pfxlen())
 
 	b := make([]byte, numBytes+1)
 	b[0] = pfx.Pfxlen()
@@ -22,9 +22,9 @@ func serializePrefix(pfx bnet.Prefix) []byte {
 }
 
 func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (bnet.Prefix, error) {
-	numBytes := int(math.Ceil(float64(pfxLen) / 8))
+	numBytes := numberOfBytesForPrefixLength(pfxLen)
 
-	if numBytes != len(b) {
+	if numBytes != uint8(len(b)) {
 		return bnet.Prefix{}, fmt.Errorf("could not parse prefix of legth %d. Expected %d bytes, got %d", pfxLen, numBytes, len(b))
 	}
 
@@ -37,4 +37,8 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (bnet.Prefix, error) 
 	}
 
 	return bnet.NewPfx(ip, pfxLen), nil
+}
+
+func numberOfBytesForPrefixLength(pfxLen uint8) uint8 {
+	return uint8(math.Ceil(float64(pfxLen) / 8))
 }
