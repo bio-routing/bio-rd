@@ -10,9 +10,10 @@ import (
 
 func TestAddPath(t *testing.T) {
 	tests := []struct {
-		name     string
-		routes   []*route.Route
-		expected *node
+		name          string
+		routes        []*route.Route
+		expected      *node
+		expectedCount int64
 	}{
 		{
 			name: "Insert first node",
@@ -23,6 +24,7 @@ func TestAddPath(t *testing.T) {
 				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 				skip:  8,
 			},
+			expectedCount: 1,
 		},
 		{
 			name: "Insert duplicate node",
@@ -36,6 +38,7 @@ func TestAddPath(t *testing.T) {
 				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 				skip:  8,
 			},
+			expectedCount: 1,
 		},
 		{
 			name: "Insert triangle",
@@ -54,6 +57,7 @@ func TestAddPath(t *testing.T) {
 					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), nil),
 				},
 			},
+			expectedCount: 3,
 		},
 		{
 			name: "Insert disjunct prefixes",
@@ -73,6 +77,7 @@ func TestAddPath(t *testing.T) {
 					skip:  16,
 				},
 			},
+			expectedCount: 2,
 		},
 		{
 			name: "Insert disjunct prefixes plus one child low",
@@ -102,6 +107,7 @@ func TestAddPath(t *testing.T) {
 					skip:  16,
 				},
 			},
+			expectedCount: 4,
 		},
 		{
 			name: "Insert disjunct prefixes plus one child high",
@@ -135,6 +141,7 @@ func TestAddPath(t *testing.T) {
 					},
 				},
 			},
+			expectedCount: 5,
 		},
 	}
 
@@ -145,6 +152,7 @@ func TestAddPath(t *testing.T) {
 		}
 
 		assert.Equal(t, test.expected, rt.root)
+		assert.Equal(t, test.expectedCount, rt.GetRouteCount())
 	}
 }
 
@@ -342,11 +350,12 @@ func TestLPM(t *testing.T) {
 
 func TestRemovePath(t *testing.T) {
 	tests := []struct {
-		name       string
-		routes     []*route.Route
-		removePfx  net.Prefix
-		removePath *route.Path
-		expected   []*route.Route
+		name          string
+		routes        []*route.Route
+		removePfx     net.Prefix
+		removePath    *route.Path
+		expected      []*route.Route
+		expectedCount int64
 	}{
 		{
 			name: "Remove a path that is the only one for a prefix",
@@ -379,6 +388,7 @@ func TestRemovePath(t *testing.T) {
 					BGPPath: &route.BGPPath{},
 				}),
 			},
+			expectedCount: 2,
 		},
 		{
 			name: "Remove a path that is one of two for a prefix",
@@ -427,6 +437,7 @@ func TestRemovePath(t *testing.T) {
 					BGPPath: &route.BGPPath{},
 				}),
 			},
+			expectedCount: 3,
 		},
 	}
 
@@ -448,6 +459,7 @@ func TestRemovePath(t *testing.T) {
 		}
 
 		assert.Equal(t, rtExpected.Dump(), rt.Dump())
+		assert.Equal(t, test.expectedCount, rt.GetRouteCount())
 	}
 }
 
