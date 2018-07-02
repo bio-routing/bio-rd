@@ -7,7 +7,6 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
-	"github.com/taktv6/tflow2/convert"
 )
 
 // BGPPath represents a set of BGP path attributes
@@ -319,15 +318,4 @@ func (b *BGPPath) LargeCommunitiesString() string {
 	}
 
 	return strings.TrimRight(str, " ")
-}
-
-func uint32To4Byte(addr uint32) [4]byte {
-	slice := convert.Uint32Byte(addr)
-	ret := [4]byte{
-		slice[0],
-		slice[1],
-		slice[2],
-		slice[3],
-	}
-	return ret
 }
