@@ -70,12 +70,26 @@ func (pfx Prefix) Contains(x Prefix) bool {
 		return pfx.containsIPv4(x)
 	}
 
-	panic("No IPv6 support yet!")
+	return pfx.containsIPv6(x)
 }
 
 func (pfx Prefix) containsIPv4(x Prefix) bool {
 	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
 	return (pfx.addr.ToUint32() & mask) == (x.addr.ToUint32() & mask)
+}
+
+func (pfx Prefix) containsIPv6(x Prefix) bool {
+	var maskHigh, maskLow uint64
+	if pfx.pfxlen <= 64 {
+		maskHigh = math.MaxUint32 << (64 - pfx.pfxlen)
+		maskLow = uint64(0)
+	} else {
+		maskHigh = math.MaxUint32
+		maskLow = math.MaxUint32 << (128 - pfx.pfxlen)
+	}
+
+	return pfx.addr.higher&maskHigh&maskHigh == x.addr.higher&maskHigh&maskHigh &&
+		pfx.addr.lower&maskHigh&maskLow == x.addr.lower&maskHigh&maskLow
 }
 
 // Equal checks if pfx and x are equal
@@ -89,7 +103,7 @@ func (pfx Prefix) GetSupernet(x Prefix) Prefix {
 		return pfx.supernetIPv4(x)
 	}
 
-	panic("No IPv6 support yet!")
+	return pfx.supernetIPv6(x)
 }
 
 func (pfx Prefix) supernetIPv4(x Prefix) Prefix {
@@ -107,6 +121,37 @@ func (pfx Prefix) supernetIPv4(x Prefix) Prefix {
 		addr:   IPv4(a << (32 - maxPfxLen)),
 		pfxlen: maxPfxLen,
 	}
+}
+
+func (pfx Prefix) supernetIPv6(x Prefix) Prefix {
+	maxPfxLen := min(pfx.pfxlen, x.pfxlen)
+
+	a := pfx.addr.BitAtPosition(1)
+	b := x.addr.BitAtPosition(1)
+	pfxLen := uint8(0)
+	mask := uint64(0)
+	for a == b && pfxLen < maxPfxLen {
+		a = pfx.addr.BitAtPosition(pfxLen + 2)
+		b = x.addr.BitAtPosition(pfxLen + 2)
+		pfxLen++
+
+		if pfxLen == 64 {
+			mask = 0
+		}
+
+		m := pfxLen % 64
+		mask = mask + uint64(1)<<(64-m)
+	}
+
+	if pfxLen == 0 {
+		return NewPfx(IPv6(0, 0), pfxLen)
+	}
+
+	if pfxLen > 64 {
+		return NewPfx(IPv6(pfx.addr.higher, pfx.addr.lower&mask), pfxLen)
+	}
+
+	return NewPfx(IPv6(pfx.addr.higher&mask, 0), pfxLen)
 }
 
 func min(a uint8, b uint8) uint8 {

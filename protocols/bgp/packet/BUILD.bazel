@@ -6,6 +6,9 @@ go_library(
         "bgp.go",
         "decoder.go",
         "encoder.go",
+        "helper.go",
+        "mp_reach_nlri.go",
+        "mp_unreach_nlri.go",
         "nlri.go",
         "parameters.go",
         "path_attribute_flags.go",
@@ -27,6 +30,8 @@ go_test(
     srcs = [
         "decoder_test.go",
         "encoder_test.go",
+        "mp_reach_nlri_test.go",
+        "mp_unreach_nlri_test.go",
         "nlri_test.go",
         "path_attributes_test.go",
     ],

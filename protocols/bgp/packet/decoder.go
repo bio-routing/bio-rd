@@ -233,6 +233,12 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 	}
 
 	switch cap.Code {
+	case MultiProtocolCapabilityCode:
+		mpCap, err := decodeMultiProtocolCapability(buf)
+		if err != nil {
+			return cap, fmt.Errorf("Unable to decode multi protocol capability")
+		}
+		cap.Value = mpCap
 	case AddPathCapabilityCode:
 		addPathCap, err := decodeAddPathCapability(buf)
 		if err != nil {
@@ -255,6 +261,21 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 	}
 
 	return cap, nil
+}
+
+func decodeMultiProtocolCapability(buf *bytes.Buffer) (MultiProtocolCapability, error) {
+	mpCap := MultiProtocolCapability{}
+	reserved := uint8(0)
+	fields := []interface{}{
+		&mpCap.AFI, &reserved, &mpCap.SAFI,
+	}
+
+	err := decode(buf, fields)
+	if err != nil {
+		return mpCap, err
+	}
+
+	return mpCap, nil
 }
 
 func decodeAddPathCapability(buf *bytes.Buffer) (AddPathCapability, error) {

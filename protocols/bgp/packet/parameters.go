@@ -29,6 +29,8 @@ func (c Capabilities) serialize(buf *bytes.Buffer) {
 	for _, cap := range c {
 		cap.serialize(tmpBuf)
 	}
+
+	buf.Write(tmpBuf.Bytes())
 }
 
 func (c Capability) serialize(buf *bytes.Buffer) {
@@ -59,4 +61,15 @@ type ASN4Capability struct {
 
 func (a ASN4Capability) serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint32Byte(a.ASN4))
+}
+
+type MultiProtocolCapability struct {
+	AFI  uint16
+	SAFI uint8
+}
+
+func (a MultiProtocolCapability) serialize(buf *bytes.Buffer) {
+	buf.Write(convert.Uint16Byte(a.AFI))
+	buf.WriteByte(0) // RESERVED
+	buf.WriteByte(a.SAFI)
 }

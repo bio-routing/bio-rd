@@ -1,0 +1,41 @@
+package packet
+
+import (
+	"bytes"
+	"testing"
+
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
+	tests := []struct {
+		name     string
+		nlri     MultiProtocolUnreachNLRI
+		expected []byte
+	}{
+		{
+			name: "Simple IPv6 prefix",
+			nlri: MultiProtocolUnreachNLRI{
+				AFI:  IPv6AFI,
+				SAFI: UnicastSAFI,
+				Prefixes: []bnet.Prefix{
+					bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+				},
+			},
+			expected: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                     // SAFI
+				0x2c, 0x26, 0x20, 0x01, 0x10, 0x90, 0x00, // Prefix
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			test.nlri.serialize(buf)
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
+	}
+}

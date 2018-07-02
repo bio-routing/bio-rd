@@ -25,4 +25,5 @@ type Peer struct {
 	ImportFilter      *filter.Filter
 	ExportFilter      *filter.Filter
 	RouteServerClient bool
+	IPv6              bool
 }

@@ -124,7 +124,7 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 	}
 	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
-	caps := make([]packet.Capability, 0)
+	caps := make(packet.Capabilities, 0)
 
 	addPathEnabled, addPathCap := handleAddPathCapability(c)
 	if addPathEnabled {
@@ -133,12 +133,14 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 
 	caps = append(caps, asn4Capability(c))
 
-	for _, cap := range caps {
-		p.optOpenParams = append(p.optOpenParams, packet.OptParam{
-			Type:  packet.CapabilitiesParamType,
-			Value: cap,
-		})
+	if c.IPv6 {
+		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
 	}
+
+	p.optOpenParams = append(p.optOpenParams, packet.OptParam{
+		Type:  packet.CapabilitiesParamType,
+		Value: caps,
+	})
 
 	return p, nil
 }
@@ -148,6 +150,16 @@ func asn4Capability(c config.Peer) packet.Capability {
 		Code: packet.ASN4CapabilityCode,
 		Value: packet.ASN4Capability{
 			ASN4: c.LocalAS,
+		},
+	}
+}
+
+func multiProtocolCapability(afi uint16) packet.Capability {
+	return packet.Capability{
+		Code: packet.MultiProtocolCapabilityCode,
+		Value: packet.MultiProtocolCapability{
+			AFI:  afi,
+			SAFI: packet.UnicastSAFI,
 		},
 	}
 }
