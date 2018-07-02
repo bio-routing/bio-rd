@@ -1442,7 +1442,7 @@ func TestSerializeCommunities(t *testing.T) {
 		{
 			name: "2 communities",
 			input: &PathAttribute{
-				TypeCode: LargeCommunitiesAttr,
+				TypeCode: CommunitiesAttr,
 				Value: []uint32{
 					131080, 16778241,
 				},
