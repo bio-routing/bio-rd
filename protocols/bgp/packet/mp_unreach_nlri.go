@@ -49,7 +49,7 @@ func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, er
 	idx := uint16(0)
 	for idx < uint16(len(prefix)) {
 		pfxLen := prefix[idx]
-		numBytes := uint16(numberOfBytesForPrefixLength(pfxLen))
+		numBytes := uint16(BytesInAddr(pfxLen))
 		idx++
 
 		r := uint16(len(prefix)) - idx

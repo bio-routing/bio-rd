@@ -67,7 +67,7 @@ func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error)
 	idx := uint16(0)
 	for idx < uint16(len(variable)) {
 		pfxLen := variable[idx]
-		numBytes := uint16(numberOfBytesForPrefixLength(pfxLen))
+		numBytes := uint16(BytesInAddr(pfxLen))
 		idx++
 
 		r := uint16(len(variable)) - idx

@@ -12,6 +12,8 @@ const (
 	MaxLen            = 4096
 	MinUpdateLen      = 4
 	NLRIMaxLen        = 5
+	AFILen            = 2
+	SAFILen           = 1
 	CommunityLen      = 4
 	LargeCommunityLen = 12
 
