@@ -257,6 +257,8 @@ func (s *establishedState) newRoutePath() *route.Path {
 }
 
 func (s *establishedState) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) {
+	path.BGPPath.NextHop = nlri.NextHop
+
 	for _, pfx := range nlri.Prefixes {
 		s.fsm.adjRIBIn.AddPath(pfx, path)
 	}
