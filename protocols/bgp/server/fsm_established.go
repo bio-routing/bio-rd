@@ -293,6 +293,10 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 			path.BGPPath.Communities = pa.Value.([]uint32)
 		case packet.LargeCommunitiesAttr:
 			path.BGPPath.LargeCommunities = pa.Value.([]types.LargeCommunity)
+		case packet.OriginatorIDAttr:
+			path.BGPPath.OriginatorID = pa.Value.(uint32)
+		case packet.ClusterListAttr:
+			path.BGPPath.ClusterList = pa.Value.([]uint32)
 		default:
 			unknownAttr := s.processUnknownAttribute(pa)
 			if unknownAttr != nil {

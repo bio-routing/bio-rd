@@ -99,6 +99,14 @@ func decodePathAttr(buf *bytes.Buffer, opt *types.Options) (pa *PathAttribute, c
 		if err := pa.decodeCommunities(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode Community: %v", err)
 		}
+	case OriginatorIDAttr:
+		if err := pa.decodeOriginatorID(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %v", err)
+		}
+	case ClusterListAttr:
+		if err := pa.decodeClusterList(buf); err != nil {
+			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %v", err)
+		}
 	case MultiProtocolReachNLRICode:
 		if err := pa.decodeMultiProtocolReachNLRI(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to multi protocol reachable NLRI: %v", err)
@@ -361,6 +369,30 @@ func (pa *PathAttribute) decodeUint32(buf *bytes.Buffer, attrName string) error 
 		return fmt.Errorf("dumpNBytes failed: %v", err)
 	}
 
+	return nil
+}
+
+func (pa *PathAttribute) decodeOriginatorID(buf *bytes.Buffer) error {
+	return pa.decodeUint32(buf, "OriginatorID")
+}
+
+func (pa *PathAttribute) decodeClusterList(buf *bytes.Buffer) error {
+	if pa.Length%ClusterIDLen != 0 {
+		return fmt.Errorf("Unable to read ClusterList path attribute. Length %d is not divisible by %d", pa.Length, ClusterIDLen)
+	}
+
+	count := pa.Length / ClusterIDLen
+	cids := make([]uint32, count)
+
+	for i := uint16(0); i < count; i++ {
+		v, err := read4BytesAsUint32(buf)
+		if err != nil {
+			return err
+		}
+		cids[i] = v
+	}
+
+	pa.Value = cids
 	return nil
 }
 

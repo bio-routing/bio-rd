@@ -14,6 +14,7 @@ const (
 	NLRIMaxLen        = 5
 	CommunityLen      = 4
 	LargeCommunityLen = 12
+	ClusterIDLen      = 4
 
 	OpenMsg         = 1
 	UpdateMsg       = 2
@@ -66,6 +67,8 @@ const (
 	AtomicAggrAttr       = 6
 	AggregatorAttr       = 7
 	CommunitiesAttr      = 8
+	OriginatorIDAttr     = 9
+	ClusterListAttr      = 10
 	AS4PathAttr          = 17
 	AS4AggregatorAttr    = 18
 	LargeCommunitiesAttr = 32
