@@ -23,7 +23,7 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer) uint8 {
 	tempBuf := bytes.NewBuffer(nil)
 	tempBuf.Write(convert.Uint16Byte(n.AFI))
 	tempBuf.WriteByte(n.SAFI)
-	tempBuf.WriteByte(uint8(len(nextHop))) // NextHop length
+	tempBuf.WriteByte(uint8(len(nextHop)))
 	tempBuf.Write(nextHop)
 	tempBuf.WriteByte(0) // RESERVED
 	for _, pfx := range n.Prefixes {
