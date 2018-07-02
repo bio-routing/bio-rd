@@ -25,7 +25,7 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (bnet.Prefix, error) 
 	numBytes := numberOfBytesForPrefixLength(pfxLen)
 
 	if numBytes != uint8(len(b)) {
-		return bnet.Prefix{}, fmt.Errorf("could not parse prefix of legth %d. Expected %d bytes, got %d", pfxLen, numBytes, len(b))
+		return bnet.Prefix{}, fmt.Errorf("could not parse prefix of length %d. Expected %d bytes, got %d", pfxLen, numBytes, len(b))
 	}
 
 	ipBytes := make([]byte, afiAddrLenBytes[afi])
