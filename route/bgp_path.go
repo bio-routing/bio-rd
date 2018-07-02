@@ -49,12 +49,22 @@ func (b *BGPPath) Length() uint16 {
 		largeCommunitiesLen += 3 + uint16(len(b.LargeCommunities)*12)
 	}
 
+	clusterListLen := uint16(0)
+	if len(b.ClusterList) != 0 {
+		clusterListLen += 3 + uint16(len(b.ClusterList)*4)
+	}
+
 	unknownAttributesLen := uint16(0)
 	for _, unknownAttr := range b.UnknownAttributes {
 		unknownAttributesLen += unknownAttr.WireLength()
 	}
 
-	return communitiesLen + largeCommunitiesLen + 4*7 + 4 + asPathLen + unknownAttributesLen
+	originatorID := uint16(0)
+	if b.OriginatorID != 0 {
+		originatorID = 4
+	}
+
+	return communitiesLen + largeCommunitiesLen + 4*7 + 4 + originatorID + asPathLen + unknownAttributesLen
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
