@@ -216,17 +216,20 @@ func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (a
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
-	if u.fsm.options.SupportsMultiProtocol {
-		// TODO: imeplent withdraw
-		return false
-	}
-
-	err := withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
+	err := u.withdrawPrefix(pfx, p)
 	if err != nil {
 		log.Errorf("Unable to withdraw prefix: %v", err)
 		return false
 	}
 	return true
+}
+
+func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
+	if u.fsm.options.SupportsMultiProtocol {
+		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx)
+	}
+
+	return withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
 }
 
 // UpdateNewClient does nothing
