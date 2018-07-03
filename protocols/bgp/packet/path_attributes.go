@@ -466,6 +466,10 @@ func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *types.Options) uint16
 		pathAttrLen = uint16(pa.serializeCommunities(buf))
 	case LargeCommunitiesAttr:
 		pathAttrLen = uint16(pa.serializeLargeCommunities(buf))
+	case OriginatorIDAttr:
+		pathAttrLen = uint16(pa.serializeOriginatorID(buf))
+	case ClusterListAttr:
+		pathAttrLen = uint16(pa.serializeClusterList(buf))
 	default:
 		pathAttrLen = pa.serializeUnknownAttribute(buf)
 	}
@@ -627,6 +631,39 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint8 {
 	return length
 }
 
+func (pa *PathAttribute) serializeOriginatorID(buf *bytes.Buffer) uint8 {
+	attrFlags := uint8(0)
+	attrFlags = setOptional(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(OriginatorIDAttr)
+	length := uint8(4)
+	buf.WriteByte(length)
+	oid := pa.Value.(uint32)
+	buf.Write(convert.Uint32Byte(oid))
+	return 7
+}
+
+func (pa *PathAttribute) serializeClusterList(buf *bytes.Buffer) uint8 {
+	cids := pa.Value.([]uint32)
+	if len(cids) == 0 {
+		return 0
+	}
+
+	attrFlags := uint8(0)
+	attrFlags = setOptional(attrFlags)
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(ClusterListAttr)
+
+	length := uint8(ClusterIDLen * len(cids))
+	buf.WriteByte(length)
+
+	for _, cid := range cids {
+		buf.Write(convert.Uint32Byte(cid))
+	}
+
+	return length
+}
+
 func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint16 {
 	attrFlags := uint8(0)
 	if pa.Optional {
@@ -696,7 +733,7 @@ func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute
 }
 
 // PathAttributes converts a path object into a linked list of path attributes
-func PathAttributes(p *route.Path, iBGP bool) (*PathAttribute, error) {
+func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, error) {
 	asPath := &PathAttribute{
 		TypeCode: ASPathAttr,
 		Value:    p.BGPPath.ASPath,
@@ -741,6 +778,22 @@ func PathAttributes(p *route.Path, iBGP bool) (*PathAttribute, error) {
 		}
 		last.Next = localPref
 		last = localPref
+	}
+
+	if rrClient {
+		originatorID := &PathAttribute{
+			TypeCode: OriginatorIDAttr,
+			Value:    p.BGPPath.OriginatorID,
+		}
+		last.Next = originatorID
+		last = originatorID
+
+		clusterList := &PathAttribute{
+			TypeCode: ClusterListAttr,
+			Value:    p.BGPPath.ClusterList,
+		}
+		last.Next = clusterList
+		last = clusterList
 	}
 
 	optionals := last.AddOptionalPathAttributes(p)
