@@ -331,6 +331,8 @@ func (b *BGPPath) ComputeHash() string {
 		b.BGPIdentifier,
 		b.Source,
 		b.Communities,
+		b.OriginatorID,
+		b.ClusterList,
 		b.LargeCommunities,
 		b.PathIdentifier)
 
