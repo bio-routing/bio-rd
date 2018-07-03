@@ -311,6 +311,11 @@ func (b *BGPPath) Copy() *BGPPath {
 	cp.LargeCommunities = make([]types.LargeCommunity, len(cp.LargeCommunities))
 	copy(cp.LargeCommunities, b.LargeCommunities)
 
+	if b.ClusterList != nil {
+		cp.ClusterList = make([]uint32, len(cp.ClusterList))
+		copy(cp.ClusterList, b.ClusterList)
+	}
+
 	return &cp
 }
 
