@@ -27,6 +27,8 @@ type BGPPath struct {
 	Communities       []uint32
 	LargeCommunities  []types.LargeCommunity
 	UnknownAttributes []types.UnknownPathAttribute
+	OriginatorID      uint32
+	ClusterList       []uint32
 }
 
 // Length get's the length of serialized path
@@ -110,12 +112,33 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 
 	// e) TODO: interiour cost (hello IS-IS and OSPF)
 
-	// f)
-	if c.BGPIdentifier < b.BGPIdentifier {
+	// f) + RFC4456 9. (Route Reflection)
+	bgpIdentifierC := c.BGPIdentifier
+	bgpIdentifierB := b.BGPIdentifier
+
+	// IF an OriginatorID (set by an RR) is present, use this instead of Originator
+	if c.OriginatorID != 0 {
+		bgpIdentifierC = c.OriginatorID
+	}
+
+	if b.OriginatorID != 0 {
+		bgpIdentifierB = b.OriginatorID
+	}
+
+	if bgpIdentifierC < bgpIdentifierB {
 		return 1
 	}
 
-	if c.BGPIdentifier > b.BGPIdentifier {
+	if bgpIdentifierC > bgpIdentifierB {
+		return -1
+	}
+
+	// Additionally check for the shorter ClusterList
+	if len(c.ClusterList) < len(b.ClusterList) {
+		return 1
+	}
+
+	if len(c.ClusterList) > len(b.ClusterList) {
 		return -1
 	}
 
