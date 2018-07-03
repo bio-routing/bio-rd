@@ -28,17 +28,19 @@ type peer struct {
 	fsms   []*FSM
 	fsmsMu sync.Mutex
 
-	rib               *locRIB.LocRIB
-	routerID          uint32
-	addPathSend       routingtable.ClientOptions
-	addPathRecv       bool
-	reconnectInterval time.Duration
-	keepaliveTime     time.Duration
-	holdTime          time.Duration
-	optOpenParams     []packet.OptParam
-	importFilter      *filter.Filter
-	exportFilter      *filter.Filter
-	routeServerClient bool
+	rib                  *locRIB.LocRIB
+	routerID             uint32
+	addPathSend          routingtable.ClientOptions
+	addPathRecv          bool
+	reconnectInterval    time.Duration
+	keepaliveTime        time.Duration
+	holdTime             time.Duration
+	optOpenParams        []packet.OptParam
+	importFilter         *filter.Filter
+	exportFilter         *filter.Filter
+	routeServerClient    bool
+	routeReflectorClient bool
+	clusterID            uint32
 }
 
 func (p *peer) snapshot() PeerInfo {
@@ -106,21 +108,23 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 		c.LocalAS = server.localASN
 	}
 	p := &peer{
-		server:            server,
-		addr:              c.PeerAddress,
-		peerASN:           c.PeerAS,
-		localASN:          c.LocalAS,
-		fsms:              make([]*FSM, 0),
-		rib:               rib,
-		addPathSend:       c.AddPathSend,
-		addPathRecv:       c.AddPathRecv,
-		reconnectInterval: c.ReconnectInterval,
-		keepaliveTime:     c.KeepAlive,
-		holdTime:          c.HoldTime,
-		optOpenParams:     make([]packet.OptParam, 0),
-		importFilter:      filterOrDefault(c.ImportFilter),
-		exportFilter:      filterOrDefault(c.ExportFilter),
-		routeServerClient: c.RouteServerClient,
+		server:               server,
+		addr:                 c.PeerAddress,
+		peerASN:              c.PeerAS,
+		localASN:             c.LocalAS,
+		fsms:                 make([]*FSM, 0),
+		rib:                  rib,
+		addPathSend:          c.AddPathSend,
+		addPathRecv:          c.AddPathRecv,
+		reconnectInterval:    c.ReconnectInterval,
+		keepaliveTime:        c.KeepAlive,
+		holdTime:             c.HoldTime,
+		optOpenParams:        make([]packet.OptParam, 0),
+		importFilter:         filterOrDefault(c.ImportFilter),
+		exportFilter:         filterOrDefault(c.ExportFilter),
+		routeServerClient:    c.RouteServerClient,
+		routeReflectorClient: c.RouteReflectorClient,
+		clusterID:            c.RouteReflectorClusterID,
 	}
 	p.fsms = append(p.fsms, NewActiveFSM2(p))
 

@@ -77,13 +77,15 @@ func (s *establishedState) init() error {
 	}
 
 	n := &routingtable.Neighbor{
-		Type:              route.BGPPathType,
-		Address:           s.fsm.peer.addr,
-		IBGP:              s.fsm.peer.localASN == s.fsm.peer.peerASN,
-		LocalASN:          s.fsm.peer.localASN,
-		RouteServerClient: s.fsm.peer.routeServerClient,
-		LocalAddress:      localAddr,
-		CapAddPathRX:      s.fsm.options.AddPathRX,
+		Type:                 route.BGPPathType,
+		Address:              s.fsm.peer.addr,
+		IBGP:                 s.fsm.peer.localASN == s.fsm.peer.peerASN,
+		LocalASN:             s.fsm.peer.localASN,
+		RouteServerClient:    s.fsm.peer.routeServerClient,
+		LocalAddress:         localAddr,
+		CapAddPathRX:         s.fsm.options.AddPathRX,
+		RouteReflectorClient: s.fsm.peer.routeReflectorClient,
+		ClusterID:            s.fsm.peer.clusterID,
 	}
 
 	s.fsm.adjRIBOut = adjRIBOut.New(n, s.fsm.peer.exportFilter)

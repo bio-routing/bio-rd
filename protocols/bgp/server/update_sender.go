@@ -17,6 +17,7 @@ type UpdateSender struct {
 	routingtable.ClientManager
 	fsm       *FSM
 	iBGP      bool
+	rrClient  bool
 	toSendMu  sync.Mutex
 	toSend    map[string]*pathPfxs
 	destroyCh chan struct{}
@@ -31,6 +32,7 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 	return &UpdateSender{
 		fsm:       fsm,
 		iBGP:      fsm.peer.localASN == fsm.peer.peerASN,
+		rrClient:  fsm.peer.routeReflectorClient,
 		destroyCh: make(chan struct{}),
 		toSend:    make(map[string]*pathPfxs),
 	}
