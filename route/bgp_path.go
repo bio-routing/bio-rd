@@ -242,6 +242,14 @@ func (b *BGPPath) Print() string {
 	ret += fmt.Sprintf("\t\tCommunities: %v\n", b.Communities)
 	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
+	if b.OriginatorID != 0 {
+		oid := uint32To4Byte(b.OriginatorID)
+		ret += fmt.Sprintf("\t\tOriginatorID: %d.%d.%d.%d\n", oid[0], oid[1], oid[2], oid[3])
+	}
+	if b.ClusterList != nil {
+		ret += fmt.Sprintf("\t\tClusterList %s\n", b.ClusterListString())
+	}
+
 	return ret
 }
 
@@ -329,6 +337,17 @@ func (b *BGPPath) CommunitiesString() string {
 	str := ""
 	for _, com := range b.Communities {
 		str += types.CommunityStringForUint32(com) + " "
+	}
+
+	return strings.TrimRight(str, " ")
+}
+
+// ClusterListString returns the formated ClusterList
+func (b *BGPPath) ClusterListString() string {
+	str := ""
+	for _, cid := range b.ClusterList {
+		octes := uint32To4Byte(cid)
+		str += fmt.Sprintf("%d.%d.%d.%d ", octes[0], octes[1], octes[2], octes[3])
 	}
 
 	return strings.TrimRight(str, " ")
