@@ -172,6 +172,80 @@ func TestDecodePathAttr(t *testing.T) {
 			},
 			wantFail: true,
 		},
+		{
+			name: "Missing value OriginatorID",
+			input: []byte{
+				0,
+				OriginatorIDAttr,
+				4,
+			},
+			wantFail: true,
+		},
+		{
+			name: "Valid OriginatorID",
+			input: []byte{
+				128,              // Attr. Flags
+				OriginatorIDAttr, // Attr. Type Code
+				4,                // Attr. Length
+				1, 2, 3, 4,
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length:         4,
+				Optional:       true,
+				Transitive:     false,
+				Partial:        false,
+				ExtendedLength: false,
+				TypeCode:       OriginatorIDAttr,
+				Value:          bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(),
+			},
+		},
+		{
+			name: "one valid ClusterID",
+			input: []byte{
+				128,             // Attr. Flags
+				ClusterListAttr, // Attr. Type Code
+				4,               // Attr. Length
+				1, 1, 1, 1,
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				TypeCode: ClusterListAttr,
+				Optional: true,
+				Length:   4,
+				Value: []uint32{
+					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+				},
+			},
+		},
+		{
+			name: "two valid ClusterIDs",
+			input: []byte{
+				setOptional(uint8(0)),  // Attr. Flags
+				ClusterListAttr,        // Attr. Type Code
+				8,                      // Attr. Length
+				1, 2, 3, 4, 8, 8, 8, 8, // 1.2.3.4, 8.8.8.8
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				TypeCode: ClusterListAttr,
+				Optional: true,
+				Length:   8,
+				Value: []uint32{
+					bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(), bnet.IPv4FromOctets(8, 8, 8, 8).ToUint32(),
+				},
+			},
+		},
+		{
+			name: "one and a half ClusterID",
+			input: []byte{
+				setOptional(uint8(0)), // Attr. Flags
+				ClusterListAttr,       // Attr. Type Code
+				8,                     // Attr. Length
+				1, 2, 3, 4, 8, 8,      // 1.2.3.4, 8.8.
+			},
+			wantFail: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -728,6 +802,85 @@ func TestDecodeCommunity(t *testing.T) {
 			Length: l,
 		}
 		err := pa.decodeCommunities(bytes.NewBuffer(test.input))
+
+		if test.wantFail {
+			if err != nil {
+				continue
+			}
+			t.Errorf("Expected error did not happen for test %q", test.name)
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		assert.Equal(t, test.expected, pa)
+	}
+}
+
+func TestDecodeClusterList(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          []byte
+		wantFail       bool
+		explicitLength uint16
+		expected       *PathAttribute
+	}{
+		{
+			name:     "Empty input",
+			input:    []byte{},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 0,
+				Value:  []uint32{},
+			},
+		},
+		{
+			name: "one valid ClusterID",
+			input: []byte{
+				1, 1, 1, 1,
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 4,
+				Value: []uint32{
+					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+				},
+			},
+		},
+		{
+			name: "two valid ClusterIDs",
+			input: []byte{
+				1, 2, 3, 4, 8, 8, 8, 8, // 1.2.3.4, 8.8.8.8
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 8,
+				Value: []uint32{
+					bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(), bnet.IPv4FromOctets(8, 8, 8, 8).ToUint32(),
+				},
+			},
+		},
+		{
+			name: "one and a half ClusterID",
+			input: []byte{
+				1, 2, 3, 4, 8, 8, // 1.2.3.4, 8.8.
+			},
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		l := uint16(len(test.input))
+		if test.explicitLength != 0 {
+			l = test.explicitLength
+		}
+		pa := &PathAttribute{
+			Length: l,
+		}
+		err := pa.decodeClusterList(bytes.NewBuffer(test.input))
 
 		if test.wantFail {
 			if err != nil {
@@ -1479,6 +1632,106 @@ func TestSerializeCommunities(t *testing.T) {
 	}
 }
 
+func TestSerializeOriginatorID(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Valid OriginatorID",
+			input: &PathAttribute{
+				TypeCode: OriginatorIDAttr,
+				Value:    bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+			},
+			expected: []byte{
+				setOptional(uint8(0)), // Attribute flags
+				OriginatorIDAttr,      // Type
+				4,                     // Length
+				1, 1, 1, 1,            // ClusterID (1.1.1.1)
+			},
+			expectedLen: 7,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			buf := bytes.NewBuffer(nil)
+			n := test.input.serializeOriginatorID(buf)
+			if n != test.expectedLen {
+				t.Errorf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
+	}
+}
+
+func TestSerializeClusterList(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *PathAttribute
+		expected    []byte
+		expectedLen uint8
+	}{
+		{
+			name: "Empty list of CluserIDs",
+			input: &PathAttribute{
+				TypeCode: ClusterListAttr,
+				Value:    []uint32{},
+			},
+			expected:    []byte{},
+			expectedLen: 0,
+		},
+		{
+			name: "One ClusterID",
+			input: &PathAttribute{
+				TypeCode: ClusterListAttr,
+				Value: []uint32{
+					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+				},
+			},
+			expected: []byte{
+				setOptional(uint8(0)), // Attribute flags
+				ClusterListAttr,       // Type
+				4,                     // Length
+				1, 1, 1, 1,            // ClusterID (1.1.1.1)
+			},
+			expectedLen: 4,
+		},
+		{
+			name: "Two ClusterIDs",
+			input: &PathAttribute{
+				TypeCode: ClusterListAttr,
+				Value: []uint32{
+					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+					bnet.IPv4FromOctets(192, 168, 23, 42).ToUint32(),
+				},
+			},
+			expected: []byte{
+				setOptional(uint8(0)),        // Attribute flags
+				ClusterListAttr,              // Type
+				8,                            // Length
+				1, 1, 1, 1, 192, 168, 23, 42, // ClusterID (1.1.1.1)
+			},
+			expectedLen: 8,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			buf := bytes.NewBuffer([]byte{})
+			n := test.input.serializeClusterList(buf)
+			if n != test.expectedLen {
+				t.Fatalf("Unexpected length for test %q: %d", test.name, n)
+			}
+
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
+	}
+}
+
 func TestSerializeUnknownAttribute(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1722,6 +1975,46 @@ func TestSerialize(t *testing.T) {
 				// NLRI
 				24, 8, 8, 8, // 8.8.8.0/24
 				22, 185, 65, 240, // 185.65.240.0/22
+			},
+		},
+		{
+			name: "Reflected NLRI",
+			msg: &BGPUpdate{
+				NLRI: &NLRI{
+					IP:     strAddr("100.110.128.0"),
+					Pfxlen: 17,
+				},
+				PathAttributes: &PathAttribute{
+					TypeCode: OriginatorIDAttr,
+					Value:    bnet.IPv4FromOctets(9, 8, 7, 6).ToUint32(),
+					Next: &PathAttribute{
+						TypeCode: ClusterListAttr,
+						Value: []uint32{
+							bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(),
+						},
+					},
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0, 41, // Length
+				2,    // Msg Type
+				0, 0, // Withdrawn Routes Length
+
+				0, 14, // Total Path Attribute Length
+				// OriginatorID
+				128,        // Attr. Flags (Opt.)
+				9,          // Attr. Type Code
+				4,          // Attr Length
+				9, 8, 7, 6, // 9.8.7.6
+
+				// ClusterList
+				128, // Attr Flags (Opt.)
+				10,  // Attr. Type Code
+				4,
+				1, 2, 3, 4,
+
+				17, 100, 110, 128, // NLRI
 			},
 		},
 	}
