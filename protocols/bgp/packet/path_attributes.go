@@ -757,7 +757,7 @@ func PathAttributes(p *route.Path, iBGP bool) (*PathAttribute, error) {
 	if p.BGPPath.Aggregator != nil {
 		aggregator := &PathAttribute{
 			TypeCode: AggregatorAttr,
-			Value:    p.BGPPath.Aggregator,
+			Value:    *p.BGPPath.Aggregator,
 		}
 		last.Next = aggregator
 		last = aggregator

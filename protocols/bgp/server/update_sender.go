@@ -191,22 +191,21 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 }
 
 func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop bnet.IP) {
-	attrs = pa.Copy()
-	curCopy := attrs
-
 	cur := pa
 
-	if cur.TypeCode == packet.NextHopAttr {
-		nextHop = cur.Value.(bnet.IP)
-		cur = cur.Next
-	}
-
+	var curCopy, lastCopy *packet.PathAttribute
 	for cur != nil {
 		if cur.TypeCode == packet.NextHopAttr {
 			nextHop = cur.Value.(bnet.IP)
 		} else {
-			curCopy.Next = cur.Copy()
-			curCopy = curCopy.Next
+			curCopy = cur.Copy()
+
+			if lastCopy == nil {
+				attrs = curCopy
+			} else {
+				lastCopy.Next = curCopy
+			}
+			lastCopy = curCopy
 		}
 
 		cur = cur.Next
@@ -217,6 +216,11 @@ func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (a
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
+	if u.fsm.options.SupportsMultiProtocol {
+		// TODO: imeplent withdraw
+		return false
+	}
+
 	err := withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
 	if err != nil {
 		log.Errorf("Unable to withdraw prefix: %v", err)
