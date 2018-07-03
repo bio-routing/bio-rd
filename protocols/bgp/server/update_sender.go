@@ -84,8 +84,11 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 
 		u.toSendMu.Lock()
 
+		overhead := u.updateOverhead()
+
 		for key, pathNLRIs := range u.toSend {
-			budget = packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length())
+			budget = packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length()) - overhead
+
 			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP)
 			if err != nil {
 				log.Errorf("Unable to get path attributes: %v", err)
@@ -96,10 +99,11 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 			prefixes := make([]bnet.Prefix, 0, 1)
 			for _, pfx := range pathNLRIs.pfxs {
 				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
+
 				if budget < 0 {
 					updatesPrefixes = append(updatesPrefixes, prefixes)
 					prefixes = make([]bnet.Prefix, 0, 1)
-					budget = packet.MaxLen - int(pathNLRIs.path.BGPPath.Length())
+					budget = packet.MaxLen - int(pathNLRIs.path.BGPPath.Length()) - overhead
 				}
 
 				prefixes = append(prefixes, pfx)
@@ -118,30 +122,97 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 	}
 }
 
+func (u *UpdateSender) updateOverhead() int {
+	// TODO: for multi RIB support we need the AFI/SAFI combination to determine overhead. For now: MultiProtocol = IPv6
+	if u.fsm.options.SupportsMultiProtocol {
+		// since we are replacing the next hop attribute IPv4Len has to be subtracted, we also add another byte for extended length
+		return packet.AFILen + packet.SAFILen + 1 + packet.IPv6Len - packet.IPv4Len + 1
+	}
+
+	return 0
+}
+
 func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefixes [][]bnet.Prefix, pathID uint32) {
-	var nlri *packet.NLRI
 	var err error
-
-	for _, updatePrefix := range updatePrefixes {
-		update := &packet.BGPUpdate{
-			PathAttributes: pathAttrs,
-		}
-
-		for _, pfx := range updatePrefix {
-			nlri = &packet.NLRI{
-				PathIdentifier: pathID,
-				IP:             pfx.Addr().ToUint32(),
-				Pfxlen:         pfx.Pfxlen(),
-				Next:           update.NLRI,
-			}
-			update.NLRI = nlri
-		}
+	for _, prefixes := range updatePrefixes {
+		update := u.updateMessageForPrefixes(prefixes, pathAttrs, pathID)
 
 		err = serializeAndSendUpdate(u.fsm.con, update, u.fsm.options)
 		if err != nil {
 			log.Errorf("Failed to serialize and send: %v", err)
 		}
 	}
+}
+
+func (u *UpdateSender) updateMessageForPrefixes(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
+	if u.fsm.options.SupportsMultiProtocol {
+		return u.bgpUpdateMultiProtocol(pfxs, pa, pathID)
+	}
+
+	return u.bgpUpdate(pfxs, pa, pathID)
+}
+
+func (u *UpdateSender) bgpUpdate(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
+	update := &packet.BGPUpdate{
+		PathAttributes: pa,
+	}
+
+	var nlri *packet.NLRI
+	for _, pfx := range pfxs {
+		nlri = &packet.NLRI{
+			PathIdentifier: pathID,
+			IP:             pfx.Addr().ToUint32(),
+			Pfxlen:         pfx.Pfxlen(),
+			Next:           update.NLRI,
+		}
+		update.NLRI = nlri
+	}
+
+	return update
+}
+
+func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
+	pa, nextHop := u.copyAttributesWithoutNextHop(pa)
+
+	attrs := &packet.PathAttribute{
+		TypeCode: packet.MultiProtocolReachNLRICode,
+		Value: packet.MultiProtocolReachNLRI{
+			AFI:      packet.IPv6AFI,
+			SAFI:     packet.UnicastSAFI,
+			NextHop:  nextHop,
+			Prefixes: pfxs,
+		},
+	}
+	attrs.Next = pa
+
+	return &packet.BGPUpdate{
+		PathAttributes: attrs,
+	}
+}
+
+func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop bnet.IP) {
+	attrs = pa.Copy()
+	curCopy := attrs
+
+	cur := pa
+
+	if cur.TypeCode == packet.NextHopAttr {
+		nextHop = cur.Value.(bnet.IP)
+		cur = cur.Next
+	}
+
+	for cur != nil {
+		if cur.TypeCode == packet.NextHopAttr {
+			nextHop = cur.Value.(bnet.IP)
+		} else {
+			curCopy.Next = cur.Copy()
+			curCopy = curCopy.Next
+		}
+
+		cur = cur.Next
+	}
+
+	return attrs, nextHop
 }
 
 // RemovePath withdraws prefix `pfx` from a peer

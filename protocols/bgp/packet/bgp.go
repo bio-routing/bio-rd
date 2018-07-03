@@ -16,6 +16,8 @@ const (
 	SAFILen           = 1
 	CommunityLen      = 4
 	LargeCommunityLen = 12
+	IPv4Len           = 4
+	IPv6Len           = 16
 
 	OpenMsg         = 1
 	UpdateMsg       = 2
