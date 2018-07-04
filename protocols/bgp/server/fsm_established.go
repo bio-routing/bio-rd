@@ -59,7 +59,7 @@ func (s establishedState) run() (state, string) {
 func (s *establishedState) init() error {
 	contributingASNs := s.fsm.rib.GetContributingASNs()
 
-	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs)
+	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs, s.fsm.peer.routerID, s.fsm.peer.clusterID)
 	contributingASNs.Add(s.fsm.peer.localASN)
 	s.fsm.adjRIBIn.Register(s.fsm.rib)
 
