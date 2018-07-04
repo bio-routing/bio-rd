@@ -776,6 +776,72 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 			},
 			expectedCount: 1,
 		},
+		{
+			name: "Remove NO_EXPORT route added before",
+			routesRemove: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						ASPath:    types.ASPath{},
+						ASPathLen: 0,
+						Origin:    0,
+						MED:       0,
+						EBGP:      false,
+						Communities: []uint32{
+							types.WellKnownCommunityNoExport,
+						},
+						LargeCommunities:  []types.LargeCommunity{},
+						UnknownAttributes: nil,
+						PathIdentifier:    0,
+						LocalPref:         0,
+						Source:            net.IP{},
+						ClusterList: []uint32{
+							neighborBestOnlyRR.ClusterID,
+						},
+					},
+				}),
+			},
+			expected:      []*route.Route{},
+			expectedCount: 0,
+		},
+		{
+			name: "Add route with one entry in ClusterList and OriginatorID set (with success)",
+			routesAdd: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						OriginatorID: 42,
+						ClusterList: []uint32{
+							23,
+						},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						ASPath:            types.ASPath{},
+						ASPathLen:         0,
+						Origin:            0,
+						MED:               0,
+						EBGP:              false,
+						Communities:       []uint32{},
+						LargeCommunities:  []types.LargeCommunity{},
+						UnknownAttributes: nil,
+						PathIdentifier:    0,
+						LocalPref:         0,
+						Source:            net.IP{},
+						ClusterList: []uint32{
+							neighborBestOnlyRR.ClusterID,
+							23,
+						},
+						OriginatorID: 42,
+					},
+				}),
+			},
+			expectedCount: 1,
+		},
 	}
 
 	for i, test := range tests {
