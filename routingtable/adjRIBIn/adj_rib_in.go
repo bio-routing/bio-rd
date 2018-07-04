@@ -69,7 +69,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	defer a.mu.Unlock()
 
 	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
-	if p.BGPPath.OriginatorID == 1 {
+	if p.BGPPath.OriginatorID == a.routerID {
 		return nil
 	}
 

@@ -82,7 +82,7 @@ func TestAddPath(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref:    111,
-						OriginatorID: 1,
+						OriginatorID: routerID,
 					},
 				}),
 			},
