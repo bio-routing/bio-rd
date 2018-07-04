@@ -126,6 +126,12 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 		routeReflectorClient: c.RouteReflectorClient,
 		clusterID:            c.RouteReflectorClusterID,
 	}
+
+	// If we are a route reflector and no ClusterID was set, use our RouterID
+	if p.routeReflectorClient && p.clusterID == 0 {
+		p.clusterID = c.RouterID
+	}
+
 	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
 	caps := make(packet.Capabilities, 0)
