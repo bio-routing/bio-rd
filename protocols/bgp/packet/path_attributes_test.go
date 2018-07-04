@@ -1573,7 +1573,7 @@ func TestSerializeLargeCommunities(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			buf := bytes.NewBuffer([]byte{})
 			n := test.input.serializeLargeCommunities(buf)
 			if n != test.expectedLen {
@@ -1620,7 +1620,7 @@ func TestSerializeCommunities(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			buf := bytes.NewBuffer([]byte{})
 			n := test.input.serializeCommunities(buf)
 			if n != test.expectedLen {
@@ -1656,7 +1656,7 @@ func TestSerializeOriginatorID(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			buf := bytes.NewBuffer(nil)
 			n := test.input.serializeOriginatorID(buf)
 			if n != test.expectedLen {
@@ -1720,7 +1720,7 @@ func TestSerializeClusterList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			buf := bytes.NewBuffer([]byte{})
 			n := test.input.serializeClusterList(buf)
 			if n != test.expectedLen {
