@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "fake_conn.go",
+        "family_routing.go",
         "fsm.go",
         "fsm_active.go",
         "fsm_cease.go",
@@ -13,6 +14,7 @@ go_library(
         "fsm_manager.go",
         "fsm_open_confirm.go",
         "fsm_open_sent.go",
+        "helper.go",
         "peer.go",
         "server.go",
         "sockopt.go",
@@ -42,7 +44,7 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
-        "fsm_established_test.go",
+        "family_routing_test.go",
         "fsm_open_sent_test.go",
         "fsm_test.go",
         "server_test.go",
