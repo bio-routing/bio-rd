@@ -71,13 +71,13 @@ func (rt *RoutingTable) RemovePath(pfx net.Prefix, p *route.Path) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	if rt.removePath(pfx, p) {
-		atomic.AddInt64(&rt.routeCount, -1)
-	}
+	rt.removePath(pfx, p)
 }
 
-func (rt *RoutingTable) removePath(pfx net.Prefix, p *route.Path) bool {
-	return rt.root.removePath(pfx, p)
+func (rt *RoutingTable) removePath(pfx net.Prefix, p *route.Path) {
+	if rt.root.removePath(pfx, p) {
+		atomic.AddInt64(&rt.routeCount, -1)
+	}
 }
 
 func (rt *RoutingTable) removePaths(pfx net.Prefix, paths []*route.Path) {

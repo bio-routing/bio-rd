@@ -18,14 +18,18 @@ type AdjRIBIn struct {
 	mu               sync.RWMutex
 	exportFilter     *filter.Filter
 	contributingASNs *routingtable.ContributingASNs
+	routerID         uint32
+	clusterID        uint32
 }
 
 // New creates a new Adjacency RIB In
-func New(exportFilter *filter.Filter, contributingASNs *routingtable.ContributingASNs) *AdjRIBIn {
+func New(exportFilter *filter.Filter, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32) *AdjRIBIn {
 	a := &AdjRIBIn{
 		rt:               routingtable.NewRoutingTable(),
 		exportFilter:     exportFilter,
 		contributingASNs: contributingASNs,
+		routerID:         routerID,
+		clusterID:        clusterID,
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -63,6 +67,20 @@ func (a *AdjRIBIn) RouteCount() int64 {
 func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
+	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
+	if p.BGPPath.OriginatorID == a.routerID {
+		return nil
+	}
+
+	// RFC4456 Sect. 8: Ignore routes which contian our ClusterID in their ClusterList
+	if len(p.BGPPath.ClusterList) > 0 {
+		for _, cid := range p.BGPPath.ClusterList {
+			if cid == a.clusterID {
+				return nil
+			}
+		}
+	}
 
 	oldPaths := a.rt.ReplacePath(pfx, p)
 	a.removePathsFromClients(pfx, oldPaths)

@@ -19,8 +19,14 @@ type Neighbor struct {
 	// Local ASN of session
 	LocalASN uint32
 
-	// Peer is a route server client
+	// RouteServerClient incicates if the peer is a route server client
 	RouteServerClient bool
+
+	// RouteReflectorClient indicates if the peer is a route reflector client
+	RouteReflectorClient bool
+
+	// ClusterID is our route reflectors clusterID
+	ClusterID uint32
 
 	// CapAddPathRX indicates if the peer supports receiving multiple BGP paths
 	CapAddPathRX bool

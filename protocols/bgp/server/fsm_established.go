@@ -59,7 +59,7 @@ func (s establishedState) run() (state, string) {
 func (s *establishedState) init() error {
 	contributingASNs := s.fsm.rib.GetContributingASNs()
 
-	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs)
+	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs, s.fsm.peer.routerID, s.fsm.peer.clusterID)
 	contributingASNs.Add(s.fsm.peer.localASN)
 	s.fsm.adjRIBIn.Register(s.fsm.rib)
 
@@ -77,13 +77,15 @@ func (s *establishedState) init() error {
 	}
 
 	n := &routingtable.Neighbor{
-		Type:              route.BGPPathType,
-		Address:           s.fsm.peer.addr,
-		IBGP:              s.fsm.peer.localASN == s.fsm.peer.peerASN,
-		LocalASN:          s.fsm.peer.localASN,
-		RouteServerClient: s.fsm.peer.routeServerClient,
-		LocalAddress:      localAddr,
-		CapAddPathRX:      s.fsm.options.AddPathRX,
+		Type:                 route.BGPPathType,
+		Address:              s.fsm.peer.addr,
+		IBGP:                 s.fsm.peer.localASN == s.fsm.peer.peerASN,
+		LocalASN:             s.fsm.peer.localASN,
+		RouteServerClient:    s.fsm.peer.routeServerClient,
+		LocalAddress:         localAddr,
+		CapAddPathRX:         s.fsm.options.AddPathRX,
+		RouteReflectorClient: s.fsm.peer.routeReflectorClient,
+		ClusterID:            s.fsm.peer.clusterID,
 	}
 
 	s.fsm.adjRIBOut = adjRIBOut.New(n, s.fsm.peer.exportFilter)
@@ -293,6 +295,10 @@ func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *
 			path.BGPPath.Communities = pa.Value.([]uint32)
 		case packet.LargeCommunitiesAttr:
 			path.BGPPath.LargeCommunities = pa.Value.([]types.LargeCommunity)
+		case packet.OriginatorIDAttr:
+			path.BGPPath.OriginatorID = pa.Value.(uint32)
+		case packet.ClusterListAttr:
+			path.BGPPath.ClusterList = pa.Value.([]uint32)
 		default:
 			unknownAttr := s.processUnknownAttribute(pa)
 			if unknownAttr != nil {

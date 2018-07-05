@@ -36,9 +36,9 @@ func TestComputeHash(t *testing.T) {
 		Source:         bnet.IPv4(4),
 	}
 
-	assert.Equal(t, "98d68e69d993f8807c561cc7d63de759f7edc732887f88a7ebf42f61b9e54821", p.ComputeHash())
+	assert.Equal(t, "1058916ff3e6a51c7d8a47945d13fc3fcd8ee578a6d376505f46d58979b30fae", p.ComputeHash())
 
 	p.LocalPref = 150
 
-	assert.NotEqual(t, "98d68e69d993f8807c561cc7d63de759f7edc732887f88a7ebf42f61b9e54821", p.ComputeHash())
+	assert.NotEqual(t, "1058916ff3e6a51c7d8a47945d13fc3fcd8ee578a6d376505f46d58979b30fae", p.ComputeHash())
 }

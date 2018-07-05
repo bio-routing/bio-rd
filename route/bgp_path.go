@@ -26,6 +26,8 @@ type BGPPath struct {
 	Communities       []uint32
 	LargeCommunities  []types.LargeCommunity
 	UnknownAttributes []types.UnknownPathAttribute
+	OriginatorID      uint32
+	ClusterList       []uint32
 }
 
 // Length get's the length of serialized path
@@ -46,12 +48,22 @@ func (b *BGPPath) Length() uint16 {
 		largeCommunitiesLen += 3 + uint16(len(b.LargeCommunities)*12)
 	}
 
+	clusterListLen := uint16(0)
+	if len(b.ClusterList) != 0 {
+		clusterListLen += 3 + uint16(len(b.ClusterList)*4)
+	}
+
 	unknownAttributesLen := uint16(0)
 	for _, unknownAttr := range b.UnknownAttributes {
 		unknownAttributesLen += unknownAttr.WireLength()
 	}
 
-	return communitiesLen + largeCommunitiesLen + 4*7 + 4 + asPathLen + unknownAttributesLen
+	originatorID := uint16(0)
+	if b.OriginatorID != 0 {
+		originatorID = 4
+	}
+
+	return communitiesLen + largeCommunitiesLen + 4*7 + 4 + originatorID + asPathLen + unknownAttributesLen
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
@@ -109,12 +121,33 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 
 	// e) TODO: interiour cost (hello IS-IS and OSPF)
 
-	// f)
-	if c.BGPIdentifier < b.BGPIdentifier {
+	// f) + RFC4456 9. (Route Reflection)
+	bgpIdentifierC := c.BGPIdentifier
+	bgpIdentifierB := b.BGPIdentifier
+
+	// IF an OriginatorID (set by an RR) is present, use this instead of Originator
+	if c.OriginatorID != 0 {
+		bgpIdentifierC = c.OriginatorID
+	}
+
+	if b.OriginatorID != 0 {
+		bgpIdentifierB = b.OriginatorID
+	}
+
+	if bgpIdentifierC < bgpIdentifierB {
 		return 1
 	}
 
-	if c.BGPIdentifier > b.BGPIdentifier {
+	if bgpIdentifierC > bgpIdentifierB {
+		return -1
+	}
+
+	// Additionally check for the shorter ClusterList
+	if len(c.ClusterList) < len(b.ClusterList) {
+		return 1
+	}
+
+	if len(c.ClusterList) > len(b.ClusterList) {
 		return -1
 	}
 
@@ -218,6 +251,14 @@ func (b *BGPPath) Print() string {
 	ret += fmt.Sprintf("\t\tCommunities: %v\n", b.Communities)
 	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
+	if b.OriginatorID != 0 {
+		oid := uint32To4Byte(b.OriginatorID)
+		ret += fmt.Sprintf("\t\tOriginatorID: %d.%d.%d.%d\n", oid[0], oid[1], oid[2], oid[3])
+	}
+	if b.ClusterList != nil {
+		ret += fmt.Sprintf("\t\tClusterList %s\n", b.ClusterListString())
+	}
+
 	return ret
 }
 
@@ -279,6 +320,11 @@ func (b *BGPPath) Copy() *BGPPath {
 	cp.LargeCommunities = make([]types.LargeCommunity, len(cp.LargeCommunities))
 	copy(cp.LargeCommunities, b.LargeCommunities)
 
+	if b.ClusterList != nil {
+		cp.ClusterList = make([]uint32, len(cp.ClusterList))
+		copy(cp.ClusterList, b.ClusterList)
+	}
+
 	return &cp
 }
 
@@ -294,6 +340,8 @@ func (b *BGPPath) ComputeHash() string {
 		b.BGPIdentifier,
 		b.Source,
 		b.Communities,
+		b.OriginatorID,
+		b.ClusterList,
 		b.LargeCommunities,
 		b.PathIdentifier)
 
@@ -305,6 +353,17 @@ func (b *BGPPath) CommunitiesString() string {
 	str := ""
 	for _, com := range b.Communities {
 		str += types.CommunityStringForUint32(com) + " "
+	}
+
+	return strings.TrimRight(str, " ")
+}
+
+// ClusterListString returns the formated ClusterList
+func (b *BGPPath) ClusterListString() string {
+	str := ""
+	for _, cid := range b.ClusterList {
+		octes := uint32To4Byte(cid)
+		str += fmt.Sprintf("%d.%d.%d.%d ", octes[0], octes[1], octes[2], octes[3])
 	}
 
 	return strings.TrimRight(str, " ")
