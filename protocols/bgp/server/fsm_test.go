@@ -20,6 +20,7 @@ func TestFSM100Updates(t *testing.T) {
 		rib:          locRIB.New(),
 		importFilter: filter.NewAcceptAllFilter(),
 		exportFilter: filter.NewAcceptAllFilter(),
+		routerID:     bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 	})
 
 	fsmA.holdTimer = time.NewTimer(time.Second * 90)

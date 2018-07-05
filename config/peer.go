@@ -10,20 +10,22 @@ import (
 
 // Peer defines the configuration for a BGP session
 type Peer struct {
-	AdminEnabled      bool
-	ReconnectInterval time.Duration
-	KeepAlive         time.Duration
-	HoldTime          time.Duration
-	LocalAddress      bnet.IP
-	PeerAddress       bnet.IP
-	LocalAS           uint32
-	PeerAS            uint32
-	Passive           bool
-	RouterID          uint32
-	AddPathSend       routingtable.ClientOptions
-	AddPathRecv       bool
-	ImportFilter      *filter.Filter
-	ExportFilter      *filter.Filter
-	RouteServerClient bool
-	IPv6              bool
+	AdminEnabled            bool
+	ReconnectInterval       time.Duration
+	KeepAlive               time.Duration
+	HoldTime                time.Duration
+	LocalAddress            bnet.IP
+	PeerAddress             bnet.IP
+	LocalAS                 uint32
+	PeerAS                  uint32
+	Passive                 bool
+	RouterID                uint32
+	AddPathSend             routingtable.ClientOptions
+	AddPathRecv             bool
+	ImportFilter            *filter.Filter
+	ExportFilter            *filter.Filter
+	RouteServerClient       bool
+	RouteReflectorClient    bool
+	RouteReflectorClusterID uint32
+	IPv6                    bool
 }

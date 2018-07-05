@@ -17,6 +17,7 @@ type UpdateSender struct {
 	routingtable.ClientManager
 	fsm       *FSM
 	iBGP      bool
+	rrClient  bool
 	toSendMu  sync.Mutex
 	toSend    map[string]*pathPfxs
 	destroyCh chan struct{}
@@ -31,6 +32,7 @@ func newUpdateSender(fsm *FSM) *UpdateSender {
 	return &UpdateSender{
 		fsm:       fsm,
 		iBGP:      fsm.peer.localASN == fsm.peer.peerASN,
+		rrClient:  fsm.peer.routeReflectorClient,
 		destroyCh: make(chan struct{}),
 		toSend:    make(map[string]*pathPfxs),
 	}
@@ -86,7 +88,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 
 		for key, pathNLRIs := range u.toSend {
 			budget = packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length())
-			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP)
+			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP, u.rrClient)
 			if err != nil {
 				log.Errorf("Unable to get path attributes: %v", err)
 				continue

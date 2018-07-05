@@ -53,8 +53,8 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		return nil
 	}
 
-	// Don't export routes learned via iBGP to an iBGP neighbor
-	if !p.BGPPath.EBGP && a.neighbor.IBGP {
+	// Don't export routes learned via iBGP to an iBGP neighbor which is NOT a route reflection client
+	if !p.BGPPath.EBGP && a.neighbor.IBGP && !a.neighbor.RouteReflectorClient {
 		return nil
 	}
 
@@ -63,6 +63,27 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.Prepend(a.neighbor.LocalASN, 1)
 		p.BGPPath.NextHop = a.neighbor.LocalAddress
+	}
+
+	// If the iBGP neighbor is a route reflection client...
+	if a.neighbor.IBGP && a.neighbor.RouteReflectorClient {
+		/*
+		 * RFC4456 Section 8:
+		 * This attribute will carry the BGP Identifier of the originator of the route in the local AS.
+		 * A BGP speaker SHOULD NOT create an ORIGINATOR_ID attribute if one already exists.
+		 */
+		if p.BGPPath.OriginatorID == 0 {
+			p.BGPPath.OriginatorID = p.BGPPath.Source.ToUint32()
+		}
+
+		/*
+		 * When an RR reflects a route, it MUST prepend the local CLUSTER_ID to the CLUSTER_LIST.
+		 * If the CLUSTER_LIST is empty, it MUST create a new one.
+		 */
+		cList := make([]uint32, len(p.BGPPath.ClusterList)+1)
+		copy(cList[1:], p.BGPPath.ClusterList)
+		cList[0] = a.neighbor.ClusterID
+		p.BGPPath.ClusterList = cList
 	}
 
 	p, reject := a.exportFilter.ProcessTerms(pfx, p)
