@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+
 	"github.com/stretchr/testify/assert"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -22,10 +24,11 @@ func TestSender(t *testing.T) {
 		generateNLRIs   uint64
 		expectedUpdates [][]byte
 		addPath         bool
-		ipv6            bool
+		afi             uint16
 	}{
 		{
 			name: "Two paths with 3 NLRIs each",
+			afi:  packet.IPv4AFI,
 			paths: []pathPfxs{
 				{
 					path: &route.Path{
@@ -87,6 +90,7 @@ func TestSender(t *testing.T) {
 		},
 		{
 			name:    "Two paths with 3 NLRIs each with BGP Add Path",
+			afi:     packet.IPv4AFI,
 			addPath: true,
 			paths: []pathPfxs{
 				{
@@ -165,6 +169,7 @@ func TestSender(t *testing.T) {
 		},
 		{
 			name: "Overflow. Too many NLRIs.",
+			afi:  packet.IPv4AFI,
 			paths: []pathPfxs{
 				{
 					path: &route.Path{
@@ -332,6 +337,7 @@ func TestSender(t *testing.T) {
 		},
 		{
 			name: "Overflow with IPv6. Too many NLRIs.",
+			afi:  packet.IPv6AFI,
 			paths: []pathPfxs{
 				{
 					path: &route.Path{
@@ -857,7 +863,6 @@ func TestSender(t *testing.T) {
 					0x0, 0x40, 0x1, 0x1, 0x0, 0x40, 0x5, 0x4, 0x0, 0x0, 0x0, 0x64,
 				},
 			},
-			ipv6: true,
 		},
 	}
 
@@ -881,11 +886,11 @@ func TestSender(t *testing.T) {
 			}
 		}
 
-		if test.ipv6 {
+		if test.afi == packet.IPv6AFI {
 			fsmA.options.SupportsMultiProtocol = true
 		}
 
-		updateSender := newUpdateSender(fsmA)
+		updateSender := newUpdateSender(fsmA, test.afi, packet.UnicastSAFI)
 
 		for _, pathPfx := range test.paths {
 			for _, pfx := range pathPfx.pfxs {
@@ -897,7 +902,7 @@ func TestSender(t *testing.T) {
 					y := i - x
 
 					var pfx bnet.Prefix
-					if test.ipv6 {
+					if test.afi == packet.IPv6AFI {
 						pfx = bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0), 48)
 					} else {
 						pfx = bnet.NewPfx(bnet.IPv4FromOctets(10, 0, uint8(x), uint8(y)), 32)

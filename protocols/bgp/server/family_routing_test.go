@@ -43,12 +43,12 @@ func TestProcessAttributes(t *testing.T) {
 		Next: unknown1,
 	}
 
-	e := &establishedState{}
+	f := &familyRouting{}
 
 	p := &route.Path{
 		BGPPath: &route.BGPPath{},
 	}
-	e.processAttributes(asPath, p)
+	f.processAttributes(asPath, p)
 
 	expectedCodes := []uint8{200, 100}
 	expectedValues := [][]byte{[]byte{5, 6}, []byte{1, 2, 3, 4}}

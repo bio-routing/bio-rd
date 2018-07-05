@@ -94,7 +94,7 @@ func TestFSM100Updates(t *testing.T) {
 	}
 
 	time.Sleep(time.Second)
-	ribRouteCount := fsmA.rib.RouteCount()
+	ribRouteCount := fsmA.ipv4Unicast.rib.RouteCount()
 	if ribRouteCount != 255 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
 	}
@@ -112,11 +112,11 @@ func TestFSM100Updates(t *testing.T) {
 			0, 0,
 		}
 		fsmA.msgRecvCh <- update
-		ribRouteCount = fsmA.rib.RouteCount()
+		ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	}
 	time.Sleep(time.Second * 1)
 
-	ribRouteCount = fsmA.rib.RouteCount()
+	ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	if ribRouteCount != 0 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
 	}
