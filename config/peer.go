@@ -31,6 +31,7 @@ type Peer struct {
 	IPv6                    *AddressFamilyConfig
 }
 
+// AddressFamilyConfig represents all configuration parameters specific for an address family
 type AddressFamilyConfig struct {
 	RIB          *locRIB.LocRIB
 	ImportFilter *filter.Filter
