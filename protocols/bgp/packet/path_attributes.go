@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 	"fmt"
+	"math"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
@@ -466,6 +467,10 @@ func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *types.Options) uint16
 		pathAttrLen = uint16(pa.serializeCommunities(buf))
 	case LargeCommunitiesAttr:
 		pathAttrLen = uint16(pa.serializeLargeCommunities(buf))
+	case MultiProtocolReachNLRICode:
+		pathAttrLen = pa.serializeMultiProtocolReachNLRI(buf)
+	case MultiProtocolUnreachNLRICode:
+		pathAttrLen = pa.serializeMultiProtocolUnreachNLRI(buf)
 	case OriginatorIDAttr:
 		pathAttrLen = uint16(pa.serializeOriginatorID(buf))
 	case ClusterListAttr:
@@ -690,6 +695,62 @@ func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint16 {
 	return uint16(len(b) + 2)
 }
 
+func (pa *PathAttribute) serializeMultiProtocolReachNLRI(buf *bytes.Buffer) uint16 {
+	v := pa.Value.(MultiProtocolReachNLRI)
+	pa.Optional = true
+
+	tempBuf := bytes.NewBuffer(nil)
+	v.serialize(tempBuf)
+
+	return pa.serializeGeneric(tempBuf.Bytes(), buf)
+}
+
+func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer) uint16 {
+	v := pa.Value.(MultiProtocolUnreachNLRI)
+	pa.Optional = true
+
+	tempBuf := bytes.NewBuffer(nil)
+	v.serialize(tempBuf)
+
+	return pa.serializeGeneric(tempBuf.Bytes(), buf)
+}
+
+func (pa *PathAttribute) serializeGeneric(b []byte, buf *bytes.Buffer) uint16 {
+	attrFlags := uint8(0)
+	if pa.Optional {
+		attrFlags = setOptional(attrFlags)
+	}
+	if pa.Transitive {
+		attrFlags = setTransitive(attrFlags)
+	}
+
+	if len(b) > math.MaxUint8 {
+		pa.ExtendedLength = true
+	}
+
+	if pa.ExtendedLength {
+		attrFlags = setExtendedLength(attrFlags)
+	}
+
+	if pa.Transitive {
+		attrFlags = setTransitive(attrFlags)
+	}
+
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(pa.TypeCode)
+
+	if pa.ExtendedLength {
+		l := len(b)
+		buf.WriteByte(uint8(l >> 8))
+		buf.WriteByte(uint8(l & 0x0000FFFF))
+	} else {
+		buf.WriteByte(uint8(len(b)))
+	}
+	buf.Write(b)
+
+	return uint16(len(b) + 2)
+}
+
 func fourBytesToUint32(address [4]byte) uint32 {
 	return uint32(address[0])<<24 + uint32(address[1])<<16 + uint32(address[2])<<8 + uint32(address[3])
 }
@@ -765,7 +826,7 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 	if p.BGPPath.Aggregator != nil {
 		aggregator := &PathAttribute{
 			TypeCode: AggregatorAttr,
-			Value:    p.BGPPath.Aggregator,
+			Value:    *p.BGPPath.Aggregator,
 		}
 		last.Next = aggregator
 		last = aggregator

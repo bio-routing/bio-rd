@@ -133,6 +133,20 @@ func (ip IP) bytesIPv4() []byte {
 	}
 }
 
+// IsIPv4 returns if the `IP` is of address family IPv4
+func (ip IP) IsIPv4() bool {
+	return ip.ipVersion == 4
+}
+
+// SizeBytes returns the number of bytes required to represent the `IP`
+func (ip IP) SizeBytes() uint8 {
+	if ip.ipVersion == 4 {
+		return 4
+	}
+
+	return 16
+}
+
 // ToUint32 return the rightmost 32 bits of an 'IP'
 func (ip IP) ToUint32() uint32 {
 	return uint32(^uint64(0) >> 32 & ip.lower)

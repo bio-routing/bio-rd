@@ -15,7 +15,7 @@ type MultiProtocolUnreachNLRI struct {
 	Prefixes []bnet.Prefix
 }
 
-func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer) uint8 {
+func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer) uint16 {
 	tempBuf := bytes.NewBuffer(nil)
 	tempBuf.Write(convert.Uint16Byte(n.AFI))
 	tempBuf.WriteByte(n.SAFI)
@@ -25,7 +25,7 @@ func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer) uint8 {
 
 	buf.Write(tempBuf.Bytes())
 
-	return uint8(tempBuf.Len())
+	return uint16(tempBuf.Len())
 }
 
 func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, error) {
@@ -49,7 +49,7 @@ func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, er
 	idx := uint16(0)
 	for idx < uint16(len(prefix)) {
 		pfxLen := prefix[idx]
-		numBytes := uint16(numberOfBytesForPrefixLength(pfxLen))
+		numBytes := uint16(BytesInAddr(pfxLen))
 		idx++
 
 		r := uint16(len(prefix)) - idx

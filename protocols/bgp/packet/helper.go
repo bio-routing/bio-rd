@@ -2,7 +2,6 @@ package packet
 
 import (
 	"fmt"
-	"math"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
@@ -12,7 +11,7 @@ func serializePrefix(pfx bnet.Prefix) []byte {
 		return []byte{}
 	}
 
-	numBytes := numberOfBytesForPrefixLength(pfx.Pfxlen())
+	numBytes := BytesInAddr(pfx.Pfxlen())
 
 	b := make([]byte, numBytes+1)
 	b[0] = pfx.Pfxlen()
@@ -22,7 +21,7 @@ func serializePrefix(pfx bnet.Prefix) []byte {
 }
 
 func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (bnet.Prefix, error) {
-	numBytes := numberOfBytesForPrefixLength(pfxLen)
+	numBytes := BytesInAddr(pfxLen)
 
 	if numBytes != uint8(len(b)) {
 		return bnet.Prefix{}, fmt.Errorf("could not parse prefix of length %d. Expected %d bytes, got %d", pfxLen, numBytes, len(b))
@@ -37,8 +36,4 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (bnet.Prefix, error) 
 	}
 
 	return bnet.NewPfx(ip, pfxLen), nil
-}
-
-func numberOfBytesForPrefixLength(pfxLen uint8) uint8 {
-	return uint8(math.Ceil(float64(pfxLen) / 8))
 }

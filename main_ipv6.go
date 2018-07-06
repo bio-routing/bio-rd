@@ -45,4 +45,23 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		ExportFilter: filter.NewDrainFilter(),
 		IPv6:         true,
 	}, rib)
+
+	b.AddPeer(config.Peer{
+		AdminEnabled:      true,
+		LocalAS:           65200,
+		PeerAS:            65400,
+		PeerAddress:       bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0xcafe, 0, 0, 0, 5),
+		LocalAddress:      bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
+		ReconnectInterval: time.Second * 15,
+		HoldTime:          time.Second * 90,
+		KeepAlive:         time.Second * 30,
+		Passive:           true,
+		RouterID:          b.RouterID(),
+		AddPathSend: routingtable.ClientOptions{
+			BestOnly: true,
+		},
+		ImportFilter: filter.NewDrainFilter(),
+		ExportFilter: filter.NewAcceptAllFilter(),
+		IPv6:         true,
+	}, rib)
 }

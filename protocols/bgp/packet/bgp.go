@@ -12,8 +12,12 @@ const (
 	MaxLen            = 4096
 	MinUpdateLen      = 4
 	NLRIMaxLen        = 5
+	AFILen            = 2
+	SAFILen           = 1
 	CommunityLen      = 4
 	LargeCommunityLen = 12
+	IPv4Len           = 4
+	IPv6Len           = 16
 	ClusterIDLen      = 4
 
 	OpenMsg         = 1

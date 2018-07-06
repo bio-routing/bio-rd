@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/taktv6/tflow2/convert"
+
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
-	"github.com/taktv6/tflow2/convert"
 )
 
 // BGPPath represents a set of BGP path attributes
@@ -253,7 +254,7 @@ func (b *BGPPath) Print() string {
 	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
 	if b.OriginatorID != 0 {
-		oid := uint32To4Byte(b.OriginatorID)
+		oid := convert.Uint32Byte(b.OriginatorID)
 		ret += fmt.Sprintf("\t\tOriginatorID: %d.%d.%d.%d\n", oid[0], oid[1], oid[2], oid[3])
 	}
 	if b.ClusterList != nil {
@@ -331,7 +332,7 @@ func (b *BGPPath) Copy() *BGPPath {
 
 // ComputeHash computes an hash over all attributes of the path
 func (b *BGPPath) ComputeHash() string {
-	s := fmt.Sprintf("%s\t%d\t%v\t%d\t%d\t%v\t%d\t%s\t%v\t%v\t%d",
+	s := fmt.Sprintf("%s\t%d\t%v\t%d\t%d\t%v\t%d\t%s\t%v\t%v\t%d\t%d\t%v",
 		b.NextHop,
 		b.LocalPref,
 		b.ASPath,
@@ -341,10 +342,10 @@ func (b *BGPPath) ComputeHash() string {
 		b.BGPIdentifier,
 		b.Source,
 		b.Communities,
-		b.OriginatorID,
-		b.ClusterList,
 		b.LargeCommunities,
-		b.PathIdentifier)
+		b.PathIdentifier,
+		b.OriginatorID,
+		b.ClusterList)
 
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 }
@@ -363,7 +364,7 @@ func (b *BGPPath) CommunitiesString() string {
 func (b *BGPPath) ClusterListString() string {
 	str := ""
 	for _, cid := range b.ClusterList {
-		octes := uint32To4Byte(cid)
+		octes := convert.Uint32Byte(cid)
 		str += fmt.Sprintf("%d.%d.%d.%d ", octes[0], octes[1], octes[2], octes[3])
 	}
 
@@ -378,15 +379,4 @@ func (b *BGPPath) LargeCommunitiesString() string {
 	}
 
 	return strings.TrimRight(str, " ")
-}
-
-func uint32To4Byte(addr uint32) [4]byte {
-	slice := convert.Uint32Byte(addr)
-	ret := [4]byte{
-		slice[0],
-		slice[1],
-		slice[2],
-		slice[3],
-	}
-	return ret
 }
