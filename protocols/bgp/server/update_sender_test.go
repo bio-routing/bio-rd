@@ -868,11 +868,24 @@ func TestSender(t *testing.T) {
 
 	for _, test := range tests {
 		fsmA := newFSM2(&peer{
-			addr:         bnet.IPv4FromOctets(169, 254, 100, 100),
-			rib:          locRIB.New(),
-			importFilter: filter.NewAcceptAllFilter(),
-			exportFilter: filter.NewAcceptAllFilter(),
+			addr: bnet.IPv4FromOctets(169, 254, 100, 100),
 		})
+
+		rib := locRIB.New()
+		if test.afi == packet.IPv6AFI {
+			fsmA.options.SupportsMultiProtocol = true
+			fsmA.ipv6Unicast = newFamilyRouting(packet.IPv6AFI, packet.UnicastSAFI, &familyParameters{
+				rib:          rib,
+				importFilter: filter.NewAcceptAllFilter(),
+				exportFilter: filter.NewAcceptAllFilter(),
+			}, fsmA)
+		} else {
+			fsmA.ipv4Unicast = newFamilyRouting(packet.IPv4AFI, packet.UnicastSAFI, &familyParameters{
+				rib:          rib,
+				importFilter: filter.NewAcceptAllFilter(),
+				exportFilter: filter.NewAcceptAllFilter(),
+			}, fsmA)
+		}
 
 		fsmA.holdTimer = time.NewTimer(time.Second * 90)
 		fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
@@ -884,10 +897,6 @@ func TestSender(t *testing.T) {
 			fsmA.options = &types.Options{
 				AddPathRX: true,
 			}
-		}
-
-		if test.afi == packet.IPv6AFI {
-			fsmA.options.SupportsMultiProtocol = true
 		}
 
 		updateSender := newUpdateSender(fsmA, test.afi, packet.UnicastSAFI)

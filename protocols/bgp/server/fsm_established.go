@@ -78,15 +78,26 @@ func (s *establishedState) init() error {
 		ClusterID:            s.fsm.peer.clusterID,
 	}
 
-	s.fsm.ipv4Unicast.init(n)
-	s.fsm.ipv6Unicast.init(n)
+	if s.fsm.ipv4Unicast != nil {
+		s.fsm.ipv4Unicast.init(n)
+	}
+
+	if s.fsm.ipv6Unicast != nil {
+		s.fsm.ipv6Unicast.init(n)
+	}
+
 	s.fsm.ribsInitialized = true
 	return nil
 }
 
 func (s *establishedState) uninit() {
-	s.fsm.ipv4Unicast.dispose()
-	s.fsm.ipv6Unicast.dispose()
+	if s.fsm.ipv4Unicast != nil {
+		s.fsm.ipv4Unicast.dispose()
+	}
+
+	if s.fsm.ipv6Unicast != nil {
+		s.fsm.ipv6Unicast.dispose()
+	}
 }
 
 func (s *establishedState) manualStop() (state, string) {
@@ -184,9 +195,13 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 
 	switch afi {
 	case packet.IPv4AFI:
-		s.fsm.ipv4Unicast.processUpdate(u)
+		if s.fsm.ipv4Unicast != nil {
+			s.fsm.ipv4Unicast.processUpdate(u)
+		}
 	case packet.IPv6AFI:
-		s.fsm.ipv6Unicast.processUpdate(u)
+		if s.fsm.ipv6Unicast != nil {
+			s.fsm.ipv6Unicast.processUpdate(u)
+		}
 	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
@@ -197,10 +212,7 @@ func (s *establishedState) addressFamilyForUpdate(u *packet.BGPUpdate) (afi uint
 		return packet.IPv4AFI, packet.UnicastSAFI
 	}
 
-	cur := u.PathAttributes
-	for cur != nil {
-		cur = cur.Next
-
+	for cur := u.PathAttributes; cur != nil; cur = cur.Next {
 		if cur.TypeCode == packet.MultiProtocolReachNLRICode {
 			a := cur.Value.(packet.MultiProtocolReachNLRI)
 			return a.AFI, a.SAFI

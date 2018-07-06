@@ -3,6 +3,8 @@ package config
 import (
 	"time"
 
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -22,10 +24,15 @@ type Peer struct {
 	RouterID                uint32
 	AddPathSend             routingtable.ClientOptions
 	AddPathRecv             bool
-	ImportFilter            *filter.Filter
-	ExportFilter            *filter.Filter
 	RouteServerClient       bool
 	RouteReflectorClient    bool
 	RouteReflectorClusterID uint32
-	IPv6                    bool
+	IPv4                    *AddressFamilyConfig
+	IPv6                    *AddressFamilyConfig
+}
+
+type AddressFamilyConfig struct {
+	RIB          *locRIB.LocRIB
+	ImportFilter *filter.Filter
+	ExportFilter *filter.Filter
 }

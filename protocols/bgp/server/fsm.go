@@ -97,8 +97,14 @@ func newFSM2(peer *peer) *FSM {
 		stopMsgRecvCh:    make(chan struct{}),
 		options:          &types.Options{},
 	}
-	f.ipv4Unicast = newFamilyRouting(packet.IPv4AFI, packet.UnicastSAFI, peer.rib, f)
-	f.ipv6Unicast = newFamilyRouting(packet.IPv6AFI, packet.UnicastSAFI, peer.rib, f)
+
+	if peer.ipv4 != nil {
+		f.ipv4Unicast = newFamilyRouting(packet.IPv4AFI, packet.UnicastSAFI, peer.ipv4, f)
+	}
+
+	if peer.ipv6 != nil {
+		f.ipv6Unicast = newFamilyRouting(packet.IPv6AFI, packet.UnicastSAFI, peer.ipv6, f)
+	}
 
 	return f
 }

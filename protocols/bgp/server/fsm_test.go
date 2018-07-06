@@ -16,11 +16,13 @@ import (
 // TestFSM100Updates emulates receiving 100 BGP updates and withdraws. Checks route counts.
 func TestFSM100Updates(t *testing.T) {
 	fsmA := newFSM2(&peer{
-		addr:         bnet.IPv4FromOctets(169, 254, 100, 100),
-		rib:          locRIB.New(),
-		importFilter: filter.NewAcceptAllFilter(),
-		exportFilter: filter.NewAcceptAllFilter(),
-		routerID:     bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+		addr:     bnet.IPv4FromOctets(169, 254, 100, 100),
+		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+		ipv4: &familyParameters{
+			rib:          locRIB.New(),
+			importFilter: filter.NewAcceptAllFilter(),
+			exportFilter: filter.NewAcceptAllFilter(),
+		},
 	})
 
 	fsmA.holdTimer = time.NewTimer(time.Second * 90)

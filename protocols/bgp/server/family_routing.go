@@ -32,23 +32,25 @@ type familyRouting struct {
 	initialized bool
 }
 
-func newFamilyRouting(afi uint16, safi uint8, rib *locRIB.LocRIB, fsm *FSM) *familyRouting {
+func newFamilyRouting(afi uint16, safi uint8, params *familyParameters, fsm *FSM) *familyRouting {
 	return &familyRouting{
-		afi:  afi,
-		safi: safi,
-		rib:  rib,
-		fsm:  fsm,
+		afi:          afi,
+		safi:         safi,
+		fsm:          fsm,
+		rib:          params.rib,
+		importFilter: params.importFilter,
+		exportFilter: params.exportFilter,
 	}
 }
 
 func (f *familyRouting) init(n *routingtable.Neighbor) {
 	contributingASNs := f.rib.GetContributingASNs()
 
-	f.adjRIBIn = adjRIBIn.New(f.fsm.peer.importFilter, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID)
+	f.adjRIBIn = adjRIBIn.New(f.importFilter, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID)
 	contributingASNs.Add(f.fsm.peer.localASN)
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.fsm.peer.exportFilter)
+	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter)
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
 	}
