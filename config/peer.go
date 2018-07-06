@@ -3,11 +3,10 @@ package config
 import (
 	"time"
 
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
 // Peer defines the configuration for a BGP session
