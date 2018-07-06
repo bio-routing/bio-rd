@@ -90,7 +90,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 
 		for key, pathNLRIs := range u.toSend {
 			budget = packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length()) - overhead
-      
+
 			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP, u.rrClient)
 			if err != nil {
 				log.Errorf("Unable to get path attributes: %v", err)
@@ -193,10 +193,8 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 }
 
 func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop bnet.IP) {
-	cur := pa
-
 	var curCopy, lastCopy *packet.PathAttribute
-	for cur != nil {
+	for cur := pa; cur != nil; cur = cur.Next {
 		if cur.TypeCode == packet.NextHopAttr {
 			nextHop = cur.Value.(bnet.IP)
 		} else {
@@ -209,8 +207,6 @@ func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (a
 			}
 			lastCopy = curCopy
 		}
-
-		cur = cur.Next
 	}
 
 	return attrs, nextHop
