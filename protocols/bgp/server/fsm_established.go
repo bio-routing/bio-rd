@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	log "github.com/sirupsen/logrus"
 )
 
 type establishedState struct {
@@ -195,13 +196,15 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 
 	switch afi {
 	case packet.IPv4AFI:
-		if s.fsm.ipv4Unicast != nil {
-			s.fsm.ipv4Unicast.processUpdate(u)
+		if s.fsm.ipv4Unicast == nil {
+			log.Warnf("Received update for family IPv4 unicast, but this family is not configured.")
 		}
+		s.fsm.ipv4Unicast.processUpdate(u)
 	case packet.IPv6AFI:
-		if s.fsm.ipv6Unicast != nil {
-			s.fsm.ipv6Unicast.processUpdate(u)
+		if s.fsm.ipv6Unicast == nil {
+			log.Warnf("Received update for family IPv6 unicast, but this family is not configured.")
 		}
+		s.fsm.ipv6Unicast.processUpdate(u)
 	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
