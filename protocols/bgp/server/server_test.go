@@ -1,7 +1,6 @@
 package server
 
 import (
-	"net"
 	"testing"
 	"time"
 
@@ -9,24 +8,9 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
-
-func TestBgpServerConfigCheck(t *testing.T) {
-	s := NewBgpServer()
-
-	err := s.Start(&config.Global{})
-	if err == nil {
-		t.Fatalf("server with empty config should not start")
-	}
-
-	err = s.Start(&config.Global{
-		LocalASN: 204880,
-		RouterID: 2137,
-	})
-	if err != nil {
-		t.Fatalf("server should have started, got err: %v", err)
-	}
-}
 
 func TestBgpServerPeerSnapshot(t *testing.T) {
 	s := NewBgpServer()
@@ -47,8 +31,8 @@ func TestBgpServerPeerSnapshot(t *testing.T) {
 	pc := config.Peer{
 		AdminEnabled:      true,
 		PeerAS:            65300,
-		PeerAddress:       net.IP([]byte{169, 254, 200, 1}),
-		LocalAddress:      net.IP([]byte{169, 254, 200, 0}),
+		PeerAddress:       bnet.IPv4FromOctets(169, 254, 200, 1),
+		LocalAddress:      bnet.IPv4FromOctets(169, 254, 200, 0),
 		ReconnectInterval: time.Second * 15,
 		HoldTime:          time.Second * 90,
 		KeepAlive:         time.Second * 30,
@@ -73,7 +57,7 @@ func TestBgpServerPeerSnapshot(t *testing.T) {
 		break
 	}
 
-	if want, got := net.ParseIP("169.254.200.1"), peer.PeerAddr; !want.Equal(got) {
+	if want, got := bnet.IPv4FromOctets(169, 254, 200, 1), peer.PeerAddr; !want.Equal(got) {
 		t.Errorf("PeerAddr: got %v, want %v", got, want)
 	}
 	if want, got := uint32(65300), peer.PeerASN; want != got {

@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
+        "fake_conn.go",
         "fsm.go",
         "fsm_active.go",
         "fsm_cease.go",
@@ -18,7 +19,6 @@ go_library(
         "tcplistener.go",
         "update_helper.go",
         "update_sender.go",
-        "update_sender_add_path.go",
         "util.go",
         "withdraw.go",
     ],
@@ -28,11 +28,13 @@ go_library(
         "//config:go_default_library",
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//routingtable:go_default_library",
         "//routingtable/adjRIBIn:go_default_library",
         "//routingtable/adjRIBOut:go_default_library",
         "//routingtable/filter:go_default_library",
+        "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )
@@ -40,8 +42,12 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
+        "fsm_established_test.go",
+        "fsm_open_sent_test.go",
+        "fsm_test.go",
         "server_test.go",
         "update_helper_test.go",
+        "update_sender_test.go",
         "withdraw_test.go",
     ],
     embed = [":go_default_library"],
@@ -49,10 +55,12 @@ go_test(
         "//config:go_default_library",
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//routingtable:go_default_library",
         "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
+        "//testing:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

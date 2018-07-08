@@ -1,12 +1,9 @@
 package routingtable
 
 import (
-	"strings"
-
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
-	log "github.com/sirupsen/logrus"
 )
 
 // ShouldPropagateUpdate performs some default checks and returns if an route update should be propagated to a neighbor
@@ -32,18 +29,8 @@ func isDisallowedByCommunity(p *route.Path, n *Neighbor) bool {
 		return false
 	}
 
-	strs := strings.Split(p.BGPPath.Communities, " ")
-	for _, str := range strs {
-		com, err := packet.ParseCommunityString(str)
-		if err != nil {
-			log.WithField("Sender", "routingtable.ShouldAnnounce()").
-				WithField("community", str).
-				WithError(err).
-				Error("Could not parse community")
-			continue
-		}
-
-		if (com == packet.WellKnownCommunityNoExport && !n.IBGP) || com == packet.WellKnownCommunityNoAdvertise {
+	for _, com := range p.BGPPath.Communities {
+		if (com == types.WellKnownCommunityNoExport && !n.IBGP) || com == types.WellKnownCommunityNoAdvertise {
 			return true
 		}
 	}

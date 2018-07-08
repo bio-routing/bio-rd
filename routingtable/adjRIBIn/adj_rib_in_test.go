@@ -1,57 +1,20 @@
 package adjRIBIn
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/bio-routing/bio-rd/routingtable/filter"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
-type RTMockClient struct {
-	removePathParams struct {
-		pfx  net.Prefix
-		path *route.Path
-	}
-}
-
-func NewRTMockClient() *RTMockClient {
-	return &RTMockClient{}
-}
-
-func (m *RTMockClient) AddPath(pfx net.Prefix, p *route.Path) error {
-	return nil
-}
-
-func (m *RTMockClient) UpdateNewClient(client routingtable.RouteTableClient) error {
-	return fmt.Errorf("Not implemented")
-}
-
-func (m *RTMockClient) Register(routingtable.RouteTableClient) {
-	return
-}
-
-func (m *RTMockClient) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
-	return
-}
-
-func (m *RTMockClient) Unregister(routingtable.RouteTableClient) {
-	return
-}
-
-// RemovePath removes the path for prefix `pfx`
-func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
-	m.removePathParams.pfx = pfx
-	m.removePathParams.path = p
-	return true
-}
-
 func TestAddPath(t *testing.T) {
+	routerID := net.IPv4FromOctets(1, 1, 1, 1).ToUint32()
+	clusterID := net.IPv4FromOctets(2, 2, 2, 2).ToUint32()
+
 	tests := []struct {
 		name       string
 		routes     []*route.Route
@@ -62,17 +25,17 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Add route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 100,
 					},
 				}),
 			},
-			removePfx:  net.NewPfx(0, 0),
+			removePfx:  net.Prefix{},
 			removePath: nil,
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 100,
@@ -83,20 +46,20 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Overwrite routes",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 100,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 200,
 					},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -104,7 +67,7 @@ func TestAddPath(t *testing.T) {
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 200,
@@ -112,22 +75,54 @@ func TestAddPath(t *testing.T) {
 				}),
 			},
 		},
+		{
+			name: "Add route with our RouterID as OriginatorID",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref:    111,
+						OriginatorID: routerID,
+					},
+				}),
+			},
+			expected: []*route.Route{},
+		},
+		{
+			name: "Add route with our ClusterID within ClusterList",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref:    222,
+						OriginatorID: 23,
+						ClusterList: []uint32{
+							clusterID,
+						},
+					},
+				}),
+			},
+			expected: []*route.Route{},
+		},
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter())
-		mc := NewRTMockClient()
+		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), routerID, clusterID)
+		mc := routingtable.NewRTMockClient()
 		adjRIBIn.ClientManager.Register(mc)
 
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
 		}
 
-		if mc.removePathParams.pfx != test.removePfx {
-			t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, mc.removePathParams.pfx.String(), test.removePfx.String())
-		}
+		if test.removePath != nil {
+			removePathParams := mc.GetRemovePathParams()
+			if removePathParams.Pfx != test.removePfx {
+				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, removePathParams.Pfx.String(), test.removePfx.String())
+			}
 
-		assert.Equal(t, test.removePath, mc.removePathParams.path)
+			assert.Equal(t, test.removePath, removePathParams.Path)
+		}
 		assert.Equal(t, test.expected, adjRIBIn.rt.Dump())
 	}
 }
@@ -144,30 +139,30 @@ func TestRemovePath(t *testing.T) {
 		{
 			name: "Remove an existing route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type:    route.BGPPathType,
 				BGPPath: &route.BGPPath{},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
@@ -177,26 +172,26 @@ func TestRemovePath(t *testing.T) {
 		{
 			name: "Remove non existing route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type:    route.BGPPathType,
 				BGPPath: &route.BGPPath{},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
@@ -206,31 +201,29 @@ func TestRemovePath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter())
+		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 1, 2)
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
 		}
 
-		mc := NewRTMockClient()
+		mc := routingtable.NewRTMockClient()
 		adjRIBIn.ClientManager.Register(mc)
 		adjRIBIn.RemovePath(test.removePfx, test.removePath)
 
 		if test.wantPropagation {
-			if mc.removePathParams.pfx != test.removePfx {
-				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, mc.removePathParams.pfx.String(), test.removePfx.String())
+			removePathParams := mc.GetRemovePathParams()
+			if removePathParams.Pfx != test.removePfx {
+				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, removePathParams.Pfx.String(), test.removePfx.String())
 			}
-			assert.Equal(t, test.removePath, mc.removePathParams.path)
+			assert.Equal(t, test.removePath, removePathParams.Path)
 		} else {
-			if mc.removePathParams.pfx != net.NewPfx(0, 0) {
+			removePathParams := mc.GetRemovePathParams()
+			uninitialized := net.Prefix{}
+			if removePathParams.Pfx != uninitialized {
 				t.Errorf("Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
 			}
 		}
 
 		assert.Equal(t, test.expected, adjRIBIn.rt.Dump())
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := net.StrToAddr(s)
-	return ret
 }

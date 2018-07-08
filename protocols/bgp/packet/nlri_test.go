@@ -162,7 +162,7 @@ func TestBytesInAddr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res := bytesInAddr(test.input)
+		res := BytesInAddr(test.input)
 		if res != test.expected {
 			t.Errorf("Unexpected result for test %q: %d", test.name, res)
 		}
@@ -212,12 +212,12 @@ func TestNLRISerialize(t *testing.T) {
 func TestNLRIAddPathSerialize(t *testing.T) {
 	tests := []struct {
 		name     string
-		nlri     *NLRIAddPath
+		nlri     *NLRI
 		expected []byte
 	}{
 		{
 			name: "Test #1",
-			nlri: &NLRIAddPath{
+			nlri: &NLRI{
 				PathIdentifier: 100,
 				IP:             strAddr("1.2.3.0"),
 				Pfxlen:         25,
@@ -226,7 +226,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 		},
 		{
 			name: "Test #2",
-			nlri: &NLRIAddPath{
+			nlri: &NLRI{
 				PathIdentifier: 100,
 				IP:             strAddr("1.2.3.0"),
 				Pfxlen:         24,
@@ -235,7 +235,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 		},
 		{
 			name: "Test #3",
-			nlri: &NLRIAddPath{
+			nlri: &NLRI{
 				PathIdentifier: 100,
 				IP:             strAddr("100.200.128.0"),
 				Pfxlen:         17,
@@ -246,7 +246,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(nil)
-		test.nlri.serialize(buf)
+		test.nlri.serializeAddPath(buf)
 		res := buf.Bytes()
 		assert.Equal(t, test.expected, res)
 	}

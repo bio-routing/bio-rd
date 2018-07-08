@@ -70,7 +70,7 @@ func TestSerializeOpenMsg(t *testing.T) {
 			name: "Valid #1",
 			input: &BGPOpen{
 				Version:       4,
-				AS:            15169,
+				ASN:           15169,
 				HoldTime:      120,
 				BGPIdentifier: convert.Uint32([]byte{100, 111, 120, 130}),
 				OptParmLen:    0,
@@ -106,30 +106,61 @@ func TestSerializeOptParams(t *testing.T) {
 			expected:  []byte{},
 		},
 		{
-			name: "1 Option",
+			name: "AddPath",
 			optParams: []OptParam{
-				{
+				OptParam{
 					Type:   2,
 					Length: 6,
-					Value: Capability{
-						Code:   69,
-						Length: 4,
-						Value: AddPathCapability{
-							AFI:         1,
-							SAFI:        1,
-							SendReceive: 3,
+					Value: Capabilities{
+						Capability{
+							Code:   69,
+							Length: 4,
+							Value: AddPathCapability{
+								AFI:         1,
+								SAFI:        1,
+								SendReceive: 3,
+							},
 						},
 					},
 				},
 			},
 			expected: []byte{2, 6, 69, 4, 0, 1, 1, 3},
 		},
+		{
+			name: "Multi Protocol Support (IPv6), 32 bit ASNs",
+			optParams: []OptParam{
+				OptParam{
+					Length: 12,
+					Type:   CapabilitiesParamType,
+					Value: Capabilities{
+						Capability{
+							Code:   MultiProtocolCapabilityCode,
+							Length: 4,
+							Value: MultiProtocolCapability{
+								AFI:  2,
+								SAFI: 1,
+							},
+						},
+						Capability{
+							Code:   ASN4CapabilityCode,
+							Length: 4,
+							Value: ASN4Capability{
+								ASN4: 202739,
+							},
+						},
+					},
+				},
+			},
+			expected: []byte{2, 12, 1, 4, 0, 2, 0, 1, 65, 4, 0x00, 0x03, 0x17, 0xf3},
+		},
 	}
 
 	for _, test := range tests {
-		buf := bytes.NewBuffer(make([]byte, 0))
-		serializeOptParams(buf, test.optParams)
-		assert.Equal(t, test.expected, buf.Bytes())
+		t.Run(test.name, func(t *testing.T) {
+			buf := bytes.NewBuffer(make([]byte, 0))
+			serializeOptParams(buf, test.optParams)
+			assert.Equal(t, test.expected, buf.Bytes())
+		})
 	}
 }
 

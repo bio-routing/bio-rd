@@ -14,17 +14,24 @@ import (
 // LocRIB represents a routing information base
 type LocRIB struct {
 	routingtable.ClientManager
-	rt *routingtable.RoutingTable
-	mu sync.RWMutex
+	rt               *routingtable.RoutingTable
+	mu               sync.RWMutex
+	contributingASNs *routingtable.ContributingASNs
 }
 
 // New creates a new routing information base
 func New() *LocRIB {
 	a := &LocRIB{
-		rt: routingtable.NewRoutingTable(),
+		rt:               routingtable.NewRoutingTable(),
+		contributingASNs: routingtable.NewContributingASNs(),
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
+}
+
+// GetContributingASNs returns a pointer to the list of contributing ASNs
+func (a *LocRIB) GetContributingASNs() *routingtable.ContributingASNs {
+	return a.contributingASNs
 }
 
 //Count routes from the LocRIP
@@ -46,6 +53,11 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 	}
 
 	return nil
+}
+
+// RouteCount returns the number of stored routes
+func (a *LocRIB) RouteCount() int64 {
+	return a.rt.GetRouteCount()
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.

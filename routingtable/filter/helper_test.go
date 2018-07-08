@@ -1,27 +1,23 @@
 package filter
 
-/*func TestNewAcceptAllFilter(t *testing.T) {
+import (
+	"testing"
+
+	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestNewAcceptAllFilter(t *testing.T) {
 	f := NewAcceptAllFilter()
 
-	m := &clientMock{}
-	f.Register(m)
-
-	f.AddPath(net.NewPfx(0, 0), &route.Path{})
-
-	if !m.addPathCalled {
-		t.Fatalf("expected accepted, but was filtered")
-	}
+	_, reject := f.ProcessTerms(net.NewPfx(net.IPv4(0), 0), &route.Path{})
+	assert.Equal(t, false, reject)
 }
 
 func TestNewDrainFilter(t *testing.T) {
 	f := NewDrainFilter()
 
-	m := &clientMock{}
-	f.Register(m)
-
-	f.AddPath(net.NewPfx(0, 0), &route.Path{})
-
-	if m.addPathCalled {
-		t.Fatalf("expected filtered, but was accepted")
-	}
-}*/
+	_, reject := f.ProcessTerms(net.NewPfx(net.IPv4(0), 0), &route.Path{})
+	assert.Equal(t, true, reject)
+}

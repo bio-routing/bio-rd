@@ -16,7 +16,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
     ],
 )
@@ -33,7 +33,7 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],

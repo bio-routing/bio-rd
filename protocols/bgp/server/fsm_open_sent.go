@@ -11,7 +11,8 @@ import (
 )
 
 type openSentState struct {
-	fsm *FSM
+	fsm         *FSM
+	peerASNRcvd uint32
 }
 
 func newOpenSentState(fsm *FSM) *openSentState {
@@ -77,7 +78,7 @@ func (s *openSentState) holdTimerExpired() (state, string) {
 }
 
 func (s *openSentState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data))
+	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -108,6 +109,8 @@ func (s *openSentState) unexpectedMessage() (state, string) {
 
 func (s *openSentState) openMsgReceived(msg *packet.BGPMessage) (state, string) {
 	openMsg := msg.Body.(*packet.BGPOpen)
+	s.peerASNRcvd = uint32(openMsg.ASN)
+
 	s.fsm.neighborID = openMsg.BGPIdentifier
 	stopTimer(s.fsm.connectRetryTimer)
 	if s.fsm.peer.collisionHandling(s.fsm) {
@@ -118,6 +121,10 @@ func (s *openSentState) openMsgReceived(msg *packet.BGPMessage) (state, string) 
 		return s.tcpFailure()
 	}
 
+	return s.handleOpenMessage(openMsg)
+}
+
+func (s *openSentState) handleOpenMessage(openMsg *packet.BGPOpen) (state, string) {
 	s.fsm.holdTime = time.Duration(math.Min(float64(s.fsm.peer.holdTime), float64(time.Duration(openMsg.HoldTime)*time.Second)))
 	if s.fsm.holdTime != 0 {
 		if !s.fsm.holdTimer.Reset(s.fsm.holdTime) {
@@ -127,7 +134,14 @@ func (s *openSentState) openMsgReceived(msg *packet.BGPMessage) (state, string) 
 		s.fsm.keepaliveTimer = time.NewTimer(s.fsm.keepaliveTime)
 	}
 
+	s.peerASNRcvd = uint32(openMsg.ASN)
 	s.processOpenOptions(openMsg.OptParams)
+
+	if s.peerASNRcvd != s.fsm.peer.peerASN {
+		s.fsm.sendNotification(packet.OpenMessageError, packet.BadPeerAS)
+		return newCeaseState(), fmt.Sprintf("Bad Peer AS %d, expected: %d", s.peerASNRcvd, s.fsm.peer.peerASN)
+	}
+
 	return newOpenConfirmState(s.fsm), "Received OPEN message"
 }
 
@@ -157,8 +171,15 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 	switch cap.Code {
 	case packet.AddPathCapabilityCode:
 		s.processAddPathCapability(cap.Value.(packet.AddPathCapability))
-
+	case packet.ASN4CapabilityCode:
+		s.processASN4Capability(cap.Value.(packet.ASN4Capability))
+	case packet.MultiProtocolCapabilityCode:
+		s.processMultiProtocolCapability(cap.Value.(packet.MultiProtocolCapability))
 	}
+}
+
+func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolCapability) {
+	s.fsm.options.SupportsMultiProtocol = true
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
@@ -172,19 +193,27 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 	switch addPathCap.SendReceive {
 	case packet.AddPathReceive:
 		if !s.fsm.peer.addPathSend.BestOnly {
-			s.fsm.capAddPathSend = true
+			s.fsm.options.AddPathRX = true
 		}
 	case packet.AddPathSend:
 		if s.fsm.peer.addPathRecv {
-			s.fsm.capAddPathRecv = true
+			s.fsm.options.AddPathRX = true
 		}
 	case packet.AddPathSendReceive:
 		if !s.fsm.peer.addPathSend.BestOnly {
-			s.fsm.capAddPathSend = true
+			s.fsm.options.AddPathRX = true
 		}
 		if s.fsm.peer.addPathRecv {
-			s.fsm.capAddPathRecv = true
+			s.fsm.options.AddPathRX = true
 		}
+	}
+}
+
+func (s *openSentState) processASN4Capability(cap packet.ASN4Capability) {
+	s.fsm.options.Supports4OctetASN = true
+
+	if s.peerASNRcvd == packet.ASTransASN {
+		s.peerASNRcvd = cap.ASN4
 	}
 }
 

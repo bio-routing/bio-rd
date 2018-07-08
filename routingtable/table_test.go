@@ -10,131 +10,138 @@ import (
 
 func TestAddPath(t *testing.T) {
 	tests := []struct {
-		name     string
-		routes   []*route.Route
-		expected *node
+		name          string
+		routes        []*route.Route
+		expected      *node
+		expectedCount int64
 	}{
 		{
 			name: "Insert first node",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 			},
 			expected: &node{
-				route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 				skip:  8,
 			},
+			expectedCount: 1,
 		},
 		{
 			name: "Insert duplicate node",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 			},
 			expected: &node{
-				route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 				skip:  8,
 			},
+			expectedCount: 1,
 		},
 		{
 			name: "Insert triangle",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), nil),
 			},
 			expected: &node{
-				route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 				skip:  8,
 				l: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), nil),
 				},
 				h: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), nil),
 				},
 			},
+			expectedCount: 3,
 		},
 		{
 			name: "Insert disjunct prefixes",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
 			},
 			expected: &node{
-				route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 7), nil),
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 7), nil),
 				skip:  7,
 				dummy: true,
 				l: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 				},
 				h: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
 					skip:  16,
 				},
 			},
+			expectedCount: 2,
 		},
 		{
 			name: "Insert disjunct prefixes plus one child low",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
 			expected: &node{
-				route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 7), nil),
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 7), nil),
 				skip:  7,
 				dummy: true,
 				l: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 					l: &node{
 						skip:  1,
-						route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+						route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 						l: &node{
 							skip:  1,
-							route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
+							route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
 						},
 					},
 				},
 				h: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
 					skip:  16,
 				},
 			},
+			expectedCount: 4,
 		},
 		{
 			name: "Insert disjunct prefixes plus one child high",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.128"), 25), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 128), 25), nil),
 			},
 			expected: &node{
-				route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 7), nil),
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 7), nil),
 				skip:  7,
 				dummy: true,
 				l: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 					l: &node{
 						skip:  1,
-						route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+						route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 						l: &node{
 							skip:  1,
-							route: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
+							route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
 						},
 					},
 				},
 				h: &node{
-					route: route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
 					skip:  16,
 					h: &node{
-						route: route.NewRoute(net.NewPfx(strAddr("11.100.123.128"), 25), nil),
+						route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 128), 25), nil),
 					},
 				},
 			},
+			expectedCount: 5,
 		},
 	}
 
@@ -145,6 +152,7 @@ func TestAddPath(t *testing.T) {
 		}
 
 		assert.Equal(t, test.expected, rt.root)
+		assert.Equal(t, test.expectedCount, rt.GetRouteCount())
 	}
 }
 
@@ -158,67 +166,67 @@ func TestGet(t *testing.T) {
 		{
 			name: "Test 1: Search pfx and dump route + more specifics",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 8),
-			expected: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
+			expected: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 		},
 		{
 			name: "Test 2: Search pfx and don't dump more specifics",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 8),
-			expected: route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
+			expected: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
 		},
 		{
 			name:     "Test 3: Empty table",
 			routes:   []*route.Route{},
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 32),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32),
 			expected: nil,
 		},
 		{
 			name: "Test 4: Get Dummy",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
 			},
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 7),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 7),
 			expected: nil,
 		},
 		{
 			name: "Test 5",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
-			needle:   net.NewPfx(strAddr("11.100.123.0"), 24),
-			expected: route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
+			needle:   net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24),
+			expected: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
 		},
 		{
 			name: "Test 4: Get nonexistent #1",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
 			},
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 10),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10),
 			expected: nil,
 		},
 		{
 			name: "Test 4: Get nonexistent #2",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
 			},
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 10),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10),
 			expected: nil,
 		},
 	}
@@ -250,22 +258,22 @@ func TestGetLonger(t *testing.T) {
 		{
 			name: "Test 1: Search pfx and dump route + more specifics",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
-			needle: net.NewPfx(strAddr("10.0.0.0"), 8),
+			needle: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
 			},
 		},
 		{
 			name:     "Test 2: Empty root",
 			routes:   nil,
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 8),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			expected: []*route.Route{},
 		},
 	}
@@ -297,36 +305,36 @@ func TestLPM(t *testing.T) {
 		{
 			name:     "LPM for non-existent route",
 			routes:   []*route.Route{},
-			needle:   net.NewPfx(strAddr("10.0.0.0"), 32),
+			needle:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32),
 			expected: nil,
 		},
 		{
 			name: "Positive LPM test",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
-			needle: net.NewPfx(167772160, 32), // 10.0.0.0/32
+			needle: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32),
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
 			},
 		},
 		{
 			name: "Exact match",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("11.100.123.0"), 24), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 12), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
-			needle: net.NewPfx(strAddr("10.0.0.0"), 10),
+			needle: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10),
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), nil),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
 			},
 		},
 	}
@@ -342,69 +350,71 @@ func TestLPM(t *testing.T) {
 
 func TestRemovePath(t *testing.T) {
 	tests := []struct {
-		name       string
-		routes     []*route.Route
-		removePfx  net.Prefix
-		removePath *route.Path
-		expected   []*route.Route
+		name          string
+		routes        []*route.Route
+		removePfx     net.Prefix
+		removePath    *route.Path
+		expected      []*route.Route
+		expectedCount int64
 	}{
 		{
 			name: "Remove a path that is the only one for a prefix",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type:    route.BGPPathType,
 				BGPPath: &route.BGPPath{},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
+			expectedCount: 2,
 		},
 		{
 			name: "Remove a path that is one of two for a prefix",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1000,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 2000,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			removePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -412,21 +422,22 @@ func TestRemovePath(t *testing.T) {
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 2000,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.128.0.0"), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
 			},
+			expectedCount: 3,
 		},
 	}
 
@@ -448,6 +459,7 @@ func TestRemovePath(t *testing.T) {
 		}
 
 		assert.Equal(t, rtExpected.Dump(), rt.Dump())
+		assert.Equal(t, test.expectedCount, rt.GetRouteCount())
 	}
 }
 
@@ -462,13 +474,13 @@ func TestReplacePath(t *testing.T) {
 	}{
 		{
 			name:       "replace in empty table",
-			replacePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			replacePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			replacePath: &route.Path{
 				Type:    route.BGPPathType,
 				BGPPath: &route.BGPPath{},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type:    route.BGPPathType,
 					BGPPath: &route.BGPPath{},
 				}),
@@ -478,22 +490,22 @@ func TestReplacePath(t *testing.T) {
 		{
 			name: "replace not existing prefix with multiple paths",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
-			replacePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			replacePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			replacePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -501,23 +513,23 @@ func TestReplacePath(t *testing.T) {
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1000,
 					},
 				}),
-				newMultiPathRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				newMultiPathRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}, &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -526,34 +538,34 @@ func TestReplacePath(t *testing.T) {
 		{
 			name: "replace existing prefix with multiple paths",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 2,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
-			replacePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			replacePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			replacePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -561,23 +573,23 @@ func TestReplacePath(t *testing.T) {
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1000,
 					},
 				}),
-				newMultiPathRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				newMultiPathRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1001,
-						NextHop:   101,
+						NextHop:   net.IPv4(101),
 					},
 				}, &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -624,42 +636,42 @@ func TestRemovePrefix(t *testing.T) {
 	}{
 		{
 			name:        "remove in empty table",
-			removePfx:   net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx:   net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			expected:    []*route.Route{},
 			expectedOld: nil,
 		},
 		{
 			name: "remove not exist prefix",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
 
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("12.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(12, 0, 0, 0), 8),
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
 
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -668,35 +680,35 @@ func TestRemovePrefix(t *testing.T) {
 		{
 			name: "remove not existing more specific prefix",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
 
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 9),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9),
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
 
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -705,35 +717,35 @@ func TestRemovePrefix(t *testing.T) {
 		{
 			name: "remove not existing more less prefix",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
 
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 7),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 7),
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
 
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -742,33 +754,33 @@ func TestRemovePrefix(t *testing.T) {
 		{
 			name: "remove existing prefix",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 2,
 					},
 				}),
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
-			removePfx: net.NewPfx(strAddr("10.0.0.0"), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(strAddr("11.0.0.0"), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 0, 0, 0), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						LocalPref: 1002,
-						NextHop:   100,
+						NextHop:   net.IPv4(100),
 					},
 				}),
 			},
@@ -815,9 +827,4 @@ func newMultiPathRoute(pfx net.Prefix, paths ...*route.Path) *route.Route {
 	}
 	return r
 
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := net.StrToAddr(s)
-	return ret
 }

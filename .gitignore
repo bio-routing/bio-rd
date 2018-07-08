@@ -16,6 +16,7 @@
 # IDE specific files
 .idea/
 *.iml
+.vscode
 
 # 'go build' binary
 bio-rd

@@ -1,4 +1,4 @@
-package packet
+package types
 
 import (
 	"fmt"
@@ -6,16 +6,19 @@ import (
 	"strings"
 )
 
+// LargeCommunity represents a large community (RFC8195)
 type LargeCommunity struct {
 	GlobalAdministrator uint32
 	DataPart1           uint32
 	DataPart2           uint32
 }
 
-func (c LargeCommunity) String() string {
+// String transitions a large community to it's human readable representation
+func (c *LargeCommunity) String() string {
 	return fmt.Sprintf("(%d,%d,%d)", c.GlobalAdministrator, c.DataPart1, c.DataPart2)
 }
 
+// ParseLargeCommunityString parses a human readable large community representation
 func ParseLargeCommunityString(s string) (com LargeCommunity, err error) {
 	s = strings.Trim(s, "()")
 	t := strings.Split(s, ",")

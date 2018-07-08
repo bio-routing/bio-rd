@@ -1,6 +1,8 @@
 package route
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Path struct {
 	Type       uint8
