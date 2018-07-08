@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"sync"
@@ -70,6 +71,9 @@ type FSM struct {
 	stateMu    sync.RWMutex
 	reason     string
 	active     bool
+
+	connectionCancelFunc      context.CancelFunc
+	messageReceiverCancelFunc context.CancelFunc
 }
 
 // NewPassiveFSM2 initiates a new passive FSM
@@ -105,8 +109,11 @@ func newFSM2(peer *peer) *FSM {
 }
 
 func (fsm *FSM) start() {
+	ctx, cancel := context.WithCancel(context.Background())
+	fsm.connectionCancelFunc = cancel
+
 	go fsm.run()
-	go fsm.tcpConnector()
+	go fsm.tcpConnector(ctx)
 	return
 }
 
@@ -130,6 +137,9 @@ func (fsm *FSM) run() {
 		}
 
 		if newState == "cease" {
+			if fsm.connectionCancelFunc != nil {
+				fsm.connectionCancelFunc()
+			}
 			return
 		}
 
@@ -166,7 +176,7 @@ func (fsm *FSM) cease() {
 	fsm.eventCh <- Cease
 }
 
-func (fsm *FSM) tcpConnector() error {
+func (fsm *FSM) tcpConnector(ctx context.Context) {
 	for {
 		select {
 		case <-fsm.initiateCon:
@@ -177,6 +187,8 @@ func (fsm *FSM) tcpConnector() error {
 					continue
 				case <-time.NewTimer(time.Second * 30).C:
 					continue
+				case <-ctx.Done():
+					return
 				}
 			}
 
@@ -186,6 +198,8 @@ func (fsm *FSM) tcpConnector() error {
 			case <-time.NewTimer(time.Second * 30).C:
 				c.Close()
 				continue
+			case <-ctx.Done():
+				return
 			}
 		}
 	}
@@ -195,14 +209,25 @@ func (fsm *FSM) tcpConnect() {
 	fsm.initiateCon <- struct{}{}
 }
 
-func (fsm *FSM) msgReceiver() error {
+func (fsm *FSM) msgReceiver(ctx context.Context) {
+	msgCh := make(chan []byte)
+	defer close(msgCh)
+
+	errCh := make(chan error)
+	defer close(errCh)
+
 	for {
-		msg, err := recvMsg(fsm.con)
-		if err != nil {
+		go recvMsg(ctx, fsm.con, msgCh, errCh)
+
+		select {
+		case m := <-msgCh:
+			fsm.msgRecvCh <- m
+		case err := <-errCh:
 			fsm.msgRecvFailCh <- err
-			return nil
+			return
+		case <-ctx.Done():
+			return
 		}
-		fsm.msgRecvCh <- msg
 	}
 }
 

@@ -48,6 +48,7 @@ func (s *idleState) automaticStart() (state, string) {
 func (s *idleState) start() (state, string) {
 	s.fsm.resetConnectRetryCounter()
 	s.fsm.startConnectRetryTimer()
+
 	go s.fsm.tcpConnect()
 
 	return newConnectState(s.fsm), s.newStateReason

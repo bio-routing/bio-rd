@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -126,19 +127,36 @@ func (b *bgpServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
 	return nil
 }
 
-func recvMsg(c net.Conn) (msg []byte, err error) {
+func recvMsg(ctx context.Context, c net.Conn, msgCh chan<- []byte, errCh chan<- error) {
 	buffer := make([]byte, packet.MaxLen)
-	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
+	_, err := io.ReadFull(c, buffer[0:packet.MinLen])
 	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			errCh <- fmt.Errorf("Read failed: %v", err)
+			return
+		}
 	}
 
 	l := int(buffer[16])*256 + int(buffer[17])
 	toRead := l
 	_, err = io.ReadFull(c, buffer[packet.MinLen:toRead])
 	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			errCh <- fmt.Errorf("Read failed: %v", err)
+			return
+		}
 	}
 
-	return buffer, nil
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		msgCh <- buffer
+	}
 }
