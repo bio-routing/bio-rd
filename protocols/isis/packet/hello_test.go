@@ -7,6 +7,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestHelloSerialize(t *testing.T) {
+	tests := []struct {
+		name     string
+		hello    *L2Hello
+		expected []byte
+	}{
+		{
+			name: "Test #1",
+			hello: &L2Hello{
+				CircuitType:  2,
+				SystemID:     [6]byte{1, 2, 3, 4, 5, 6},
+				HoldingTimer: 27,
+				PDULength:    100,
+				Priority:     128,
+				DesignatedIS: [6]byte{1, 2, 3, 4, 5, 6},
+				TLVs:         []TLV{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := test.hello.serialize()
+		assert.Equalf(t, test.expected, res, "Test: %q", test.name)
+	}
+}
+
 func TestDecodeISISHello(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -7,9 +7,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// TLV is an interface that all TLVs must fulfill
 type TLV interface {
 	Type() uint8
 	Length() uint8
+	Serialize(*bytes.Buffer)
+}
+
+func serializeTLVs(tlvs []TLV) []byte {
+	buf := bytes.NewBuffer(nil)
+
+	for _, tlv := range tlvs {
+		tlv.Serialize(buf)
+	}
+
+	return buf.Bytes()
 }
 
 func readTLVs(buf *bytes.Buffer, length uint16) ([]TLV, error) {

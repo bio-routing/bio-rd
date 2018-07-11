@@ -1,17 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"time"
-
 	"github.com/sirupsen/logrus"
 
 	"github.com/bio-routing/bio-rd/config"
-	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
@@ -22,7 +15,35 @@ func strAddr(s string) uint32 {
 }
 
 func main() {
-	logrus.Printf("This is a BGP speaker\n")
+	logrus.Printf("This is an ISIS speaker\n")
+
+	isis := isisserver.NewISISServer(config.ISISConfig{
+		NetworkEntityTitle: []byte{
+			4, 9,
+			0, // Area
+			0, 1, 0,
+			0, 0, 0,
+			0, 0, 0,
+			0, 0, 1,
+			0, // SEL
+		},
+		Interfaces: []config.ISISInterfaceConfig{
+			{
+				Name:         "enp2s0",
+				PointToPoint: true,
+				Passive:      false,
+				ISISLevel2Config: config.ISISLevelConfig{
+					HelloInterval: 1,
+					HoldTime:      4,
+					Metric:        10,
+				},
+			},
+		},
+	})
+
+	isis.Start()
+
+	/*logrus.Printf("This is a BGP speaker\n")
 
 	rib := locRIB.New()
 	b := server.NewBgpServer()
@@ -82,7 +103,7 @@ func main() {
 			fmt.Printf("LocRIB count: %d\n", rib.Count())
 			time.Sleep(time.Second * 10)
 		}
-	}()
+	}()*/
 
 	select {}
 }

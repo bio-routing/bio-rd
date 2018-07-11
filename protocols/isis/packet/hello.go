@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/taktv6/tflow2/convert"
 )
 
 type L2Hello struct {
@@ -40,4 +42,16 @@ func decodeISISHello(buf *bytes.Buffer) (*L2Hello, error) {
 
 	pdu.TLVs = TLVs
 	return pdu, nil
+}
+
+func (h *L2Hello) serialize() []byte {
+	buf := bytes.NewBuffer(nil)
+	buf.WriteByte(h.CircuitType)
+	buf.Write(h.SystemID[:])
+	buf.Write(convert.Uint16Byte(h.HoldingTimer))
+	buf.Write(convert.Uint16Byte(h.PDULength))
+	buf.WriteByte(h.Priority)
+	buf.Write(h.DesignatedIS[:])
+
+	return buf.Bytes()
 }
