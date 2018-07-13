@@ -91,7 +91,7 @@ func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
 			opt := &types.Options{
 				AddPathRX: false,
 			}
-			err := withDrawPrefixesMultiProtocol(buf, opt, test.Prefix)
+			err := withDrawPrefixesMultiProtocol(buf, opt, test.Prefix, &route.Path{})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

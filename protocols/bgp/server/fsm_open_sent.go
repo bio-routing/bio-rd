@@ -179,10 +179,7 @@ func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolC
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
-	if addPathCap.AFI != 1 {
-		return
-	}
-	if addPathCap.SAFI != 1 {
+	if addPathCap.SAFI != packet.UnicastSAFI {
 		return
 	}
 

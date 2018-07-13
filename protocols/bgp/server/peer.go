@@ -136,10 +136,7 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 
 	caps := make(packet.Capabilities, 0)
 
-	addPathEnabled, addPathCap := handleAddPathCapability(c)
-	if addPathEnabled {
-		caps = append(caps, addPathCap)
-	}
+	caps = append(caps, addPathCapabilities(c)...)
 
 	caps = append(caps, asn4Capability(c))
 
@@ -174,7 +171,9 @@ func multiProtocolCapability(afi uint16) packet.Capability {
 	}
 }
 
-func handleAddPathCapability(c config.Peer) (bool, packet.Capability) {
+func addPathCapabilities(c config.Peer) []packet.Capability {
+	caps := make([]packet.Capability, 0)
+
 	addPath := uint8(0)
 	if c.AddPathRecv {
 		addPath += packet.AddPathReceive
@@ -184,17 +183,30 @@ func handleAddPathCapability(c config.Peer) (bool, packet.Capability) {
 	}
 
 	if addPath == 0 {
-		return false, packet.Capability{}
+		return caps
 	}
 
-	return true, packet.Capability{
+	caps = append(caps, packet.Capability{
 		Code: packet.AddPathCapabilityCode,
 		Value: packet.AddPathCapability{
 			AFI:         packet.IPv4AFI,
 			SAFI:        packet.UnicastSAFI,
 			SendReceive: addPath,
 		},
+	})
+
+	if c.IPv6 {
+		caps = append(caps, packet.Capability{
+			Code: packet.AddPathCapabilityCode,
+			Value: packet.AddPathCapability{
+				AFI:         packet.IPv6AFI,
+				SAFI:        packet.UnicastSAFI,
+				SendReceive: addPath,
+			},
+		})
 	}
+
+	return caps
 }
 
 func filterOrDefault(f *filter.Filter) *filter.Filter {

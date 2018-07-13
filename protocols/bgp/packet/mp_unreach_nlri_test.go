@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,6 +14,7 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 		name     string
 		nlri     MultiProtocolUnreachNLRI
 		expected []byte
+		addPath  bool
 	}{
 		{
 			name: "Simple IPv6 prefix",
@@ -29,12 +31,32 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 				0x2c, 0x26, 0x20, 0x01, 0x10, 0x90, 0x00, // Prefix
 			},
 		},
+		{
+			name: "IPv6 prefix with ADD-PATH",
+			nlri: MultiProtocolUnreachNLRI{
+				AFI:  IPv6AFI,
+				SAFI: UnicastSAFI,
+				Prefixes: []bnet.Prefix{
+					bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+				},
+				PathID: 100,
+			},
+			expected: []byte{
+				0x00, 0x02, // AFI
+				0x01,                  // SAFI
+				0x00, 0x00, 0x00, 100, // PathID
+				0x2c, 0x26, 0x20, 0x01, 0x10, 0x90, 0x00, // Prefix
+			},
+			addPath: true,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			test.nlri.serialize(buf)
+			test.nlri.serialize(buf, &types.Options{
+				AddPathRX: test.addPath,
+			})
 			assert.Equal(t, test.expected, buf.Bytes())
 		})
 	}

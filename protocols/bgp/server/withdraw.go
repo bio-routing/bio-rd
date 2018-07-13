@@ -59,7 +59,12 @@ func withDrawPrefixesAddPath(out io.Writer, opt *types.Options, pfx net.Prefix, 
 	return serializeAndSendUpdate(out, update, opt)
 }
 
-func withDrawPrefixesMultiProtocol(out io.Writer, opt *types.Options, pfx net.Prefix) error {
+func withDrawPrefixesMultiProtocol(out io.Writer, opt *types.Options, pfx net.Prefix, p *route.Path) error {
+	pathID := uint32(0)
+	if p.BGPPath != nil {
+		pathID = p.BGPPath.PathIdentifier
+	}
+
 	update := &packet.BGPUpdate{
 		PathAttributes: &packet.PathAttribute{
 			TypeCode: packet.MultiProtocolUnreachNLRICode,
@@ -67,8 +72,10 @@ func withDrawPrefixesMultiProtocol(out io.Writer, opt *types.Options, pfx net.Pr
 				AFI:      packet.IPv6AFI,
 				SAFI:     packet.UnicastSAFI,
 				Prefixes: []net.Prefix{pfx},
+				PathID:   pathID,
 			},
 		},
 	}
+
 	return serializeAndSendUpdate(out, update, opt)
 }

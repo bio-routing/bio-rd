@@ -468,9 +468,9 @@ func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *types.Options) uint16
 	case LargeCommunitiesAttr:
 		pathAttrLen = uint16(pa.serializeLargeCommunities(buf))
 	case MultiProtocolReachNLRICode:
-		pathAttrLen = pa.serializeMultiProtocolReachNLRI(buf)
+		pathAttrLen = pa.serializeMultiProtocolReachNLRI(buf, opt)
 	case MultiProtocolUnreachNLRICode:
-		pathAttrLen = pa.serializeMultiProtocolUnreachNLRI(buf)
+		pathAttrLen = pa.serializeMultiProtocolUnreachNLRI(buf, opt)
 	case OriginatorIDAttr:
 		pathAttrLen = uint16(pa.serializeOriginatorID(buf))
 	case ClusterListAttr:
@@ -695,22 +695,22 @@ func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint16 {
 	return uint16(len(b) + 2)
 }
 
-func (pa *PathAttribute) serializeMultiProtocolReachNLRI(buf *bytes.Buffer) uint16 {
+func (pa *PathAttribute) serializeMultiProtocolReachNLRI(buf *bytes.Buffer, opt *types.Options) uint16 {
 	v := pa.Value.(MultiProtocolReachNLRI)
 	pa.Optional = true
 
 	tempBuf := bytes.NewBuffer(nil)
-	v.serialize(tempBuf)
+	v.serialize(tempBuf, opt)
 
 	return pa.serializeGeneric(tempBuf.Bytes(), buf)
 }
 
-func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer) uint16 {
+func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer, opt *types.Options) uint16 {
 	v := pa.Value.(MultiProtocolUnreachNLRI)
 	pa.Optional = true
 
 	tempBuf := bytes.NewBuffer(nil)
-	v.serialize(tempBuf)
+	v.serialize(tempBuf, opt)
 
 	return pa.serializeGeneric(tempBuf.Bytes(), buf)
 }

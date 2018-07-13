@@ -102,6 +102,10 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 			for _, pfx := range pathNLRIs.pfxs {
 				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
 
+				if u.fsm.options.AddPathRX {
+					budget -= 4
+				}
+
 				if budget < 0 {
 					updatesPrefixes = append(updatesPrefixes, prefixes)
 					prefixes = make([]bnet.Prefix, 0, 1)
@@ -183,6 +187,7 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 			SAFI:     packet.UnicastSAFI,
 			NextHop:  nextHop,
 			Prefixes: pfxs,
+			PathID:   pathID,
 		},
 	}
 	attrs.Next = pa
@@ -224,7 +229,7 @@ func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 
 func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
 	if u.fsm.options.SupportsMultiProtocol {
-		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx)
+		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx, p)
 	}
 
 	return withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
