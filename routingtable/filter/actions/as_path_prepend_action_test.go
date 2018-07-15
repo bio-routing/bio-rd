@@ -54,9 +54,9 @@ func TestAppendPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			a := NewASPathPrependAction(12345, test.times)
-			p, _ := a.Do(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+			res := a.Do(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 
@@ -64,8 +64,8 @@ func TestAppendPath(t *testing.T) {
 				return
 			}
 
-			assert.Equal(te, test.expectedPath, p.BGPPath.ASPath.String(), "ASPath")
-			assert.Equal(te, test.expectedLength, p.BGPPath.ASPathLen, "ASPathLen")
+			assert.Equal(t, test.expectedPath, res.Path.BGPPath.ASPath.String(), "ASPath")
+			assert.Equal(t, test.expectedLength, res.Path.BGPPath.ASPathLen, "ASPathLen")
 		})
 	}
 }

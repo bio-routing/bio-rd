@@ -71,7 +71,7 @@ func TestAddingLargeCommunities(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			p := &route.Path{
 				BGPPath: &route.BGPPath{
 					LargeCommunities: test.current,
@@ -79,9 +79,9 @@ func TestAddingLargeCommunities(t *testing.T) {
 			}
 
 			a := NewAddLargeCommunityAction(test.communities)
-			modPath, _ := a.Do(net.Prefix{}, p)
+			res := a.Do(net.Prefix{}, p)
 
-			assert.Equal(te, test.expected, modPath.BGPPath.LargeCommunitiesString())
+			assert.Equal(t, test.expected, res.Path.BGPPath.LargeCommunitiesString())
 		})
 	}
 }
