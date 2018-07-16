@@ -212,7 +212,7 @@ func addPathCapabilities(c config.Peer) []packet.Capability {
 		},
 	})
 
-	if c.IPv6 {
+	if c.IPv6 != nil {
 		caps = append(caps, packet.Capability{
 			Code: packet.AddPathCapabilityCode,
 			Value: packet.AddPathCapability{
