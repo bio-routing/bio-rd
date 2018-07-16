@@ -1,16 +1,15 @@
 package server
 
 import (
+	"bytes"
+	"errors"
 	"testing"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
-
-	"errors"
-
-	"bytes"
-
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,7 +90,8 @@ func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
 			opt := &types.Options{
 				AddPathRX: false,
 			}
-			err := withDrawPrefixesMultiProtocol(buf, opt, test.Prefix, &route.Path{})
+
+			err := withDrawPrefixesMultiProtocol(buf, opt, test.Prefix, &route.Path{}, packet.IPv6AFI, packet.UnicastSAFI)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

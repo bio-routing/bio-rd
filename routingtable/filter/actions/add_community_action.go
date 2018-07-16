@@ -15,9 +15,9 @@ func NewAddCommunityAction(coms []uint32) *AddCommunityAction {
 	}
 }
 
-func (a *AddCommunityAction) Do(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
+func (a *AddCommunityAction) Do(p net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil || len(a.communities) == 0 {
-		return pa, false
+		return Result{Path: pa}
 	}
 
 	modified := pa.Copy()
@@ -26,5 +26,5 @@ func (a *AddCommunityAction) Do(p net.Prefix, pa *route.Path) (modPath *route.Pa
 		modified.BGPPath.Communities = append(modified.BGPPath.Communities, com)
 	}
 
-	return modified, false
+	return Result{Path: modified}
 }

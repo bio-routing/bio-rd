@@ -4,10 +4,10 @@ go_library(
     name = "go_default_library",
     srcs = [
         "accept_action.go",
+        "action.go",
         "add_community_action.go",
         "add_large_community_action.go",
         "as_path_prepend_action.go",
-        "filter_action.go",
         "reject_action.go",
         "set_local_pref_action.go",
         "set_nexthop_action.go",

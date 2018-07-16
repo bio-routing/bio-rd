@@ -21,10 +21,11 @@ func (f *Filter) ProcessTerms(p net.Prefix, pa *route.Path) (modPath *route.Path
 	modPath = pa
 
 	for _, t := range f.terms {
-		modPath, reject = t.Process(p, modPath)
-		if reject {
-			return modPath, true
+		res := t.Process(p, modPath)
+		if res.Terminate {
+			return res.Path, res.Reject
 		}
+		modPath = res.Path
 	}
 
 	return modPath, false

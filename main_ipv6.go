@@ -41,10 +41,12 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		AddPathSend: routingtable.ClientOptions{
 			BestOnly: true,
 		},
-		ImportFilter: filter.NewAcceptAllFilter(),
-		ExportFilter: filter.NewDrainFilter(),
-		IPv6:         true,
-	}, rib)
+		IPv6: &config.AddressFamilyConfig{
+			RIB:          rib,
+			ImportFilter: filter.NewAcceptAllFilter(),
+			ExportFilter: filter.NewDrainFilter(),
+		},
+	})
 
 	b.AddPeer(config.Peer{
 		AdminEnabled:      true,
@@ -60,8 +62,10 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		AddPathSend: routingtable.ClientOptions{
 			BestOnly: true,
 		},
-		ImportFilter: filter.NewDrainFilter(),
-		ExportFilter: filter.NewAcceptAllFilter(),
-		IPv6:         true,
-	}, rib)
+		IPv6: &config.AddressFamilyConfig{
+			RIB:          rib,
+			ImportFilter: filter.NewDrainFilter(),
+			ExportFilter: filter.NewAcceptAllFilter(),
+		},
+	})
 }

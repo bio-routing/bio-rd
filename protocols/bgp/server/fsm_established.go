@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
-	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
+	log "github.com/sirupsen/logrus"
 )
 
 type establishedState struct {
@@ -57,12 +54,6 @@ func (s establishedState) run() (state, string) {
 }
 
 func (s *establishedState) init() error {
-	contributingASNs := s.fsm.rib.GetContributingASNs()
-
-	s.fsm.adjRIBIn = adjRIBIn.New(s.fsm.peer.importFilter, contributingASNs, s.fsm.peer.routerID, s.fsm.peer.clusterID)
-	contributingASNs.Add(s.fsm.peer.localASN)
-	s.fsm.adjRIBIn.Register(s.fsm.rib)
-
 	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
 	if err != nil {
 		return fmt.Errorf("Unable to get local address: %v", err)
@@ -88,35 +79,26 @@ func (s *establishedState) init() error {
 		ClusterID:            s.fsm.peer.clusterID,
 	}
 
-	s.fsm.adjRIBOut = adjRIBOut.New(n, s.fsm.peer.exportFilter)
-	clientOptions := routingtable.ClientOptions{
-		BestOnly: true,
-	}
-	if s.fsm.options.AddPathRX {
-		clientOptions = s.fsm.peer.addPathSend
+	if s.fsm.ipv4Unicast != nil {
+		s.fsm.ipv4Unicast.init(n)
 	}
 
-	s.fsm.updateSender = newUpdateSender(s.fsm)
-	s.fsm.updateSender.Start(time.Millisecond * 5)
-
-	s.fsm.adjRIBOut.Register(s.fsm.updateSender)
-	s.fsm.rib.RegisterWithOptions(s.fsm.adjRIBOut, clientOptions)
+	if s.fsm.ipv6Unicast != nil {
+		s.fsm.ipv6Unicast.init(n)
+	}
 
 	s.fsm.ribsInitialized = true
 	return nil
 }
 
 func (s *establishedState) uninit() {
-	s.fsm.rib.GetContributingASNs().Remove(s.fsm.peer.localASN)
-	s.fsm.adjRIBIn.Unregister(s.fsm.rib)
-	s.fsm.rib.Unregister(s.fsm.adjRIBOut)
-	s.fsm.adjRIBOut.Unregister(s.fsm.updateSender)
-	s.fsm.updateSender.Destroy()
+	if s.fsm.ipv4Unicast != nil {
+		s.fsm.ipv4Unicast.dispose()
+	}
 
-	s.fsm.adjRIBIn = nil
-	s.fsm.adjRIBOut = nil
-
-	s.fsm.ribsInitialized = false
+	if s.fsm.ipv6Unicast != nil {
+		s.fsm.ipv6Unicast.dispose()
+	}
 }
 
 func (s *establishedState) manualStop() (state, string) {
@@ -205,123 +187,47 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	}
 
 	u := msg.Body.(*packet.BGPUpdate)
-	s.withdraws(u)
-	s.updates(u)
-	s.multiProtocolUpdates(u)
+	afi, safi := s.addressFamilyForUpdate(u)
+
+	if safi != packet.UnicastSAFI {
+		// only unicast support, so other SAFIs are ignored
+		return newEstablishedState(s.fsm), s.fsm.reason
+	}
+
+	switch afi {
+	case packet.IPv4AFI:
+		if s.fsm.ipv4Unicast == nil {
+			log.Warnf("Received update for family IPv4 unicast, but this family is not configured.")
+		}
+		s.fsm.ipv4Unicast.processUpdate(u)
+	case packet.IPv6AFI:
+		if s.fsm.ipv6Unicast == nil {
+			log.Warnf("Received update for family IPv6 unicast, but this family is not configured.")
+		}
+		s.fsm.ipv6Unicast.processUpdate(u)
+	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) withdraws(u *packet.BGPUpdate) {
-	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
-		s.fsm.adjRIBIn.RemovePath(pfx, nil)
-	}
-}
-
-func (s *establishedState) updates(u *packet.BGPUpdate) {
-	for r := u.NLRI; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
-
-		path := s.newRoutePath()
-		s.processAttributes(u.PathAttributes, path)
-
-		s.fsm.adjRIBIn.AddPath(pfx, path)
-	}
-}
-
-func (s *establishedState) multiProtocolUpdates(u *packet.BGPUpdate) {
-	if !s.fsm.options.SupportsMultiProtocol {
-		return
+func (s *establishedState) addressFamilyForUpdate(u *packet.BGPUpdate) (afi uint16, safi uint8) {
+	if !s.fsm.options.SupportsMultiProtocol || u.NLRI != nil || u.WithdrawnRoutes != nil {
+		return packet.IPv4AFI, packet.UnicastSAFI
 	}
 
-	path := s.newRoutePath()
-	s.processAttributes(u.PathAttributes, path)
+	for cur := u.PathAttributes; cur != nil; cur = cur.Next {
+		if cur.TypeCode == packet.MultiProtocolReachNLRICode {
+			a := cur.Value.(packet.MultiProtocolReachNLRI)
+			return a.AFI, a.SAFI
+		}
 
-	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
-		switch pa.TypeCode {
-		case packet.MultiProtocolReachNLRICode:
-			s.multiProtocolUpdate(path, pa.Value.(packet.MultiProtocolReachNLRI))
-		case packet.MultiProtocolUnreachNLRICode:
-			s.multiProtocolWithdraw(path, pa.Value.(packet.MultiProtocolUnreachNLRI))
+		if cur.TypeCode == packet.MultiProtocolUnreachNLRICode {
+			a := cur.Value.(packet.MultiProtocolUnreachNLRI)
+			return a.AFI, a.SAFI
 		}
 	}
-}
 
-func (s *establishedState) newRoutePath() *route.Path {
-	return &route.Path{
-		Type: route.BGPPathType,
-		BGPPath: &route.BGPPath{
-			Source: s.fsm.peer.addr,
-			EBGP:   s.fsm.peer.localASN != s.fsm.peer.peerASN,
-		},
-	}
-}
-
-func (s *establishedState) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) {
-	path.BGPPath.NextHop = nlri.NextHop
-
-	for _, pfx := range nlri.Prefixes {
-		s.fsm.adjRIBIn.AddPath(pfx, path)
-	}
-}
-
-func (s *establishedState) multiProtocolWithdraw(path *route.Path, nlri packet.MultiProtocolUnreachNLRI) {
-	for _, pfx := range nlri.Prefixes {
-		s.fsm.adjRIBIn.RemovePath(pfx, path)
-	}
-}
-
-func (s *establishedState) processAttributes(attrs *packet.PathAttribute, path *route.Path) {
-	for pa := attrs; pa != nil; pa = pa.Next {
-		switch pa.TypeCode {
-		case packet.OriginAttr:
-			path.BGPPath.Origin = pa.Value.(uint8)
-		case packet.LocalPrefAttr:
-			path.BGPPath.LocalPref = pa.Value.(uint32)
-		case packet.MEDAttr:
-			path.BGPPath.MED = pa.Value.(uint32)
-		case packet.NextHopAttr:
-			path.BGPPath.NextHop = pa.Value.(bnet.IP)
-		case packet.ASPathAttr:
-			path.BGPPath.ASPath = pa.Value.(types.ASPath)
-			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
-		case packet.AggregatorAttr:
-			aggr := pa.Value.(types.Aggregator)
-			path.BGPPath.Aggregator = &aggr
-		case packet.AtomicAggrAttr:
-			path.BGPPath.AtomicAggregate = true
-		case packet.CommunitiesAttr:
-			path.BGPPath.Communities = pa.Value.([]uint32)
-		case packet.LargeCommunitiesAttr:
-			path.BGPPath.LargeCommunities = pa.Value.([]types.LargeCommunity)
-		case packet.OriginatorIDAttr:
-			path.BGPPath.OriginatorID = pa.Value.(uint32)
-		case packet.ClusterListAttr:
-			path.BGPPath.ClusterList = pa.Value.([]uint32)
-		default:
-			unknownAttr := s.processUnknownAttribute(pa)
-			if unknownAttr != nil {
-				path.BGPPath.UnknownAttributes = append(path.BGPPath.UnknownAttributes, *unknownAttr)
-			}
-		}
-	}
-}
-
-func (s *establishedState) processUnknownAttribute(attr *packet.PathAttribute) *types.UnknownPathAttribute {
-	if !attr.Transitive {
-		return nil
-	}
-
-	u := &types.UnknownPathAttribute{
-		Transitive: true,
-		Optional:   attr.Optional,
-		Partial:    attr.Partial,
-		TypeCode:   attr.TypeCode,
-		Value:      attr.Value.([]byte),
-	}
-
-	return u
+	return
 }
 
 func (s *establishedState) keepaliveReceived() (state, string) {

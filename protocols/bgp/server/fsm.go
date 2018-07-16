@@ -8,8 +8,6 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -60,10 +58,8 @@ type FSM struct {
 	local net.IP
 
 	ribsInitialized bool
-	adjRIBIn        routingtable.RouteTableClient
-	adjRIBOut       routingtable.RouteTableClient
-	rib             *locRIB.LocRIB
-	updateSender    *UpdateSender
+	ipv4Unicast     *fsmAddressFamily
+	ipv6Unicast     *fsmAddressFamily
 
 	neighborID uint32
 	state      state
@@ -89,7 +85,7 @@ func NewActiveFSM2(peer *peer) *FSM {
 }
 
 func newFSM2(peer *peer) *FSM {
-	return &FSM{
+	f := &FSM{
 		connectRetryTime: time.Minute,
 		peer:             peer,
 		eventCh:          make(chan int),
@@ -99,9 +95,18 @@ func newFSM2(peer *peer) *FSM {
 		msgRecvCh:        make(chan []byte),
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
-		rib:              peer.rib,
 		options:          &types.Options{},
 	}
+
+	if peer.ipv4 != nil {
+		f.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, peer.ipv4, f)
+	}
+
+	if peer.ipv6 != nil {
+		f.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, peer.ipv6, f)
+	}
+
+	return f
 }
 
 func (fsm *FSM) start() {
