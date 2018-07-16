@@ -28,7 +28,6 @@ type peer struct {
 	fsms   []*FSM
 	fsmsMu sync.Mutex
 
-	rib                  *locRIB.LocRIB
 	routerID             uint32
 	addPathSend          routingtable.ClientOptions
 	addPathRecv          bool
@@ -36,11 +35,18 @@ type peer struct {
 	keepaliveTime        time.Duration
 	holdTime             time.Duration
 	optOpenParams        []packet.OptParam
-	importFilter         *filter.Filter
-	exportFilter         *filter.Filter
 	routeServerClient    bool
 	routeReflectorClient bool
 	clusterID            uint32
+
+	ipv4 *familyParameters
+	ipv6 *familyParameters
+}
+
+type familyParameters struct {
+	rib          *locRIB.LocRIB
+	importFilter *filter.Filter
+	exportFilter *filter.Filter
 }
 
 func (p *peer) snapshot() PeerInfo {
@@ -103,36 +109,40 @@ func isEstablishedState(s state) bool {
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error) {
+func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	if c.LocalAS == 0 {
 		c.LocalAS = server.localASN
 	}
+
 	p := &peer{
 		server:               server,
 		addr:                 c.PeerAddress,
 		peerASN:              c.PeerAS,
 		localASN:             c.LocalAS,
 		fsms:                 make([]*FSM, 0),
-		rib:                  rib,
 		addPathSend:          c.AddPathSend,
 		addPathRecv:          c.AddPathRecv,
 		reconnectInterval:    c.ReconnectInterval,
 		keepaliveTime:        c.KeepAlive,
 		holdTime:             c.HoldTime,
 		optOpenParams:        make([]packet.OptParam, 0),
-		importFilter:         filterOrDefault(c.ImportFilter),
-		exportFilter:         filterOrDefault(c.ExportFilter),
 		routeServerClient:    c.RouteServerClient,
 		routeReflectorClient: c.RouteReflectorClient,
 		clusterID:            c.RouteReflectorClusterID,
+	}
+
+	if c.IPv4 != nil {
+		p.ipv4 = &familyParameters{
+			rib:          c.IPv4.RIB,
+			importFilter: filterOrDefault(c.IPv4.ImportFilter),
+			exportFilter: filterOrDefault(c.IPv4.ExportFilter),
+		}
 	}
 
 	// If we are a route reflector and no ClusterID was set, use our RouterID
 	if p.routeReflectorClient && p.clusterID == 0 {
 		p.clusterID = c.RouterID
 	}
-
-	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
 	caps := make(packet.Capabilities, 0)
 
@@ -143,7 +153,12 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 
 	caps = append(caps, asn4Capability(c))
 
-	if c.IPv6 {
+	if c.IPv6 != nil {
+		p.ipv6 = &familyParameters{
+			rib:          c.IPv6.RIB,
+			importFilter: filterOrDefault(c.IPv6.ImportFilter),
+			exportFilter: filterOrDefault(c.IPv6.ExportFilter),
+		}
 		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
 	}
 
@@ -151,6 +166,8 @@ func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error
 		Type:  packet.CapabilitiesParamType,
 		Value: caps,
 	})
+
+	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
 	return p, nil
 }

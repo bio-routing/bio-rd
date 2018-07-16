@@ -6,6 +6,7 @@ go_library(
         "fake_conn.go",
         "fsm.go",
         "fsm_active.go",
+        "fsm_address_family.go",
         "fsm_cease.go",
         "fsm_connect.go",
         "fsm_established.go",
@@ -42,7 +43,7 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
-        "fsm_established_test.go",
+        "fsm_address_family_test.go",
         "fsm_open_sent_test.go",
         "fsm_test.go",
         "server_test.go",

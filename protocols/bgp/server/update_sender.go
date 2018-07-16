@@ -16,6 +16,8 @@ import (
 type UpdateSender struct {
 	routingtable.ClientManager
 	fsm       *FSM
+	afi       uint16
+	safi      uint8
 	iBGP      bool
 	rrClient  bool
 	toSendMu  sync.Mutex
@@ -28,9 +30,11 @@ type pathPfxs struct {
 	pfxs []bnet.Prefix
 }
 
-func newUpdateSender(fsm *FSM) *UpdateSender {
+func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
 	return &UpdateSender{
 		fsm:       fsm,
+		afi:       afi,
+		safi:      safi,
 		iBGP:      fsm.peer.localASN == fsm.peer.peerASN,
 		rrClient:  fsm.peer.routeReflectorClient,
 		destroyCh: make(chan struct{}),
@@ -125,19 +129,27 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 }
 
 func (u *UpdateSender) updateOverhead() int {
-	// TODO: for multi RIB support we need the AFI/SAFI combination to determine overhead. For now: MultiProtocol = IPv6
-	if u.fsm.options.SupportsMultiProtocol {
-		// since we are replacing the next hop attribute IPv4Len has to be subtracted, we also add another byte for extended length
-		return packet.AFILen + packet.SAFILen + 1 + packet.IPv6Len - packet.IPv4Len + 1
+	if !u.fsm.options.SupportsMultiProtocol {
+		return 0
 	}
 
-	return 0
+	addrLen := packet.IPv4AFI
+	if u.afi == packet.IPv6AFI {
+		addrLen = packet.IPv6Len
+	}
+
+	// since we are replacing the next hop attribute IPv4Len has to be subtracted, we also add another byte for extended length
+	return packet.AFILen + packet.SAFILen + 1 + addrLen - packet.IPv4Len + 1
 }
 
 func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefixes [][]bnet.Prefix, pathID uint32) {
 	var err error
 	for _, prefixes := range updatePrefixes {
 		update := u.updateMessageForPrefixes(prefixes, pathAttrs, pathID)
+		if update == nil {
+			log.Errorf("Failed to create update: Neighbor does not support multi protocol.")
+			return
+		}
 
 		err = serializeAndSendUpdate(u.fsm.con, update, u.fsm.options)
 		if err != nil {
@@ -147,11 +159,15 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 }
 
 func (u *UpdateSender) updateMessageForPrefixes(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
+	if u.afi == packet.IPv4AFI && u.safi == packet.UnicastSAFI {
+		return u.bgpUpdate(pfxs, pa, pathID)
+	}
+
 	if u.fsm.options.SupportsMultiProtocol {
 		return u.bgpUpdateMultiProtocol(pfxs, pa, pathID)
 	}
 
-	return u.bgpUpdate(pfxs, pa, pathID)
+	return nil
 }
 
 func (u *UpdateSender) bgpUpdate(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
@@ -179,8 +195,8 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 	attrs := &packet.PathAttribute{
 		TypeCode: packet.MultiProtocolReachNLRICode,
 		Value: packet.MultiProtocolReachNLRI{
-			AFI:      packet.IPv6AFI,
-			SAFI:     packet.UnicastSAFI,
+			AFI:      u.afi,
+			SAFI:     u.safi,
 			NextHop:  nextHop,
 			Prefixes: pfxs,
 		},
@@ -224,7 +240,7 @@ func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 
 func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
 	if u.fsm.options.SupportsMultiProtocol {
-		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx)
+		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx, u.afi, u.safi)
 	}
 
 	return withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
