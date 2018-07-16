@@ -12,11 +12,11 @@ import (
 type mockAction struct {
 }
 
-func (*mockAction) Do(p net.Prefix, pa *route.Path) (*route.Path, bool) {
+func (*mockAction) Do(p net.Prefix, pa *route.Path) actions.Result {
 	cp := *pa
 	cp.Type = route.OSPFPathType
 
-	return &cp, false
+	return actions.Result{Path: &cp}
 }
 
 func TestProcess(t *testing.T) {
@@ -25,7 +25,7 @@ func TestProcess(t *testing.T) {
 		prefix         net.Prefix
 		path           *route.Path
 		from           []*TermCondition
-		then           []FilterAction
+		then           []Action
 		expectReject   bool
 		expectModified bool
 	}{
@@ -34,7 +34,7 @@ func TestProcess(t *testing.T) {
 			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
 			path:   &route.Path{},
 			from:   []*TermCondition{},
-			then: []FilterAction{
+			then: []Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -48,7 +48,7 @@ func TestProcess(t *testing.T) {
 				NewTermConditionWithPrefixLists(
 					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8))),
 			},
-			then: []FilterAction{
+			then: []Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -62,7 +62,7 @@ func TestProcess(t *testing.T) {
 				NewTermConditionWithPrefixLists(
 					NewPrefixList(net.NewPfx(net.IPv4(0), 32))),
 			},
-			then: []FilterAction{
+			then: []Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -76,7 +76,7 @@ func TestProcess(t *testing.T) {
 				NewTermConditionWithPrefixLists(
 					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8))),
 			},
-			then: []FilterAction{
+			then: []Action{
 				&mockAction{},
 			},
 			expectReject:   false,
@@ -90,7 +90,7 @@ func TestProcess(t *testing.T) {
 				NewTermConditionWithRouteFilters(
 					NewRouteFilter(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8), Exact())),
 			},
-			then: []FilterAction{
+			then: []Action{
 				&mockAction{},
 				&actions.AcceptAction{},
 			},
@@ -109,7 +109,7 @@ func TestProcess(t *testing.T) {
 					},
 				},
 			},
-			then: []FilterAction{
+			then: []Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -118,18 +118,18 @@ func TestProcess(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			term := NewTerm(test.from, test.then)
 
-			pa, reject := term.Process(test.prefix, test.path)
-			assert.Equal(te, test.expectReject, reject, "reject")
+			res := term.Process(test.prefix, test.path)
+			assert.Equal(t, test.expectReject, res.Reject, "reject")
 
-			if pa != test.path && !test.expectModified {
-				te.Fatal("expected path to be not modified but was")
+			if res.Path != test.path && !test.expectModified {
+				t.Fatal("expected path to be not modified but was")
 			}
 
-			if pa == test.path && test.expectModified {
-				te.Fatal("expected path to be modified but was same reference")
+			if res.Path == test.path && test.expectModified {
+				t.Fatal("expected path to be modified but was same reference")
 			}
 		})
 	}

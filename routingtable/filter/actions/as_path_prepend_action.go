@@ -17,13 +17,13 @@ func NewASPathPrependAction(asn uint32, times uint16) *ASPathPrependAction {
 	}
 }
 
-func (a *ASPathPrependAction) Do(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
+func (a *ASPathPrependAction) Do(p net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil {
-		return pa, false
+		return Result{Path: pa}
 	}
 
 	modified := pa.Copy()
 	modified.BGPPath.Prepend(a.asn, a.times)
 
-	return modified, false
+	return Result{Path: modified}
 }
