@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 )
 
