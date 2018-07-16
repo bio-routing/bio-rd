@@ -58,8 +58,8 @@ type FSM struct {
 	local net.IP
 
 	ribsInitialized bool
-	ipv4Unicast     *familyRouting
-	ipv6Unicast     *familyRouting
+	ipv4Unicast     *fsmAddressFamily
+	ipv6Unicast     *fsmAddressFamily
 
 	neighborID uint32
 	state      state
@@ -99,11 +99,11 @@ func newFSM2(peer *peer) *FSM {
 	}
 
 	if peer.ipv4 != nil {
-		f.ipv4Unicast = newFamilyRouting(packet.IPv4AFI, packet.UnicastSAFI, peer.ipv4, f)
+		f.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, peer.ipv4, f)
 	}
 
 	if peer.ipv6 != nil {
-		f.ipv6Unicast = newFamilyRouting(packet.IPv6AFI, packet.UnicastSAFI, peer.ipv6, f)
+		f.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, peer.ipv6, f)
 	}
 
 	return f

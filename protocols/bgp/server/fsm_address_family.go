@@ -14,8 +14,8 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
-// familyRouting holds RIBs and the UpdateSender of an peer for an AFI/SAFI combination
-type familyRouting struct {
+// fsmAddressFamily holds RIBs and the UpdateSender of an peer for an AFI/SAFI combination
+type fsmAddressFamily struct {
 	afi  uint16
 	safi uint8
 	fsm  *FSM
@@ -32,8 +32,8 @@ type familyRouting struct {
 	initialized bool
 }
 
-func newFamilyRouting(afi uint16, safi uint8, params *familyParameters, fsm *FSM) *familyRouting {
-	return &familyRouting{
+func newFSMAddressFamily(afi uint16, safi uint8, params *familyParameters, fsm *FSM) *fsmAddressFamily {
+	return &fsmAddressFamily{
 		afi:          afi,
 		safi:         safi,
 		fsm:          fsm,
@@ -43,7 +43,7 @@ func newFamilyRouting(afi uint16, safi uint8, params *familyParameters, fsm *FSM
 	}
 }
 
-func (f *familyRouting) init(n *routingtable.Neighbor) {
+func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs := f.rib.GetContributingASNs()
 
 	f.adjRIBIn = adjRIBIn.New(f.importFilter, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID)
@@ -65,7 +65,7 @@ func (f *familyRouting) init(n *routingtable.Neighbor) {
 	f.rib.RegisterWithOptions(f.adjRIBOut, clientOptions)
 }
 
-func (f *familyRouting) dispose() {
+func (f *fsmAddressFamily) dispose() {
 	if !f.initialized {
 		return
 	}
@@ -82,7 +82,7 @@ func (f *familyRouting) dispose() {
 	f.initialized = false
 }
 
-func (f *familyRouting) processUpdate(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
 	if f.afi == packet.IPv4AFI && f.safi == packet.UnicastSAFI {
 		f.withdraws(u)
 		f.updates(u)
@@ -93,14 +93,14 @@ func (f *familyRouting) processUpdate(u *packet.BGPUpdate) {
 	}
 }
 
-func (f *familyRouting) withdraws(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
 		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
 		f.adjRIBIn.RemovePath(pfx, nil)
 	}
 }
 
-func (f *familyRouting) updates(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
 		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
 
@@ -111,7 +111,7 @@ func (f *familyRouting) updates(u *packet.BGPUpdate) {
 	}
 }
 
-func (f *familyRouting) multiProtocolUpdates(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate) {
 	if !f.fsm.options.SupportsMultiProtocol {
 		return
 	}
@@ -129,7 +129,7 @@ func (f *familyRouting) multiProtocolUpdates(u *packet.BGPUpdate) {
 	}
 }
 
-func (f *familyRouting) newRoutePath() *route.Path {
+func (f *fsmAddressFamily) newRoutePath() *route.Path {
 	return &route.Path{
 		Type: route.BGPPathType,
 		BGPPath: &route.BGPPath{
@@ -139,7 +139,7 @@ func (f *familyRouting) newRoutePath() *route.Path {
 	}
 }
 
-func (f *familyRouting) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) {
+func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) {
 	path.BGPPath.NextHop = nlri.NextHop
 
 	for _, pfx := range nlri.Prefixes {
@@ -147,13 +147,13 @@ func (f *familyRouting) multiProtocolUpdate(path *route.Path, nlri packet.MultiP
 	}
 }
 
-func (f *familyRouting) multiProtocolWithdraw(path *route.Path, nlri packet.MultiProtocolUnreachNLRI) {
+func (f *fsmAddressFamily) multiProtocolWithdraw(path *route.Path, nlri packet.MultiProtocolUnreachNLRI) {
 	for _, pfx := range nlri.Prefixes {
 		f.adjRIBIn.RemovePath(pfx, path)
 	}
 }
 
-func (f *familyRouting) processAttributes(attrs *packet.PathAttribute, path *route.Path) {
+func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *route.Path) {
 	for pa := attrs; pa != nil; pa = pa.Next {
 		switch pa.TypeCode {
 		case packet.OriginAttr:
@@ -189,7 +189,7 @@ func (f *familyRouting) processAttributes(attrs *packet.PathAttribute, path *rou
 	}
 }
 
-func (f *familyRouting) processUnknownAttribute(attr *packet.PathAttribute) *types.UnknownPathAttribute {
+func (f *fsmAddressFamily) processUnknownAttribute(attr *packet.PathAttribute) *types.UnknownPathAttribute {
 	if !attr.Transitive {
 		return nil
 	}

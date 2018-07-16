@@ -874,13 +874,13 @@ func TestSender(t *testing.T) {
 		rib := locRIB.New()
 		if test.afi == packet.IPv6AFI {
 			fsmA.options.SupportsMultiProtocol = true
-			fsmA.ipv6Unicast = newFamilyRouting(packet.IPv6AFI, packet.UnicastSAFI, &familyParameters{
+			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &familyParameters{
 				rib:          rib,
 				importFilter: filter.NewAcceptAllFilter(),
 				exportFilter: filter.NewAcceptAllFilter(),
 			}, fsmA)
 		} else {
-			fsmA.ipv4Unicast = newFamilyRouting(packet.IPv4AFI, packet.UnicastSAFI, &familyParameters{
+			fsmA.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &familyParameters{
 				rib:          rib,
 				importFilter: filter.NewAcceptAllFilter(),
 				exportFilter: filter.NewAcceptAllFilter(),

@@ -43,7 +43,7 @@ func TestProcessAttributes(t *testing.T) {
 		Next: unknown1,
 	}
 
-	f := &familyRouting{}
+	f := &fsmAddressFamily{}
 
 	p := &route.Path{
 		BGPPath: &route.BGPPath{},
