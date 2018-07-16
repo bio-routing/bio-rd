@@ -26,7 +26,7 @@ type bgpServer struct {
 type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
-	AddPeer(config.Peer, *locRIB.LocRIB) error
+	AddPeer(config.Peer) error
 	GetPeerInfoAll() map[string]PeerInfo
 }
 
@@ -110,8 +110,8 @@ func (b *bgpServer) incomingConnectionWorker() {
 	}
 }
 
-func (b *bgpServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
-	peer, err := newPeer(c, rib, b)
+func (b *bgpServer) AddPeer(c config.Peer) error {
+	peer, err := newPeer(c, b)
 	if err != nil {
 		return err
 	}

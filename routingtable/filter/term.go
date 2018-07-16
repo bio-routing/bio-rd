@@ -5,18 +5,20 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 )
 
-type FilterAction interface {
-	Do(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool)
-}
-
 // Term matches a path against a list of conditions and performs actions if it matches
 type Term struct {
 	from []*TermCondition
-	then []FilterAction
+	then []Action
+}
+
+type TermResult struct {
+	Path      *route.Path
+	Terminate bool
+	Reject    bool
 }
 
 // NewTerm creates a new term
-func NewTerm(from []*TermCondition, then []FilterAction) *Term {
+func NewTerm(from []*TermCondition, then []Action) *Term {
 	t := &Term{
 		from: from,
 		then: then,
@@ -26,7 +28,7 @@ func NewTerm(from []*TermCondition, then []FilterAction) *Term {
 }
 
 // Process processes a path returning if the path should be rejected and returns a possible modified version of the path
-func (t *Term) Process(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
+func (t *Term) Process(p net.Prefix, pa *route.Path) TermResult {
 	orig := pa
 
 	if len(t.from) == 0 {
@@ -39,18 +41,23 @@ func (t *Term) Process(p net.Prefix, pa *route.Path) (modPath *route.Path, rejec
 		}
 	}
 
-	return orig, false
+	return TermResult{Path: orig}
 }
 
-func (t *Term) processActions(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
-	modPath = pa
+func (t *Term) processActions(p net.Prefix, pa *route.Path) TermResult {
+	modPath := pa
 
 	for _, action := range t.then {
-		modPath, reject = action.Do(p, modPath)
-		if reject {
-			continue
+		res := action.Do(p, modPath)
+		if res.Terminate {
+			return TermResult{
+				Path:      modPath,
+				Terminate: true,
+				Reject:    res.Reject,
+			}
 		}
+		modPath = res.Path
 	}
 
-	return modPath, reject
+	return TermResult{Path: modPath}
 }

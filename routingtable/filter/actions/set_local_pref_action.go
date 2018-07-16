@@ -15,13 +15,13 @@ func NewSetLocalPrefAction(pref uint32) *SetLocalPrefAction {
 	}
 }
 
-func (a *SetLocalPrefAction) Do(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
+func (a *SetLocalPrefAction) Do(p net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil {
-		return pa, false
+		return Result{Path: pa}
 	}
 
 	modified := *pa
 	modified.BGPPath.LocalPref = a.pref
 
-	return &modified, false
+	return Result{Path: &modified}
 }
