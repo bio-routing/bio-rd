@@ -186,7 +186,7 @@ func (fsm *FSM) cease() {
 	fsm.eventCh <- Cease
 }
 
-func (fsm *FSM) tcpConnector(ctx context.Context) error {
+func (fsm *FSM) tcpConnector(ctx context.Context) {
 	for {
 		select {
 		case <-fsm.initiateCon:
@@ -207,7 +207,7 @@ func (fsm *FSM) tcpConnector(ctx context.Context) error {
 				c.Close()
 				continue
 			case <-ctx.Done():
-				return nil
+				return
 			}
 		}
 	}
