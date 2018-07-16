@@ -10,7 +10,7 @@ func NewAcceptAllFilter() *Filter {
 		[]*Term{
 			NewTerm(
 				[]*TermCondition{},
-				[]FilterAction{
+				[]Action{
 					&actions.AcceptAction{},
 				}),
 		})
@@ -22,7 +22,7 @@ func NewDrainFilter() *Filter {
 		[]*Term{
 			NewTerm(
 				[]*TermCondition{},
-				[]FilterAction{
+				[]Action{
 					&actions.RejectAction{},
 				}),
 		})

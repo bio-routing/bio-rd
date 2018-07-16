@@ -31,12 +31,12 @@ func TestSetNextHopTest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			a := NewSetNextHopAction(bnet.IPv4FromOctets(100, 64, 2, 1))
-			p, _ := a.Do(net.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+			res := a.Do(net.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 
 			if test.bgpPath != nil {
-				assert.Equal(t, test.expected, p.BGPPath.NextHop)
+				assert.Equal(t, test.expected, res.Path.BGPPath.NextHop)
 			}
 		})
 	}
