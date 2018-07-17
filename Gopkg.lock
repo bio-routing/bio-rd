@@ -2,10 +2,29 @@
 
 
 [[projects]]
+  branch = "parse-constraints-with-dash-in-pre"
+  name = "github.com/Masterminds/semver"
+  packages = ["."]
+  revision = "a93e51b5a57ef416dac8bb02d11407b6f55d8929"
+  source = "https://github.com/carolynvs/semver.git"
+
+[[projects]]
+  name = "github.com/Masterminds/vcs"
+  packages = ["."]
+  revision = "6f1c6d150500e452704e9863f68c2559f58616bf"
+  version = "v1.12.0"
+
+[[projects]]
   branch = "master"
-  name = "github.com/bio-routing/bio-rd"
-  packages = ["config","net","protocols/bgp/packet","protocols/bgp/server","rt"]
-  revision = "cde9a80f20bf6a6c4b4f810337d9308e42e11e3d"
+  name = "github.com/armon/go-radix"
+  packages = ["."]
+  revision = "1fca145dffbcaa8fe914309b1ec0cfc67500fe61"
+
+[[projects]]
+  name = "github.com/boltdb/bolt"
+  packages = ["."]
+  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
+  version = "v1.3.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -14,10 +33,71 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/go-yaml/yaml"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
+
+[[projects]]
+  name = "github.com/golang/dep"
+  packages = [
+    ".",
+    "gps",
+    "gps/internal/pb",
+    "gps/paths",
+    "gps/pkgtree",
+    "internal/fs",
+  ]
+  revision = "37d9ea0ac16f0e0a05afc3b60e1ac8c364b6c329"
+  version = "v0.4.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  revision = "9eb2c01ac278a5d89ce4b2be68fe4500955d8179"
+
+[[projects]]
+  name = "github.com/jmank88/nuts"
+  packages = ["."]
+  revision = "8b28145dffc87104e66d074f62ea8080edfad7c8"
+  version = "v0.3.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nightlyone/lockfile"
+  packages = ["."]
+  revision = "0ad87eef1443f64d3d8c50da647e2b1552851124"
+
+[[projects]]
+  name = "github.com/pelletier/go-toml"
+  packages = ["."]
+  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
+  version = "v1.2.0"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/q3k/goveralls"
+  packages = ["."]
+  revision = "789b29cb81d4de953738cec0fbaefa8af2ff4ea2"
+  version = "v0.1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/sdboyer/constext"
+  packages = ["."]
+  revision = "836a144573533ea4da4e6929c235fd348aed1c80"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -47,23 +127,32 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
+  revision = "afe8f62b1d6bbd81f31868121a50b06d8188e1f9"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   revision = "bb9c189858d91f42db229b04d45a4c3d23a7662a"
 
 [[projects]]
-  branch = "v2"
-  name = "gopkg.in/tomb.v2"
-  packages = ["."]
-  revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
+  branch = "master"
+  name = "golang.org/x/tools"
+  packages = ["cover"]
+  revision = "25b95b48224cce18163c7d49dcfb89a2d5ecd209"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "57d99764685b75e316ae1a1245ae53ad0f5ca7d60f1eee63102c3759e188d0fd"
+  inputs-digest = "8d26786e7bd681598d376675bc030c802da70ac1e285fe39220d11970e1036c4"
   solver-name = "gps-cdcl"
   solver-version = 1

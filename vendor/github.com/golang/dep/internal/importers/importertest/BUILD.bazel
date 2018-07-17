@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "testcase.go",
+        "testdata.go",
+    ],
+    importmap = "vendor/github.com/golang/dep/internal/importers/importertest",
+    importpath = "github.com/golang/dep/internal/importers/importertest",
+    visibility = ["//vendor/github.com/golang/dep:__subpackages__"],
+    deps = [
+        "//vendor/github.com/golang/dep:go_default_library",
+        "//vendor/github.com/golang/dep/gps:go_default_library",
+        "//vendor/github.com/golang/dep/internal/test:go_default_library",
+        "//vendor/github.com/pkg/errors:go_default_library",
+    ],
+)

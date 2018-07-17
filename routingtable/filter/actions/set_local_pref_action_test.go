@@ -3,7 +3,7 @@ package actions
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/net"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,20 +27,15 @@ func TestSetLocalPref(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			a := NewSetLocalPrefAction(150)
-			p, _ := a.Do(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+			res := a.Do(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 
 			if test.expectedLocalPref > 0 {
-				assert.Equal(te, test.expectedLocalPref, p.BGPPath.LocalPref)
+				assert.Equal(t, test.expectedLocalPref, res.Path.BGPPath.LocalPref)
 			}
 		})
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := net.StrToAddr(s)
-	return ret
 }
