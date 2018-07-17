@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+	"io"
 	"sync"
 	"time"
 
@@ -245,11 +247,86 @@ func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 
 func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
 	if u.fsm.options.SupportsMultiProtocol {
-		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx, p, u.afi, u.safi)
-
+		return u.withDrawPrefixesMultiProtocol(u.fsm.con, pfx, p)
 	}
 
-	return withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
+	return u.withDrawPrefixesAddPath(u.fsm.con, pfx, p)
+}
+
+// withDrawPrefixes generates a BGPUpdate message and write it to the given
+// io.Writer.
+func (u *UpdateSender) withDrawPrefixes(out io.Writer, prefixes ...bnet.Prefix) error {
+	if len(prefixes) < 1 {
+		return nil
+	}
+
+	var rootNLRI *packet.NLRI
+	var currentNLRI *packet.NLRI
+	for _, pfx := range prefixes {
+		if rootNLRI == nil {
+			rootNLRI = &packet.NLRI{
+				IP:     pfx.Addr().ToUint32(),
+				Pfxlen: pfx.Pfxlen(),
+			}
+			currentNLRI = rootNLRI
+		} else {
+			currentNLRI.Next = &packet.NLRI{
+				IP:     pfx.Addr().ToUint32(),
+				Pfxlen: pfx.Pfxlen(),
+			}
+			currentNLRI = currentNLRI.Next
+		}
+	}
+
+	update := &packet.BGPUpdate{
+		WithdrawnRoutes: rootNLRI,
+	}
+
+	return serializeAndSendUpdate(out, update, u.fsm.options)
+
+}
+
+// withDrawPrefixesAddPath generates a BGPUpdateAddPath message and write it to the given
+// io.Writer.
+func (u *UpdateSender) withDrawPrefixesAddPath(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+	if p.Type != route.BGPPathType {
+		return errors.New("wrong path type, expected BGPPathType")
+	}
+
+	if p.BGPPath == nil {
+		return errors.New("got nil BGPPath")
+	}
+
+	update := &packet.BGPUpdate{
+		WithdrawnRoutes: &packet.NLRI{
+			PathIdentifier: p.BGPPath.PathIdentifier,
+			IP:             pfx.Addr().ToUint32(),
+			Pfxlen:         pfx.Pfxlen(),
+		},
+	}
+
+	return serializeAndSendUpdate(out, update, u.fsm.options)
+}
+
+func (u *UpdateSender) withDrawPrefixesMultiProtocol(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+	pathID := uint32(0)
+	if p.BGPPath != nil {
+		pathID = p.BGPPath.PathIdentifier
+	}
+
+	update := &packet.BGPUpdate{
+		PathAttributes: &packet.PathAttribute{
+			TypeCode: packet.MultiProtocolUnreachNLRICode,
+			Value: packet.MultiProtocolUnreachNLRI{
+				AFI:      u.afi,
+				SAFI:     u.safi,
+				Prefixes: []bnet.Prefix{pfx},
+				PathID:   pathID,
+			},
+		},
+	}
+
+	return serializeAndSendUpdate(out, update, u.fsm.options)
 }
 
 // UpdateNewClient does nothing
