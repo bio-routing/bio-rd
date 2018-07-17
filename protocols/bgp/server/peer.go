@@ -29,8 +29,6 @@ type peer struct {
 	fsmsMu sync.Mutex
 
 	routerID             uint32
-	addPathSend          routingtable.ClientOptions
-	addPathRecv          bool
 	reconnectInterval    time.Duration
 	keepaliveTime        time.Duration
 	holdTime             time.Duration
@@ -44,9 +42,13 @@ type peer struct {
 }
 
 type familyParameters struct {
-	rib          *locRIB.LocRIB
+	rib *locRIB.LocRIB
+
 	importFilter *filter.Filter
 	exportFilter *filter.Filter
+
+	addPathSend routingtable.ClientOptions
+	addPathRecv bool
 }
 
 func (p *peer) snapshot() PeerInfo {
@@ -120,8 +122,6 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 		peerASN:              c.PeerAS,
 		localASN:             c.LocalAS,
 		fsms:                 make([]*FSM, 0),
-		addPathSend:          c.AddPathSend,
-		addPathRecv:          c.AddPathRecv,
 		reconnectInterval:    c.ReconnectInterval,
 		keepaliveTime:        c.KeepAlive,
 		holdTime:             c.HoldTime,
@@ -136,6 +136,8 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 			rib:          c.IPv4.RIB,
 			importFilter: filterOrDefault(c.IPv4.ImportFilter),
 			exportFilter: filterOrDefault(c.IPv4.ExportFilter),
+			addPathRecv:  c.IPv4.AddPathRecv,
+			addPathSend:  c.IPv4.AddPathSend,
 		}
 	}
 
@@ -155,6 +157,8 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 			rib:          c.IPv6.RIB,
 			importFilter: filterOrDefault(c.IPv6.ImportFilter),
 			exportFilter: filterOrDefault(c.IPv6.ExportFilter),
+			addPathRecv:  c.IPv6.AddPathRecv,
+			addPathSend:  c.IPv6.AddPathSend,
 		}
 		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
 	}
