@@ -38,13 +38,13 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		AddPathSend: routingtable.ClientOptions{
-			BestOnly: true,
-		},
 		IPv6: &config.AddressFamilyConfig{
 			RIB:          rib,
 			ImportFilter: filter.NewAcceptAllFilter(),
 			ExportFilter: filter.NewDrainFilter(),
+			AddPathSend: routingtable.ClientOptions{
+				BestOnly: true,
+			},
 		},
 	})
 
@@ -59,13 +59,13 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		AddPathSend: routingtable.ClientOptions{
-			BestOnly: true,
-		},
 		IPv6: &config.AddressFamilyConfig{
 			RIB:          rib,
 			ImportFilter: filter.NewDrainFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
+			AddPathSend: routingtable.ClientOptions{
+				BestOnly: true,
+			},
 		},
 	})
 }
