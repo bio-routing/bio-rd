@@ -195,39 +195,44 @@ func multiProtocolCapability(afi uint16) packet.Capability {
 func addPathCapabilities(c config.Peer) []packet.Capability {
 	caps := make([]packet.Capability, 0)
 
+	enabled, cap := addPathCapabilityForFamily(c.IPv4, packet.IPv4AFI, packet.UnicastSAFI)
+	if enabled {
+		caps = append(caps, cap)
+	}
+
+	enabled, cap = addPathCapabilityForFamily(c.IPv6, packet.IPv6AFI, packet.UnicastSAFI)
+	if enabled {
+		caps = append(caps, cap)
+	}
+
+	return caps
+}
+
+func addPathCapabilityForFamily(f *config.AddressFamilyConfig, afi uint16, safi uint8) (enabled bool, cap packet.Capability) {
+	if f == nil {
+		return false, packet.Capability{}
+	}
+
 	addPath := uint8(0)
-	if c.AddPathRecv {
+	if f.AddPathRecv {
 		addPath += packet.AddPathReceive
 	}
-	if !c.AddPathSend.BestOnly {
+	if !f.AddPathSend.BestOnly {
 		addPath += packet.AddPathSend
 	}
 
 	if addPath == 0 {
-		return caps
+		return false, packet.Capability{}
 	}
 
-	caps = append(caps, packet.Capability{
+	return true, packet.Capability{
 		Code: packet.AddPathCapabilityCode,
 		Value: packet.AddPathCapability{
-			AFI:         packet.IPv4AFI,
-			SAFI:        packet.UnicastSAFI,
+			AFI:         afi,
+			SAFI:        safi,
 			SendReceive: addPath,
 		},
-	})
-
-	if c.IPv6 != nil {
-		caps = append(caps, packet.Capability{
-			Code: packet.AddPathCapabilityCode,
-			Value: packet.AddPathCapability{
-				AFI:         packet.IPv6AFI,
-				SAFI:        packet.UnicastSAFI,
-				SendReceive: addPath,
-			},
-		})
 	}
-
-	return caps
 }
 
 func filterOrDefault(f *filter.Filter) *filter.Filter {
