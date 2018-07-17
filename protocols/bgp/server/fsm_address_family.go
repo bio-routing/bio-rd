@@ -29,6 +29,9 @@ type fsmAddressFamily struct {
 
 	updateSender *UpdateSender
 
+	addPathSend routingtable.ClientOptions
+	addPathRecv bool
+
 	initialized bool
 }
 
@@ -40,6 +43,8 @@ func newFSMAddressFamily(afi uint16, safi uint8, params *familyParameters, fsm *
 		rib:          params.rib,
 		importFilter: params.importFilter,
 		exportFilter: params.exportFilter,
+		addPathRecv:  params.addPathRecv,
+		addPathSend:  params.addPathSend,
 	}
 }
 
@@ -51,17 +56,18 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	f.adjRIBIn.Register(f.rib)
 
 	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter)
-	clientOptions := routingtable.ClientOptions{
-		BestOnly: true,
-	}
-	if f.fsm.options.AddPathRX {
-		clientOptions = f.fsm.peer.addPathSend
-	}
 
 	f.updateSender = newUpdateSender(f.fsm, f.afi, f.safi)
 	f.updateSender.Start(time.Millisecond * 5)
 
 	f.adjRIBOut.Register(f.updateSender)
+
+	clientOptions := routingtable.ClientOptions{
+		BestOnly: true,
+	}
+	if f.fsm.options.AddPathRX {
+		clientOptions = f.addPathSend
+	}
 	f.rib.RegisterWithOptions(f.adjRIBOut, clientOptions)
 }
 
