@@ -113,6 +113,21 @@ func newFSM2(peer *peer) *FSM {
 	return f
 }
 
+func (fsm *FSM) addressFamily(afi uint16, safi uint8) *fsmAddressFamily {
+	if safi != packet.UnicastSAFI {
+		return nil
+	}
+
+	switch afi {
+	case packet.IPv4AFI:
+		return fsm.ipv4Unicast
+	case packet.IPv6AFI:
+		return fsm.ipv6Unicast
+	default:
+		return nil
+	}
+}
+
 func (fsm *FSM) start() {
 	ctx, cancel := context.WithCancel(context.Background())
 	fsm.connectionCancelFunc = cancel

@@ -38,13 +38,13 @@ func TestBgpServerPeerSnapshot(t *testing.T) {
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          s.RouterID(),
-		AddPathSend: routingtable.ClientOptions{
-			MaxPaths: 10,
-		},
 		IPv4: &config.AddressFamilyConfig{
 			RIB:          rib,
 			ImportFilter: filter.NewDrainFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
+			AddPathSend: routingtable.ClientOptions{
+				MaxPaths: 10,
+			},
 		},
 	}
 	s.AddPeer(pc)
