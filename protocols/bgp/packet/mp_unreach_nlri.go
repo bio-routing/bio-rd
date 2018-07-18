@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -17,12 +16,12 @@ type MultiProtocolUnreachNLRI struct {
 	PathID   uint32
 }
 
-func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer, opt *types.Options) uint16 {
+func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	tempBuf := bytes.NewBuffer(nil)
 	tempBuf.Write(convert.Uint16Byte(n.AFI))
 	tempBuf.WriteByte(n.SAFI)
 	for _, pfx := range n.Prefixes {
-		if opt.AddPathRX {
+		if opt.UseAddPath {
 			tempBuf.Write(convert.Uint32Byte(n.PathID))
 		}
 		tempBuf.Write(serializePrefix(pfx))

@@ -21,7 +21,6 @@ go_library(
         "update_helper.go",
         "update_sender.go",
         "util.go",
-        "withdraw.go",
     ],
     importpath = "github.com/bio-routing/bio-rd/protocols/bgp/server",
     visibility = ["//visibility:public"],
@@ -49,7 +48,6 @@ go_test(
         "server_test.go",
         "update_helper_test.go",
         "update_sender_test.go",
-        "withdraw_test.go",
     ],
     embed = [":go_default_library"],
     deps = [

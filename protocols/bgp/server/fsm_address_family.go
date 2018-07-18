@@ -31,6 +31,7 @@ type fsmAddressFamily struct {
 
 	addPathSend routingtable.ClientOptions
 	addPathRecv bool
+	addPathRX   bool
 
 	initialized bool
 }
@@ -65,7 +66,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
 	}
-	if f.fsm.options.AddPathRX {
+	if f.addPathRX {
 		clientOptions = f.addPathSend
 	}
 	f.rib.RegisterWithOptions(f.adjRIBOut, clientOptions)

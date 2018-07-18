@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
@@ -881,12 +880,14 @@ func TestSender(t *testing.T) {
 				importFilter: filter.NewAcceptAllFilter(),
 				exportFilter: filter.NewAcceptAllFilter(),
 			}, fsmA)
+			fsmA.ipv6Unicast.addPathRX = test.addPath
 		} else {
 			fsmA.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &familyParameters{
 				rib:          rib,
 				importFilter: filter.NewAcceptAllFilter(),
 				exportFilter: filter.NewAcceptAllFilter(),
 			}, fsmA)
+			fsmA.ipv4Unicast.addPathRX = test.addPath
 		}
 
 		fsmA.holdTimer = time.NewTimer(time.Second * 90)
@@ -894,12 +895,6 @@ func TestSender(t *testing.T) {
 		fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
 		fsmA.state = newEstablishedState(fsmA)
 		fsmA.con = btest.NewMockConn()
-
-		if test.addPath {
-			fsmA.options = &types.Options{
-				AddPathRX: true,
-			}
-		}
 
 		updateSender := newUpdateSender(fsmA, test.afi, packet.UnicastSAFI)
 
@@ -990,11 +985,10 @@ func TestWithDrawPrefixes(t *testing.T) {
 		buf := bytes.NewBuffer([]byte{})
 
 		u := &UpdateSender{
-			fsm: &FSM{
-				options: &types.Options{},
-			},
-			afi:  packet.IPv6AFI,
-			safi: packet.UnicastSAFI,
+			fsm:     &FSM{},
+			afi:     packet.IPv6AFI,
+			safi:    packet.UnicastSAFI,
+			options: &packet.EncodeOptions{},
 		}
 
 		err := u.withDrawPrefixes(buf, tc.Prefix...)
@@ -1033,13 +1027,11 @@ func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
 
 			u := &UpdateSender{
 				fsm: &FSM{
-					options: &types.Options{
-						AddPathRX: false,
-					},
 					supportsMultiProtocol: true,
 				},
-				afi:  packet.IPv6AFI,
-				safi: packet.UnicastSAFI,
+				afi:     packet.IPv6AFI,
+				safi:    packet.UnicastSAFI,
+				options: &packet.EncodeOptions{},
 			}
 
 			err := u.withDrawPrefixesMultiProtocol(buf, test.Prefix, &route.Path{})
@@ -1104,10 +1096,9 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 		buf := bytes.NewBuffer([]byte{})
 
 		u := &UpdateSender{
-			fsm: &FSM{
-				options: &types.Options{
-					AddPathRX: true,
-				},
+			fsm: &FSM{},
+			options: &packet.EncodeOptions{
+				UseAddPath: true,
 			},
 		}
 

@@ -74,7 +74,7 @@ func BenchmarkDecodeUpdateMsg(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		buf := bytes.NewBuffer(input)
-		_, err := decodeUpdateMsg(buf, uint16(len(input)), &types.Options{})
+		_, err := decodeUpdateMsg(buf, uint16(len(input)), &DecodeOptions{})
 		if err != nil {
 			fmt.Printf("decodeUpdateMsg failed: %v\n", err)
 		}
@@ -255,7 +255,7 @@ func TestDecode(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		msg, err := Decode(buf, &types.Options{})
+		msg, err := Decode(buf, &DecodeOptions{})
 
 		if err != nil && !test.wantFail {
 			t.Errorf("Unexpected error in test %d: %v", test.testNum, err)
@@ -1369,7 +1369,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			if l == 0 {
 				l = uint16(len(test.input))
 			}
-			msg, err := decodeUpdateMsg(buf, l, &types.Options{})
+			msg, err := decodeUpdateMsg(buf, l, &DecodeOptions{})
 
 			if err != nil && !test.wantFail {
 				t.Fatalf("Unexpected error in test %d: %v", test.testNum, err)
@@ -1405,7 +1405,7 @@ func TestDecodeMsgBody(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodeMsgBody(test.buffer, test.msgType, test.length, &types.Options{})
+		res, err := decodeMsgBody(test.buffer, test.msgType, test.length, &DecodeOptions{})
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error dit not happen in test %q", test.name)
 		}

@@ -7,7 +7,6 @@ import (
 	"github.com/taktv6/tflow2/convert"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 )
 
 // MultiProtocolReachNLRI represents network layer reachability information for one prefix of an IP address family (rfc4760)
@@ -19,7 +18,7 @@ type MultiProtocolReachNLRI struct {
 	PathID   uint32
 }
 
-func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *types.Options) uint16 {
+func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	nextHop := n.NextHop.Bytes()
 
 	tempBuf := bytes.NewBuffer(nil)
@@ -29,7 +28,7 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *types.Options
 	tempBuf.Write(nextHop)
 	tempBuf.WriteByte(0) // RESERVED
 	for _, pfx := range n.Prefixes {
-		if opt.AddPathRX {
+		if opt.UseAddPath {
 			tempBuf.Write(convert.Uint32Byte(n.PathID))
 		}
 		tempBuf.Write(serializePrefix(pfx))

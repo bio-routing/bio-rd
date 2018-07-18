@@ -52,7 +52,7 @@ func TestDecodePathAttrs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &types.Options{})
+		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &DecodeOptions{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -249,7 +249,7 @@ func TestDecodePathAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &types.Options{})
+		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &DecodeOptions{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -1516,8 +1516,8 @@ func TestSerializeASPath(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := bytes.NewBuffer(nil)
-			opt := &types.Options{
-				Supports4OctetASN: test.use32BitASN,
+			opt := &EncodeOptions{
+				Use32BitASN: test.use32BitASN,
 			}
 			n := test.input.serializeASPath(buf, opt)
 			if n != test.expectedLen {
@@ -2020,10 +2020,7 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		opt := &types.Options{
-			AddPathRX: false,
-		}
-		res, err := test.msg.SerializeUpdate(opt)
+		res, err := test.msg.SerializeUpdate(&EncodeOptions{})
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -2233,8 +2230,8 @@ func TestSerializeAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		opt := &types.Options{
-			AddPathRX: true,
+		opt := &EncodeOptions{
+			UseAddPath: true,
 		}
 		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {

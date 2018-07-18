@@ -20,6 +20,7 @@ type UpdateSender struct {
 	fsm       *FSM
 	afi       uint16
 	safi      uint8
+	options   *packet.EncodeOptions
 	iBGP      bool
 	rrClient  bool
 	toSendMu  sync.Mutex
@@ -33,6 +34,8 @@ type pathPfxs struct {
 }
 
 func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
+	f := fsm.addressFamily(afi, safi)
+
 	return &UpdateSender{
 		fsm:       fsm,
 		afi:       afi,
@@ -41,6 +44,10 @@ func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
 		rrClient:  fsm.peer.routeReflectorClient,
 		destroyCh: make(chan struct{}),
 		toSend:    make(map[string]*pathPfxs),
+		options: &packet.EncodeOptions{
+			Use32BitASN: fsm.supports4OctetASN,
+			UseAddPath:  f.addPathRX,
+		},
 	}
 }
 
@@ -108,7 +115,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 			for _, pfx := range pathNLRIs.pfxs {
 				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
 
-				if u.fsm.options.AddPathRX {
+				if u.options.UseAddPath {
 					budget -= 4
 				}
 
@@ -157,7 +164,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 			return
 		}
 
-		err = serializeAndSendUpdate(u.fsm.con, update, u.fsm.options)
+		err = serializeAndSendUpdate(u.fsm.con, update, u.options)
 		if err != nil {
 			log.Errorf("Failed to serialize and send: %v", err)
 		}
@@ -282,7 +289,7 @@ func (u *UpdateSender) withDrawPrefixes(out io.Writer, prefixes ...bnet.Prefix) 
 		WithdrawnRoutes: rootNLRI,
 	}
 
-	return serializeAndSendUpdate(out, update, u.fsm.options)
+	return serializeAndSendUpdate(out, update, u.options)
 
 }
 
@@ -305,7 +312,7 @@ func (u *UpdateSender) withDrawPrefixesAddPath(out io.Writer, pfx bnet.Prefix, p
 		},
 	}
 
-	return serializeAndSendUpdate(out, update, u.fsm.options)
+	return serializeAndSendUpdate(out, update, u.options)
 }
 
 func (u *UpdateSender) withDrawPrefixesMultiProtocol(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
@@ -326,7 +333,7 @@ func (u *UpdateSender) withDrawPrefixesMultiProtocol(out io.Writer, pfx bnet.Pre
 		},
 	}
 
-	return serializeAndSendUpdate(out, update, u.fsm.options)
+	return serializeAndSendUpdate(out, update, u.options)
 }
 
 // UpdateNewClient does nothing

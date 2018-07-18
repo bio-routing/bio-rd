@@ -11,7 +11,7 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
-func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *types.Options) (*PathAttribute, error) {
+func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathAttribute, error) {
 	var ret *PathAttribute
 	var eol *PathAttribute
 	var pa *PathAttribute
@@ -38,7 +38,7 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *types.Options) (*PathA
 	return ret, nil
 }
 
-func decodePathAttr(buf *bytes.Buffer, opt *types.Options) (pa *PathAttribute, consumed uint16, err error) {
+func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, consumed uint16, err error) {
 	pa = &PathAttribute{}
 
 	err = decodePathAttrFlags(buf, pa)
@@ -66,7 +66,7 @@ func decodePathAttr(buf *bytes.Buffer, opt *types.Options) (pa *PathAttribute, c
 		}
 	case ASPathAttr:
 		asnLength := uint8(2)
-		if opt.Supports4OctetASN {
+		if opt.Use32BitASN {
 			asnLength = 4
 		}
 
@@ -445,7 +445,7 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 }
 
 // Serialize serializes a path attribute
-func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *types.Options) uint16 {
+func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	pathAttrLen := uint16(0)
 
 	switch pa.TypeCode {
@@ -493,16 +493,11 @@ func (pa *PathAttribute) serializeOrigin(buf *bytes.Buffer) uint8 {
 	return 4
 }
 
-func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *types.Options) uint8 {
+func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *EncodeOptions) uint8 {
 	attrFlags := uint8(0)
 	attrFlags = setTransitive(attrFlags)
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(ASPathAttr)
-
-	asnLength := uint8(2)
-	if opt.Supports4OctetASN {
-		asnLength = 4
-	}
 
 	length := uint8(0)
 	segmentsBuf := bytes.NewBuffer(nil)
@@ -510,11 +505,16 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *types.Options) 
 		segmentsBuf.WriteByte(segment.Type)
 		segmentsBuf.WriteByte(uint8(len(segment.ASNs)))
 
+		asnLength := uint8(2)
+		if opt.Use32BitASN {
+			asnLength = 4
+		}
+
 		for _, asn := range segment.ASNs {
-			if asnLength == 2 {
-				segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
-			} else {
+			if opt.Use32BitASN {
 				segmentsBuf.Write(convert.Uint32Byte(asn))
+			} else {
+				segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
 			}
 		}
 		length += 2 + uint8(len(segment.ASNs))*asnLength
@@ -695,7 +695,7 @@ func (pa *PathAttribute) serializeUnknownAttribute(buf *bytes.Buffer) uint16 {
 	return uint16(len(b) + 2)
 }
 
-func (pa *PathAttribute) serializeMultiProtocolReachNLRI(buf *bytes.Buffer, opt *types.Options) uint16 {
+func (pa *PathAttribute) serializeMultiProtocolReachNLRI(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	v := pa.Value.(MultiProtocolReachNLRI)
 	pa.Optional = true
 
@@ -705,7 +705,7 @@ func (pa *PathAttribute) serializeMultiProtocolReachNLRI(buf *bytes.Buffer, opt 
 	return pa.serializeGeneric(tempBuf.Bytes(), buf)
 }
 
-func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer, opt *types.Options) uint16 {
+func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	v := pa.Value.(MultiProtocolUnreachNLRI)
 	pa.Optional = true
 

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,8 +53,8 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			test.nlri.serialize(buf, &types.Options{
-				AddPathRX: test.addPath,
+			test.nlri.serialize(buf, &EncodeOptions{
+				UseAddPath: test.addPath,
 			})
 			assert.Equal(t, test.expected, buf.Bytes())
 		})

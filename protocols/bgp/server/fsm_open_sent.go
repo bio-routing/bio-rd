@@ -22,6 +22,9 @@ func newOpenSentState(fsm *FSM) *openSentState {
 
 func (s openSentState) run() (state, string) {
 	go s.fsm.msgReceiver()
+
+	opt := s.fsm.decodeOptions()
+
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -38,7 +41,7 @@ func (s openSentState) run() (state, string) {
 		case <-s.fsm.holdTimer.C:
 			return s.holdTimerExpired()
 		case recvMsg := <-s.fsm.msgRecvCh:
-			return s.msgReceived(recvMsg)
+			return s.msgReceived(recvMsg, opt)
 		}
 	}
 }
@@ -73,8 +76,8 @@ func (s *openSentState) holdTimerExpired() (state, string) {
 	return newIdleState(s.fsm), "Holdtimer expired"
 }
 
-func (s *openSentState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
+func (s *openSentState) msgReceived(data []byte, opt *packet.DecodeOptions) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -191,24 +194,24 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 	switch addPathCap.SendReceive {
 	case packet.AddPathReceive:
 		if !f.addPathSend.BestOnly {
-			s.fsm.options.AddPathRX = true
+			f.addPathRX = true
 		}
 	case packet.AddPathSend:
 		if f.addPathRecv {
-			s.fsm.options.AddPathRX = true
+			f.addPathRX = true
 		}
 	case packet.AddPathSendReceive:
 		if !f.addPathSend.BestOnly {
-			s.fsm.options.AddPathRX = true
+			f.addPathRX = true
 		}
 		if f.addPathRecv {
-			s.fsm.options.AddPathRX = true
+			f.addPathRX = true
 		}
 	}
 }
 
 func (s *openSentState) processASN4Capability(cap packet.ASN4Capability) {
-	s.fsm.options.Supports4OctetASN = true
+	s.fsm.supports4OctetASN = true
 
 	if s.peerASNRcvd == packet.ASTransASN {
 		s.peerASNRcvd = cap.ASN4

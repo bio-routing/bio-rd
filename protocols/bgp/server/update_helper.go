@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+
 	log "github.com/sirupsen/logrus"
 )
 
-func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *types.Options) error {
+func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *packet.EncodeOptions) error {
 	updateBytes, err := update.SerializeUpdate(opt)
 	if err != nil {
 		log.Errorf("Unable to serialize BGP Update: %v", err)
@@ -23,5 +24,5 @@ func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *type
 }
 
 type serializeAbleUpdate interface {
-	SerializeUpdate(opt *types.Options) ([]byte, error)
+	SerializeUpdate(opt *packet.EncodeOptions) ([]byte, error)
 }

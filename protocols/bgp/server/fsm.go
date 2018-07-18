@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -55,8 +54,6 @@ type FSM struct {
 	msgRecvFailCh chan error
 	stopMsgRecvCh chan struct{}
 
-	options *types.Options
-
 	local net.IP
 
 	ribsInitialized bool
@@ -64,6 +61,7 @@ type FSM struct {
 	ipv6Unicast     *fsmAddressFamily
 
 	supportsMultiProtocol bool
+	supports4OctetASN     bool
 
 	neighborID uint32
 	state      state
@@ -101,7 +99,6 @@ func newFSM2(peer *peer) *FSM {
 		msgRecvCh:        make(chan []byte),
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
-		options:          &types.Options{},
 	}
 
 	if peer.ipv4 != nil {
@@ -242,6 +239,12 @@ func (fsm *FSM) msgReceiver() error {
 			return nil
 		}
 		fsm.msgRecvCh <- msg
+	}
+}
+
+func (fsm *FSM) decodeOptions() *packet.DecodeOptions {
+	return &packet.DecodeOptions{
+		Use32BitASN: fsm.supports4OctetASN,
 	}
 }
 
