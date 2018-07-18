@@ -875,7 +875,7 @@ func TestSender(t *testing.T) {
 
 		rib := locRIB.New()
 		if test.afi == packet.IPv6AFI {
-			fsmA.options.SupportsMultiProtocol = true
+			fsmA.supportsMultiProtocol = true
 			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &familyParameters{
 				rib:          rib,
 				importFilter: filter.NewAcceptAllFilter(),
@@ -1034,9 +1034,9 @@ func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
 			u := &UpdateSender{
 				fsm: &FSM{
 					options: &types.Options{
-						AddPathRX:             false,
-						SupportsMultiProtocol: true,
+						AddPathRX: false,
 					},
+					supportsMultiProtocol: true,
 				},
 				afi:  packet.IPv6AFI,
 				safi: packet.UnicastSAFI,

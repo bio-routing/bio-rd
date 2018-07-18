@@ -138,7 +138,7 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 			exportFilter: filter.NewAcceptAllFilter(),
 		},
 	})
-	fsmA.options.SupportsMultiProtocol = true
+	fsmA.supportsMultiProtocol = true
 
 	fsmA.holdTimer = time.NewTimer(time.Second * 90)
 	fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)

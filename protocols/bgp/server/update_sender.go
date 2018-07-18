@@ -135,7 +135,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 }
 
 func (u *UpdateSender) updateOverhead() int {
-	if !u.fsm.options.SupportsMultiProtocol {
+	if !u.fsm.supportsMultiProtocol {
 		return 0
 	}
 
@@ -169,7 +169,7 @@ func (u *UpdateSender) updateMessageForPrefixes(pfxs []bnet.Prefix, pa *packet.P
 		return u.bgpUpdate(pfxs, pa, pathID)
 	}
 
-	if u.fsm.options.SupportsMultiProtocol {
+	if u.fsm.supportsMultiProtocol {
 		return u.bgpUpdateMultiProtocol(pfxs, pa, pathID)
 	}
 
@@ -246,7 +246,7 @@ func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 }
 
 func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
-	if u.fsm.options.SupportsMultiProtocol {
+	if u.fsm.supportsMultiProtocol {
 		return u.withDrawPrefixesMultiProtocol(u.fsm.con, pfx, p)
 	}
 

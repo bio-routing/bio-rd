@@ -94,7 +94,7 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
 		f.updates(u)
 	}
 
-	if f.fsm.options.SupportsMultiProtocol {
+	if f.fsm.supportsMultiProtocol {
 		f.multiProtocolUpdates(u)
 	}
 }
@@ -118,7 +118,7 @@ func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
 }
 
 func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate) {
-	if !f.fsm.options.SupportsMultiProtocol {
+	if !f.fsm.supportsMultiProtocol {
 		return
 	}
 

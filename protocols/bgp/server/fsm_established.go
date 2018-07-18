@@ -211,7 +211,7 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 }
 
 func (s *establishedState) addressFamilyForUpdate(u *packet.BGPUpdate) (afi uint16, safi uint8) {
-	if !s.fsm.options.SupportsMultiProtocol || u.NLRI != nil || u.WithdrawnRoutes != nil {
+	if !s.fsm.supportsMultiProtocol || u.NLRI != nil || u.WithdrawnRoutes != nil {
 		return packet.IPv4AFI, packet.UnicastSAFI
 	}
 

@@ -175,7 +175,7 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 }
 
 func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolCapability) {
-	s.fsm.options.SupportsMultiProtocol = true
+	s.fsm.supportsMultiProtocol = true
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {

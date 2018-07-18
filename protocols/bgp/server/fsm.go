@@ -63,6 +63,8 @@ type FSM struct {
 	ipv4Unicast     *fsmAddressFamily
 	ipv6Unicast     *fsmAddressFamily
 
+	supportsMultiProtocol bool
+
 	neighborID uint32
 	state      state
 	stateMu    sync.RWMutex
