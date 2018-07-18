@@ -22,10 +22,9 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		IBGP:              false,
 		LocalASN:          41981,
 		RouteServerClient: false,
-		CapAddPathRX:      false,
 	}
 
-	adjRIBOut := New(neighborBestOnlyEBGP, filter.NewAcceptAllFilter())
+	adjRIBOut := New(neighborBestOnlyEBGP, filter.NewAcceptAllFilter(), false)
 
 	tests := []struct {
 		name          string
@@ -329,10 +328,9 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		IBGP:              true,
 		LocalASN:          41981,
 		RouteServerClient: false,
-		CapAddPathRX:      false,
 	}
 
-	adjRIBOut := New(neighborBestOnlyEBGP, filter.NewAcceptAllFilter())
+	adjRIBOut := New(neighborBestOnlyEBGP, filter.NewAcceptAllFilter(), false)
 
 	tests := []struct {
 		name          string
@@ -544,12 +542,11 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		IBGP:                 true,
 		LocalASN:             41981,
 		RouteServerClient:    false,
-		CapAddPathRX:         false,
 		RouteReflectorClient: true,
 		ClusterID:            net.IPv4FromOctets(2, 2, 2, 2).ToUint32(),
 	}
 
-	adjRIBOut := New(neighborBestOnlyRR, filter.NewAcceptAllFilter())
+	adjRIBOut := New(neighborBestOnlyRR, filter.NewAcceptAllFilter(), false)
 
 	tests := []struct {
 		name          string
@@ -875,10 +872,9 @@ func TestAddPathIBGP(t *testing.T) {
 		IBGP:              true,
 		LocalASN:          41981,
 		RouteServerClient: false,
-		CapAddPathRX:      true,
 	}
 
-	adjRIBOut := New(neighborBestOnlyEBGP, filter.NewAcceptAllFilter())
+	adjRIBOut := New(neighborBestOnlyEBGP, filter.NewAcceptAllFilter(), true)
 
 	tests := []struct {
 		name          string

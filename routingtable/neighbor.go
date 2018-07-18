@@ -27,7 +27,4 @@ type Neighbor struct {
 
 	// ClusterID is our route reflectors clusterID
 	ClusterID uint32
-
-	// CapAddPathRX indicates if the peer supports receiving multiple BGP paths
-	CapAddPathRX bool
 }

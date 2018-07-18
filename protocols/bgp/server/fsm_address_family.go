@@ -56,7 +56,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs.Add(f.fsm.peer.localASN)
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter)
+	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, f.addPathRX)
 
 	f.updateSender = newUpdateSender(f.fsm, f.afi, f.safi)
 	f.updateSender.Start(time.Millisecond * 5)
