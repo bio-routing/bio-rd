@@ -29,7 +29,6 @@ func (n *netlinkServer) Start(c *config.Global) error {
 		return fmt.Errorf("Failed to load defaults: %v", err)
 	}
 
-	n.table = c.RoutingTable
 	log.Infof("Kernel routing table: %d\n", n.table)
 
 	n.rib.ClientManager.Register(n)
