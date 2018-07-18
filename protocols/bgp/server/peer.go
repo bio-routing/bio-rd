@@ -16,6 +16,7 @@ type PeerInfo struct {
 	PeerAddr bnet.IP
 	PeerASN  uint32
 	LocalASN uint32
+	States   []string
 }
 
 type peer struct {
@@ -52,10 +53,19 @@ type familyParameters struct {
 }
 
 func (p *peer) snapshot() PeerInfo {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+	states := make([]string, 0, len(p.fsms))
+	for _, fsm := range p.fsms {
+		fsm.stateMu.RLock()
+		states = append(states, stateName(fsm.state))
+		fsm.stateMu.RUnlock()
+	}
 	return PeerInfo{
 		PeerAddr: p.addr,
 		PeerASN:  p.peerASN,
 		LocalASN: p.localASN,
+		States:   states,
 	}
 }
 
