@@ -499,16 +499,16 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *EncodeOptions) 
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(ASPathAttr)
 
+	asnLength := uint8(2)
+	if opt.Use32BitASN {
+		asnLength = 4
+	}
+
 	length := uint8(0)
 	segmentsBuf := bytes.NewBuffer(nil)
 	for _, segment := range pa.Value.(types.ASPath) {
 		segmentsBuf.WriteByte(segment.Type)
 		segmentsBuf.WriteByte(uint8(len(segment.ASNs)))
-
-		asnLength := uint8(2)
-		if opt.Use32BitASN {
-			asnLength = 4
-		}
 
 		for _, asn := range segment.ASNs {
 			if opt.Use32BitASN {
