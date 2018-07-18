@@ -47,8 +47,8 @@ type familyParameters struct {
 	importFilter *filter.Filter
 	exportFilter *filter.Filter
 
-	addPathSend routingtable.ClientOptions
-	addPathRecv bool
+	addPathSend         routingtable.ClientOptions
+	addPathRXConfigured bool
 }
 
 func (p *peer) snapshot() PeerInfo {
@@ -133,11 +133,11 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv4 != nil {
 		p.ipv4 = &familyParameters{
-			rib:          c.IPv4.RIB,
-			importFilter: filterOrDefault(c.IPv4.ImportFilter),
-			exportFilter: filterOrDefault(c.IPv4.ExportFilter),
-			addPathRecv:  c.IPv4.AddPathRecv,
-			addPathSend:  c.IPv4.AddPathSend,
+			rib:                 c.IPv4.RIB,
+			importFilter:        filterOrDefault(c.IPv4.ImportFilter),
+			exportFilter:        filterOrDefault(c.IPv4.ExportFilter),
+			addPathRXConfigured: c.IPv4.AddPathRecv,
+			addPathSend:         c.IPv4.AddPathSend,
 		}
 	}
 
@@ -154,11 +154,11 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv6 != nil {
 		p.ipv6 = &familyParameters{
-			rib:          c.IPv6.RIB,
-			importFilter: filterOrDefault(c.IPv6.ImportFilter),
-			exportFilter: filterOrDefault(c.IPv6.ExportFilter),
-			addPathRecv:  c.IPv6.AddPathRecv,
-			addPathSend:  c.IPv6.AddPathSend,
+			rib:                 c.IPv6.RIB,
+			importFilter:        filterOrDefault(c.IPv6.ImportFilter),
+			exportFilter:        filterOrDefault(c.IPv6.ExportFilter),
+			addPathRXConfigured: c.IPv6.AddPathRecv,
+			addPathSend:         c.IPv6.AddPathSend,
 		}
 		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
 	}

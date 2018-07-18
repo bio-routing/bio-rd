@@ -29,23 +29,23 @@ type fsmAddressFamily struct {
 
 	updateSender *UpdateSender
 
-	addPathSend routingtable.ClientOptions
-	addPathRecv bool
-	addPathRX   bool
+	addPathSend         routingtable.ClientOptions
+	addPathRXConfigured bool
+	addPathRX           bool
 
 	initialized bool
 }
 
 func newFSMAddressFamily(afi uint16, safi uint8, params *familyParameters, fsm *FSM) *fsmAddressFamily {
 	return &fsmAddressFamily{
-		afi:          afi,
-		safi:         safi,
-		fsm:          fsm,
-		rib:          params.rib,
-		importFilter: params.importFilter,
-		exportFilter: params.exportFilter,
-		addPathRecv:  params.addPathRecv,
-		addPathSend:  params.addPathSend,
+		afi:                 afi,
+		safi:                safi,
+		fsm:                 fsm,
+		rib:                 params.rib,
+		importFilter:        params.importFilter,
+		exportFilter:        params.exportFilter,
+		addPathRXConfigured: params.addPathRXConfigured,
+		addPathSend:         params.addPathSend,
 	}
 }
 
