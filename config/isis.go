@@ -7,9 +7,10 @@ type ISISConfig struct {
 
 type ISISInterfaceConfig struct {
 	Name             string
-	PointToPoint     bool
 	Passive          bool
-	ISISLevel2Config ISISLevelConfig
+	P2P              bool
+	ISISLevel1Config *ISISLevelConfig
+	ISISLevel2Config *ISISLevelConfig
 }
 
 type ISISLevelConfig struct {

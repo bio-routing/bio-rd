@@ -1,79 +1,43 @@
 package server
 
 import (
-	"time"
-	"fmt"
-	"net"
-	"syscall"
-
 	"github.com/bio-routing/bio-rd/config"
-
-	"github.com/mdlayher/raw"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
 const (
 	maxEtherFrameSize = 9216
 )
 
+//ISISServer represents an ISIS speaker
 type ISISServer struct {
-	config config.ISISConfig
+	config     config.ISISConfig
+	interfaces map[string]*netIf
 }
 
-type isisInterface struct {
-	name string
-	rx chan []byte
+type isisNeighbor struct {
+	SystemID  types.SystemID
+	Interface string
 }
 
+// NewISISServer creates and initializes a new ISIS speaker
 func NewISISServer(cfg config.ISISConfig) *ISISServer {
 	return &ISISServer{
-		config: cfg,
+		config:     cfg,
+		interfaces: make(map[string]*netIf),
 	}
 }
 
-func newISISInterface(name string) *isisInterface {
-	return &isisInterface{
-		name: name,
-		rx: make(chan []byte),
-	}
-}
-
+// Start starts an ISIS speaker
 func (isis *ISISServer) Start() error {
 	for _, ifs := range isis.config.Interfaces {
-		ifa, err := net.InterfaceByName(ifs.Name)
-		if err != nil {
-			return fmt.Errorf("Unable to get interface: %v", err)
-		}
-
-		c, err := raw.ListenPacket(ifa, syscall.ETH_P_802_2, nil)
-		if err != nil {
-			return fmt.Errorf("Unable to listen: %v", err)
-		}
-
-		c.SetPromiscuous(true)
-
-		go func() {
-			buffer := make([]byte, maxEtherFrameSize)
-			for {
-				n, addr, err := c.ReadFrom(buffer)
-				if err != nil {
-					panic(fmt.Sprintf("Unable to read from socket: %v", err))
-				}
-
-				fmt.Printf("Packet from %v: %v\n", addr.String(), buffer[:n])
-			}
-		}()
-
-		go func() {
-			for {
-				c.WriteTo([]byte{1, 2, 3, 4}, net.HardwareAddr([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}))
-				time.Sleep(time.Second)
-			}
-		}()
+		isis.interfaces[ifs.Name] = newNetIf(ifs)
 	}
 
 	return nil
 }
 
+// Stop stops an ISIS speaker
 func (isis *ISISServer) Stop() error {
 
 	return nil

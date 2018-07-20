@@ -29,10 +29,10 @@ func main() {
 		},
 		Interfaces: []config.ISISInterfaceConfig{
 			{
-				Name:         "enp2s0",
-				PointToPoint: true,
-				Passive:      false,
-				ISISLevel2Config: config.ISISLevelConfig{
+				Name:    "enp2s0",
+				P2P:     true,
+				Passive: false,
+				ISISLevel2Config: &config.ISISLevelConfig{
 					HelloInterval: 1,
 					HoldTime:      4,
 					Metric:        10,

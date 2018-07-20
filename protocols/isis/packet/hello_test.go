@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,11 +25,22 @@ func TestHelloSerialize(t *testing.T) {
 				DesignatedIS: [6]byte{1, 2, 3, 4, 5, 6},
 				TLVs:         []TLV{},
 			},
+			expected: []byte{
+				2,
+				1, 2, 3, 4, 5, 6,
+				0, 27,
+				0, 100,
+				128,
+				0, // Reserved
+				1, 2, 3, 4, 5, 6,
+			},
 		},
 	}
 
 	for _, test := range tests {
-		res := test.hello.serialize()
+		buf := bytes.NewBuffer(nil)
+		test.hello.serialize(buf)
+		res := buf.Bytes()
 		assert.Equalf(t, test.expected, res, "Test: %q", test.name)
 	}
 }
@@ -41,13 +53,14 @@ func TestDecodeISISHello(t *testing.T) {
 		expected *L2Hello
 	}{
 		{
-			name: "Header only",
+			name: "No TLVs",
 			input: []byte{
 				2,
 				1, 2, 3, 4, 5, 6,
 				0, 200,
 				0, 18,
 				150,
+				0,
 				1, 1, 1, 2, 2, 2,
 			},
 			expected: &L2Hello{
@@ -68,6 +81,7 @@ func TestDecodeISISHello(t *testing.T) {
 				0, 200,
 				0, 22,
 				150,
+				0,
 				1, 1, 1, 2, 2, 2,
 				0, 2, 10, 10,
 			},
@@ -89,6 +103,7 @@ func TestDecodeISISHello(t *testing.T) {
 				0, 200,
 				0, 26,
 				150,
+				0,
 				1, 1, 1, 2, 2, 2,
 				6,
 				6,
@@ -113,15 +128,16 @@ func TestDecodeISISHello(t *testing.T) {
 		{
 			name: "Full Hello (JunOS)",
 			input: []byte{
-				2,
-				1, 2, 3, 4, 5, 6,
-				0, 200,
-				0, 41,
-				150,
-				1, 1, 1, 2, 2, 2,
-				6,
-				6,
-				2, 2, 2, 3, 3, 3,
+				2,                // CircuitType
+				1, 2, 3, 4, 5, 6, // SystemID
+				0, 200, // Holding Timer
+				0, 41, // PDU Length
+				150,              // Prio
+				0,                // Reserved
+				1, 1, 1, 2, 2, 2, // Designated IS
+				6,                // Type = ISNeighborsTLV
+				6,                // Length
+				2, 2, 2, 3, 3, 3, // Neighbor
 				129,
 				2,
 				0xcc, 0x8e,
@@ -129,9 +145,8 @@ func TestDecodeISISHello(t *testing.T) {
 				4,
 				10, 0, 0, 0,
 				1,
-				3,
-				2,
-				10, 20,
+				6,
+				49, 10, 0, 0, 20, 30,
 			},
 			expected: &L2Hello{
 				CircuitType:  2,
@@ -147,9 +162,9 @@ func TestDecodeISISHello(t *testing.T) {
 						NeighborSNPA: [6]byte{2, 2, 2, 3, 3, 3},
 					},
 					&ProtocolsSupportedTLV{
-						TLVType:                129,
-						TLVLength:              2,
-						NerworkLayerProtocolID: []byte{0xcc, 0x8e},
+						TLVType:                 129,
+						TLVLength:               2,
+						NerworkLayerProtocolIDs: []byte{0xcc, 0x8e},
 					},
 					&IPInterfaceAddressTLV{
 						TLVType:     132,
@@ -157,10 +172,13 @@ func TestDecodeISISHello(t *testing.T) {
 						IPv4Address: 167772160,
 					},
 					&AreaAddressTLV{
-						TLVType:    1,
-						TLVLength:  3,
-						AreaLength: 2,
-						AreaID:     []byte{10, 20},
+						TLVType:   1,
+						TLVLength: 6,
+						AreaIDs: []types.AreaID{
+							{
+								49, 10, 0, 0, 20, 30,
+							},
+						},
 					},
 				},
 			},

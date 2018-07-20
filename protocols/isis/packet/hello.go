@@ -21,12 +21,14 @@ const L2HelloMinSize = 18
 
 func decodeISISHello(buf *bytes.Buffer) (*L2Hello, error) {
 	pdu := &L2Hello{}
+	reserved := uint8(0)
 	fields := []interface{}{
 		&pdu.CircuitType,
 		&pdu.SystemID,
 		&pdu.HoldingTimer,
 		&pdu.PDULength,
 		&pdu.Priority,
+		&reserved,
 		&pdu.DesignatedIS,
 	}
 
@@ -44,14 +46,12 @@ func decodeISISHello(buf *bytes.Buffer) (*L2Hello, error) {
 	return pdu, nil
 }
 
-func (h *L2Hello) serialize() []byte {
-	buf := bytes.NewBuffer(nil)
+func (h *L2Hello) serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.CircuitType)
 	buf.Write(h.SystemID[:])
 	buf.Write(convert.Uint16Byte(h.HoldingTimer))
 	buf.Write(convert.Uint16Byte(h.PDULength))
 	buf.WriteByte(h.Priority)
+	buf.WriteByte(0) // Reserved
 	buf.Write(h.DesignatedIS[:])
-
-	return buf.Bytes()
 }
