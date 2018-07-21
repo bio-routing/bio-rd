@@ -1051,7 +1051,7 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 			wantFail: true,
 		},
 		{
-			name: "MP_REACH_NLRI with invalid prefixes",
+			name: "MP_UNREACH_NLRI with invalid prefixes",
 			input: []byte{
 				0x00, 0x02, // AFI
 				0x01,                   // SAFI
