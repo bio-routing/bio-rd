@@ -370,3 +370,46 @@ func TestBitAtPosition(t *testing.T) {
 		}
 	}
 }
+
+func TestIPFromString(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected IP
+		wantFail bool
+	}{
+		{
+			name:     "ipv4",
+			input:    "192.168.1.234",
+			expected: IPv4FromOctets(192, 168, 1, 234),
+		},
+		{
+			name:     "ipv6",
+			input:    "2001:678:1e0::cafe",
+			expected: IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
+		},
+		{
+			name:     "invalid",
+			input:    "foo",
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ip, err := IPFromString(test.input)
+			if err == nil && test.wantFail {
+				t.Fatal("expected error but got nil")
+			}
+			if err != nil {
+				if test.wantFail {
+					return
+				}
+
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, test.expected, ip)
+		})
+	}
+}

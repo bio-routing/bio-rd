@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -66,6 +68,8 @@ type FSM struct {
 	stateMu    sync.RWMutex
 	reason     string
 	active     bool
+
+	connectionCancelFunc context.CancelFunc
 }
 
 // NewPassiveFSM2 initiates a new passive FSM
@@ -110,8 +114,11 @@ func newFSM2(peer *peer) *FSM {
 }
 
 func (fsm *FSM) start() {
+	ctx, cancel := context.WithCancel(context.Background())
+	fsm.connectionCancelFunc = cancel
+
 	go fsm.run()
-	go fsm.tcpConnector()
+	go fsm.tcpConnector(ctx)
 	return
 }
 
@@ -120,6 +127,8 @@ func (fsm *FSM) activate() {
 }
 
 func (fsm *FSM) run() {
+	defer fsm.cancelRunningGoRoutines()
+
 	next, reason := fsm.state.run()
 	for {
 		newState := stateName(next)
@@ -143,6 +152,12 @@ func (fsm *FSM) run() {
 		fsm.stateMu.Unlock()
 
 		next, reason = fsm.state.run()
+	}
+}
+
+func (fsm *FSM) cancelRunningGoRoutines() {
+	if fsm.connectionCancelFunc != nil {
+		fsm.connectionCancelFunc()
 	}
 }
 
@@ -171,7 +186,7 @@ func (fsm *FSM) cease() {
 	fsm.eventCh <- Cease
 }
 
-func (fsm *FSM) tcpConnector() error {
+func (fsm *FSM) tcpConnector(ctx context.Context) {
 	for {
 		select {
 		case <-fsm.initiateCon:
@@ -191,6 +206,8 @@ func (fsm *FSM) tcpConnector() error {
 			case <-time.NewTimer(time.Second * 30).C:
 				c.Close()
 				continue
+			case <-ctx.Done():
+				return
 			}
 		}
 	}
@@ -274,6 +291,23 @@ func (fsm *FSM) sendKeepalive() error {
 	}
 
 	return nil
+}
+
+func recvMsg(c net.Conn) (msg []byte, err error) {
+	buffer := make([]byte, packet.MaxLen)
+	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
+	if err != nil {
+		return nil, fmt.Errorf("Read failed: %v", err)
+	}
+
+	l := int(buffer[16])*256 + int(buffer[17])
+	toRead := l
+	_, err = io.ReadFull(c, buffer[packet.MinLen:toRead])
+	if err != nil {
+		return nil, fmt.Errorf("Read failed: %v", err)
+	}
+
+	return buffer, nil
 }
 
 func stopTimer(t *time.Timer) {

@@ -10,6 +10,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBgpServerPeerSnapshot(t *testing.T) {
@@ -60,13 +61,12 @@ func TestBgpServerPeerSnapshot(t *testing.T) {
 		break
 	}
 
-	if want, got := bnet.IPv4FromOctets(169, 254, 200, 1), peer.PeerAddr; !want.Equal(got) {
-		t.Errorf("PeerAddr: got %v, want %v", got, want)
+	want := PeerInfo{
+		PeerAddr: bnet.IPv4FromOctets(169, 254, 200, 1),
+		PeerASN:  uint32(65300),
+		LocalASN: uint32(204880),
+		States:   []string{"idle"},
 	}
-	if want, got := uint32(65300), peer.PeerASN; want != got {
-		t.Errorf("PeerASN: got %v, want %v", got, want)
-	}
-	if want, got := uint32(204880), peer.LocalASN; want != got {
-		t.Errorf("PeerASN: got %v, want %v", got, want)
-	}
+
+	assert.Equal(t, want, peer)
 }
