@@ -2,8 +2,6 @@ package routingtable
 
 import (
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // ClientOptions represents options for a client
