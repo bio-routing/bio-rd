@@ -6,6 +6,7 @@ go_library(
         "bgp.go",
         "decoder.go",
         "encoder.go",
+        "fuzzing.go",
         "helper.go",
         "mp_reach_nlri.go",
         "mp_unreach_nlri.go",
