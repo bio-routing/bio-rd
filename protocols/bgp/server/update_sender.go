@@ -243,7 +243,7 @@ func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (a
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
-	err := u.withdrawPrefix(pfx, p)
+	err := u.withdrawPrefix(u.fsm.con, pfx, p)
 	if err != nil {
 		log.Errorf("Unable to withdraw prefix: %v", err)
 		return false
@@ -252,19 +252,7 @@ func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	return true
 }
 
-func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
-	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
-		return u.withdrawPrefixIPv4(u.fsm.con, pfx, p)
-	}
-
-	if !u.addressFamily.multiProtocol {
-		return fmt.Errorf(packet.AFIName(u.addressFamily.afi) + " was not negotiated")
-	}
-
-	return u.withdrawPrefixesMultiProtocol(u.fsm.con, pfx, p)
-}
-
-func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
 	if p.Type != route.BGPPathType {
 		return errors.New("wrong path type, expected BGPPathType")
 	}
@@ -273,6 +261,18 @@ func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *rou
 		return errors.New("got nil BGPPath")
 	}
 
+	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
+		return u.withdrawPrefixIPv4(out, pfx, p)
+	}
+
+	if !u.addressFamily.multiProtocol {
+		return fmt.Errorf(packet.AFIName(u.addressFamily.afi) + " was not negotiated")
+	}
+
+	return u.withdrawPrefixMultiProtocol(out, pfx, p)
+}
+
+func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
 	update := &packet.BGPUpdate{
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
@@ -284,7 +284,7 @@ func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *rou
 	return serializeAndSendUpdate(out, update, u.options)
 }
 
-func (u *UpdateSender) withdrawPrefixesMultiProtocol(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
 	pathID := uint32(0)
 	if p.BGPPath != nil {
 		pathID = p.BGPPath.PathIdentifier
