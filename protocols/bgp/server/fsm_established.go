@@ -187,7 +187,16 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	}
 
 	u := msg.Body.(*packet.BGPUpdate)
-	afi, safi := s.addressFamilyForUpdate(u)
+
+	if s.fsm.ipv4Unicast != nil {
+		s.fsm.ipv4Unicast.processUpdate(u)
+	}
+
+	if s.fsm.ipv6Unicast != nil {
+		s.fsm.ipv6Unicast.processUpdate(u)
+	}
+
+	afi, safi := s.updateAddressFamily(u)
 
 	if safi != packet.UnicastSAFI {
 		// only unicast support, so other SAFIs are ignored
@@ -199,19 +208,19 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 		if s.fsm.ipv4Unicast == nil {
 			log.Warnf("Received update for family IPv4 unicast, but this family is not configured.")
 		}
-		s.fsm.ipv4Unicast.processUpdate(u)
+
 	case packet.IPv6AFI:
 		if s.fsm.ipv6Unicast == nil {
 			log.Warnf("Received update for family IPv6 unicast, but this family is not configured.")
 		}
-		s.fsm.ipv6Unicast.processUpdate(u)
+
 	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) addressFamilyForUpdate(u *packet.BGPUpdate) (afi uint16, safi uint8) {
-	if !s.fsm.options.SupportsMultiProtocol || u.NLRI != nil || u.WithdrawnRoutes != nil {
+func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16, safi uint8) {
+	if u.WithdrawnRoutes != nil || u.NLRI != nil {
 		return packet.IPv4AFI, packet.UnicastSAFI
 	}
 

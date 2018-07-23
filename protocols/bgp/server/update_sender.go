@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -129,7 +130,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 }
 
 func (u *UpdateSender) updateOverhead() int {
-	if !u.fsm.options.SupportsMultiProtocol {
+	if u.afi == packet.IPv4AFI && !u.fsm.options.MultiProtocolIPv4 {
 		return 0
 	}
 
@@ -159,14 +160,18 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 }
 
 func (u *UpdateSender) updateMessageForPrefixes(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
-	if u.afi == packet.IPv4AFI && u.safi == packet.UnicastSAFI {
+	switch u.afi {
+	case packet.IPv4AFI:
+		if u.fsm.options.MultiProtocolIPv4 {
+			return u.bgpUpdateMultiProtocol(pfxs, pa, pathID)
+		}
 		return u.bgpUpdate(pfxs, pa, pathID)
+	case packet.IPv6AFI:
+		if u.fsm.options.MultiProtocolIPv6 {
+			return u.bgpUpdateMultiProtocol(pfxs, pa, pathID)
+		}
+		return nil
 	}
-
-	if u.fsm.options.SupportsMultiProtocol {
-		return u.bgpUpdateMultiProtocol(pfxs, pa, pathID)
-	}
-
 	return nil
 }
 
@@ -239,11 +244,31 @@ func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 }
 
 func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
-	if u.fsm.options.SupportsMultiProtocol {
-		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx, u.afi, u.safi)
+	if u.afi == packet.IPv4AFI {
+		return u.withdrawPrefixIPv4(pfx, p)
 	}
 
-	return withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
+	if u.afi == packet.IPv6AFI {
+		return u.withdrawPrefixIPv6(pfx, p)
+	}
+
+	return fmt.Errorf("Unsupported AFI: %v", u.afi)
+}
+
+func (u *UpdateSender) withdrawPrefixIPv4(pfx bnet.Prefix, p *route.Path) error {
+	if u.fsm.options.MultiProtocolIPv4 {
+		return withdrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx, u.afi, u.safi)
+	}
+
+	return withdrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
+}
+
+func (u *UpdateSender) withdrawPrefixIPv6(pfx bnet.Prefix, p *route.Path) error {
+	if !u.fsm.options.MultiProtocolIPv6 {
+		return fmt.Errorf("IPv6 was not negotiated")
+	}
+
+	return withdrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
 }
 
 // UpdateNewClient does nothing

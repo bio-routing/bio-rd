@@ -35,13 +35,16 @@ func getAllOptions() []types.Options {
 	parameters := []bool{true, false}
 	var ret []types.Options
 	for _, octet := range parameters {
-		for _, multi := range parameters {
-			for _, addPathX := range parameters {
-				ret = append(ret, types.Options{
-					Supports4OctetASN:     octet,
-					SupportsMultiProtocol: multi,
-					AddPathRX:             addPathX,
-				})
+		for _, mpbgp4 := range parameters {
+			for _, mpbgp6 := range parameters {
+				for _, addPathX := range parameters {
+					ret = append(ret, types.Options{
+						Supports4OctetASN: octet,
+						MultiProtocolIPv4: mpbgp4,
+						MultiProtocolIPv6: mpbgp6,
+						AddPathRX:         addPathX,
+					})
+				}
 			}
 		}
 	}

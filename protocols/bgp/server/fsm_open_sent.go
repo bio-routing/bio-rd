@@ -175,7 +175,16 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 }
 
 func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolCapability) {
-	s.fsm.options.SupportsMultiProtocol = true
+	if cap.SAFI != 0 {
+		return
+	}
+
+	switch cap.AFI {
+	case packet.IPv4AFI:
+		s.fsm.options.MultiProtocolIPv4 = true
+	case packet.IPv6AFI:
+		s.fsm.options.MultiProtocolIPv6 = true
+	}
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {

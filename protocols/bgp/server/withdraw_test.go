@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithDrawPrefixes(t *testing.T) {
+func TestWithdrawPrefixes(t *testing.T) {
 	testcases := []struct {
 		Name          string
 		Prefix        []net.Prefix
@@ -54,7 +54,7 @@ func TestWithDrawPrefixes(t *testing.T) {
 	for _, tc := range testcases {
 		buf := bytes.NewBuffer([]byte{})
 		opt := &types.Options{}
-		err := withDrawPrefixes(buf, opt, tc.Prefix...)
+		err := withdrawPrefixes(buf, opt, tc.Prefix...)
 		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
 		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
 	}
@@ -90,7 +90,7 @@ func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
 			opt := &types.Options{
 				AddPathRX: false,
 			}
-			err := withDrawPrefixesMultiProtocol(buf, opt, test.Prefix, packet.IPv6AFI, packet.UnicastSAFI)
+			err := withdrawPrefixesMultiProtocol(buf, opt, test.Prefix, packet.IPv6AFI, packet.UnicastSAFI)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -153,7 +153,7 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 		opt := &types.Options{
 			AddPathRX: true,
 		}
-		err := withDrawPrefixesAddPath(buf, opt, tc.Prefix, tc.Path)
+		err := withdrawPrefixesAddPath(buf, opt, tc.Prefix, tc.Path)
 		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
 		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
 	}

@@ -96,7 +96,7 @@ func (b *bgpServer) incomingConnectionWorker() {
 		}).Info("Incoming TCP connection")
 
 		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
-		fsm := NewActiveFSM2(peer)
+		fsm := NewActiveFSM(peer)
 		fsm.state = newActiveState(fsm)
 		fsm.startConnectRetryTimer()
 
