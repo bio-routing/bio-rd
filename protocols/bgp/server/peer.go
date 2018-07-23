@@ -177,7 +177,7 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 		Value: caps,
 	})
 
-	p.fsms = append(p.fsms, NewActiveFSM2(p))
+	p.fsms = append(p.fsms, NewActiveFSM(p))
 
 	return p, nil
 }

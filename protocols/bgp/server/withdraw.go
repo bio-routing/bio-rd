@@ -10,9 +10,9 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 )
 
-// withDrawPrefixes generates a BGPUpdate message and write it to the given
+// withdrawPrefixes generates a BGPUpdate message and write it to the given
 // io.Writer.
-func withDrawPrefixes(out io.Writer, opt *types.Options, prefixes ...net.Prefix) error {
+func withdrawPrefixes(out io.Writer, opt *types.Options, prefixes ...net.Prefix) error {
 	if len(prefixes) < 1 {
 		return nil
 	}
@@ -40,9 +40,9 @@ func withDrawPrefixes(out io.Writer, opt *types.Options, prefixes ...net.Prefix)
 
 }
 
-// withDrawPrefixesAddPath generates a BGPUpdateAddPath message and write it to the given
+// withdrawPrefixesAddPath generates a BGPUpdateAddPath message and write it to the given
 // io.Writer.
-func withDrawPrefixesAddPath(out io.Writer, opt *types.Options, pfx net.Prefix, p *route.Path) error {
+func withdrawPrefixesAddPath(out io.Writer, opt *types.Options, pfx net.Prefix, p *route.Path) error {
 	if p.Type != route.BGPPathType {
 		return errors.New("wrong path type, expected BGPPathType")
 	}
@@ -59,7 +59,7 @@ func withDrawPrefixesAddPath(out io.Writer, opt *types.Options, pfx net.Prefix, 
 	return serializeAndSendUpdate(out, update, opt)
 }
 
-func withDrawPrefixesMultiProtocol(out io.Writer, opt *types.Options, pfx net.Prefix, afi uint16, safi uint8) error {
+func withdrawPrefixesMultiProtocol(out io.Writer, opt *types.Options, pfx net.Prefix, afi uint16, safi uint8) error {
 	update := &packet.BGPUpdate{
 		PathAttributes: &packet.PathAttribute{
 			TypeCode: packet.MultiProtocolUnreachNLRICode,
