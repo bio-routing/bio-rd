@@ -13,8 +13,8 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
-// TestFSM55UpdatesIPv4 emulates receiving 255 BGP updates and withdraws. Checks route counts.
-func TestFSM100UpdatesIPv4(t *testing.T) {
+// TestFSM255UpdatesIPv4 emulates receiving 255 BGP updates and withdraws. Checks route counts.
+func TestFSM255UpdatesIPv4(t *testing.T) {
 	fsmA := newFSM(&peer{
 		addr:     bnet.IPv4FromOctets(169, 254, 100, 100),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
