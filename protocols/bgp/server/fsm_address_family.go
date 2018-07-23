@@ -30,24 +30,24 @@ type fsmAddressFamily struct {
 	updateSender *UpdateSender
 
 	addPathSend         routingtable.ClientOptions
-	addPathRXConfigured bool
-	addPathRX           bool
+	addPathTXConfigured bool
+	addPathTX           bool
 
 	multiProtocol bool
 
 	initialized bool
 }
 
-func newFSMAddressFamily(afi uint16, safi uint8, params *familyParameters, fsm *FSM) *fsmAddressFamily {
+func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm *FSM) *fsmAddressFamily {
 	return &fsmAddressFamily{
 		afi:                 afi,
 		safi:                safi,
 		fsm:                 fsm,
-		rib:                 params.rib,
-		importFilter:        params.importFilter,
-		exportFilter:        params.exportFilter,
-		addPathRXConfigured: params.addPathRXConfigured,
-		addPathSend:         params.addPathSend,
+		rib:                 family.rib,
+		importFilter:        family.importFilter,
+		exportFilter:        family.exportFilter,
+		addPathTXConfigured: family.addPathReceive, // at this point we switch from peers view to our view
+		addPathSend:         family.addPathSend,
 	}
 }
 
@@ -58,7 +58,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs.Add(f.fsm.peer.localASN)
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, f.addPathRX)
+	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, f.addPathTX)
 
 	f.updateSender = newUpdateSender(f.fsm, f.afi, f.safi)
 	f.updateSender.Start(time.Millisecond * 5)
@@ -68,7 +68,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	clientOptions := routingtable.ClientOptions{
 		BestOnly: true,
 	}
-	if f.addPathRX {
+	if f.addPathTX {
 		clientOptions = f.addPathSend
 	}
 	f.rib.RegisterWithOptions(f.adjRIBOut, clientOptions)

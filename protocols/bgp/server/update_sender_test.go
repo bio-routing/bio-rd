@@ -874,20 +874,20 @@ func TestSender(t *testing.T) {
 
 		rib := locRIB.New()
 		if test.afi == packet.IPv6AFI {
-			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &familyParameters{
+			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
 				rib:          rib,
 				importFilter: filter.NewAcceptAllFilter(),
 				exportFilter: filter.NewAcceptAllFilter(),
 			}, fsmA)
 			fsmA.ipv6Unicast.multiProtocol = true
-			fsmA.ipv6Unicast.addPathRX = test.addPath
+			fsmA.ipv6Unicast.addPathTX = test.addPath
 		} else {
-			fsmA.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &familyParameters{
+			fsmA.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &peerAddressFamily{
 				rib:          rib,
 				importFilter: filter.NewAcceptAllFilter(),
 				exportFilter: filter.NewAcceptAllFilter(),
 			}, fsmA)
-			fsmA.ipv4Unicast.addPathRX = test.addPath
+			fsmA.ipv4Unicast.addPathTX = test.addPath
 		}
 
 		fsmA.holdTimer = time.NewTimer(time.Second * 90)

@@ -201,18 +201,18 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 	switch addPathCap.SendReceive {
 	case packet.AddPathReceive:
 		if !f.addPathSend.BestOnly {
-			f.addPathRX = true
+			f.addPathTX = true
 		}
 	case packet.AddPathSend:
-		if f.addPathRXConfigured {
-			f.addPathRX = true
+		if f.addPathTXConfigured {
+			f.addPathTX = true
 		}
 	case packet.AddPathSendReceive:
 		if !f.addPathSend.BestOnly {
-			f.addPathRX = true
+			f.addPathTX = true
 		}
-		if f.addPathRXConfigured {
-			f.addPathRX = true
+		if f.addPathTXConfigured {
+			f.addPathTX = true
 		}
 	}
 }
