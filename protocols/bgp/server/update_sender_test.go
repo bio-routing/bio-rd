@@ -868,18 +868,18 @@ func TestSender(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		fsmA := newFSM2(&peer{
+		fsmA := newFSM(&peer{
 			addr: bnet.IPv4FromOctets(169, 254, 100, 100),
 		})
 
 		rib := locRIB.New()
 		if test.afi == packet.IPv6AFI {
-			fsmA.supportsMultiProtocol = true
 			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &familyParameters{
 				rib:          rib,
 				importFilter: filter.NewAcceptAllFilter(),
 				exportFilter: filter.NewAcceptAllFilter(),
 			}, fsmA)
+			fsmA.ipv6Unicast.multiProtocol = true
 			fsmA.ipv6Unicast.addPathRX = test.addPath
 		} else {
 			fsmA.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &familyParameters{
@@ -942,62 +942,7 @@ func TestSender(t *testing.T) {
 		}
 	}
 }
-
-func TestWithDrawPrefixes(t *testing.T) {
-	testcases := []struct {
-		Name          string
-		Prefix        []bnet.Prefix
-		Expected      []byte
-		ExpectedError error
-	}{
-		{
-			Name:   "One withdraw",
-			Prefix: []bnet.Prefix{bnet.NewPfx(bnet.IPv4(1413010532), 24)},
-			Expected: []byte{
-				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
-				0x00, 0x1b, // BGP Message Length
-				0x02,       // BGP Message Type == Update
-				0x00, 0x04, // WithDraw Octet length
-				0x18,             // Prefix Length
-				0x54, 0x38, 0xd4, // Prefix,
-				0x00, 0x00, // Total Path Attribute Length
-			},
-			ExpectedError: nil,
-		},
-		{
-			Name:   "two withdraws",
-			Prefix: []bnet.Prefix{bnet.NewPfx(bnet.IPv4(1413010532), 24), bnet.NewPfx(bnet.IPv4(1413010534), 25)},
-			Expected: []byte{
-				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
-				0x00, 0x20, // BGP Message Length
-				0x02,       // BGP Message Type == Update
-				0x00, 0x09, // WithDraw Octet length
-				0x18,             // Prefix Length first
-				0x54, 0x38, 0xd4, // Prefix,
-				0x19,                   // Prefix Length second
-				0x54, 0x38, 0xd4, 0x66, // Prefix,
-				0x00, 0x00, // Total Path Attribute Length
-			},
-			ExpectedError: nil,
-		},
-	}
-	for _, tc := range testcases {
-		buf := bytes.NewBuffer([]byte{})
-
-		u := &UpdateSender{
-			fsm:     &FSM{},
-			afi:     packet.IPv6AFI,
-			safi:    packet.UnicastSAFI,
-			options: &packet.EncodeOptions{},
-		}
-
-		err := u.withDrawPrefixes(buf, tc.Prefix...)
-		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
-		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
-	}
-}
-
-func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
+func TestWithdrawPrefixesMultiProtocol(t *testing.T) {
 	tests := []struct {
 		Name     string
 		Prefix   bnet.Prefix
@@ -1021,20 +966,23 @@ func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
 			},
 		},
 	}
+
+	t.Parallel()
+
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			buf := bytes.NewBuffer([]byte{})
 
 			u := &UpdateSender{
-				fsm: &FSM{
-					supportsMultiProtocol: true,
+				fsm: &FSM{},
+				addressFamily: &fsmAddressFamily{
+					afi:  packet.IPv6AFI,
+					safi: packet.UnicastSAFI,
 				},
-				afi:     packet.IPv6AFI,
-				safi:    packet.UnicastSAFI,
 				options: &packet.EncodeOptions{},
 			}
 
-			err := u.withDrawPrefixesMultiProtocol(buf, test.Prefix, &route.Path{})
+			err := u.withdrawPrefixesMultiProtocol(buf, test.Prefix, &route.Path{})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -1044,24 +992,26 @@ func TestWithDrawPrefixesMultiProtocol(t *testing.T) {
 	}
 }
 
-func TestWithDrawPrefixesAddPath(t *testing.T) {
+func TestWithdrawPrefixIPv4(t *testing.T) {
 	testcases := []struct {
-		Name          string
-		Prefix        bnet.Prefix
-		Path          *route.Path
-		Expected      []byte
-		ExpectedError error
+		name          string
+		addPathTX     bool
+		prefix        bnet.Prefix
+		path          *route.Path
+		expected      []byte
+		expectedError error
 	}{
 		{
-			Name:   "Normal withdraw",
-			Prefix: bnet.NewPfx(bnet.IPv4(1413010532), 24),
-			Path: &route.Path{
+			name:      "Normal withdraw with ADD-PATH",
+			addPathTX: true,
+			prefix:    bnet.NewPfx(bnet.IPv4(1413010532), 24),
+			path: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
 					PathIdentifier: 1,
 				},
 			},
-			Expected: []byte{
+			expected: []byte{
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
 				0x00, 0x1f, // BGP Message Length
 				0x02,       // BGP Message Type == Update
@@ -1071,39 +1021,67 @@ func TestWithDrawPrefixesAddPath(t *testing.T) {
 				0x54, 0x38, 0xd4, // Prefix,
 				0x00, 0x00, // Total Path Attribute Length
 			},
-			ExpectedError: nil,
+			expectedError: nil,
 		},
 		{
-			Name:   "Non bgp withdraw",
-			Prefix: bnet.NewPfx(bnet.IPv4(1413010532), 24),
-			Path: &route.Path{
+			name:      "Normal withdraw without ADD-PATH",
+			addPathTX: false,
+			prefix:    bnet.NewPfx(bnet.IPv4(1413010532), 24),
+			path: &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					PathIdentifier: 1,
+				},
+			},
+			expected: []byte{
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // BGP Marker
+				0x00, 0x1b, // BGP Message Length
+				0x02,       // BGP Message Type == Update
+				0x00, 0x04, // WithDraw Octet length
+				0x18,             // Prefix Length
+				0x54, 0x38, 0xd4, // Prefix,
+				0x00, 0x00, // Total Path Attribute Length
+			},
+			expectedError: nil,
+		},
+		{
+			name:      "Non bgp withdraw",
+			addPathTX: true,
+			prefix:    bnet.NewPfx(bnet.IPv4(1413010532), 24),
+			path: &route.Path{
 				Type: route.StaticPathType,
 			},
-			Expected:      []byte{},
-			ExpectedError: errors.New("wrong path type, expected BGPPathType"),
+			expected:      []byte{},
+			expectedError: errors.New("wrong path type, expected BGPPathType"),
 		},
 		{
-			Name:   "Nil BGPPathType",
-			Prefix: bnet.NewPfx(bnet.IPv4(1413010532), 24),
-			Path: &route.Path{
+			name:      "Nil BGPPathType",
+			addPathTX: true,
+			prefix:    bnet.NewPfx(bnet.IPv4(1413010532), 24),
+			path: &route.Path{
 				Type: route.BGPPathType,
 			},
-			Expected:      []byte{},
-			ExpectedError: errors.New("got nil BGPPath"),
+			expected:      []byte{},
+			expectedError: errors.New("got nil BGPPath"),
 		},
 	}
+
+	t.Parallel()
+
 	for _, tc := range testcases {
-		buf := bytes.NewBuffer([]byte{})
+		t.Run(tc.name, func(t *testing.T) {
+			buf := bytes.NewBuffer([]byte{})
 
-		u := &UpdateSender{
-			fsm: &FSM{},
-			options: &packet.EncodeOptions{
-				UseAddPath: true,
-			},
-		}
+			u := &UpdateSender{
+				fsm: &FSM{},
+				options: &packet.EncodeOptions{
+					UseAddPath: tc.addPathTX,
+				},
+			}
 
-		err := u.withDrawPrefixesAddPath(buf, tc.Prefix, tc.Path)
-		assert.Equal(t, tc.ExpectedError, err, "error mismatch in testcase %v", tc.Name)
-		assert.Equal(t, tc.Expected, buf.Bytes(), "expected different bytes in testcase %v", tc.Name)
+			err := u.withdrawPrefixIPv4(buf, tc.prefix, tc.path)
+			assert.Equal(t, tc.expectedError, err, "error mismatch")
+			assert.Equal(t, tc.expected, buf.Bytes(), "expected different bytes")
+		})
 	}
 }

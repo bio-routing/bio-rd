@@ -60,8 +60,7 @@ type FSM struct {
 	ipv4Unicast     *fsmAddressFamily
 	ipv6Unicast     *fsmAddressFamily
 
-	supportsMultiProtocol bool
-	supports4OctetASN     bool
+	supports4OctetASN bool
 
 	neighborID uint32
 	state      state
@@ -72,23 +71,23 @@ type FSM struct {
 	connectionCancelFunc context.CancelFunc
 }
 
-// NewPassiveFSM2 initiates a new passive FSM
-func NewPassiveFSM2(peer *peer, con *net.TCPConn) *FSM {
-	fsm := newFSM2(peer)
+// NewPassiveFSM initiates a new passive FSM
+func NewPassiveFSM(peer *peer, con *net.TCPConn) *FSM {
+	fsm := newFSM(peer)
 	fsm.con = con
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-// NewActiveFSM2 initiates a new passive FSM
-func NewActiveFSM2(peer *peer) *FSM {
-	fsm := newFSM2(peer)
+// NewActiveFSM initiates a new passive FSM
+func NewActiveFSM(peer *peer) *FSM {
+	fsm := newFSM(peer)
 	fsm.active = true
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-func newFSM2(peer *peer) *FSM {
+func newFSM(peer *peer) *FSM {
 	f := &FSM{
 		connectRetryTime: time.Minute,
 		peer:             peer,

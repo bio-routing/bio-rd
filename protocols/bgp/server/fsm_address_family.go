@@ -33,6 +33,8 @@ type fsmAddressFamily struct {
 	addPathRXConfigured bool
 	addPathRX           bool
 
+	multiProtocol bool
+
 	initialized bool
 }
 
@@ -90,14 +92,17 @@ func (f *fsmAddressFamily) dispose() {
 }
 
 func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
-	if f.afi == packet.IPv4AFI && f.safi == packet.UnicastSAFI {
-		f.withdraws(u)
-		f.updates(u)
+	if f.safi != packet.UnicastSAFI {
+		return
 	}
 
-	if f.fsm.supportsMultiProtocol {
+	if f.multiProtocol {
 		f.multiProtocolUpdates(u)
+		return
 	}
+
+	f.withdraws(u)
+	f.updates(u)
 }
 
 func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
@@ -119,10 +124,6 @@ func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
 }
 
 func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate) {
-	if !f.fsm.supportsMultiProtocol {
-		return
-	}
-
 	path := f.newRoutePath()
 	f.processAttributes(u.PathAttributes, path)
 
@@ -147,6 +148,10 @@ func (f *fsmAddressFamily) newRoutePath() *route.Path {
 }
 
 func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) {
+	if f.afi != nlri.AFI || f.safi != nlri.SAFI {
+		return
+	}
+
 	path.BGPPath.NextHop = nlri.NextHop
 
 	for _, pfx := range nlri.Prefixes {
@@ -155,6 +160,10 @@ func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.Mul
 }
 
 func (f *fsmAddressFamily) multiProtocolWithdraw(path *route.Path, nlri packet.MultiProtocolUnreachNLRI) {
+	if f.afi != nlri.AFI || f.safi != nlri.SAFI {
+		return
+	}
+
 	for _, pfx := range nlri.Prefixes {
 		f.adjRIBIn.RemovePath(pfx, path)
 	}

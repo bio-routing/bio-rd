@@ -178,7 +178,14 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 }
 
 func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolCapability) {
-	s.fsm.supportsMultiProtocol = true
+	if cap.SAFI != packet.UnicastSAFI {
+		return
+	}
+
+	f := s.fsm.addressFamily(cap.AFI, cap.SAFI)
+	if f != nil {
+		f.multiProtocol = true
+	}
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
