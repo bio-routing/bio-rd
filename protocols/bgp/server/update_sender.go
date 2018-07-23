@@ -249,7 +249,7 @@ func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
 	}
 
 	if u.afi == packet.IPv6AFI {
-		return u.withdrawPrefixIPv4(pfx, p)
+		return u.withdrawPrefixIPv6(pfx, p)
 	}
 
 	return fmt.Errorf("Unsupported AFI: %v", u.afi)
