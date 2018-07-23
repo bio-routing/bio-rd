@@ -62,6 +62,21 @@ func IPFromBytes(b []byte) (IP, error) {
 	return IP{}, fmt.Errorf("byte slice has an invalid legth. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
 }
 
+// IPFromString returns an IP address for a given string
+func IPFromString(str string) (IP, error) {
+	ip := net.ParseIP(str)
+	if ip == nil {
+		return IP{}, fmt.Errorf("%s is not a valid IP address", str)
+	}
+
+	ip4 := ip.To4()
+	if ip4 != nil {
+		return IPFromBytes(ip4)
+	}
+
+	return IPFromBytes(ip.To16())
+}
+
 // Equal returns true if ip is equal to other
 func (ip IP) Equal(other IP) bool {
 	return ip == other

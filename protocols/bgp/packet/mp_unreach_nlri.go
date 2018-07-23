@@ -34,36 +34,41 @@ func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptio
 
 func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, error) {
 	n := MultiProtocolUnreachNLRI{}
-	prefix := make([]byte, len(b)-3)
 
+	prefixesLength := len(b) - 3 // 3 <- AFI + SAFI
+	if prefixesLength < 0 {
+		return n, fmt.Errorf("Invalid length of MP_UNREACH_NLRI: expected more than 3 bytes but got %d", len(b))
+	}
+
+	prefixes := make([]byte, prefixesLength)
 	fields := []interface{}{
 		&n.AFI,
 		&n.SAFI,
-		&prefix,
+		&prefixes,
 	}
 	err := decode(bytes.NewBuffer(b), fields)
 	if err != nil {
 		return MultiProtocolUnreachNLRI{}, err
 	}
 
-	if len(prefix) == 0 {
+	if len(prefixes) == 0 {
 		return n, nil
 	}
 
 	idx := uint16(0)
-	for idx < uint16(len(prefix)) {
-		pfxLen := prefix[idx]
+	for idx < uint16(len(prefixes)) {
+		pfxLen := prefixes[idx]
 		numBytes := uint16(BytesInAddr(pfxLen))
 		idx++
 
-		r := uint16(len(prefix)) - idx
+		r := uint16(len(prefixes)) - idx
 		if r < numBytes {
 			return MultiProtocolUnreachNLRI{}, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", numBytes, r)
 		}
 
 		start := idx
 		end := idx + numBytes
-		pfx, err := deserializePrefix(prefix[start:end], pfxLen, n.AFI)
+		pfx, err := deserializePrefix(prefixes[start:end], pfxLen, n.AFI)
 		if err != nil {
 			return MultiProtocolUnreachNLRI{}, err
 		}
