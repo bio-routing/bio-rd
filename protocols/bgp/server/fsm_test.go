@@ -18,7 +18,7 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 	fsmA := newFSM(&peer{
 		addr:     bnet.IPv4FromOctets(169, 254, 100, 100),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
-		ipv4: &familyParameters{
+		ipv4: &peerAddressFamily{
 			rib:          locRIB.New(),
 			importFilter: filter.NewAcceptAllFilter(),
 			exportFilter: filter.NewAcceptAllFilter(),
@@ -132,14 +132,14 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 	fsmA := newFSM(&peer{
 		addr:     bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0xffff, 0, 0, 0, 1),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
-		ipv6: &familyParameters{
+		ipv6: &peerAddressFamily{
 			rib:          locRIB.New(),
 			importFilter: filter.NewAcceptAllFilter(),
 			exportFilter: filter.NewAcceptAllFilter(),
 		},
 	})
 
-	fsmA.options.MultiProtocolIPv6 = true
+	fsmA.ipv6Unicast.multiProtocol = true
 	fsmA.holdTimer = time.NewTimer(time.Second * 90)
 	fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
 	fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)

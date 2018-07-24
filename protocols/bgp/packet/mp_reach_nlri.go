@@ -15,9 +15,10 @@ type MultiProtocolReachNLRI struct {
 	SAFI     uint8
 	NextHop  bnet.IP
 	Prefixes []bnet.Prefix
+	PathID   uint32
 }
 
-func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer) uint16 {
+func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	nextHop := n.NextHop.Bytes()
 
 	tempBuf := bytes.NewBuffer(nil)
@@ -27,6 +28,9 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer) uint16 {
 	tempBuf.Write(nextHop)
 	tempBuf.WriteByte(0) // RESERVED
 	for _, pfx := range n.Prefixes {
+		if opt.UseAddPath {
+			tempBuf.Write(convert.Uint32Byte(n.PathID))
+		}
 		tempBuf.Write(serializePrefix(pfx))
 	}
 

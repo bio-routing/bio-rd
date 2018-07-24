@@ -13,13 +13,17 @@ type MultiProtocolUnreachNLRI struct {
 	AFI      uint16
 	SAFI     uint8
 	Prefixes []bnet.Prefix
+	PathID   uint32
 }
 
-func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer) uint16 {
+func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	tempBuf := bytes.NewBuffer(nil)
 	tempBuf.Write(convert.Uint16Byte(n.AFI))
 	tempBuf.WriteByte(n.SAFI)
 	for _, pfx := range n.Prefixes {
+		if opt.UseAddPath {
+			tempBuf.Write(convert.Uint32Byte(n.PathID))
+		}
 		tempBuf.Write(serializePrefix(pfx))
 	}
 

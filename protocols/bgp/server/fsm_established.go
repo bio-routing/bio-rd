@@ -30,6 +30,8 @@ func (s establishedState) run() (state, string) {
 		}
 	}
 
+	opt := s.fsm.decodeOptions()
+
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -48,7 +50,7 @@ func (s establishedState) run() (state, string) {
 		case <-s.fsm.keepaliveTimer.C:
 			return s.keepaliveTimerExpired()
 		case recvMsg := <-s.fsm.msgRecvCh:
-			return s.msgReceived(recvMsg)
+			return s.msgReceived(recvMsg, opt)
 		}
 	}
 }
@@ -74,7 +76,6 @@ func (s *establishedState) init() error {
 		LocalASN:             s.fsm.peer.localASN,
 		RouteServerClient:    s.fsm.peer.routeServerClient,
 		LocalAddress:         localAddr,
-		CapAddPathRX:         s.fsm.options.AddPathRX,
 		RouteReflectorClient: s.fsm.peer.routeReflectorClient,
 		ClusterID:            s.fsm.peer.clusterID,
 	}
@@ -148,8 +149,8 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
+func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:

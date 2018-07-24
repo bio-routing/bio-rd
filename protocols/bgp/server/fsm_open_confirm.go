@@ -18,6 +18,8 @@ func newOpenConfirmState(fsm *FSM) *openConfirmState {
 }
 
 func (s openConfirmState) run() (state, string) {
+	opt := s.fsm.decodeOptions()
+
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -34,7 +36,7 @@ func (s openConfirmState) run() (state, string) {
 		case <-s.fsm.keepaliveTimer.C:
 			return s.keepaliveTimerExpired()
 		case recvMsg := <-s.fsm.msgRecvCh:
-			return s.msgReceived(recvMsg)
+			return s.msgReceived(recvMsg, opt)
 		}
 	}
 }
@@ -81,8 +83,8 @@ func (s *openConfirmState) keepaliveTimerExpired() (state, string) {
 	return newOpenConfirmState(s.fsm), s.fsm.reason
 }
 
-func (s *openConfirmState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
+func (s *openConfirmState) msgReceived(data []byte, opt *packet.DecodeOptions) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:

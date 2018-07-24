@@ -7,7 +7,6 @@ go_library(
         "as_path.go",
         "community.go",
         "large_community.go",
-        "options.go",
         "unknown_attribute.go",
     ],
     importpath = "github.com/bio-routing/bio-rd/protocols/bgp/types",

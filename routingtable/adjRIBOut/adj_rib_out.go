@@ -17,18 +17,20 @@ type AdjRIBOut struct {
 	routingtable.ClientManager
 	rt            *routingtable.RoutingTable
 	neighbor      *routingtable.Neighbor
+	addPathTX     bool
 	pathIDManager *pathIDManager
-	mu            sync.RWMutex
 	exportFilter  *filter.Filter
+	mu            sync.RWMutex
 }
 
 // New creates a new Adjacency RIB Out with BGP add path
-func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter) *AdjRIBOut {
+func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter, addPathTX bool) *AdjRIBOut {
 	a := &AdjRIBOut{
 		rt:            routingtable.NewRoutingTable(),
 		neighbor:      neighbor,
 		pathIDManager: newPathIDManager(),
 		exportFilter:  exportFilter,
+		addPathTX:     addPathTX,
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -47,7 +49,7 @@ func (a *AdjRIBOut) RouteCount() int64 {
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
-		if a.neighbor.CapAddPathRX {
+		if a.addPathTX {
 			a.removePathsForPrefix(pfx)
 		}
 		return nil
@@ -94,8 +96,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	// AddPathRX capable neighbor
-	if a.neighbor.CapAddPathRX {
+	if a.addPathTX {
 		pathID, err := a.pathIDManager.addPath(p)
 		if err != nil {
 			return fmt.Errorf("Unable to get path ID: %v", err)
@@ -140,7 +141,7 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	a.rt.RemovePath(pfx, p)
 
 	// If the neighbar has AddPath capabilities, try to find the PathID
-	if a.neighbor.CapAddPathRX {
+	if a.addPathTX {
 		pathID, err := a.pathIDManager.releasePath(p)
 		if err != nil {
 			log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)

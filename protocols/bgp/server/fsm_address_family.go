@@ -29,17 +29,25 @@ type fsmAddressFamily struct {
 
 	updateSender *UpdateSender
 
+	addPathSend         routingtable.ClientOptions
+	addPathTXConfigured bool
+	addPathTX           bool
+
+	multiProtocol bool
+
 	initialized bool
 }
 
-func newFSMAddressFamily(afi uint16, safi uint8, params *familyParameters, fsm *FSM) *fsmAddressFamily {
+func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm *FSM) *fsmAddressFamily {
 	return &fsmAddressFamily{
-		afi:          afi,
-		safi:         safi,
-		fsm:          fsm,
-		rib:          params.rib,
-		importFilter: params.importFilter,
-		exportFilter: params.exportFilter,
+		afi:                 afi,
+		safi:                safi,
+		fsm:                 fsm,
+		rib:                 family.rib,
+		importFilter:        family.importFilter,
+		exportFilter:        family.exportFilter,
+		addPathTXConfigured: family.addPathReceive, // at this point we switch from peers view to our view
+		addPathSend:         family.addPathSend,
 	}
 }
 
@@ -50,18 +58,19 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs.Add(f.fsm.peer.localASN)
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter)
-	clientOptions := routingtable.ClientOptions{
-		BestOnly: true,
-	}
-	if f.fsm.options.AddPathRX {
-		clientOptions = f.fsm.peer.addPathSend
-	}
+	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, f.addPathTX)
 
 	f.updateSender = newUpdateSender(f.fsm, f.afi, f.safi)
 	f.updateSender.Start(time.Millisecond * 5)
 
 	f.adjRIBOut.Register(f.updateSender)
+
+	clientOptions := routingtable.ClientOptions{
+		BestOnly: true,
+	}
+	if f.addPathTX {
+		clientOptions = f.addPathSend
+	}
 	f.rib.RegisterWithOptions(f.adjRIBOut, clientOptions)
 }
 
@@ -87,19 +96,7 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
 		return
 	}
 
-	mp := false
-	switch f.afi {
-	case packet.IPv4AFI:
-		if f.fsm.options.MultiProtocolIPv4 {
-			mp = true
-		}
-	case packet.IPv6AFI:
-		if f.fsm.options.MultiProtocolIPv6 {
-			mp = true
-		}
-	}
-
-	if mp {
+	if f.multiProtocol {
 		f.multiProtocolUpdates(u)
 		return
 	}
