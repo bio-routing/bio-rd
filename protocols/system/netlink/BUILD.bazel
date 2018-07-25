@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["netlink.go"],
+    srcs = [
+        "netlink.go",
+        "route.go",
+    ],
     importpath = "github.com/bio-routing/bio-rd/protocols/system/netlink",
     visibility = ["//visibility:public"],
     deps = [
