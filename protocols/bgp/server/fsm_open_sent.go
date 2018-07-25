@@ -22,6 +22,9 @@ func newOpenSentState(fsm *FSM) *openSentState {
 
 func (s openSentState) run() (state, string) {
 	go s.fsm.msgReceiver()
+
+	opt := s.fsm.decodeOptions()
+
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -38,7 +41,7 @@ func (s openSentState) run() (state, string) {
 		case <-s.fsm.holdTimer.C:
 			return s.holdTimerExpired()
 		case recvMsg := <-s.fsm.msgRecvCh:
-			return s.msgReceived(recvMsg)
+			return s.msgReceived(recvMsg, opt)
 		}
 	}
 }
@@ -73,8 +76,8 @@ func (s *openSentState) holdTimerExpired() (state, string) {
 	return newIdleState(s.fsm), "Holdtimer expired"
 }
 
-func (s *openSentState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
+func (s *openSentState) msgReceived(data []byte, opt *packet.DecodeOptions) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -175,38 +178,47 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 }
 
 func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolCapability) {
-	s.fsm.options.SupportsMultiProtocol = true
+	if cap.SAFI != packet.UnicastSAFI {
+		return
+	}
+
+	f := s.fsm.addressFamily(cap.AFI, cap.SAFI)
+	if f != nil {
+		f.multiProtocol = true
+	}
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
-	if addPathCap.AFI != 1 {
+	if addPathCap.SAFI != packet.UnicastSAFI {
 		return
 	}
-	if addPathCap.SAFI != 1 {
+
+	f := s.fsm.addressFamily(addPathCap.AFI, addPathCap.SAFI)
+	if f == nil {
 		return
 	}
 
 	switch addPathCap.SendReceive {
 	case packet.AddPathReceive:
-		if !s.fsm.peer.addPathSend.BestOnly {
-			s.fsm.options.AddPathRX = true
+		if !f.addPathSend.BestOnly {
+			f.addPathTX = true
 		}
 	case packet.AddPathSend:
-		if s.fsm.peer.addPathRecv {
-			s.fsm.options.AddPathRX = true
+		if f.addPathTXConfigured {
+			f.addPathTX = true
 		}
 	case packet.AddPathSendReceive:
-		if !s.fsm.peer.addPathSend.BestOnly {
-			s.fsm.options.AddPathRX = true
+		if !f.addPathSend.BestOnly {
+			f.addPathTX = true
 		}
-		if s.fsm.peer.addPathRecv {
-			s.fsm.options.AddPathRX = true
+		if f.addPathTXConfigured {
+			f.addPathTX = true
 		}
 	}
 }
 
 func (s *openSentState) processASN4Capability(cap packet.ASN4Capability) {
-	s.fsm.options.Supports4OctetASN = true
+	s.fsm.supports4OctetASN = true
 
 	if s.peerASNRcvd == packet.ASTransASN {
 		s.peerASNRcvd = cap.ASN4

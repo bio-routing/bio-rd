@@ -1,6 +1,9 @@
 package server
 
 import (
+	"errors"
+	"fmt"
+	"io"
 	"sync"
 	"time"
 
@@ -15,14 +18,14 @@ import (
 // UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
 	routingtable.ClientManager
-	fsm       *FSM
-	afi       uint16
-	safi      uint8
-	iBGP      bool
-	rrClient  bool
-	toSendMu  sync.Mutex
-	toSend    map[string]*pathPfxs
-	destroyCh chan struct{}
+	fsm           *FSM
+	addressFamily *fsmAddressFamily
+	options       *packet.EncodeOptions
+	iBGP          bool
+	rrClient      bool
+	toSendMu      sync.Mutex
+	toSend        map[string]*pathPfxs
+	destroyCh     chan struct{}
 }
 
 type pathPfxs struct {
@@ -31,14 +34,19 @@ type pathPfxs struct {
 }
 
 func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
+	f := fsm.addressFamily(afi, safi)
+
 	return &UpdateSender{
-		fsm:       fsm,
-		afi:       afi,
-		safi:      safi,
-		iBGP:      fsm.peer.localASN == fsm.peer.peerASN,
-		rrClient:  fsm.peer.routeReflectorClient,
-		destroyCh: make(chan struct{}),
-		toSend:    make(map[string]*pathPfxs),
+		fsm:           fsm,
+		addressFamily: f,
+		iBGP:          fsm.peer.localASN == fsm.peer.peerASN,
+		rrClient:      fsm.peer.routeReflectorClient,
+		destroyCh:     make(chan struct{}),
+		toSend:        make(map[string]*pathPfxs),
+		options: &packet.EncodeOptions{
+			Use32BitASN: fsm.supports4OctetASN,
+			UseAddPath:  f.addPathTX,
+		},
 	}
 }
 
@@ -106,6 +114,10 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 			for _, pfx := range pathNLRIs.pfxs {
 				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
 
+				if u.options.UseAddPath {
+					budget -= 4
+				}
+
 				if budget < 0 {
 					updatesPrefixes = append(updatesPrefixes, prefixes)
 					prefixes = make([]bnet.Prefix, 0, 1)
@@ -129,12 +141,12 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 }
 
 func (u *UpdateSender) updateOverhead() int {
-	if !u.fsm.options.SupportsMultiProtocol {
+	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
 		return 0
 	}
 
 	addrLen := packet.IPv4AFI
-	if u.afi == packet.IPv6AFI {
+	if u.addressFamily.afi == packet.IPv6AFI {
 		addrLen = packet.IPv6Len
 	}
 
@@ -151,7 +163,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 			return
 		}
 
-		err = serializeAndSendUpdate(u.fsm.con, update, u.fsm.options)
+		err = serializeAndSendUpdate(u.fsm.con, update, u.options)
 		if err != nil {
 			log.Errorf("Failed to serialize and send: %v", err)
 		}
@@ -159,11 +171,11 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 }
 
 func (u *UpdateSender) updateMessageForPrefixes(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
-	if u.afi == packet.IPv4AFI && u.safi == packet.UnicastSAFI {
+	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
 		return u.bgpUpdate(pfxs, pa, pathID)
 	}
 
-	if u.fsm.options.SupportsMultiProtocol {
+	if u.addressFamily.multiProtocol {
 		return u.bgpUpdateMultiProtocol(pfxs, pa, pathID)
 	}
 
@@ -195,10 +207,11 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 	attrs := &packet.PathAttribute{
 		TypeCode: packet.MultiProtocolReachNLRICode,
 		Value: packet.MultiProtocolReachNLRI{
-			AFI:      u.afi,
-			SAFI:     u.safi,
+			AFI:      u.addressFamily.afi,
+			SAFI:     u.addressFamily.safi,
 			NextHop:  nextHop,
 			Prefixes: pfxs,
+			PathID:   pathID,
 		},
 	}
 	attrs.Next = pa
@@ -230,20 +243,66 @@ func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (a
 
 // RemovePath withdraws prefix `pfx` from a peer
 func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
-	err := u.withdrawPrefix(pfx, p)
+	err := u.withdrawPrefix(u.fsm.con, pfx, p)
 	if err != nil {
 		log.Errorf("Unable to withdraw prefix: %v", err)
 		return false
 	}
+
 	return true
 }
 
-func (u *UpdateSender) withdrawPrefix(pfx bnet.Prefix, p *route.Path) error {
-	if u.fsm.options.SupportsMultiProtocol {
-		return withDrawPrefixesMultiProtocol(u.fsm.con, u.fsm.options, pfx, u.afi, u.safi)
+func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+	if p.Type != route.BGPPathType {
+		return errors.New("wrong path type, expected BGPPathType")
 	}
 
-	return withDrawPrefixesAddPath(u.fsm.con, u.fsm.options, pfx, p)
+	if p.BGPPath == nil {
+		return errors.New("got nil BGPPath")
+	}
+
+	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
+		return u.withdrawPrefixIPv4(out, pfx, p)
+	}
+
+	if !u.addressFamily.multiProtocol {
+		return fmt.Errorf(packet.AFIName(u.addressFamily.afi) + " was not negotiated")
+	}
+
+	return u.withdrawPrefixMultiProtocol(out, pfx, p)
+}
+
+func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+	update := &packet.BGPUpdate{
+		WithdrawnRoutes: &packet.NLRI{
+			PathIdentifier: p.BGPPath.PathIdentifier,
+			IP:             pfx.Addr().ToUint32(),
+			Pfxlen:         pfx.Pfxlen(),
+		},
+	}
+
+	return serializeAndSendUpdate(out, update, u.options)
+}
+
+func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+	pathID := uint32(0)
+	if p.BGPPath != nil {
+		pathID = p.BGPPath.PathIdentifier
+	}
+
+	update := &packet.BGPUpdate{
+		PathAttributes: &packet.PathAttribute{
+			TypeCode: packet.MultiProtocolUnreachNLRICode,
+			Value: packet.MultiProtocolUnreachNLRI{
+				AFI:      u.addressFamily.afi,
+				SAFI:     u.addressFamily.safi,
+				Prefixes: []bnet.Prefix{pfx},
+				PathID:   pathID,
+			},
+		},
+	}
+
+	return serializeAndSendUpdate(out, update, u.options)
 }
 
 // UpdateNewClient does nothing

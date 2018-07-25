@@ -52,7 +52,7 @@ func TestDecodePathAttrs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &types.Options{})
+		res, err := decodePathAttrs(bytes.NewBuffer(test.input), uint16(len(test.input)), &DecodeOptions{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -249,7 +249,7 @@ func TestDecodePathAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &types.Options{})
+		res, _, err := decodePathAttr(bytes.NewBuffer(test.input), &DecodeOptions{})
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -934,6 +934,51 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "MP_REACH_NLRI with invalid length",
+			input: []byte{
+				0x00, 0x02, // AFI
+			},
+			wantFail: true,
+		},
+		{
+			name: "MP_REACH_NLRI with invalid length 2",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                           // SAFI
+				0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, // incomplete NextHop
+			},
+			wantFail: true,
+		},
+		{
+			name: "MP_REACH_NLRI without prefixes",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                                                                                 // SAFI
+				0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, // NextHop
+				0x00, // RESERVED
+			},
+			expected: &PathAttribute{
+				Length: 21,
+				Value: MultiProtocolReachNLRI{
+					AFI:      IPv6AFI,
+					SAFI:     UnicastSAFI,
+					NextHop:  bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2),
+					Prefixes: []bnet.Prefix{},
+				},
+			},
+		},
+		{
+			name: "MP_REACH_NLRI with invalid prefixes",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                                                                                 // SAFI
+				0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, // NextHop
+				0x00,             // RESERVED
+				0x30, 0x26, 0x00, // Prefix
+			},
+			wantFail: true,
+		},
 	}
 
 	t.Parallel()
@@ -997,6 +1042,22 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "MP_UNREACH_NLRI with invalid length",
+			input: []byte{
+				0x00, 0x02, // AFI
+			},
+			wantFail: true,
+		},
+		{
+			name: "MP_UNREACH_NLRI with invalid prefixes",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                   // SAFI
+				0x2c, 0x26, 0x20, 0x01, // Prefix
+			},
+			wantFail: true,
 		},
 	}
 
@@ -1516,8 +1577,8 @@ func TestSerializeASPath(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := bytes.NewBuffer(nil)
-			opt := &types.Options{
-				Supports4OctetASN: test.use32BitASN,
+			opt := &EncodeOptions{
+				Use32BitASN: test.use32BitASN,
 			}
 			n := test.input.serializeASPath(buf, opt)
 			if n != test.expectedLen {
@@ -2020,10 +2081,7 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		opt := &types.Options{
-			AddPathRX: false,
-		}
-		res, err := test.msg.SerializeUpdate(opt)
+		res, err := test.msg.SerializeUpdate(&EncodeOptions{})
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -2233,8 +2291,8 @@ func TestSerializeAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		opt := &types.Options{
-			AddPathRX: true,
+		opt := &EncodeOptions{
+			UseAddPath: true,
 		}
 		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {

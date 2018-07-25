@@ -15,9 +15,10 @@ type MultiProtocolReachNLRI struct {
 	SAFI     uint8
 	NextHop  bnet.IP
 	Prefixes []bnet.Prefix
+	PathID   uint32
 }
 
-func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer) uint16 {
+func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	nextHop := n.NextHop.Bytes()
 
 	tempBuf := bytes.NewBuffer(nil)
@@ -27,6 +28,9 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer) uint16 {
 	tempBuf.Write(nextHop)
 	tempBuf.WriteByte(0) // RESERVED
 	for _, pfx := range n.Prefixes {
+		if opt.UseAddPath {
+			tempBuf.Write(convert.Uint32Byte(n.PathID))
+		}
 		tempBuf.Write(serializePrefix(pfx))
 	}
 
@@ -38,8 +42,13 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer) uint16 {
 func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error) {
 	n := MultiProtocolReachNLRI{}
 	nextHopLength := uint8(0)
-	variable := make([]byte, len(b)-4)
 
+	variableLength := len(b) - 4 // 4 <- AFI + SAFI + NextHopLength
+	if variableLength <= 0 {
+		return n, fmt.Errorf("Invalid length of MP_REACH_NLRI: expected more than 4 bytes but got %d", len(b))
+	}
+
+	variable := make([]byte, variableLength)
 	fields := []interface{}{
 		&n.AFI,
 		&n.SAFI,
@@ -51,18 +60,24 @@ func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error)
 		return MultiProtocolReachNLRI{}, err
 	}
 
+	budget := variableLength
+	if budget < int(nextHopLength) {
+		return MultiProtocolReachNLRI{},
+			fmt.Errorf("Failed to decode next hop IP: expected %d bytes for NLRI, only %d remaining", nextHopLength, budget)
+	}
+
 	n.NextHop, err = bnet.IPFromBytes(variable[:nextHopLength])
 	if err != nil {
 		return MultiProtocolReachNLRI{}, fmt.Errorf("Failed to decode next hop IP: %v", err)
 	}
-
-	variable = variable[1+nextHopLength:]
+	budget -= int(nextHopLength)
 
 	n.Prefixes = make([]bnet.Prefix, 0)
-
-	if len(variable) == 0 {
+	if budget == 0 {
 		return n, nil
 	}
+
+	variable = variable[1+nextHopLength:] // 1 <- RESERVED field
 
 	idx := uint16(0)
 	for idx < uint16(len(variable)) {

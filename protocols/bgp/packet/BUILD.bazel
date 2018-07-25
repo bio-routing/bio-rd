@@ -4,7 +4,9 @@ go_library(
     name = "go_default_library",
     srcs = [
         "bgp.go",
+        "decode_options.go",
         "decoder.go",
+        "encode_options.go",
         "encoder.go",
         "helper.go",
         "mp_reach_nlri.go",

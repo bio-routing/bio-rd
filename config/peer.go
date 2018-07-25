@@ -21,8 +21,6 @@ type Peer struct {
 	PeerAS                  uint32
 	Passive                 bool
 	RouterID                uint32
-	AddPathSend             routingtable.ClientOptions
-	AddPathRecv             bool
 	RouteServerClient       bool
 	RouteReflectorClient    bool
 	RouteReflectorClusterID uint32
@@ -35,4 +33,6 @@ type AddressFamilyConfig struct {
 	RIB          *locRIB.LocRIB
 	ImportFilter *filter.Filter
 	ExportFilter *filter.Filter
+	AddPathSend  routingtable.ClientOptions
+	AddPathRecv  bool
 }

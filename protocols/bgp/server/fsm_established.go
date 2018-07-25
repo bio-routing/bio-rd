@@ -30,6 +30,8 @@ func (s establishedState) run() (state, string) {
 		}
 	}
 
+	opt := s.fsm.decodeOptions()
+
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -48,7 +50,7 @@ func (s establishedState) run() (state, string) {
 		case <-s.fsm.keepaliveTimer.C:
 			return s.keepaliveTimerExpired()
 		case recvMsg := <-s.fsm.msgRecvCh:
-			return s.msgReceived(recvMsg)
+			return s.msgReceived(recvMsg, opt)
 		}
 	}
 }
@@ -74,7 +76,6 @@ func (s *establishedState) init() error {
 		LocalASN:             s.fsm.peer.localASN,
 		RouteServerClient:    s.fsm.peer.routeServerClient,
 		LocalAddress:         localAddr,
-		CapAddPathRX:         s.fsm.options.AddPathRX,
 		RouteReflectorClient: s.fsm.peer.routeReflectorClient,
 		ClusterID:            s.fsm.peer.clusterID,
 	}
@@ -148,8 +149,8 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) msgReceived(data []byte) (state, string) {
-	msg, err := packet.Decode(bytes.NewBuffer(data), s.fsm.options)
+func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (state, string) {
+	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
 		switch bgperr := err.(type) {
 		case packet.BGPError:
@@ -187,7 +188,16 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	}
 
 	u := msg.Body.(*packet.BGPUpdate)
-	afi, safi := s.addressFamilyForUpdate(u)
+
+	if s.fsm.ipv4Unicast != nil {
+		s.fsm.ipv4Unicast.processUpdate(u)
+	}
+
+	if s.fsm.ipv6Unicast != nil {
+		s.fsm.ipv6Unicast.processUpdate(u)
+	}
+
+	afi, safi := s.updateAddressFamily(u)
 
 	if safi != packet.UnicastSAFI {
 		// only unicast support, so other SAFIs are ignored
@@ -199,19 +209,19 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 		if s.fsm.ipv4Unicast == nil {
 			log.Warnf("Received update for family IPv4 unicast, but this family is not configured.")
 		}
-		s.fsm.ipv4Unicast.processUpdate(u)
+
 	case packet.IPv6AFI:
 		if s.fsm.ipv6Unicast == nil {
 			log.Warnf("Received update for family IPv6 unicast, but this family is not configured.")
 		}
-		s.fsm.ipv6Unicast.processUpdate(u)
+
 	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) addressFamilyForUpdate(u *packet.BGPUpdate) (afi uint16, safi uint8) {
-	if !s.fsm.options.SupportsMultiProtocol || u.NLRI != nil || u.WithdrawnRoutes != nil {
+func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16, safi uint8) {
+	if u.WithdrawnRoutes != nil || u.NLRI != nil {
 		return packet.IPv4AFI, packet.UnicastSAFI
 	}
 

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -55,13 +54,13 @@ type FSM struct {
 	msgRecvFailCh chan error
 	stopMsgRecvCh chan struct{}
 
-	options *types.Options
-
 	local net.IP
 
 	ribsInitialized bool
 	ipv4Unicast     *fsmAddressFamily
 	ipv6Unicast     *fsmAddressFamily
+
+	supports4OctetASN bool
 
 	neighborID uint32
 	state      state
@@ -72,23 +71,23 @@ type FSM struct {
 	connectionCancelFunc context.CancelFunc
 }
 
-// NewPassiveFSM2 initiates a new passive FSM
-func NewPassiveFSM2(peer *peer, con *net.TCPConn) *FSM {
-	fsm := newFSM2(peer)
+// NewPassiveFSM initiates a new passive FSM
+func NewPassiveFSM(peer *peer, con *net.TCPConn) *FSM {
+	fsm := newFSM(peer)
 	fsm.con = con
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-// NewActiveFSM2 initiates a new passive FSM
-func NewActiveFSM2(peer *peer) *FSM {
-	fsm := newFSM2(peer)
+// NewActiveFSM initiates a new passive FSM
+func NewActiveFSM(peer *peer) *FSM {
+	fsm := newFSM(peer)
 	fsm.active = true
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-func newFSM2(peer *peer) *FSM {
+func newFSM(peer *peer) *FSM {
 	f := &FSM{
 		connectRetryTime: time.Minute,
 		peer:             peer,
@@ -99,7 +98,6 @@ func newFSM2(peer *peer) *FSM {
 		msgRecvCh:        make(chan []byte),
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
-		options:          &types.Options{},
 	}
 
 	if peer.ipv4 != nil {
@@ -111,6 +109,21 @@ func newFSM2(peer *peer) *FSM {
 	}
 
 	return f
+}
+
+func (fsm *FSM) addressFamily(afi uint16, safi uint8) *fsmAddressFamily {
+	if safi != packet.UnicastSAFI {
+		return nil
+	}
+
+	switch afi {
+	case packet.IPv4AFI:
+		return fsm.ipv4Unicast
+	case packet.IPv6AFI:
+		return fsm.ipv6Unicast
+	default:
+		return nil
+	}
 }
 
 func (fsm *FSM) start() {
@@ -225,6 +238,12 @@ func (fsm *FSM) msgReceiver() error {
 			return nil
 		}
 		fsm.msgRecvCh <- msg
+	}
+}
+
+func (fsm *FSM) decodeOptions() *packet.DecodeOptions {
+	return &packet.DecodeOptions{
+		Use32BitASN: fsm.supports4OctetASN,
 	}
 }
 

@@ -158,3 +158,15 @@ type PathAttribute struct {
 	Value          interface{}
 	Next           *PathAttribute
 }
+
+// AFIName returns the name of an address family
+func AFIName(afi uint16) string {
+	switch afi {
+	case IPv4AFI:
+		return "IPv4"
+	case IPv6AFI:
+		return "IPv6"
+	default:
+		return "Unknown AFI"
+	}
+}
