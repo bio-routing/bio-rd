@@ -22,6 +22,16 @@ func NewPfx(addr IP, pfxlen uint8) Prefix {
 	}
 }
 
+func NewPfxFromIPNet(ipNet *net.IPNet) Prefix {
+	ones, _ := ipNet.Mask.Size()
+	ip, _ := IPFromBytes(ipNet.IP)
+
+	return Prefix{
+		addr:   ip,
+		pfxlen: uint8(ones),
+	}
+}
+
 // StrToAddr converts an IP address string to it's uint32 representation
 func StrToAddr(x string) (uint32, error) {
 	parts := strings.Split(x, ".")

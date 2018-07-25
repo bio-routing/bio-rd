@@ -8,6 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable"
 	rt "github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
@@ -16,18 +17,61 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
+// RoutesDiff gets the list of elements contained by a but not b
+func RoutesDiff(a, b []netlink.Route) []netlink.Route {
+	ret := make([]netlink.Route, 0)
+
+	for _, pa := range a {
+		if !routesContains(pa, b) {
+			ret = append(ret, pa)
+		}
+	}
+
+	return ret
+}
+
+func routesContains(needle netlink.Route, haystack []netlink.Route) bool {
+	for _, p := range haystack {
+		if p.LinkIndex == needle.LinkIndex &&
+			p.ILinkIndex == needle.ILinkIndex &&
+			p.Scope == needle.Scope &&
+			p.Dst == needle.Dst &&
+			p.Protocol == needle.Protocol &&
+			p.Priority == needle.Priority &&
+			p.Table == needle.Table &&
+			p.Type == needle.Type &&
+			p.Tos == needle.Tos &&
+			p.Flags == needle.Flags &&
+			p.MPLSDst == needle.MPLSDst &&
+			p.NewDst == needle.NewDst &&
+			p.Encap == needle.Encap &&
+			p.MTU == needle.MTU &&
+			p.AdvMSS == needle.AdvMSS {
+
+			return true
+		}
+	}
+
+	return false
+}
+
 type NetlinkServer struct {
 	mu      sync.RWMutex
 	rib     *locRIB.LocRIB
 	options *config.Netlink
 	routes  []netlink.Route
+	routingtable.ClientManager
 }
 
 func NewNetlinkServer(options *config.Netlink, rib *locRIB.LocRIB) *NetlinkServer {
-	return &NetlinkServer{
+	n := &NetlinkServer{
 		options: options,
 		rib:     rib,
 	}
+
+	n.ClientManager = routingtable.NewClientManager(n)
+
+	return n
 }
 
 func (n *NetlinkServer) Start() error {
@@ -39,9 +83,38 @@ func (n *NetlinkServer) Start() error {
 	return nil
 }
 
+// Register a new client
+func (n *NetlinkServer) Register(client rt.RouteTableClient) {
+	n.ClientManager.Register(client)
+}
+
+// Register a new client with options
+func (n *NetlinkServer) RegisterWithOptions(client rt.RouteTableClient, options rt.ClientOptions) {
+	n.ClientManager.RegisterWithOptions(client, options)
+}
+
+// Unregister a client
+func (n *NetlinkServer) Unregister(client rt.RouteTableClient) {
+	n.ClientManager.Unregister(client)
+}
+
+// UpdateNewClient sends current state to a new client
+func (n *NetlinkServer) UpdateNewClient(client routingtable.RouteTableClient) error {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+
+	n.propagateChanges(make([]netlink.Route, 0), n.routes)
+
+	return nil
+}
+
+// Get the route count
 func (n *NetlinkServer) RouteCount() int64 {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 	return int64(len(n.routes))
 }
+
 func (n *NetlinkServer) AddPath(pfx net.Prefix, path *route.Path) error {
 	log.WithFields(log.Fields{
 		"Prefix": pfx.String(),
@@ -75,17 +148,20 @@ func (n *NetlinkServer) readKernelRoutes() {
 	time.Sleep(n.options.HoldTime)
 
 	for {
-
 		// Family doesn't matter. I only filter by the rt_table here
 		routes, err := netlink.RouteListFiltered(4, &netlink.Route{Table: n.options.RoutingTable}, netlink.RT_FILTER_TABLE)
 		if err != nil {
 			log.WithError(err).Error("Failed to read routes from kernel")
-			// TODO: what should happen in this case? continue? break? Since it's a daemon i would say wait...
+			// TODO: what should happen in this case? wait a few seconds and continue? break?
+			break
 		}
+
 		n.mu.Lock()
+		n.propagateChanges(n.routes, routes)
 		n.routes = routes
 		n.mu.Unlock()
 
+		n.mu.RLock()
 		for idx, route := range n.routes {
 			log.WithFields(log.Fields{
 				"LinkIndex":  route.LinkIndex,
@@ -109,6 +185,7 @@ func (n *NetlinkServer) readKernelRoutes() {
 			}).Debugf("Route [%d] read", idx)
 		}
 		log.WithField("RouteCount", n.RouteCount()).Debugf("Reading routes finised")
+		n.mu.RUnlock()
 
 		time.Sleep(n.options.UpdateInterval)
 	}
@@ -137,19 +214,39 @@ func (n *NetlinkServer) createRoute(pfx net.Prefix, path *route.Path) *netlink.R
 	}
 }
 
-// Not supported for netlink
-func (n *NetlinkServer) Register(rt.RouteTableClient) {
+func createPathFromRoute(r *netlink.Route) *route.Path {
+	nextHop, _ := net.IPFromBytes(r.Dst.IP)
+	return &route.Path{
+		Type:       route.StaticPathType,
+		StaticPath: &route.StaticPath{NextHop: nextHop},
+	}
 }
 
-// Not supported for netlink
-func (n *NetlinkServer) RegisterWithOptions(rt.RouteTableClient, rt.ClientOptions) {
+func (n *NetlinkServer) propagateChanges(oldRoutes []netlink.Route, newRoutes []netlink.Route) {
+	n.removePathsFromClients(oldRoutes, newRoutes)
+	n.addPathsToClients(oldRoutes, newRoutes)
 }
 
-// Not supported for netlink
-func (n *NetlinkServer) Unregister(rt.RouteTableClient) {
+func (n *NetlinkServer) addPathsToClients(oldRoutes []netlink.Route, newRoutes []netlink.Route) {
+	for _, client := range n.ClientManager.Clients() {
+		advertise := RoutesDiff(newRoutes, oldRoutes)
+
+		for _, route := range advertise {
+			pfx := net.NewPfxFromIPNet(route.Dst)
+			path := createPathFromRoute(&route)
+			client.AddPath(pfx, path)
+		}
+	}
 }
 
-// Not supported for netlink
-func (n *NetlinkServer) UpdateNewClient(rt.RouteTableClient) error {
-	return nil
+func (n *NetlinkServer) removePathsFromClients(oldRoutes []netlink.Route, newRoutes []netlink.Route) {
+	for _, client := range n.ClientManager.Clients() {
+		withdraw := RoutesDiff(oldRoutes, newRoutes)
+
+		for _, route := range withdraw {
+			pfx := net.NewPfxFromIPNet(route.Dst)
+			path := createPathFromRoute(&route)
+			client.RemovePath(pfx, path)
+		}
+	}
 }
