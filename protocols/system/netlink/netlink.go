@@ -115,6 +115,9 @@ func (n *NetlinkServer) RouteCount() int64 {
 	return int64(len(n.routes))
 }
 
+// Add a path to the Kernel using netlink
+// This function is triggered by the loc_rib, cause we are subscribed as
+// client in the loc_rib
 func (n *NetlinkServer) AddPath(pfx net.Prefix, path *route.Path) error {
 	log.WithFields(log.Fields{
 		"Prefix": pfx.String(),
@@ -129,6 +132,9 @@ func (n *NetlinkServer) AddPath(pfx net.Prefix, path *route.Path) error {
 	return nil
 }
 
+// Remove a path from the Kernel using netlink
+// This function is triggered by the loc_rib, cause we are subscribed as
+// client in the loc_rib
 func (n *NetlinkServer) RemovePath(pfx net.Prefix, path *route.Path) bool {
 	log.WithFields(log.Fields{
 		"Prefix": pfx.String(),
@@ -143,6 +149,7 @@ func (n *NetlinkServer) RemovePath(pfx net.Prefix, path *route.Path) bool {
 	return true
 }
 
+// Read routes from kernel
 func (n *NetlinkServer) readKernelRoutes() {
 	// Start fetching the kernel routes after the hold time
 	time.Sleep(n.options.HoldTime)
@@ -191,6 +198,7 @@ func (n *NetlinkServer) readKernelRoutes() {
 	}
 }
 
+// create a route from a prefix and a path
 func (n *NetlinkServer) createRoute(pfx net.Prefix, path *route.Path) *netlink.Route {
 	var nextHop bnet.IP
 
@@ -214,6 +222,7 @@ func (n *NetlinkServer) createRoute(pfx net.Prefix, path *route.Path) *netlink.R
 	}
 }
 
+// create a path from a route
 func createPathFromRoute(r *netlink.Route) *route.Path {
 	nextHop, _ := net.IPFromBytes(r.Dst.IP)
 	return &route.Path{
@@ -222,6 +231,7 @@ func createPathFromRoute(r *netlink.Route) *route.Path {
 	}
 }
 
+// propagate changes to all subscribed clients
 func (n *NetlinkServer) propagateChanges(oldRoutes []netlink.Route, newRoutes []netlink.Route) {
 	n.removePathsFromClients(oldRoutes, newRoutes)
 	n.addPathsToClients(oldRoutes, newRoutes)
