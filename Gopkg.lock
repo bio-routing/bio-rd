@@ -70,10 +70,10 @@
   revision = "0ad87eef1443f64d3d8c50da647e2b1552851124"
 
 [[projects]]
+  branch = "master"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
-  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
-  version = "v1.2.0"
+  revision = "603baefff989777996bf283da430d693e78eba3a"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -119,6 +119,21 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/vishvananda/netlink"
+  packages = [
+    ".",
+    "nl",
+  ]
+  revision = "d68dce480e5f9d08d0e024ee400ab36de67f0141"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/vishvananda/netns"
+  packages = ["."]
+  revision = "be1fbeda19366dea804f00efff2dd73a1642fdcc"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   revision = "b0697eccbea9adec5b7ba8008f4c33d98d733388"
@@ -153,6 +168,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8d26786e7bd681598d376675bc030c802da70ac1e285fe39220d11970e1036c4"
+  inputs-digest = "b051f08a83fd66cfd3acbe382367813dbaab3fd94675a8153fd2068dec6d2074"
   solver-name = "gps-cdcl"
   solver-version = 1

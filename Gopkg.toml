@@ -40,3 +40,7 @@ required = ["github.com/golang/dep", "github.com/q3k/goveralls", "github.com/go-
 [[constraint]]
   branch = "master"
   name = "github.com/taktv6/tflow2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/vishvananda/netlink"

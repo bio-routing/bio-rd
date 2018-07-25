@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 )
@@ -18,6 +19,16 @@ func NewPfx(addr IP, pfxlen uint8) Prefix {
 	return Prefix{
 		addr:   addr,
 		pfxlen: pfxlen,
+	}
+}
+
+func NewPfxFromIPNet(ipNet *net.IPNet) Prefix {
+	ones, _ := ipNet.Mask.Size()
+	ip, _ := IPFromBytes(ipNet.IP)
+
+	return Prefix{
+		addr:   ip,
+		pfxlen: uint8(ones),
 	}
 }
 
@@ -58,6 +69,20 @@ func (pfx Prefix) Pfxlen() uint8 {
 // String returns a string representation of pfx
 func (pfx Prefix) String() string {
 	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
+}
+
+func (pfx Prefix) GetIPNet() *net.IPNet {
+	var dstNetwork net.IPNet
+	dstNetwork.IP = pfx.Addr().Bytes()
+
+	pfxLen := int(pfx.Pfxlen())
+	if pfx.Addr().IsIPv4() {
+		dstNetwork.Mask = net.CIDRMask(pfxLen, 32)
+	} else {
+		dstNetwork.Mask = net.CIDRMask(pfxLen, 128)
+	}
+
+	return &dstNetwork
 }
 
 // Contains checks if x is a subnet of or equal to pfx

@@ -114,6 +114,7 @@ func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
 }
 
 // RemovePath removes the path for prefix `pfx`
+//	return false if the pfx does not exist in AdjRIBIn.rt, true otherwise
 func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
