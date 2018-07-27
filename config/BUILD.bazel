@@ -13,6 +13,7 @@ go_library(
         "//routingtable:go_default_library",
         "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
+        "//vendor/github.com/spf13/viper:go_default_library",
         "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
     ],
 )

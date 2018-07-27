@@ -51,6 +51,10 @@ func (b *bgpServer) RouterID() uint32 {
 }
 
 func (b *bgpServer) Start(c *config.Global) error {
+	if err := c.ReadGlobalConfig(); err != nil {
+		return fmt.Errorf("Failed to load global config: %v", err)
+	}
+
 	if err := c.SetDefaultGlobalConfigValues(); err != nil {
 		return fmt.Errorf("Failed to load defaults: %v", err)
 	}

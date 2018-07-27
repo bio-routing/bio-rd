@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/taktv6/tflow2/convert"
+
+	"github.com/spf13/viper"
 )
 
 type Global struct {
@@ -37,6 +39,25 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 		g.Port = BGPPORT
 	}
 
+	return nil
+}
+
+func (g *Global) ReadGlobalConfig() error {
+	viper.SetConfigName("global")
+	viper.AddConfigPath("/etc/bio-rd/")
+	viper.AddConfigPath("$HOME/.bio-rd")
+	viper.AddConfigPath(".")
+
+	err := viper.ReadInConfig()
+
+	if err != nil {
+		return fmt.Errorf("unable to read the global config file: %v", err)
+	}
+
+	err = viper.Unmarshal(g)
+	if err != nil {
+		fmt.Printf("unable to decode into config struct, %v", err)
+	}
 	return nil
 }
 
