@@ -16,6 +16,7 @@ type Global struct {
 	Port             uint16
 	LocalAddressList []net.IP
 	Listen           bool
+	LoopbackIface    string
 }
 
 const BGPPORT = uint16(179)
@@ -28,7 +29,7 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 	}
 
 	if g.RouterID == 0 {
-		rtrid, err := generateRouterID()
+		rtrid, err := generateRouterID(g)
 		if err != nil {
 			return fmt.Errorf("Unable to determine router ID: %v", err)
 		}
@@ -48,6 +49,8 @@ func (g *Global) ReadGlobalConfig() error {
 	viper.AddConfigPath("$HOME/.bio-rd")
 	viper.AddConfigPath(".")
 
+	viper.SetDefault("LoopbackIface", "lo")
+
 	err := viper.ReadInConfig()
 
 	if err != nil {
@@ -61,8 +64,8 @@ func (g *Global) ReadGlobalConfig() error {
 	return nil
 }
 
-func generateRouterID() (uint32, error) {
-	addr, err := getLoopbackIP()
+func generateRouterID(g *Global) (uint32, error) {
+	addr, err := getLoopbackIP(g)
 	if err == nil {
 		return convert.Uint32b([]byte(addr)[12:16]), nil
 	}
@@ -109,8 +112,8 @@ func _getHighestIP(ifs []net.Interface) (net.IP, error) {
 	return nil, fmt.Errorf("No non localhost IPv4 address found on interface lo")
 }
 
-func getLoopbackIP() (net.IP, error) {
-	iface, err := net.InterfaceByName("lo")
+func getLoopbackIP(g *Global) (net.IP, error) {
+	iface, err := net.InterfaceByName(g.LoopbackIface)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get interface lo: %v", err)
 	}
