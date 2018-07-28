@@ -1,5 +1,5 @@
 dist: trusty
-
+sudo: required
 addons:
   apt:
     sources:
@@ -17,8 +17,8 @@ before_install:
   - wget https://github.com/bazelbuild/bazel/releases/download/0.14.1/bazel-0.14.1-installer-linux-x86_64.sh
   - sha256sum -c .travis.bazel-0.14.1-installer-linux-x86_64.sh.sha256
   - bash bazel-0.14.1-installer-linux-x86_64.sh --user
-  - mkdir $HOME/.bio-rd
-  - cp global.example.yaml $HOME/.bio-rd/global.yaml
+  - sudo mkdir /etc/bio-rd
+  - sudo cp global.example.yaml /etc/bio-rd/global.yaml
 
 script:
 - mkdir -p $HOME/gopath/src/github.com/bio-routing/
