@@ -16,10 +16,11 @@ func TestGetLoopbackIP(t *testing.T) {
 		want    net.IP
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Error(tt.args.iface)
 			got, err := _getLoopbackIP(tt.args.iface)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("_getLoopbackIP() error = %v, wantErr %v", err, tt.wantErr)
@@ -42,7 +43,7 @@ func TestGetHighestIP(t *testing.T) {
 		want    net.IP
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -68,7 +69,7 @@ func TestAddrIsGreater(t *testing.T) {
 		args args
 		want bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -77,4 +78,8 @@ func TestAddrIsGreater(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReadGlobalConfig(t *testing.T) {
+
 }
