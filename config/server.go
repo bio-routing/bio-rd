@@ -5,8 +5,11 @@ import (
 	"net"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/taktv6/tflow2/convert"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -44,22 +47,34 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 }
 
 func (g *Global) ReadGlobalConfig() error {
+
+	return _readGlobalConfig(g)
+}
+
+func _readGlobalConfig(g *Global) error {
+
 	viper.SetConfigName("global")
 	viper.AddConfigPath("/etc/bio-rd/")
-	viper.AddConfigPath("$HOME/.bio-rd")
+	home, err := homedir.Dir()
+	if err != nil {
+		logrus.Infof("Can't find home directory")
+	} else {
+		viper.AddConfigPath(home + "/.bio-rd")
+	}
 	viper.AddConfigPath(".")
 
 	viper.SetDefault("LoopbackIface", "lo")
 
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 
 	if err != nil {
-		return fmt.Errorf("unable to read the global config file: %v", err)
+
+		return fmt.Errorf("unable to read the global config file: %#v", err)
 	}
 
 	err = viper.Unmarshal(g)
 	if err != nil {
-		fmt.Printf("unable to decode into config struct, %v", err)
+		return fmt.Errorf("unable to decode into config struct, %#v", err)
 	}
 	return nil
 }

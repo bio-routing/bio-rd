@@ -82,4 +82,17 @@ func TestAddrIsGreater(t *testing.T) {
 
 func TestReadGlobalConfig(t *testing.T) {
 
+	g := new(Global)
+
+	err := _readGlobalConfig(g)
+
+	if err != nil {
+		t.Fatalf("Error on reading global config file: %v", err)
+	} else {
+		if g.LoopbackIface != "lo" {
+			t.Log("%#v", g)
+			t.Errorf("Except lo as LoopbackIface")
+		}
+	}
+
 }
