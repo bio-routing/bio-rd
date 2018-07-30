@@ -90,7 +90,6 @@ func TestReadGlobalConfig(t *testing.T) {
 		t.Fatalf("Error on reading global config file: %v", err)
 	} else {
 		if g.LoopbackIface != "lo" {
-			t.Log("%#v", g)
 			t.Errorf("Except lo as LoopbackIface")
 		}
 	}
