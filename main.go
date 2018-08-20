@@ -36,6 +36,7 @@ func main() {
 					HelloInterval: 1,
 					HoldTime:      4,
 					Metric:        10,
+					Priority:      64,
 				},
 			},
 		},

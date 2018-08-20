@@ -17,7 +17,10 @@ type L2Hello struct {
 	TLVs         []TLV
 }
 
-const L2HelloMinSize = 18
+const (
+	L2HelloMinSize = 18
+	L2CircuitType  = 2
+)
 
 func decodeISISHello(buf *bytes.Buffer) (*L2Hello, error) {
 	pdu := &L2Hello{}
@@ -46,7 +49,7 @@ func decodeISISHello(buf *bytes.Buffer) (*L2Hello, error) {
 	return pdu, nil
 }
 
-func (h *L2Hello) serialize(buf *bytes.Buffer) {
+func (h *L2Hello) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.CircuitType)
 	buf.Write(h.SystemID[:])
 	buf.Write(convert.Uint16Byte(h.HoldingTimer))

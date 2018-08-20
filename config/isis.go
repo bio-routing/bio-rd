@@ -17,4 +17,5 @@ type ISISLevelConfig struct {
 	HelloInterval uint16
 	HoldTime      uint16
 	Metric        uint32
+	Priority      uint8
 }
