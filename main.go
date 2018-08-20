@@ -29,7 +29,7 @@ func main() {
 		},
 		Interfaces: []config.ISISInterfaceConfig{
 			{
-				Name:    "enp2s0",
+				Name:    "virbr1",
 				P2P:     true,
 				Passive: false,
 				ISISLevel2Config: &config.ISISLevelConfig{
@@ -42,7 +42,10 @@ func main() {
 		},
 	})
 
-	isis.Start()
+	err := isis.Start()
+	if err != nil {
+		logrus.Errorf("Unable to start ISIS: %v", err)
+	}
 
 	/*logrus.Printf("This is a BGP speaker\n")
 

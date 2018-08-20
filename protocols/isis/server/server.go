@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
@@ -31,7 +33,17 @@ func NewISISServer(cfg config.ISISConfig) *ISISServer {
 // Start starts an ISIS speaker
 func (isis *ISISServer) Start() error {
 	for _, ifs := range isis.config.Interfaces {
-		isis.interfaces[ifs.Name] = newNetIf(isis, ifs)
+		i, err := newNetIf(isis, ifs)
+		if err != nil {
+			return fmt.Errorf("Unable to enable ISIS on %s: %v", ifs.Name, err)
+		}
+		isis.interfaces[ifs.Name] = i
+
+		go func(ifaName string) {
+			for {
+				isis.interfaces[ifaName].readPacket()
+			}
+		}(ifs.Name)
 	}
 
 	return nil
