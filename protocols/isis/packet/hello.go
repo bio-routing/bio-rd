@@ -17,12 +17,59 @@ type L2Hello struct {
 	TLVs         []TLV
 }
 
+type P2PHello struct {
+	CircuitType    uint8
+	SystemID       [6]byte
+	HoldingTimer   uint16
+	PDULength      uint16
+	LocalCircuitID uint8
+	TLVs           []TLV
+}
+
 const (
-	L2HelloMinSize = 18
-	L2CircuitType  = 2
+	L2HelloMinSize  = 18
+	P2PHelloMinSize = 12
+	L2CircuitType   = 2
 )
 
-func decodeISISHello(buf *bytes.Buffer) (*L2Hello, error) {
+func (h *P2PHello) Serialize(buf *bytes.Buffer) {
+	buf.WriteByte(h.CircuitType)
+	buf.Write(h.SystemID[:])
+	buf.Write(convert.Uint16Byte(h.HoldingTimer))
+	buf.Write(convert.Uint16Byte(h.PDULength))
+	buf.WriteByte(h.LocalCircuitID)
+
+	for _, TLV := range h.TLVs {
+		TLV.Serialize(buf)
+	}
+}
+
+func decodeISISP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
+	pdu := &P2PHello{}
+
+	fields := []interface{}{
+		&pdu.CircuitType,
+		&pdu.SystemID,
+		&pdu.HoldingTimer,
+		&pdu.PDULength,
+		&pdu.LocalCircuitID,
+	}
+
+	err := decode(buf, fields)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+	}
+
+	TLVs, err := readTLVs(buf, pdu.PDULength-P2PHelloMinSize)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
+	}
+
+	pdu.TLVs = TLVs
+	return pdu, nil
+}
+
+func decodeISISL2Hello(buf *bytes.Buffer) (*L2Hello, error) {
 	pdu := &L2Hello{}
 	reserved := uint8(0)
 	fields := []interface{}{
@@ -47,14 +94,4 @@ func decodeISISHello(buf *bytes.Buffer) (*L2Hello, error) {
 
 	pdu.TLVs = TLVs
 	return pdu, nil
-}
-
-func (h *L2Hello) Serialize(buf *bytes.Buffer) {
-	buf.WriteByte(h.CircuitType)
-	buf.Write(h.SystemID[:])
-	buf.Write(convert.Uint16Byte(h.HoldingTimer))
-	buf.Write(convert.Uint16Byte(h.PDULength))
-	buf.WriteByte(h.Priority)
-	buf.WriteByte(0) // Reserved
-	buf.Write(h.DesignatedIS[:])
 }

@@ -1,35 +1,22 @@
 package server
 
 import (
-	"syscall"
 	"bytes"
 	"fmt"
-	"time"
 	"net"
+	"time"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	"github.com/bio-routing/bio-rd/biosyscall"
 )
 
 var (
-	AllL1ISS = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x14}
-	AllL2ISS = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x15}
+	AllL1ISS  = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x14}
+	AllL2ISS  = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x15}
 	AllP2PISS = [6]byte{0x09, 0x00, 0x2b, 0x00, 0x00, 0x5b}
-	AllISS = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
-	AllESS = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
-	// tcpdump -n -i XX isis -dd
-	filter = []syscall.SockFilter{
-		{ 0x28, 0, 0, 0x0000000c },
-		{ 0x25, 5, 0, 0x000005dc },
-		{ 0x28, 0, 0, 0x0000000e },
-		{ 0x15, 0, 3, 0x0000fefe },
-		{ 0x30, 0, 0, 0x00000011 },
-		{ 0x15, 0, 1, 0x00000083 },
-		{ 0x6, 0, 0, 0x00040000 },
-		{ 0x6, 0, 0, 0x00000000 },
-	}
+	AllISS    = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
+	AllESS    = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
 )
 
 type netIf struct {
@@ -95,42 +82,14 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 	return &nif, nil
 }
 
-func (n *netIf) mcastJoin(addr [6]byte) error {
-	if biosyscall.JoinISISMcast(n.socket, n.ifa.Index) != 0 {
-		return fmt.Errorf("setsockopt failed")
-	}
-
-	return nil
-}
-
-func (n *netIf) openPacketSocket() error {
-	socket, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_DGRAM, syscall.ETH_P_ALL)
-	if err != nil {
-		return fmt.Errorf("socket() failed: %v", err)
-	}
-	n.socket = socket
-
-	if biosyscall.SetBPFFilter(n.socket) != 0 {
-		return fmt.Errorf("Unable to set BPF filter")
-	}
-
-	if biosyscall.BindToInterface(n.socket, n.ifa.Index) != 0 {
-		return fmt.Errorf("Unable to bind to interface")
-	}
-
-	return nil
-}
-
 func (n *netIf) readPacket() {
-	buffer := make([]byte, 1500)
-	fmt.Printf("Waiting for packet...\n")
-	_, err := syscall.Read(n.socket, buffer)
+	pkt, src, err := n.recvPacket()
 	if err != nil {
-		fmt.Printf("read() failed\n")
+		fmt.Printf("recvmsg() failed\n")
 		return
 	}
 
-	fmt.Printf("Recevied: %v\n", buffer)
+	fmt.Printf("From %v: %v\n", src, pkt)
 }
 
 func (n *netIf) helloSender() {
@@ -141,16 +100,22 @@ func (n *netIf) helloSender() {
 	}
 }
 
-func (n *netIf) sendHello() {
-	p := packet.L2Hello{
+func (n *netIf) sendHello() error {
+	p := packet.P2PHello{
 		CircuitType:  packet.L2CircuitType,
 		SystemID:     n.isisServer.systemID(),
 		HoldingTimer: n.l2.HoldTime,
-		Priority:     128,
 	}
 
 	buf := bytes.NewBuffer(nil)
 	p.Serialize(buf)
 
 	fmt.Printf("Sending Hello: %v\n", buf.Bytes())
+
+	err := n.sendPacket(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to send packet: %v", err)
+	}
+
+	return nil
 }

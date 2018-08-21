@@ -1,30 +1,36 @@
 package packet
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
-type isisHeader struct {
-	ProtoDiscriminator  uint8
-	LengthIndicator     uint8
-	ProtocolIDExtension uint8
-	IDLength            uint8
-	PDUType             uint8
-	Version             uint8
-	MaxAreaAddresses    uint8
+const (
+	P2P_HELLO = 0x11
+)
+
+type isisPacket struct {
+	header *isisHeader
+	body   interface{}
 }
 
-func (h *isisHeader) serialize(buf *bytes.Buffer) {
-	buf.WriteByte(h.ProtoDiscriminator)
-	buf.WriteByte(h.LengthIndicator)
-	buf.WriteByte(h.ProtocolIDExtension)
-	buf.WriteByte(h.IDLength)
-	buf.WriteByte(h.PDUType)
-	buf.WriteByte(h.Version)
-	buf.WriteByte(0) // Reserved
-	buf.WriteByte(h.MaxAreaAddresses)
-}
+func Decode(buf *bytes.Buffer) (*isisPacket, error) {
+	pkt := &isisPacket{}
 
-func DecodeHeader(buf *bytes.Buffer) (*isisHeader, error) {
-	h := &isisHeader{}
+	hdr, err := decodeHeader(buf)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to decode header: %v", err)
+	}
+	pkt.header = hdr
 
-	return h, nil
+	switch pkt.header.PDUType {
+	case P2P_HELLO:
+		p2pHello, err := decodeISISP2PHello(buf)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode P2P hello: %v", err)
+		}
+		pkt.body = p2pHello
+	}
+
+	return pkt, nil
 }

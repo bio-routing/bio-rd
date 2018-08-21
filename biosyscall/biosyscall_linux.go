@@ -68,13 +68,13 @@ int isis_multicast_join(int fd, int registerto, int ifindex)
 	} else {
 		mreq.mr_type = PACKET_MR_ALLMULTI;
 	}
-	
+
 	return setsockopt(fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mreq, sizeof(struct packet_mreq));
 }
 */
 import "C"
 
-import(
+import (
 	"unsafe"
 )
 
@@ -89,7 +89,7 @@ func SetSockOpt(sockfd int, level int, optName int, optVal uintptr, optLen int) 
 
 func JoinISISMcast(sockfd int, ifIndex int) int {
 	return int(C.isis_multicast_join(C.int(sockfd), 4, C.int(ifIndex)))
-}	
+}
 
 func BindToInterface(sockfd int, ifIndex int) int {
 	return int(C.bind_to_interface(C.int(sockfd), C.int(ifIndex)))
