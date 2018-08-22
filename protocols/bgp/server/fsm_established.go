@@ -60,11 +60,7 @@ func (s *establishedState) init() error {
 	if err != nil {
 		return fmt.Errorf("Unable to get local address: %v", err)
 	}
-	hostIP := net.ParseIP(host)
-	if hostIP == nil {
-		return fmt.Errorf("Unable to parse address")
-	}
-	localAddr, err := bnet.IPFromBytes(hostIP)
+	localAddr, err := bnet.IPFromString(host)
 	if err != nil {
 		return fmt.Errorf("Unable to parse address: %v", err)
 	}
