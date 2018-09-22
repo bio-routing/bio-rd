@@ -4,10 +4,10 @@ go_library(
     name = "go_default_library",
     srcs = [
         "accept_action.go",
+        "action.go",
         "add_community_action.go",
         "add_large_community_action.go",
         "as_path_prepend_action.go",
-        "filter_action.go",
         "reject_action.go",
         "set_local_pref_action.go",
         "set_nexthop_action.go",
@@ -16,7 +16,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
     ],
 )
@@ -33,7 +33,7 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],

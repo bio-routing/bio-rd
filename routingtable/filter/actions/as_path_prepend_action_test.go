@@ -3,9 +3,9 @@ package actions
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 
-	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,11 +25,10 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 0",
 			times: 0,
 			bgpPath: &route.BGPPath{
-				ASPath: packet.ASPath{
-					packet.ASPathSegment{
-						Count: 2,
-						Type:  packet.ASSequence,
-						ASNs:  []uint32{12345, 12345},
+				ASPath: types.ASPath{
+					types.ASPathSegment{
+						Type: types.ASSequence,
+						ASNs: []uint32{12345, 12345},
 					},
 				},
 				ASPathLen: 2,
@@ -41,11 +40,10 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 3",
 			times: 3,
 			bgpPath: &route.BGPPath{
-				ASPath: packet.ASPath{
-					packet.ASPathSegment{
-						Count: 2,
-						Type:  packet.ASSequence,
-						ASNs:  []uint32{12345, 15169},
+				ASPath: types.ASPath{
+					types.ASPathSegment{
+						Type: types.ASSequence,
+						ASNs: []uint32{12345, 15169},
 					},
 				},
 				ASPathLen: 2,
@@ -56,9 +54,9 @@ func TestAppendPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			a := NewASPathPrependAction(12345, test.times)
-			p, _ := a.Do(net.NewPfx(strAddr("10.0.0.0"), 8), &route.Path{
+			res := a.Do(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 
@@ -66,8 +64,8 @@ func TestAppendPath(t *testing.T) {
 				return
 			}
 
-			assert.Equal(te, test.expectedPath, p.BGPPath.ASPath.String(), "ASPath")
-			assert.Equal(te, test.expectedLength, p.BGPPath.ASPathLen, "ASPathLen")
+			assert.Equal(t, test.expectedPath, res.Path.BGPPath.ASPath.String(), "ASPath")
+			assert.Equal(t, test.expectedLength, res.Path.BGPPath.ASPathLen, "ASPathLen")
 		})
 	}
 }

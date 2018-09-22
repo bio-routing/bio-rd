@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
+        "action.go",
         "community_filter.go",
         "filter.go",
         "helper.go",
@@ -17,7 +18,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//routingtable/filter/actions:go_default_library",
     ],
@@ -35,7 +36,7 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//routingtable/filter/actions:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",

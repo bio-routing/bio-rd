@@ -53,9 +53,9 @@ func TestAddingCommunities(t *testing.T) {
 			}
 
 			a := NewAddCommunityAction(test.communities)
-			modPath, _ := a.Do(net.Prefix{}, p)
+			res := a.Do(net.Prefix{}, p)
 
-			assert.Equal(t, test.expected, modPath.BGPPath.CommunitiesString())
+			assert.Equal(t, test.expected, res.Path.BGPPath.CommunitiesString())
 		})
 	}
 }

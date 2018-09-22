@@ -1,14 +1,16 @@
 package filter
 
 import (
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 )
 
+// LargeCommunityFilter represents a filter for large communities
 type LargeCommunityFilter struct {
-	community packet.LargeCommunity
+	community types.LargeCommunity
 }
 
-func (f *LargeCommunityFilter) Matches(coms []packet.LargeCommunity) bool {
+// Matches checks if a community f.community is on the filter list
+func (f *LargeCommunityFilter) Matches(coms []types.LargeCommunity) bool {
 	for _, com := range coms {
 		if com == f.community {
 			return true

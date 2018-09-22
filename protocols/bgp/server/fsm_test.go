@@ -1,7 +1,6 @@
 package server
 
 import (
-	"net"
 	"sync"
 	"testing"
 	"time"
@@ -10,15 +9,20 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/stretchr/testify/assert"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
-// TestFSM100Updates emulates receiving 100 BGP updates and withdraws. Checks route counts.
-func TestFSM100Updates(t *testing.T) {
-	fsmA := newFSM2(&peer{
-		addr:         net.ParseIP("169.254.100.100"),
-		rib:          locRIB.New(),
-		importFilter: filter.NewAcceptAllFilter(),
-		exportFilter: filter.NewAcceptAllFilter(),
+// TestFSM255UpdatesIPv4 emulates receiving 255 BGP updates and withdraws. Checks route counts.
+func TestFSM255UpdatesIPv4(t *testing.T) {
+	fsmA := newFSM(&peer{
+		addr:     bnet.IPv4FromOctets(169, 254, 100, 100),
+		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+		ipv4: &peerAddressFamily{
+			rib:          locRIB.New(),
+			importFilter: filter.NewAcceptAllFilter(),
+			exportFilter: filter.NewAcceptAllFilter(),
+		},
 	})
 
 	fsmA.holdTimer = time.NewTimer(time.Second * 90)
@@ -88,10 +92,11 @@ func TestFSM100Updates(t *testing.T) {
 		}
 
 		fsmA.msgRecvCh <- update
+
 	}
 
 	time.Sleep(time.Second)
-	ribRouteCount := fsmA.rib.RouteCount()
+	ribRouteCount := fsmA.ipv4Unicast.rib.RouteCount()
 	if ribRouteCount != 255 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
 	}
@@ -109,11 +114,126 @@ func TestFSM100Updates(t *testing.T) {
 			0, 0,
 		}
 		fsmA.msgRecvCh <- update
-		ribRouteCount = fsmA.rib.RouteCount()
+		ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	}
 	time.Sleep(time.Second * 1)
 
-	ribRouteCount = fsmA.rib.RouteCount()
+	ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
+	if ribRouteCount != 0 {
+		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
+	}
+
+	fsmA.eventCh <- ManualStop
+	wg.Wait()
+}
+
+// TestFSM255UpdatesIPv6 emulates receiving 255 BGP updates and withdraws. Checks route counts.
+func TestFSM255UpdatesIPv6(t *testing.T) {
+	fsmA := newFSM(&peer{
+		addr:     bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0xffff, 0, 0, 0, 1),
+		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
+		ipv6: &peerAddressFamily{
+			rib:          locRIB.New(),
+			importFilter: filter.NewAcceptAllFilter(),
+			exportFilter: filter.NewAcceptAllFilter(),
+		},
+	})
+
+	fsmA.ipv6Unicast.multiProtocol = true
+	fsmA.holdTimer = time.NewTimer(time.Second * 90)
+	fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
+	fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
+	fsmA.state = newEstablishedState(fsmA)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		fsmA.con = fakeConn{}
+		for {
+			nextState, reason := fsmA.state.run()
+			fsmA.state = nextState
+			stateName := stateName(nextState)
+			switch stateName {
+			case "idle":
+				wg.Done()
+				return
+			case "cease":
+				t.Errorf("Unexpected cease state: %s", reason)
+				wg.Done()
+				return
+			case "established":
+				continue
+			default:
+				t.Errorf("Unexpected new state: %s", reason)
+				wg.Done()
+				return
+			}
+		}
+
+	}()
+
+	for i := uint8(0); i < 255; i++ {
+		update := []byte{
+			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0, 76,
+			2,
+			0, 0,
+			0, 53,
+			64, // Attribute flags
+			1,  // Attribute Type code (ORIGIN)
+			1,  // Length
+			2,  // INCOMPLETE
+
+			64,     // Attribute flags
+			2,      // Attribute Type code (AS Path)
+			12,     // Length
+			2,      // Type = AS_SEQUENCE
+			2,      // Path Segement Length
+			59, 65, // AS15169
+			12, 248, // AS3320
+			1,      // Type = AS_SET
+			2,      // Path Segement Length
+			59, 65, // AS15169
+			12, 248, // AS3320
+
+			0x90,     // Attribute flags
+			0x0e,     // MP_REACH_NLRI
+			0x00, 30, // Length
+			0x00, 0x02, // AFI
+			0x01,                                                                                                 // SAFI
+			0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, // Nexthop
+			0x00,
+			64, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x0, i,
+		}
+
+		fsmA.msgRecvCh <- update
+	}
+
+	time.Sleep(time.Second)
+	ribRouteCount := fsmA.ipv6Unicast.rib.RouteCount()
+	if ribRouteCount != 255 {
+		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
+	}
+
+	for i := uint8(0); i < 255; i++ {
+		update := []byte{
+			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0x00, 35, // Length
+			0x02,       // UPDATE
+			0x00, 0x00, // withdrawn routes
+			0x00, 0x0c,
+			0x90, 0x0f,
+			0x00, 12, // Length
+			0x00, 0x02, // AFI
+			0x01, // SAFI
+			64, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x0, i,
+		}
+		fsmA.msgRecvCh <- update
+		ribRouteCount = fsmA.ipv6Unicast.rib.RouteCount()
+	}
+	time.Sleep(time.Second * 1)
+
+	ribRouteCount = fsmA.ipv6Unicast.rib.RouteCount()
 	if ribRouteCount != 0 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
 	}
@@ -203,7 +323,7 @@ func TestOpenMessage(t *testing.T) {
 				},
 			}
 
-			fsm := newFSM2(&p)
+			fsm := newFSM(&p)
 			msg := fsm.openMessage()
 
 			assert.Equal(t, &test.expected, msg)

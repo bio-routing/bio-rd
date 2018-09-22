@@ -19,10 +19,17 @@ go_library(
 
 go_test(
     name = "go_default_test",
-    srcs = ["path_id_manager_test.go"],
+    srcs = [
+        "adj_rib_out_test.go",
+        "path_id_manager_test.go",
+    ],
     embed = [":go_default_library"],
     deps = [
+        "//net:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
+        "//routingtable:go_default_library",
+        "//routingtable/filter:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

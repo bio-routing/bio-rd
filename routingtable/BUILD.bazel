@@ -17,7 +17,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
     ],
 )
@@ -28,13 +28,12 @@ go_test(
         "client_manager_test.go",
         "contributing_asn_list_test.go",
         "table_test.go",
-        "trie_test.go",
         "update_helper_test.go",
     ],
     embed = [":go_default_library"],
     deps = [
         "//net:go_default_library",
-        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],

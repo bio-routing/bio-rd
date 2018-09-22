@@ -10,7 +10,10 @@ gazelle(
 
 go_library(
     name = "go_default_library",
-    srcs = ["main.go"],
+    srcs = [
+        "main.go",
+        "main_ipv4.go",
+    ],
     importpath = "github.com/bio-routing/bio-rd",
     visibility = ["//visibility:private"],
     deps = [

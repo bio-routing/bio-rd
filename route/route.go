@@ -28,7 +28,7 @@ type Route struct {
 	ecmpPaths uint
 }
 
-// NewRoute generates a new route with paths p
+// NewRoute generates a new route with path p
 func NewRoute(pfx net.Prefix, p *Path) *Route {
 	r := &Route{
 		pfx: pfx,
@@ -40,6 +40,23 @@ func NewRoute(pfx net.Prefix, p *Path) *Route {
 	}
 
 	r.paths = append(r.paths, p)
+	return r
+}
+
+// NewRouteAddPath generates a new route with paths p
+func NewRouteAddPath(pfx net.Prefix, p []*Path) *Route {
+	r := &Route{
+		pfx: pfx,
+	}
+
+	if p == nil {
+		r.paths = make([]*Path, 0)
+		return r
+	}
+
+	for _, path := range p {
+		r.paths = append(r.paths, path)
+	}
 	return r
 }
 
@@ -63,7 +80,7 @@ func (r *Route) Prefix() net.Prefix {
 }
 
 // Addr gets a routes address
-func (r *Route) Addr() uint32 {
+func (r *Route) Addr() net.IP {
 	return r.pfx.Addr()
 }
 

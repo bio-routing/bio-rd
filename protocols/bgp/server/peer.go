@@ -1,11 +1,11 @@
 package server
 
 import (
-	"net"
 	"sync"
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -13,14 +13,15 @@ import (
 )
 
 type PeerInfo struct {
-	PeerAddr net.IP
+	PeerAddr bnet.IP
 	PeerASN  uint32
 	LocalASN uint32
+	States   []string
 }
 
 type peer struct {
 	server   *bgpServer
-	addr     net.IP
+	addr     bnet.IP
 	peerASN  uint32
 	localASN uint32
 
@@ -28,24 +29,43 @@ type peer struct {
 	fsms   []*FSM
 	fsmsMu sync.Mutex
 
-	rib               *locRIB.LocRIB
-	routerID          uint32
-	addPathSend       routingtable.ClientOptions
-	addPathRecv       bool
-	reconnectInterval time.Duration
-	keepaliveTime     time.Duration
-	holdTime          time.Duration
-	optOpenParams     []packet.OptParam
-	importFilter      *filter.Filter
-	exportFilter      *filter.Filter
-	routeServerClient bool
+	routerID             uint32
+	reconnectInterval    time.Duration
+	keepaliveTime        time.Duration
+	holdTime             time.Duration
+	optOpenParams        []packet.OptParam
+	routeServerClient    bool
+	routeReflectorClient bool
+	clusterID            uint32
+
+	ipv4 *peerAddressFamily
+	ipv6 *peerAddressFamily
+}
+
+type peerAddressFamily struct {
+	rib *locRIB.LocRIB
+
+	importFilter *filter.Filter
+	exportFilter *filter.Filter
+
+	addPathSend    routingtable.ClientOptions
+	addPathReceive bool
 }
 
 func (p *peer) snapshot() PeerInfo {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+	states := make([]string, 0, len(p.fsms))
+	for _, fsm := range p.fsms {
+		fsm.stateMu.RLock()
+		states = append(states, stateName(fsm.state))
+		fsm.stateMu.RUnlock()
+	}
 	return PeerInfo{
 		PeerAddr: p.addr,
 		PeerASN:  p.peerASN,
 		LocalASN: p.localASN,
+		States:   states,
 	}
 }
 
@@ -101,44 +121,64 @@ func isEstablishedState(s state) bool {
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func newPeer(c config.Peer, rib *locRIB.LocRIB, server *bgpServer) (*peer, error) {
+func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	if c.LocalAS == 0 {
 		c.LocalAS = server.localASN
 	}
+
 	p := &peer{
-		server:            server,
-		addr:              c.PeerAddress,
-		peerASN:           c.PeerAS,
-		localASN:          c.LocalAS,
-		fsms:              make([]*FSM, 0),
-		rib:               rib,
-		addPathSend:       c.AddPathSend,
-		addPathRecv:       c.AddPathRecv,
-		reconnectInterval: c.ReconnectInterval,
-		keepaliveTime:     c.KeepAlive,
-		holdTime:          c.HoldTime,
-		optOpenParams:     make([]packet.OptParam, 0),
-		importFilter:      filterOrDefault(c.ImportFilter),
-		exportFilter:      filterOrDefault(c.ExportFilter),
-		routeServerClient: c.RouteServerClient,
+		server:               server,
+		addr:                 c.PeerAddress,
+		peerASN:              c.PeerAS,
+		localASN:             c.LocalAS,
+		fsms:                 make([]*FSM, 0),
+		reconnectInterval:    c.ReconnectInterval,
+		keepaliveTime:        c.KeepAlive,
+		holdTime:             c.HoldTime,
+		optOpenParams:        make([]packet.OptParam, 0),
+		routeServerClient:    c.RouteServerClient,
+		routeReflectorClient: c.RouteReflectorClient,
+		clusterID:            c.RouteReflectorClusterID,
 	}
-	p.fsms = append(p.fsms, NewActiveFSM2(p))
 
-	caps := make([]packet.Capability, 0)
-
-	addPathEnabled, addPathCap := handleAddPathCapability(c)
-	if addPathEnabled {
-		caps = append(caps, addPathCap)
+	if c.IPv4 != nil {
+		p.ipv4 = &peerAddressFamily{
+			rib:            c.IPv4.RIB,
+			importFilter:   filterOrDefault(c.IPv4.ImportFilter),
+			exportFilter:   filterOrDefault(c.IPv4.ExportFilter),
+			addPathReceive: c.IPv4.AddPathRecv,
+			addPathSend:    c.IPv4.AddPathSend,
+		}
 	}
+
+	// If we are a route reflector and no ClusterID was set, use our RouterID
+	if p.routeReflectorClient && p.clusterID == 0 {
+		p.clusterID = c.RouterID
+	}
+
+	caps := make(packet.Capabilities, 0)
+
+	caps = append(caps, addPathCapabilities(c)...)
 
 	caps = append(caps, asn4Capability(c))
 
-	for _, cap := range caps {
-		p.optOpenParams = append(p.optOpenParams, packet.OptParam{
-			Type:  packet.CapabilitiesParamType,
-			Value: cap,
-		})
+	if c.IPv6 != nil {
+		p.ipv6 = &peerAddressFamily{
+			rib:            c.IPv6.RIB,
+			importFilter:   filterOrDefault(c.IPv6.ImportFilter),
+			exportFilter:   filterOrDefault(c.IPv6.ExportFilter),
+			addPathReceive: c.IPv6.AddPathRecv,
+			addPathSend:    c.IPv6.AddPathSend,
+		}
+		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
 	}
+
+	p.optOpenParams = append(p.optOpenParams, packet.OptParam{
+		Type:  packet.CapabilitiesParamType,
+		Value: caps,
+	})
+
+	p.fsms = append(p.fsms, NewActiveFSM(p))
 
 	return p, nil
 }
@@ -152,12 +192,42 @@ func asn4Capability(c config.Peer) packet.Capability {
 	}
 }
 
-func handleAddPathCapability(c config.Peer) (bool, packet.Capability) {
+func multiProtocolCapability(afi uint16) packet.Capability {
+	return packet.Capability{
+		Code: packet.MultiProtocolCapabilityCode,
+		Value: packet.MultiProtocolCapability{
+			AFI:  afi,
+			SAFI: packet.UnicastSAFI,
+		},
+	}
+}
+
+func addPathCapabilities(c config.Peer) []packet.Capability {
+	caps := make([]packet.Capability, 0)
+
+	enabled, cap := addPathCapabilityForFamily(c.IPv4, packet.IPv4AFI, packet.UnicastSAFI)
+	if enabled {
+		caps = append(caps, cap)
+	}
+
+	enabled, cap = addPathCapabilityForFamily(c.IPv6, packet.IPv6AFI, packet.UnicastSAFI)
+	if enabled {
+		caps = append(caps, cap)
+	}
+
+	return caps
+}
+
+func addPathCapabilityForFamily(f *config.AddressFamilyConfig, afi uint16, safi uint8) (enabled bool, cap packet.Capability) {
+	if f == nil {
+		return false, packet.Capability{}
+	}
+
 	addPath := uint8(0)
-	if c.AddPathRecv {
+	if f.AddPathRecv {
 		addPath += packet.AddPathReceive
 	}
-	if !c.AddPathSend.BestOnly {
+	if !f.AddPathSend.BestOnly {
 		addPath += packet.AddPathSend
 	}
 
@@ -168,8 +238,8 @@ func handleAddPathCapability(c config.Peer) (bool, packet.Capability) {
 	return true, packet.Capability{
 		Code: packet.AddPathCapabilityCode,
 		Value: packet.AddPathCapability{
-			AFI:         packet.IPv4AFI,
-			SAFI:        packet.UnicastSAFI,
+			AFI:         afi,
+			SAFI:        safi,
 			SendReceive: addPath,
 		},
 	}
@@ -184,7 +254,7 @@ func filterOrDefault(f *filter.Filter) *filter.Filter {
 }
 
 // GetAddr returns the IP address of the peer
-func (p *peer) GetAddr() net.IP {
+func (p *peer) GetAddr() bnet.IP {
 	return p.addr
 }
 

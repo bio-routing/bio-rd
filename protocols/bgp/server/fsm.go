@@ -1,14 +1,14 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -54,44 +54,41 @@ type FSM struct {
 	msgRecvFailCh chan error
 	stopMsgRecvCh chan struct{}
 
-	capAddPathSend bool
-	capAddPathRecv bool
-
-	options *packet.Options
-
 	local net.IP
 
 	ribsInitialized bool
-	adjRIBIn        routingtable.RouteTableClient
-	adjRIBOut       routingtable.RouteTableClient
-	rib             *locRIB.LocRIB
-	updateSender    routingtable.RouteTableClient
+	ipv4Unicast     *fsmAddressFamily
+	ipv6Unicast     *fsmAddressFamily
+
+	supports4OctetASN bool
 
 	neighborID uint32
 	state      state
 	stateMu    sync.RWMutex
 	reason     string
 	active     bool
+
+	connectionCancelFunc context.CancelFunc
 }
 
-// NewPassiveFSM2 initiates a new passive FSM
-func NewPassiveFSM2(peer *peer, con *net.TCPConn) *FSM {
-	fsm := newFSM2(peer)
+// NewPassiveFSM initiates a new passive FSM
+func NewPassiveFSM(peer *peer, con *net.TCPConn) *FSM {
+	fsm := newFSM(peer)
 	fsm.con = con
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-// NewActiveFSM2 initiates a new passive FSM
-func NewActiveFSM2(peer *peer) *FSM {
-	fsm := newFSM2(peer)
+// NewActiveFSM initiates a new passive FSM
+func NewActiveFSM(peer *peer) *FSM {
+	fsm := newFSM(peer)
 	fsm.active = true
 	fsm.state = newIdleState(fsm)
 	return fsm
 }
 
-func newFSM2(peer *peer) *FSM {
-	return &FSM{
+func newFSM(peer *peer) *FSM {
+	f := &FSM{
 		connectRetryTime: time.Minute,
 		peer:             peer,
 		eventCh:          make(chan int),
@@ -101,14 +98,40 @@ func newFSM2(peer *peer) *FSM {
 		msgRecvCh:        make(chan []byte),
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
-		rib:              peer.rib,
-		options:          &packet.Options{},
+	}
+
+	if peer.ipv4 != nil {
+		f.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, peer.ipv4, f)
+	}
+
+	if peer.ipv6 != nil {
+		f.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, peer.ipv6, f)
+	}
+
+	return f
+}
+
+func (fsm *FSM) addressFamily(afi uint16, safi uint8) *fsmAddressFamily {
+	if safi != packet.UnicastSAFI {
+		return nil
+	}
+
+	switch afi {
+	case packet.IPv4AFI:
+		return fsm.ipv4Unicast
+	case packet.IPv6AFI:
+		return fsm.ipv6Unicast
+	default:
+		return nil
 	}
 }
 
 func (fsm *FSM) start() {
+	ctx, cancel := context.WithCancel(context.Background())
+	fsm.connectionCancelFunc = cancel
+
 	go fsm.run()
-	go fsm.tcpConnector()
+	go fsm.tcpConnector(ctx)
 	return
 }
 
@@ -117,6 +140,8 @@ func (fsm *FSM) activate() {
 }
 
 func (fsm *FSM) run() {
+	defer fsm.cancelRunningGoRoutines()
+
 	next, reason := fsm.state.run()
 	for {
 		newState := stateName(next)
@@ -140,6 +165,12 @@ func (fsm *FSM) run() {
 		fsm.stateMu.Unlock()
 
 		next, reason = fsm.state.run()
+	}
+}
+
+func (fsm *FSM) cancelRunningGoRoutines() {
+	if fsm.connectionCancelFunc != nil {
+		fsm.connectionCancelFunc()
 	}
 }
 
@@ -168,11 +199,11 @@ func (fsm *FSM) cease() {
 	fsm.eventCh <- Cease
 }
 
-func (fsm *FSM) tcpConnector() error {
+func (fsm *FSM) tcpConnector(ctx context.Context) {
 	for {
 		select {
 		case <-fsm.initiateCon:
-			c, err := net.DialTCP("tcp", &net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr, Port: BGPPORT})
+			c, err := net.DialTCP("tcp", &net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr.ToNetIP(), Port: BGPPORT})
 			if err != nil {
 				select {
 				case fsm.conErrCh <- err:
@@ -188,6 +219,8 @@ func (fsm *FSM) tcpConnector() error {
 			case <-time.NewTimer(time.Second * 30).C:
 				c.Close()
 				continue
+			case <-ctx.Done():
+				return
 			}
 		}
 	}
@@ -205,6 +238,12 @@ func (fsm *FSM) msgReceiver() error {
 			return nil
 		}
 		fsm.msgRecvCh <- msg
+	}
+}
+
+func (fsm *FSM) decodeOptions() *packet.DecodeOptions {
+	return &packet.DecodeOptions{
+		Use32BitASN: fsm.supports4OctetASN,
 	}
 }
 
@@ -271,6 +310,23 @@ func (fsm *FSM) sendKeepalive() error {
 	}
 
 	return nil
+}
+
+func recvMsg(c net.Conn) (msg []byte, err error) {
+	buffer := make([]byte, packet.MaxLen)
+	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
+	if err != nil {
+		return nil, fmt.Errorf("Read failed: %v", err)
+	}
+
+	l := int(buffer[16])*256 + int(buffer[17])
+	toRead := l
+	_, err = io.ReadFull(c, buffer[packet.MinLen:toRead])
+	if err != nil {
+		return nil, fmt.Errorf("Read failed: %v", err)
+	}
+
+	return buffer, nil
 }
 
 func stopTimer(t *time.Timer) {

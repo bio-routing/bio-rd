@@ -9,6 +9,13 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
+type NLRI struct {
+	PathIdentifier uint32
+	IP             uint32
+	Pfxlen         uint8
+	Next           *NLRI
+}
+
 func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
 	var ret *NLRI
 	var eol *NLRI
@@ -65,7 +72,7 @@ func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
 	a := convert.Uint32Byte(n.IP)
 
 	addr := [4]byte{a[0], a[1], a[2], a[3]}
-	nBytes := bytesInAddr(n.Pfxlen)
+	nBytes := BytesInAddr(n.Pfxlen)
 
 	buf.WriteByte(n.Pfxlen)
 	buf.Write(addr[:nBytes])
@@ -73,19 +80,20 @@ func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
 	return nBytes + 1
 }
 
-func (n *NLRIAddPath) serialize(buf *bytes.Buffer) uint8 {
+func (n *NLRI) serializeAddPath(buf *bytes.Buffer) uint8 {
 	a := convert.Uint32Byte(n.IP)
 
 	addr := [4]byte{a[0], a[1], a[2], a[3]}
-	nBytes := bytesInAddr(n.Pfxlen)
+	nBytes := BytesInAddr(n.Pfxlen)
 
 	buf.Write(convert.Uint32Byte(n.PathIdentifier))
 	buf.WriteByte(n.Pfxlen)
 	buf.Write(addr[:nBytes])
 
-	return nBytes + 1
+	return nBytes + 4
 }
 
-func bytesInAddr(pfxlen uint8) uint8 {
+// BytesInAddr gets the amount of bytes needed to encode an NLRI of prefix length pfxlen
+func BytesInAddr(pfxlen uint8) uint8 {
 	return uint8(math.Ceil(float64(pfxlen) / 8))
 }

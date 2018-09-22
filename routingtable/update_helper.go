@@ -2,7 +2,7 @@ package routingtable
 
 import (
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 )
 
@@ -30,7 +30,7 @@ func isDisallowedByCommunity(p *route.Path, n *Neighbor) bool {
 	}
 
 	for _, com := range p.BGPPath.Communities {
-		if (com == packet.WellKnownCommunityNoExport && !n.IBGP) || com == packet.WellKnownCommunityNoAdvertise {
+		if (com == types.WellKnownCommunityNoExport && !n.IBGP) || com == types.WellKnownCommunityNoAdvertise {
 			return true
 		}
 	}

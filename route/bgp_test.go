@@ -3,18 +3,18 @@ package route
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func TestComputeHash(t *testing.T) {
 	p := &BGPPath{
-		ASPath: packet.ASPath{
-			packet.ASPathSegment{
-				ASNs:  []uint32{123, 456},
-				Count: 2,
-				Type:  packet.ASSequence,
+		ASPath: types.ASPath{
+			types.ASPathSegment{
+				ASNs: []uint32{123, 456},
+				Type: types.ASSequence,
 			},
 		},
 		BGPIdentifier: 1,
@@ -22,8 +22,8 @@ func TestComputeHash(t *testing.T) {
 			123, 456,
 		},
 		EBGP: false,
-		LargeCommunities: []packet.LargeCommunity{
-			packet.LargeCommunity{
+		LargeCommunities: []types.LargeCommunity{
+			types.LargeCommunity{
 				DataPart1:           1,
 				DataPart2:           2,
 				GlobalAdministrator: 3,
@@ -31,14 +31,14 @@ func TestComputeHash(t *testing.T) {
 		},
 		LocalPref:      100,
 		MED:            1,
-		NextHop:        100,
+		NextHop:        bnet.IPv4(100),
 		PathIdentifier: 5,
-		Source:         4,
+		Source:         bnet.IPv4(4),
 	}
 
-	assert.Equal(t, "45e238420552b88043edb8cb402034466b08d53b49f8e0fedc680747014ddeff", p.ComputeHash())
+	assert.Equal(t, "5907ed8960ccc14eed8f1a34a8eb3e6c82a8dd947d6cbf67eb58ca292f4588d5", p.ComputeHash())
 
 	p.LocalPref = 150
 
-	assert.NotEqual(t, "45e238420552b88043edb8cb402034466b08d53b49f8e0fedc680747014ddeff", p.ComputeHash())
+	assert.NotEqual(t, "5907ed8960ccc14eed8f1a34a8eb3e6c82a8dd947d6cbf67eb58ca292f4588d5", p.ComputeHash())
 }

@@ -3,21 +3,18 @@ package net
 import (
 	"fmt"
 	"math"
-	"net"
 	"strconv"
 	"strings"
-
-	"github.com/taktv6/tflow2/convert"
 )
 
 // Prefix represents an IPv4 prefix
 type Prefix struct {
-	addr   uint32
+	addr   IP
 	pfxlen uint8
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr uint32, pfxlen uint8) Prefix {
+func NewPfx(addr IP, pfxlen uint8) Prefix {
 	return Prefix{
 		addr:   addr,
 		pfxlen: pfxlen,
@@ -49,7 +46,7 @@ func StrToAddr(x string) (uint32, error) {
 }
 
 // Addr returns the address of the prefix
-func (pfx Prefix) Addr() uint32 {
+func (pfx Prefix) Addr() IP {
 	return pfx.addr
 }
 
@@ -60,7 +57,7 @@ func (pfx Prefix) Pfxlen() uint8 {
 
 // String returns a string representation of pfx
 func (pfx Prefix) String() string {
-	return fmt.Sprintf("%s/%d", net.IP(convert.Uint32Byte(pfx.addr)), pfx.pfxlen)
+	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
 }
 
 // Contains checks if x is a subnet of or equal to pfx
@@ -69,8 +66,30 @@ func (pfx Prefix) Contains(x Prefix) bool {
 		return false
 	}
 
+	if pfx.addr.ipVersion == 4 {
+		return pfx.containsIPv4(x)
+	}
+
+	return pfx.containsIPv6(x)
+}
+
+func (pfx Prefix) containsIPv4(x Prefix) bool {
 	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
-	return (pfx.addr & mask) == (x.addr & mask)
+	return (pfx.addr.ToUint32() & mask) == (x.addr.ToUint32() & mask)
+}
+
+func (pfx Prefix) containsIPv6(x Prefix) bool {
+	var maskHigh, maskLow uint64
+	if pfx.pfxlen <= 64 {
+		maskHigh = math.MaxUint32 << (64 - pfx.pfxlen)
+		maskLow = uint64(0)
+	} else {
+		maskHigh = math.MaxUint32
+		maskLow = math.MaxUint32 << (128 - pfx.pfxlen)
+	}
+
+	return pfx.addr.higher&maskHigh&maskHigh == x.addr.higher&maskHigh&maskHigh &&
+		pfx.addr.lower&maskHigh&maskLow == x.addr.lower&maskHigh&maskLow
 }
 
 // Equal checks if pfx and x are equal
@@ -80,9 +99,17 @@ func (pfx Prefix) Equal(x Prefix) bool {
 
 // GetSupernet gets the next common supernet of pfx and x
 func (pfx Prefix) GetSupernet(x Prefix) Prefix {
+	if pfx.addr.ipVersion == 4 {
+		return pfx.supernetIPv4(x)
+	}
+
+	return pfx.supernetIPv6(x)
+}
+
+func (pfx Prefix) supernetIPv4(x Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
-	a := pfx.addr >> (32 - maxPfxLen)
-	b := x.addr >> (32 - maxPfxLen)
+	a := pfx.addr.ToUint32() >> (32 - maxPfxLen)
+	b := x.addr.ToUint32() >> (32 - maxPfxLen)
 
 	for i := 0; a != b; i++ {
 		a = a >> 1
@@ -91,9 +118,40 @@ func (pfx Prefix) GetSupernet(x Prefix) Prefix {
 	}
 
 	return Prefix{
-		addr:   a << (32 - maxPfxLen),
+		addr:   IPv4(a << (32 - maxPfxLen)),
 		pfxlen: maxPfxLen,
 	}
+}
+
+func (pfx Prefix) supernetIPv6(x Prefix) Prefix {
+	maxPfxLen := min(pfx.pfxlen, x.pfxlen)
+
+	a := pfx.addr.BitAtPosition(1)
+	b := x.addr.BitAtPosition(1)
+	pfxLen := uint8(0)
+	mask := uint64(0)
+	for a == b && pfxLen < maxPfxLen {
+		a = pfx.addr.BitAtPosition(pfxLen + 2)
+		b = x.addr.BitAtPosition(pfxLen + 2)
+		pfxLen++
+
+		if pfxLen == 64 {
+			mask = 0
+		}
+
+		m := pfxLen % 64
+		mask = mask + uint64(1)<<(64-m)
+	}
+
+	if pfxLen == 0 {
+		return NewPfx(IPv6(0, 0), pfxLen)
+	}
+
+	if pfxLen > 64 {
+		return NewPfx(IPv6(pfx.addr.higher, pfx.addr.lower&mask), pfxLen)
+	}
+
+	return NewPfx(IPv6(pfx.addr.higher&mask, 0), pfxLen)
 }
 
 func min(a uint8, b uint8) uint8 {

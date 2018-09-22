@@ -10,9 +10,15 @@ const (
 	HeaderLen         = 19
 	MinLen            = 19
 	MaxLen            = 4096
+	MinUpdateLen      = 4
 	NLRIMaxLen        = 5
+	AFILen            = 2
+	SAFILen           = 1
 	CommunityLen      = 4
 	LargeCommunityLen = 12
+	IPv4Len           = 4
+	IPv6Len           = 16
+	ClusterIDLen      = 4
 
 	OpenMsg         = 1
 	UpdateMsg       = 2
@@ -65,6 +71,8 @@ const (
 	AtomicAggrAttr       = 6
 	AggregatorAttr       = 7
 	CommunitiesAttr      = 8
+	OriginatorIDAttr     = 9
+	ClusterListAttr      = 10
 	AS4PathAttr          = 17
 	AS4AggregatorAttr    = 18
 	LargeCommunitiesAttr = 32
@@ -73,10 +81,6 @@ const (
 	IGP        = 0
 	EGP        = 1
 	INCOMPLETE = 2
-
-	// ASPath Segment Types
-	ASSet      = 1
-	ASSequence = 2
 
 	// NOTIFICATION Cease error SubCodes (RFC4486)
 	MaxPrefReached                = 1
@@ -88,15 +92,26 @@ const (
 	ConnectionCollisionResolution = 7
 	OutOfResoutces                = 8
 
-	IPv4AFI               = 1
-	UnicastSAFI           = 1
-	CapabilitiesParamType = 2
-	AddPathCapabilityCode = 69
-	ASN4CapabilityCode    = 65
-	AddPathReceive        = 1
-	AddPathSend           = 2
-	AddPathSendReceive    = 3
-	ASTransASN            = 23456
+	IPv4AFI                      = 1
+	IPv6AFI                      = 2
+	UnicastSAFI                  = 1
+	CapabilitiesParamType        = 2
+	MultiProtocolCapabilityCode  = 1
+	MultiProtocolReachNLRICode   = 14
+	MultiProtocolUnreachNLRICode = 15
+	AddPathCapabilityCode        = 69
+	ASN4CapabilityCode           = 65
+	AddPathReceive               = 1
+	AddPathSend                  = 2
+	AddPathSendReceive           = 3
+	ASTransASN                   = 23456
+)
+
+var (
+	afiAddrLenBytes = map[uint16]uint8{
+		1: 4,
+		2: 16,
+	}
 )
 
 type BGPError struct {
@@ -133,22 +148,6 @@ type BGPNotification struct {
 	ErrorSubcode uint8
 }
 
-type BGPUpdate struct {
-	WithdrawnRoutesLen uint16
-	WithdrawnRoutes    *NLRI
-	TotalPathAttrLen   uint16
-	PathAttributes     *PathAttribute
-	NLRI               *NLRI
-}
-
-type BGPUpdateAddPath struct {
-	WithdrawnRoutesLen uint16
-	WithdrawnRoutes    *NLRIAddPath
-	TotalPathAttrLen   uint16
-	PathAttributes     *PathAttribute
-	NLRI               *NLRIAddPath
-}
-
 type PathAttribute struct {
 	Length         uint16
 	Optional       bool
@@ -160,20 +159,14 @@ type PathAttribute struct {
 	Next           *PathAttribute
 }
 
-type NLRI struct {
-	IP     uint32
-	Pfxlen uint8
-	Next   *NLRI
-}
-
-type NLRIAddPath struct {
-	PathIdentifier uint32
-	IP             uint32
-	Pfxlen         uint8
-	Next           *NLRIAddPath
-}
-
-type Aggretator struct {
-	Addr uint32
-	ASN  uint16
+// AFIName returns the name of an address family
+func AFIName(afi uint16) string {
+	switch afi {
+	case IPv4AFI:
+		return "IPv4"
+	case IPv6AFI:
+		return "IPv6"
+	default:
+		return "Unknown AFI"
+	}
 }

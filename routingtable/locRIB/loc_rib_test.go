@@ -3,14 +3,14 @@ package locRIB
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/net"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type pfxPath struct {
-	pfx  net.Prefix
+	pfx  bnet.Prefix
 	path *route.Path
 }
 
@@ -25,7 +25,7 @@ func TestContainsPfxPath(t *testing.T) {
 		{
 			in: []pfxPath{},
 			check: pfxPath{
-				pfx:  net.NewPfx(1, 32),
+				pfx:  bnet.NewPfx(bnet.IPv4(1), 32),
 				path: nil,
 			},
 			expected: false,
@@ -34,17 +34,17 @@ func TestContainsPfxPath(t *testing.T) {
 		{
 			in: []pfxPath{
 				{
-					pfx: net.NewPfx(1, 32),
+					pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
-							NextHop: 2,
+							NextHop: bnet.IPv4(2),
 						},
 					},
 				},
 			},
 			check: pfxPath{
-				pfx:  net.NewPfx(1, 32),
+				pfx:  bnet.NewPfx(bnet.IPv4(1), 32),
 				path: nil,
 			},
 			expected: false,
@@ -53,21 +53,21 @@ func TestContainsPfxPath(t *testing.T) {
 		{
 			in: []pfxPath{
 				{
-					pfx: net.NewPfx(1, 32),
+					pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
-							NextHop: 2,
+							NextHop: bnet.IPv4(2),
 						},
 					},
 				},
 			},
 			check: pfxPath{
-				pfx: net.NewPfx(1, 32),
+				pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 				path: &route.Path{
 					Type: route.StaticPathType,
 					StaticPath: &route.StaticPath{
-						NextHop: 2,
+						NextHop: bnet.IPv4(2),
 					},
 				},
 			},
@@ -87,11 +87,11 @@ func TestContainsPfxPath(t *testing.T) {
 
 func TestLocRIB_RemovePathUnknown(t *testing.T) {
 	rib := New()
-	assert.True(t, rib.RemovePath(net.NewPfx(1, 32),
+	assert.True(t, rib.RemovePath(bnet.NewPfx(bnet.IPv4(1), 32),
 		&route.Path{
 			Type: route.StaticPathType,
 			StaticPath: &route.StaticPath{
-				NextHop: 2,
+				NextHop: bnet.IPv4(2),
 			},
 		}))
 }

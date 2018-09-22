@@ -10,7 +10,7 @@ import (
 )
 
 // Decode decodes a BGP message
-func Decode(buf *bytes.Buffer, opt *Options) (*BGPMessage, error) {
+func Decode(buf *bytes.Buffer, opt *DecodeOptions) (*BGPMessage, error) {
 	hdr, err := decodeHeader(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to decode header: %v", err)
@@ -27,7 +27,7 @@ func Decode(buf *bytes.Buffer, opt *Options) (*BGPMessage, error) {
 	}, nil
 }
 
-func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *Options) (interface{}, error) {
+func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOptions) (interface{}, error) {
 	switch msgType {
 	case OpenMsg:
 		return decodeOpenMsg(buf)
@@ -41,7 +41,7 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *Options) (in
 	return nil, fmt.Errorf("Unknown message type: %d", msgType)
 }
 
-func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *Options) (*BGPUpdate, error) {
+func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
 	msg := &BGPUpdate{}
 
 	err := decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
@@ -232,6 +232,12 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 	}
 
 	switch cap.Code {
+	case MultiProtocolCapabilityCode:
+		mpCap, err := decodeMultiProtocolCapability(buf)
+		if err != nil {
+			return cap, fmt.Errorf("Unable to decode multi protocol capability")
+		}
+		cap.Value = mpCap
 	case AddPathCapabilityCode:
 		addPathCap, err := decodeAddPathCapability(buf)
 		if err != nil {
@@ -254,6 +260,21 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 	}
 
 	return cap, nil
+}
+
+func decodeMultiProtocolCapability(buf *bytes.Buffer) (MultiProtocolCapability, error) {
+	mpCap := MultiProtocolCapability{}
+	reserved := uint8(0)
+	fields := []interface{}{
+		&mpCap.AFI, &reserved, &mpCap.SAFI,
+	}
+
+	err := decode(buf, fields)
+	if err != nil {
+		return mpCap, err
+	}
+
+	return mpCap, nil
 }
 
 func decodeAddPathCapability(buf *bytes.Buffer) (AddPathCapability, error) {

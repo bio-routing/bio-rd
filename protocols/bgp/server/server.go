@@ -2,14 +2,11 @@ package server
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"strings"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,7 +25,7 @@ type bgpServer struct {
 type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
-	AddPeer(config.Peer, *locRIB.LocRIB) error
+	AddPeer(config.Peer) error
 	GetPeerInfoAll() map[string]PeerInfo
 }
 
@@ -99,7 +96,7 @@ func (b *bgpServer) incomingConnectionWorker() {
 		}).Info("Incoming TCP connection")
 
 		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
-		fsm := NewActiveFSM2(peer)
+		fsm := NewActiveFSM(peer)
 		fsm.state = newActiveState(fsm)
 		fsm.startConnectRetryTimer()
 
@@ -112,8 +109,8 @@ func (b *bgpServer) incomingConnectionWorker() {
 	}
 }
 
-func (b *bgpServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
-	peer, err := newPeer(c, rib, b)
+func (b *bgpServer) AddPeer(c config.Peer) error {
+	peer, err := newPeer(c, b)
 	if err != nil {
 		return err
 	}
@@ -124,21 +121,4 @@ func (b *bgpServer) AddPeer(c config.Peer, rib *locRIB.LocRIB) error {
 	peer.Start()
 
 	return nil
-}
-
-func recvMsg(c net.Conn) (msg []byte, err error) {
-	buffer := make([]byte, packet.MaxLen)
-	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
-	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
-	}
-
-	l := int(buffer[16])*256 + int(buffer[17])
-	toRead := l
-	_, err = io.ReadFull(c, buffer[packet.MinLen:toRead])
-	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
-	}
-
-	return buffer, nil
 }

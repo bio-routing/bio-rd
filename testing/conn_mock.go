@@ -1,6 +1,8 @@
 package testing
 
-import "net"
+import (
+	"net"
+)
 
 // MockConn mock an connection
 type MockConn struct {

@@ -20,10 +20,10 @@ func TestProcessTerms(t *testing.T) {
 	}{
 		{
 			name:   "accept",
-			prefix: net.NewPfx(0, 0),
+			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []FilterAction{
+				then: []Action{
 					&actions.AcceptAction{},
 				},
 			},
@@ -32,10 +32,10 @@ func TestProcessTerms(t *testing.T) {
 		},
 		{
 			name:   "reject",
-			prefix: net.NewPfx(0, 0),
+			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []FilterAction{
+				then: []Action{
 					&actions.RejectAction{},
 				},
 			},
@@ -43,11 +43,24 @@ func TestProcessTerms(t *testing.T) {
 			expectModified: false,
 		},
 		{
-			name:   "modified",
-			prefix: net.NewPfx(0, 0),
+			name:   "accept before reject",
+			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []FilterAction{
+				then: []Action{
+					&actions.AcceptAction{},
+					&actions.RejectAction{},
+				},
+			},
+			exptectAccept:  true,
+			expectModified: false,
+		},
+		{
+			name:   "modified",
+			prefix: net.NewPfx(net.IPv4(0), 0),
+			path:   &route.Path{},
+			term: &Term{
+				then: []Action{
 					&mockAction{},
 					&actions.AcceptAction{},
 				},
@@ -58,7 +71,7 @@ func TestProcessTerms(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			f := NewFilter([]*Term{test.term})
 			p, reject := f.ProcessTerms(test.prefix, test.path)
 
