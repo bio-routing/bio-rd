@@ -48,7 +48,7 @@ func (fsm *FSM) run() {
 				"last_state": oldState,
 				"new_state":  newState,
 				"reason":     reason,
-			}).Info("FSM: Neighbor state change")
+			}).Info("ISIS FSM: Neighbor state change")
 		}
 
 		if newState == "down" {
@@ -72,12 +72,8 @@ func stateName(s state) string {
 	switch s.(type) {
 	case *initializingState:
 		return "initializing"
-	/*case *upState:
-		return "up"
 	case *downState:
 		return "down"
-	case *rejectState:
-		return "reject"*/
 	default:
 		panic(fmt.Sprintf("Unknown state: %v", s))
 	}

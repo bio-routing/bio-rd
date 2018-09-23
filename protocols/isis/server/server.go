@@ -40,6 +40,7 @@ func (isis *ISISServer) Start() error {
 
 		isis.interfaces[ifs.Name] = interf
 		isis.interfaces[ifs.Name].startReceiver()
+		isis.interfaces[ifs.Name].helloSender()
 	}
 
 	return nil

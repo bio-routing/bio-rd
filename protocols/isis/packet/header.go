@@ -15,7 +15,7 @@ type ISISHeader struct {
 	MaxAreaAddresses    uint8
 }
 
-func (h *ISISHeader) serialize(buf *bytes.Buffer) {
+func (h *ISISHeader) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.ProtoDiscriminator)
 	buf.WriteByte(h.LengthIndicator)
 	buf.WriteByte(h.ProtocolIDExtension)
@@ -28,9 +28,15 @@ func (h *ISISHeader) serialize(buf *bytes.Buffer) {
 
 func decodeHeader(buf *bytes.Buffer) (*ISISHeader, error) {
 	h := &ISISHeader{}
+	dsap := uint8(0)
+	ssap := uint8(0)
+	cf := uint8(0)
 	reserved := uint8(0)
 
 	fields := []interface{}{
+		&dsap,
+		&ssap,
+		&cf,
 		&h.ProtoDiscriminator,
 		&h.LengthIndicator,
 		&h.ProtocolIDExtension,

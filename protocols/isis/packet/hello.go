@@ -27,8 +27,8 @@ type P2PHello struct {
 }
 
 const (
-	L2HelloMinSize  = 18
-	P2PHelloMinSize = 12
+	P2PHelloMinSize = 20
+	ISISHeaderSize = 8
 	L2CircuitType   = 2
 )
 
@@ -60,7 +60,7 @@ func decodeISISP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
-	TLVs, err := readTLVs(buf, pdu.PDULength-P2PHelloMinSize)
+	TLVs, err := readTLVs(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
 	}
@@ -87,7 +87,7 @@ func decodeISISL2Hello(buf *bytes.Buffer) (*L2Hello, error) {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
-	TLVs, err := readTLVs(buf, pdu.PDULength-L2HelloMinSize)
+	TLVs, err := readTLVs(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
 	}

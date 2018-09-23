@@ -17,7 +17,7 @@ import (
 var (
 	AllL1ISS  = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x14}
 	AllL2ISS  = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x15}
-	AllP2PISS = [6]byte{0x09, 0x00, 0x2b, 0x00, 0x00, 0x5b}
+	AllP2PISS = [6]byte{0x09, 0x00, 0x2b, 0x00, 0x00, 0x50}
 	AllISS    = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
 	AllESS    = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
 )
@@ -132,26 +132,31 @@ func (n *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 	pkt, err := packet.Decode(bytes.NewBuffer(rawPkt))
 	if err != nil {
 		log.Errorf("Unable to decode packet from %v: %v: %v", src, rawPkt, err)
+		return
 	}
 
 	switch pkt.Header.PDUType {
 	case packet.P2P_HELLO:
+		log.Infof("Received P2P hello: %v", rawPkt)
 		n.processIngressP2PHello(pkt)
 	case packet.L1_LAN_HELLO_TYPE:
 		// TODO: Implement LAN support for L1
+		log.Errorf("L1 LAN support is not implemented yet")
 	case packet.L2_LAN_HELLO_TYPE:
 		// TODO: Implement LAN support for L2
+		log.Errorf("L2 LAN support is not implemented yet")
 	default:
-		n.l2.neighborsMu.RLock()
-		neighbor := n.l2.neighbors[src]
-		n.l2.neighborsMu.RUnlock()
-
-		neighbor.fsm.receive(pkt)
+		log.Errorf("Unknown packet received from %v: %v", src, rawPkt)
 	}
 }
 
 func (n *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
-	hello := pkt.Body.(packet.P2PHello)
+	hello := pkt.Body.(*packet.P2PHello)
+	
+	for _, tlv := range hello.TLVs {
+		fmt.Printf("TLV Type: %d\n", tlv.Type())
+	}
+
 	switch hello.CircuitType {
 	case 1:
 		// TODO: Implement P2P L1 support
@@ -188,11 +193,18 @@ func (n *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 	}
 }
 
+func (n *netIf) helloSender() {
+	n.p2pHelloSender()
+}
+
 func (n *netIf) p2pHelloSender() {
 	t := time.NewTicker(time.Duration(n.l2.HelloInterval) * time.Second)
 	for {
 		<-t.C
-		n.sendP2PHello()
+		err := n.sendP2PHello()
+		if err != nil {
+			log.Errorf("Unable to send hello packet: %v", err)
+		}
 	}
 }
 
@@ -201,15 +213,36 @@ func (n *netIf) sendP2PHello() error {
 		CircuitType:  packet.L2CircuitType,
 		SystemID:     n.isisServer.systemID(),
 		HoldingTimer: n.l2.HoldTime,
+		PDULength:    packet.P2PHelloMinSize,
 		TLVs:         n.p2pHelloTLVs(),
 	}
 
-	buf := bytes.NewBuffer(nil)
-	p.Serialize(buf)
+	for _, TLV := range p.TLVs {
+		p.PDULength += 2
+		p.PDULength += uint16(TLV.Length())
+	}
 
-	fmt.Printf("Sending Hello: %v\n", buf.Bytes())
+	helloBuf := bytes.NewBuffer(nil)
+	p.Serialize(helloBuf)
 
-	err := n.sendPacket(buf.Bytes())
+	hdr := packet.ISISHeader{
+		ProtoDiscriminator: 0x83,
+		LengthIndicator: 20,
+		ProtocolIDExtension: 1,
+		IDLength: 0,
+		PDUType: packet.P2P_HELLO,
+		Version: 1,
+		MaxAreaAddresses: 0,	
+	}
+
+	hdrBuf := bytes.NewBuffer(nil)
+	hdr.Serialize(hdrBuf)
+
+	hdrBuf.Write(helloBuf.Bytes())
+
+	fmt.Printf("Sending Hello: %v\n", hdrBuf.Bytes())
+
+	err := n.sendPacket(hdrBuf.Bytes(), AllISS)
 	if err != nil {
 		return fmt.Errorf("failed to send packet: %v", err)
 	}
@@ -229,12 +262,12 @@ func (n *netIf) p2pHelloTLVs() []packet.TLV {
 		p2pAdjStateTLV.NeighborExtendedLocalCircuitID = neighborExtendedLocalCircuitID
 	}
 
-	protocolSupportedTLV := packet.NewProtocolsSupportedTLV(n.supportedProtocols)
+	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(n.supportedProtocols)
 	areaAddressesTLV := packet.NewAreaAddressTLV(n.getAreas())
 
 	return []packet.TLV{
 		p2pAdjStateTLV,
-		protocolSupportedTLV,
+		protocolsSupportedTLV,
 		areaAddressesTLV,
 	}
 }
@@ -242,7 +275,9 @@ func (n *netIf) p2pHelloTLVs() []packet.TLV {
 func (n *netIf) getAreas() []types.AreaID {
 	areas := make([]types.AreaID, len(n.isisServer.config.NETs))
 	for i, NET := range n.isisServer.config.NETs {
-		areas[i] = NET.AreaID
+		a := []byte{NET.AFI}
+		a = append(a, NET.AreaID...)
+		areas[i] = a
 	}
 
 	return areas

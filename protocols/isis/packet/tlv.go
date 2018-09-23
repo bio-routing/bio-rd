@@ -25,7 +25,7 @@ func serializeTLVs(tlvs []TLV) []byte {
 	return buf.Bytes()
 }
 
-func readTLVs(buf *bytes.Buffer, length uint16) ([]TLV, error) {
+func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 	var err error
 	tlvType := uint8(0)
 	tlvLength := uint8(0)
@@ -37,41 +37,44 @@ func readTLVs(buf *bytes.Buffer, length uint16) ([]TLV, error) {
 
 	TLVs := make([]TLV, 0)
 
+	length := buf.Len()
 	read := uint16(0)
-	for read < length {
+	for read < uint16(length) {
 		err = decode(buf, headFields)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode fields: %v", err)
 		}
 
 		read += 2
+		read += uint16(tlvLength)
 
 		var tlv TLV
-		l := uint8(0)
+
+		fmt.Printf("Decode: TLV Type = %d\n", tlvType)
+		fmt.Printf("Length: %d\n", tlvLength)
 
 		switch tlvType {
 		case ProtocolsSupportedTLVType:
-			tlv, l, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
+			tlv, _, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
 		case IPInterfaceAddressTLVType:
-			tlv, l, err = readIPInterfaceAddressTLV(buf, tlvType, tlvLength)
+			tlv, _, err = readIPInterfaceAddressTLV(buf, tlvType, tlvLength)
 		case AreaAddressesTLVType:
-			tlv, l, err = readAreaAddressesTLV(buf, tlvType, tlvLength)
+			tlv, err = readAreaAddressesTLV(buf, tlvType, tlvLength)
+		case P2PAdjacencyStateTLVType:
+			tlv, _, err = readP2PAdjacencyStateTLV(buf, tlvType, tlvLength)
 		default:
 			log.Warningf("Unknown type: %d", tlvType)
-			for i := uint8(0); i < tlvLength; i++ {
-				_, err = buf.ReadByte()
-				if err != nil {
-					return nil, fmt.Errorf("Unable to read: %v", err)
-				}
-				read++
+			nirvana := make([]byte, tlvLength)
+			_, err = buf.Read(nirvana)
+			if err != nil {
+				return nil, fmt.Errorf("Unable to read: %v", err)
 			}
 			continue
 		}
 
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read IS neighbors TLV: %v", err)
+			return nil, fmt.Errorf("Unable to read TLV: %v", err)
 		}
-		read += uint16(l)
 		TLVs = append(TLVs, tlv)
 	}
 

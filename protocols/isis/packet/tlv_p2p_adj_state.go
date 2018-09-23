@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/taktv6/tflow2/convert"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
-const P2PAdjacencyStateTLVType = 2
+const P2PAdjacencyStateTLVType = 240
 
 type P2PAdjacencyStateTLV struct {
 	TLVType                        uint8
@@ -79,5 +80,11 @@ func (p P2PAdjacencyStateTLV) Value() interface{} {
 func (p P2PAdjacencyStateTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(p.TLVType)
 	buf.WriteByte(p.TLVLength)
+	buf.WriteByte(p.AdjacencyState)
+	buf.Write(convert.Uint32Byte(p.ExtendedLocalCircuitID))
 
+	if p.TLVLength == 15 {
+		buf.Write(p.NeighborSystemID[:])
+		buf.Write(convert.Uint32Byte(p.NeighborExtendedLocalCircuitID))
+	}
 }

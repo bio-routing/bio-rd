@@ -17,44 +17,45 @@ type AreaAddressesTLV struct {
 	AreaIDs   []types.AreaID
 }
 
-func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*AreaAddressesTLV, uint8, error) {
+func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*AreaAddressesTLV, error) {
 	pdu := &AreaAddressesTLV{
 		TLVType:   tlvType,
 		TLVLength: tlvLength,
 		AreaIDs:   make([]types.AreaID, 0),
 	}
 
-	bytesRead := uint8(0)
 	areaNum := 0
-	for i := uint8(0); i < tlvLength; i++ {
+	read := uint8(0)
+	for read < tlvLength {
 		areaLen, err := buf.ReadByte()
 		if err != nil {
-			return nil, 0, fmt.Errorf("Unable to read: %v", err)
+			return nil, fmt.Errorf("Unable to read: %v", err)
 		}
+		read++
 
 		newArea := make(types.AreaID, areaLen)
 		_, err = buf.Read(newArea)
 		if err != nil {
-			return nil, 0, fmt.Errorf("Unable to read: %v", err)
+			return nil, fmt.Errorf("Unable to read: %v", err)
 		}
+		read += areaLen
 
 		pdu.AreaIDs = append(pdu.AreaIDs, newArea)
-		bytesRead += areaLen + 1
 		areaNum++
 	}
 
-	return pdu, bytesRead, nil
+	return pdu, nil
 }
 
 func NewAreaAddressTLV(areas []types.AreaID) *AreaAddressesTLV {
 	a := &AreaAddressesTLV{
 		TLVType: AreaAddressesTLVType,
+		TLVLength: 0,
 		AreaIDs: make([]types.AreaID, len(areas)),
 	}
 
-	length := uint8(0)
 	for i, area := range areas {
-		length += uint8(len(area)) + 1
+		a.TLVLength += uint8(len(area)) + 1
 		a.AreaIDs[i] = area
 	}
 

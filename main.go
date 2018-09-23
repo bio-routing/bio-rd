@@ -28,7 +28,7 @@ func main() {
 		},
 		Interfaces: []config.ISISInterfaceConfig{
 			{
-				Name:    "virbr1",
+				Name:    "virbr3",
 				P2P:     true,
 				Passive: false,
 				ISISLevel2Config: &config.ISISLevelConfig{

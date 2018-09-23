@@ -1,6 +1,10 @@
 package server
 
-import "github.com/bio-routing/bio-rd/protocols/isis/packet"
+import (
+	"fmt"
+
+	"github.com/bio-routing/bio-rd/protocols/isis/packet"
+)
 
 type initializingState struct {
 	fsm *FSM
@@ -25,13 +29,14 @@ func (s initializingState) run() (state, string) {
 			protocolsSupportedTLVfound := false
 			areaAddressesTLVFound := false
 
-			hello := pkt.Body.(packet.P2PHello)
+			hello := pkt.Body.(*packet.P2PHello)
 			for _, tlv := range hello.TLVs {
+				fmt.Printf("### TLV Type: %d\n", tlv.Type())
 				switch tlv.Type() {
 				case packet.P2PAdjacencyStateTLVType:
 					p2pAdjStateTLVFound = true
 				case packet.ProtocolsSupportedTLVType:
-					if !s.fsm.neighbor.ifa.compareSupportedProtocols(tlv.(packet.ProtocolsSupportedTLV).NerworkLayerProtocolIDs) {
+					if !s.fsm.neighbor.ifa.compareSupportedProtocols(tlv.(*packet.ProtocolsSupportedTLV).NerworkLayerProtocolIDs) {
 						return newDownState(s.fsm), "Supported protocols mismatch"
 					}
 					protocolsSupportedTLVfound = true
