@@ -5,6 +5,7 @@ import (
 	"syscall"
 
 	"github.com/bio-routing/bio-rd/biosyscall"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
 func (n *netIf) openPacketSocket() error {
@@ -33,11 +34,11 @@ func (n *netIf) mcastJoin(addr [6]byte) error {
 	return nil
 }
 
-func (n *netIf) recvPacket() (pkt []byte, src [6]byte, err error) {
+func (n *netIf) recvPacket() (pkt []byte, src types.SystemID, err error) {
 	buf := make([]byte, 1500)
 	n, from, err := syscall.Recvfrom(n.socket, buf, 0)
 	if err != nil {
-		return nil, [6]byte{}, fmt.Errorf("recvfrom failed: %v", err)
+		return nil, types.SystemID{}, fmt.Errorf("recvfrom failed: %v", err)
 	}
 
 	ll := syscall.SockaddrLinklayer(from)

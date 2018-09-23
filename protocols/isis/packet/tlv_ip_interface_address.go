@@ -47,6 +47,11 @@ func (i IPInterfaceAddressTLV) Length() uint8 {
 	return i.TLVLength
 }
 
+// Value gets the TLV itself
+func (i IPInterfaceAddressTLV) Value() interface{} {
+	return i
+}
+
 // Serialize serializes an IP interfaces address TLV
 func (i IPInterfaceAddressTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(i.TLVType)

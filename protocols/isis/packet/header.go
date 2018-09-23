@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type isisHeader struct {
+type ISISHeader struct {
 	ProtoDiscriminator  uint8
 	LengthIndicator     uint8
 	ProtocolIDExtension uint8
@@ -15,7 +15,7 @@ type isisHeader struct {
 	MaxAreaAddresses    uint8
 }
 
-func (h *isisHeader) serialize(buf *bytes.Buffer) {
+func (h *ISISHeader) serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.ProtoDiscriminator)
 	buf.WriteByte(h.LengthIndicator)
 	buf.WriteByte(h.ProtocolIDExtension)
@@ -26,8 +26,8 @@ func (h *isisHeader) serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.MaxAreaAddresses)
 }
 
-func decodeHeader(buf *bytes.Buffer) (*isisHeader, error) {
-	h := &isisHeader{}
+func decodeHeader(buf *bytes.Buffer) (*ISISHeader, error) {
+	h := &ISISHeader{}
 	reserved := uint8(0)
 
 	fields := []interface{}{

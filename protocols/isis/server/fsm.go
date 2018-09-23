@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	log "github.com/sirupsen/logrus"
 )
 
 type state interface {
 	run() (state, string)
+	getState() uint8
 }
 
 // FSM is the per neighbor finite state machine
@@ -16,14 +18,16 @@ type FSM struct {
 	neighbor *neighbor
 	state    state
 	stateMu  sync.Mutex
+	pktCh    chan *packet.ISISPacket
 }
 
 func newFSM(n *neighbor) *FSM {
 	fsm := &FSM{
 		neighbor: n,
+		pktCh:    make(chan *packet.ISISPacket),
 	}
 
-	fsm.state = newNewState(fsm)
+	fsm.state = newInitializingState(fsm)
 	return fsm
 }
 
@@ -59,15 +63,16 @@ func (fsm *FSM) run() {
 	}
 }
 
+func (fsm *FSM) receive(pkt *packet.ISISPacket) {
+	fsm.pktCh <- pkt
+	log.Warningf("Received PDU type %d on %s", pkt.Header.PDUType, fsm.neighbor.ifa.name)
+}
+
 func stateName(s state) string {
 	switch s.(type) {
-	case *newState:
-		return "new"
-	/*case *oneWayState:
-		return "oneway"
 	case *initializingState:
 		return "initializing"
-	case *upState:
+	/*case *upState:
 		return "up"
 	case *downState:
 		return "down"

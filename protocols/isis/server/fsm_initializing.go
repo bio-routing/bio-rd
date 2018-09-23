@@ -2,17 +2,17 @@ package server
 
 import "github.com/bio-routing/bio-rd/protocols/isis/packet"
 
-type newState struct {
+type initializingState struct {
 	fsm *FSM
 }
 
-func newNewState(fsm *FSM) *newState {
-	return &newState{
+func newInitializingState(fsm *FSM) *initializingState {
+	return &initializingState{
 		fsm: fsm,
 	}
 }
 
-func (s newState) run() (state, string) {
+func (s initializingState) run() (state, string) {
 	for {
 		pkt := <-s.fsm.pktCh
 		switch pkt.Header.PDUType {
@@ -23,7 +23,7 @@ func (s newState) run() (state, string) {
 
 			p2pAdjStateTLVFound := false
 			protocolsSupportedTLVfound := false
-			areaAddressTLVFound := false
+			areaAddressesTLVFound := false
 
 			hello := pkt.Body.(packet.P2PHello)
 			for _, tlv := range hello.TLVs {
@@ -36,7 +36,7 @@ func (s newState) run() (state, string) {
 					}
 					protocolsSupportedTLVfound = true
 				case packet.AreaAddressesTLVType:
-					areaAddressTLVFound = true
+					areaAddressesTLVFound = true
 				}
 			}
 
@@ -46,7 +46,7 @@ func (s newState) run() (state, string) {
 			if !protocolsSupportedTLVfound {
 				return newDownState(s.fsm), "Received P2PHello without protocols supported TLV"
 			}
-			if !areaAddressTLVFound {
+			if !areaAddressesTLVFound {
 				return newDownState(s.fsm), "Received P2PHello without area address TLV"
 			}
 
@@ -57,6 +57,6 @@ func (s newState) run() (state, string) {
 	}
 }
 
-func (s newState) State() uint8 {
+func (s initializingState) getState() uint8 {
 	return packet.INITIALIZING_STATE
 }

@@ -40,6 +40,14 @@ func readProtocolsSupportedTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8
 	return pdu, read, nil
 }
 
+func NewProtocolsSupportedTLV(protocols []uint8) ProtocolsSupportedTLV {
+	return ProtocolsSupportedTLV{
+		TLVType:                 ProtocolsSupportedTLVType,
+		TLVLength:               uint8(len(protocols)),
+		NerworkLayerProtocolIDs: protocols,
+	}
+}
+
 // Type gets the type of the TLV
 func (p ProtocolsSupportedTLV) Type() uint8 {
 	return p.TLVType
@@ -48,6 +56,11 @@ func (p ProtocolsSupportedTLV) Type() uint8 {
 // Length gets the length of the TLV
 func (p ProtocolsSupportedTLV) Length() uint8 {
 	return p.TLVLength
+}
+
+// Value gets the TLV itself
+func (p ProtocolsSupportedTLV) Value() interface{} {
+	return p
 }
 
 // Serialize serializes a protocols supported TLV

@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
 func (n *netIf) openPacketSocket() error {
@@ -16,6 +18,6 @@ func (n *netIf) sendPacket(pkt []byte) error {
 	return fmt.Errorf("Unsupported platform")
 }
 
-func (n *netIf) recvPacket() (pkt []byte, src [6]byte, err error) {
-	return nil, [6]byte{}, fmt.Errorf("Unsupported platform")
+func (n *netIf) recvPacket() (pkt []byte, src types.SystemID, err error) {
+	return nil, types.SystemID{}, fmt.Errorf("Unsupported platform")
 }

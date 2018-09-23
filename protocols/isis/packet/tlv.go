@@ -12,6 +12,7 @@ type TLV interface {
 	Type() uint8
 	Length() uint8
 	Serialize(*bytes.Buffer)
+	Value() interface{}
 }
 
 func serializeTLVs(tlvs []TLV) []byte {
@@ -49,14 +50,12 @@ func readTLVs(buf *bytes.Buffer, length uint16) ([]TLV, error) {
 		l := uint8(0)
 
 		switch tlvType {
-		case ISNeighborsTLVType:
-			tlv, l, err = readISNeighborsTLV(buf, tlvType, tlvLength)
 		case ProtocolsSupportedTLVType:
 			tlv, l, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
 		case IPInterfaceAddressTLVType:
 			tlv, l, err = readIPInterfaceAddressTLV(buf, tlvType, tlvLength)
-		case AreaAddressTLVType:
-			tlv, l, err = readAreaAddressTLV(buf, tlvType, tlvLength)
+		case AreaAddressesTLVType:
+			tlv, l, err = readAreaAddressesTLV(buf, tlvType, tlvLength)
 		default:
 			log.Warningf("Unknown type: %d", tlvType)
 			for i := uint8(0); i < tlvLength; i++ {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
@@ -18,14 +19,12 @@ func main() {
 	logrus.Printf("This is an ISIS speaker\n")
 
 	isis := isisserver.NewISISServer(config.ISISConfig{
-		NetworkEntityTitle: []byte{
-			4, 9,
-			0, // Area
-			0, 1, 0,
-			0, 0, 0,
-			0, 0, 0,
-			0, 0, 1,
-			0, // SEL
+		NETs: []config.NET{
+			{
+				AFI:      0x49,
+				AreaID:   []byte{0, 1, 0, 10},
+				SystemID: types.SystemID{0, 0, 0, 0, 0, 4},
+			},
 		},
 		Interfaces: []config.ISISInterfaceConfig{
 			{
