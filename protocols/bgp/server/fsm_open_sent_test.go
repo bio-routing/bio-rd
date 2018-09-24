@@ -87,3 +87,114 @@ func TestOpenMsgReceived(t *testing.T) {
 		})
 	}
 }
+
+func TestProcessMultiProtocolCapability(t *testing.T) {
+	tests := []struct {
+		name                    string
+		peer                    *peer
+		caps                    []packet.MultiProtocolCapability
+		expectIPv4MultiProtocol bool
+		expectIPv6MultiProtocol bool
+	}{
+		{
+			name: "IPv4 only without multi protocol configuration",
+			peer: &peer{
+				ipv4: &peerAddressFamily{},
+			},
+			caps: []packet.MultiProtocolCapability{
+				packet.MultiProtocolCapability{
+					AFI:  packet.IPv4AFI,
+					SAFI: packet.UnicastSAFI,
+				},
+			},
+		},
+		{
+			name: "IPv4 only with multi protocol configuration",
+			peer: &peer{
+				ipv4: &peerAddressFamily{},
+				ipv4MultiProtocolAdvertised: true,
+			},
+			caps: []packet.MultiProtocolCapability{
+				packet.MultiProtocolCapability{
+					AFI:  packet.IPv4AFI,
+					SAFI: packet.UnicastSAFI,
+				},
+			},
+			expectIPv4MultiProtocol: true,
+		},
+		{
+			name: "IPv6 only",
+			peer: &peer{
+				ipv6: &peerAddressFamily{},
+			},
+			caps: []packet.MultiProtocolCapability{
+				packet.MultiProtocolCapability{
+					AFI:  packet.IPv6AFI,
+					SAFI: packet.UnicastSAFI,
+				},
+			},
+			expectIPv6MultiProtocol: true,
+		},
+		{
+			name: "IPv4 and IPv6, only IPv6 configured as multi protocol",
+			peer: &peer{
+				ipv4: &peerAddressFamily{},
+				ipv6: &peerAddressFamily{},
+			},
+			caps: []packet.MultiProtocolCapability{
+				packet.MultiProtocolCapability{
+					AFI:  packet.IPv6AFI,
+					SAFI: packet.UnicastSAFI,
+				},
+				packet.MultiProtocolCapability{
+					AFI:  packet.IPv4AFI,
+					SAFI: packet.UnicastSAFI,
+				},
+			},
+			expectIPv6MultiProtocol: true,
+		},
+		{
+			name: "IPv4 and IPv6 configured as multi protocol",
+			peer: &peer{
+				ipv4: &peerAddressFamily{},
+				ipv6: &peerAddressFamily{},
+				ipv4MultiProtocolAdvertised: true,
+			},
+			caps: []packet.MultiProtocolCapability{
+				packet.MultiProtocolCapability{
+					AFI:  packet.IPv6AFI,
+					SAFI: packet.UnicastSAFI,
+				},
+				packet.MultiProtocolCapability{
+					AFI:  packet.IPv4AFI,
+					SAFI: packet.UnicastSAFI,
+				},
+			},
+			expectIPv4MultiProtocol: true,
+			expectIPv6MultiProtocol: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fsm := newFSM(test.peer)
+			fsm.con = &btesting.MockConn{}
+
+			s := &openSentState{
+				fsm: fsm,
+			}
+
+			for _, cap := range test.caps {
+				s.processMultiProtocolCapability(cap)
+			}
+
+			if fsm.ipv4Unicast != nil {
+				assert.Equal(t, test.expectIPv4MultiProtocol, fsm.ipv4Unicast.multiProtocol)
+			}
+
+			if fsm.ipv6Unicast != nil {
+				assert.Equal(t, test.expectIPv6MultiProtocol, fsm.ipv6Unicast.multiProtocol)
+			}
+		})
+	}
+}

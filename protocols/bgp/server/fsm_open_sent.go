@@ -182,6 +182,10 @@ func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolC
 		return
 	}
 
+	if cap.AFI == packet.IPv4AFI && !s.fsm.peer.ipv4MultiProtocolAdvertised {
+		return
+	}
+
 	f := s.fsm.addressFamily(cap.AFI, cap.SAFI)
 	if f != nil {
 		f.multiProtocol = true
