@@ -29,14 +29,15 @@ type peer struct {
 	fsms   []*FSM
 	fsmsMu sync.Mutex
 
-	routerID             uint32
-	reconnectInterval    time.Duration
-	keepaliveTime        time.Duration
-	holdTime             time.Duration
-	optOpenParams        []packet.OptParam
-	routeServerClient    bool
-	routeReflectorClient bool
-	clusterID            uint32
+	routerID                    uint32
+	reconnectInterval           time.Duration
+	keepaliveTime               time.Duration
+	holdTime                    time.Duration
+	optOpenParams               []packet.OptParam
+	routeServerClient           bool
+	routeReflectorClient        bool
+	ipv4MultiProtocolAdvertised bool
+	clusterID                   uint32
 
 	ipv4 *peerAddressFamily
 	ipv6 *peerAddressFamily
@@ -161,6 +162,11 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	caps = append(caps, addPathCapabilities(c)...)
 
 	caps = append(caps, asn4Capability(c))
+
+	if c.IPv4 != nil && c.AdvertiseIPv4MultiProtocol {
+		caps = append(caps, multiProtocolCapability(packet.IPv4AFI))
+		p.ipv4MultiProtocolAdvertised = true
+	}
 
 	if c.IPv6 != nil {
 		p.ipv6 = &peerAddressFamily{
