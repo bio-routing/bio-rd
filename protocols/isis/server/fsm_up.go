@@ -6,20 +6,26 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 )
 
-type initializingState struct {
+type upState struct {
 	fsm *FSM
 }
 
-func newInitializingState(fsm *FSM) *initializingState {
-	return &initializingState{
+func newUpState(fsm *FSM) *upState {
+	return &upState{
 		fsm: fsm,
 	}
 }
 
-func (s initializingState) run() (state, string) {
+func (s upState) run() (state, string) {
 	for {
 		pkt := <-s.fsm.pktCh
 		switch pkt.Header.PDUType {
+		case packet.L2_LS_PDU_TYPE:
+			fmt.Printf("LSPDU Received\n")
+		case packet.L2_CSNP_TYPE:
+			fmt.Printf("CSNP received\n")
+		case packet.L2_PSNP_TYPE:
+			fmt.Printf("PSNP received\n")
 		case packet.P2P_HELLO:
 			if !s.fsm.neighbor.ifa.p2p {
 				return newDownState(s.fsm), "Received P2PHello on non-P2P interface"
@@ -70,6 +76,6 @@ func (s initializingState) run() (state, string) {
 	}
 }
 
-func (s initializingState) getState() uint8 {
-	return packet.INITIALIZING_STATE
+func (s upState) getState() uint8 {
+	return packet.UP_STATE
 }

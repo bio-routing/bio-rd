@@ -11,9 +11,9 @@ const (
 	L1_CSNP_TYPE      = 0x24
 	L1_PSNP_TYPE      = 0x26
 	L2_LAN_HELLO_TYPE = 0x10
-	L2_LS_PDU_TYPE    = 0x20
-	L2_CSNP_TYPE      = 0x25
-	L2_PSNP_TYPE      = 0x27
+	L2_LS_PDU_TYPE    = 0x14
+	L2_CSNP_TYPE      = 0x19
+	L2_PSNP_TYPE      = 0x1b
 	P2P_HELLO         = 0x11
 
 	DOWN_STATE         = 2

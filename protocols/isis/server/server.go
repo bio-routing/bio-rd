@@ -48,7 +48,7 @@ func (isis *ISISServer) Start() error {
 
 // Stop stops an ISIS speaker
 func (isis *ISISServer) Stop() error {
-
+	// TODO: Implement stop function
 	return nil
 }
 
