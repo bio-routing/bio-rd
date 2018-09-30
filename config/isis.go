@@ -1,6 +1,7 @@
 package config
 
 import (
+	"time"
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
@@ -9,6 +10,7 @@ import (
 type ISISConfig struct {
 	NETs       []NET
 	Interfaces []ISISInterfaceConfig
+	MinLSPTransmissionInterval time.Duration
 }
 
 type ISISInterfaceConfig struct {
@@ -29,7 +31,7 @@ type ISISLevelConfig struct {
 // NET represents an ISO network entity title
 type NET struct {
 	AFI      byte
-	AreaID   []byte
+	AreaID   types.AreaID
 	SystemID types.SystemID
 	SEL      byte
 }

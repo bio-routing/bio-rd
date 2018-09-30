@@ -19,6 +19,14 @@ type IPInterfaceAddressTLV struct {
 
 const ipv4AddressLength = 4
 
+func NewIPInterfaceAddressTLV(addr uint32) IPInterfaceAddressTLV {
+	return IPInterfaceAddressTLV{
+		TLVType: IPInterfaceAddressTLVType,
+		TLVLength: 4,
+		IPv4Address: addr,
+	}
+}
+
 func readIPInterfaceAddressTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*IPInterfaceAddressTLV, uint8, error) {
 	pdu := &IPInterfaceAddressTLV{
 		TLVType:   tlvType,

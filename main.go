@@ -1,6 +1,7 @@
 package main
 
 import (
+	"time"
 	"github.com/sirupsen/logrus"
 
 	"github.com/bio-routing/bio-rd/config"
@@ -39,6 +40,7 @@ func main() {
 				},
 			},
 		},
+		MinLSPTransmissionInterval: time.Second * 5,
 	})
 
 	err := isis.Start()

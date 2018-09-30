@@ -45,6 +45,10 @@ func (i ISNeighborsTLV) Length() uint8 {
 	return i.TLVLength
 }
 
+func (i ISNeighborsTLV) Value() interface{} {
+	return i.NeighborSNPA
+}
+
 // Serialize serializes an WriteByte into a buffer
 func (i ISNeighborsTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(i.TLVType)

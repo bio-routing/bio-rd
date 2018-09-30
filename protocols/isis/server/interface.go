@@ -146,6 +146,8 @@ func (n *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 		// TODO: Implement LAN support for L2
 		log.Errorf("L2 LAN support is not implemented yet")
 	default:
+		
+
 		log.Errorf("Unknown packet received from %v: %v", src, rawPkt)
 	}
 }
@@ -265,10 +267,13 @@ func (n *netIf) p2pHelloTLVs() []packet.TLV {
 	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(n.supportedProtocols)
 	areaAddressesTLV := packet.NewAreaAddressTLV(n.getAreas())
 
+	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232236033) //FIXME: Insert address automatically
+
 	return []packet.TLV{
 		p2pAdjStateTLV,
 		protocolsSupportedTLV,
 		areaAddressesTLV,
+		ipInterfaceAddressesTLV,
 	}
 }
 

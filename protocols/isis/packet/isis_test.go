@@ -10,12 +10,12 @@ import (
 func TestHeaderEncode(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *isisHeader
+		input    *ISISHeader
 		expected []byte
 	}{
 		{
 			name: "Test #1",
-			input: &isisHeader{
+			input: &ISISHeader{
 				ProtoDiscriminator:  0x83,
 				LengthIndicator:     27,
 				ProtocolIDExtension: 0,
@@ -39,7 +39,7 @@ func TestHeaderEncode(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(nil)
-		test.input.serialize(buf)
+		test.input.Serialize(buf)
 		res := buf.Bytes()
 		assert.Equalf(t, test.expected, res, "%s failed", test.name)
 	}

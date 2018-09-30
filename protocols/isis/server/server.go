@@ -15,6 +15,7 @@ const (
 type ISISServer struct {
 	config     config.ISISConfig
 	interfaces map[string]*netIf
+	lsdb *lsdb
 }
 
 type isisNeighbor struct {
@@ -24,10 +25,13 @@ type isisNeighbor struct {
 
 // NewISISServer creates and initializes a new ISIS speaker
 func NewISISServer(cfg config.ISISConfig) *ISISServer {
-	return &ISISServer{
+	server := &ISISServer{
 		config:     cfg,
 		interfaces: make(map[string]*netIf),
 	}
+
+	server.lsdb = newLSDB(server)
+	return server
 }
 
 // Start starts an ISIS speaker

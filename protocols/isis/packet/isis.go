@@ -18,6 +18,7 @@ const (
 
 	DOWN_STATE         = 2
 	INITIALIZING_STATE = 1
+	UP_STATE = 0
 )
 
 type ISISPacket struct {

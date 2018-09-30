@@ -74,6 +74,8 @@ func stateName(s state) string {
 		return "initializing"
 	case *downState:
 		return "down"
+	case *upState:
+		return "up"
 	default:
 		panic(fmt.Sprintf("Unknown state: %v", s))
 	}

@@ -36,7 +36,7 @@ func (s initializingState) run() (state, string) {
 				switch tlv.Type() {
 				case packet.P2PAdjacencyStateTLVType:
 					p2pAdjStateTLVFound = true
-					if tlv.(packet.P2PAdjacencyStateTLV).NeighborSystemID == s.fsm.neighbor.ifa.isisServer.systemID() {
+					if tlv.(*packet.P2PAdjacencyStateTLV).NeighborSystemID == s.fsm.neighbor.ifa.isisServer.systemID() {
 						foundSelf = true
 					}
 				case packet.ProtocolsSupportedTLVType:
