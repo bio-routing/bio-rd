@@ -1,21 +1,21 @@
 package packet
 
-import(
-	"fmt"
+import (
 	"bytes"
+	"fmt"
 
-	"github.com/taktv6/tflow2/convert"
 	"github.com/FMNSSun/libhash/fletcher"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/taktv6/tflow2/convert"
 )
 
-const(
-	LSPIDLen = 8
+const (
+	LSPIDLen    = 8
 	LSPDUMinLen = 19
 )
 
 type LSPID struct {
-	SystemID types.SystemID
+	SystemID     types.SystemID
 	PseudonodeID uint16
 }
 
@@ -25,13 +25,13 @@ func (l *LSPID) Serialize(buf *bytes.Buffer) {
 }
 
 type LSPDU struct {
-	Length uint16
+	Length            uint16
 	RemainingLifetime uint16
-	LSPID LSPID
-	SequenceNumber uint32
-	Checksum uint16
-	TypeBlock uint8
-	TLVs []TLV
+	LSPID             LSPID
+	SequenceNumber    uint32
+	Checksum          uint16
+	TypeBlock         uint8
+	TLVs              []TLV
 }
 
 func (l *LSPDU) SetChecksum() {
@@ -42,7 +42,7 @@ func (l *LSPDU) SetChecksum() {
 	x.Write(buf.Bytes())
 	csum := x.Sum([]byte{})
 
-	l.Checksum = uint16(csum[0]) * 256 + uint16(csum[1])
+	l.Checksum = uint16(csum[0])*256 + uint16(csum[1])
 }
 
 func (l *LSPDU) Serialize(buf *bytes.Buffer) {
@@ -58,7 +58,7 @@ func (l *LSPDU) Serialize(buf *bytes.Buffer) {
 	}
 }
 
-func decodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
+func DecodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 	pdu := &LSPDU{}
 
 	fields := []interface{}{
@@ -84,4 +84,3 @@ func decodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 	pdu.TLVs = TLVs
 	return pdu, nil
 }
-

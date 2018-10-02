@@ -54,6 +54,10 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 		fmt.Printf("Length: %d\n", tlvLength)
 
 		switch tlvType {
+		case DynamicHostNameTLVType:
+			tlv, err = readDynamicHostnameTLV(buf, tlvType, tlvLength)
+		case ChecksumTLVType:
+			tlv, err = readChecksumTLV(buf, tlvType, tlvLength)
 		case ProtocolsSupportedTLVType:
 			tlv, _, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
 		case IPInterfaceAddressTLVType:

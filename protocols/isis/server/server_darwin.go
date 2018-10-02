@@ -14,7 +14,7 @@ func (n *netIf) mcastJoin(addr [6]byte) error {
 	return fmt.Errorf("Unsupported platform")
 }
 
-func (n *netIf) sendPacket(pkt []byte) error {
+func (n *netIf) sendPacket(pkt []byte, dst [6]byte) error {
 	return fmt.Errorf("Unsupported platform")
 }
 

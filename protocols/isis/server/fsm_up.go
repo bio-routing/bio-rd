@@ -22,6 +22,8 @@ func (s upState) run() (state, string) {
 		switch pkt.Header.PDUType {
 		case packet.L2_LS_PDU_TYPE:
 			fmt.Printf("LSPDU Received\n")
+			lspdu := pkt.Body.(packet.LSPDU)
+			ack := packet.CSNP{}
 		case packet.L2_CSNP_TYPE:
 			fmt.Printf("CSNP received\n")
 		case packet.L2_PSNP_TYPE:
