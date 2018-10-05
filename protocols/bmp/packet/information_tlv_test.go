@@ -28,10 +28,17 @@ func TestDecodeInformationTLV(t *testing.T) {
 			},
 		},
 		{
-			name: "Incomplete",
+			name: "Incomplete Value",
 			input: []byte{
 				0, 10, 0, 5,
 				1, 2, 3, 4,
+			},
+			wantFail: true,
+		},
+		{
+			name: "Incomplete Header",
+			input: []byte{
+				0, 10,
 			},
 			wantFail: true,
 		},
