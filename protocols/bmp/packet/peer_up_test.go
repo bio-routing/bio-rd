@@ -80,6 +80,54 @@ func TestDecodePeerUp(t *testing.T) {
 			},
 		},
 		{
+			name: "Full #2",
+			input: []byte{
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 100,
+				0, 200,
+
+				// OPEN Sent
+				4,    // Version
+				1, 0, // ASN
+				2, 0, // Hold Time
+				100, 110, 120, 130, // BGP Identifier
+				5, // Opt Parm Len
+				1, 2, 3, 4, 5,
+
+				// OPEN Recv
+				4,    // Version
+				1, 0, // ASN
+				2, 0, // Hold Time
+				100, 110, 120, 130, // BGP Identifier
+				0, // Opt Parm Len
+			},
+			ch: &CommonHeader{
+				MsgLength: 44,
+			},
+			wantFail: false,
+			expected: &PeerUpNotification{
+				LocalAddress: [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+				LocalPort:    100,
+				RemotePort:   200,
+				SentOpenMsg: []byte{
+					4,    // Version
+					1, 0, // ASN
+					2, 0, // Hold Time
+					100, 110, 120, 130, // BGP Identifier
+					5, // Opt Parm Len
+					1, 2, 3, 4, 5,
+				},
+				ReceivedOpenMsg: []byte{
+					// OPEN Recv
+					4,    // Version
+					1, 0, // ASN
+					2, 0, // Hold Time
+					100, 110, 120, 130, // BGP Identifier
+					0, // Opt Parm Len
+				},
+			},
+		},
+		{
 			name: "Incomplete #1",
 			input: []byte{
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
@@ -101,6 +149,50 @@ func TestDecodePeerUp(t *testing.T) {
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
+			},
+			ch: &CommonHeader{
+				MsgLength: 47,
+			},
+			wantFail: true,
+		},
+		{
+			name: "Incomplete #3",
+			input: []byte{
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 100,
+				0, 200,
+
+				// OPEN Sent
+				4,    // Version
+				1, 0, // ASN
+				2, 0, // Hold Time
+			},
+			ch: &CommonHeader{
+				MsgLength: 47,
+			},
+			wantFail: true,
+		},
+		{
+			name: "Incomplete #4",
+			input: []byte{
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 100,
+				0, 200,
+
+				// OPEN Sent
+				4,    // Version
+				1, 0, // ASN
+				2, 0, // Hold Time
+				100, 110, 120, 130, // BGP Identifier
+				5, // Opt Parm Len
+				1, 2, 3, 4, 5,
+
+				// OPEN Recv
+				4,    // Version
+				1, 0, // ASN
+				2, 0, // Hold Time
+				100, 110, 120, 130, // BGP Identifier
+				3, // Opt Parm Len
 			},
 			ch: &CommonHeader{
 				MsgLength: 47,

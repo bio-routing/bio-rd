@@ -62,12 +62,8 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 		&p.Information,
 	}
 
-	err = decoder.Decode(buf, fields)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("%v\n", p.Information)
+	// This can not fail as p.Information has exactly the size of what is left in buf
+	decoder.Decode(buf, fields)
 
 	return p, nil
 }
@@ -85,7 +81,11 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 	}
 
 	optParams := make([]byte, msg[OpenMsgMinLen-1])
-	_, err = buf.Read(optParams)
+	fields := []interface{}{
+		&optParams,
+	}
+
+	err = decoder.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to read: %v", err)
 	}
