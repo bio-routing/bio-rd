@@ -7,6 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPeerUpMsgType(t *testing.T) {
+	pd := &PeerUpNotification{
+		CommonHeader: &CommonHeader{
+			MsgType: 100,
+		},
+	}
+
+	if pd.MsgType() != 100 {
+		t.Errorf("Unexpected result")
+	}
+}
 func TestDecodePeerUp(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -16,11 +16,6 @@ func (im *InitiationMessage) MsgType() uint8 {
 	return im.CommonHeader.MsgType
 }
 
-// SetCommonHeader sets the common header
-func (im *InitiationMessage) SetCommonHeader(ch *CommonHeader) {
-	im.CommonHeader = ch
-}
-
 func decodeInitiationMessage(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	im := &InitiationMessage{
 		TLVs: make([]*InformationTLV, 0, 2),

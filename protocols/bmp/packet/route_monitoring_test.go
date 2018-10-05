@@ -7,6 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRouteMonitoringMsgType(t *testing.T) {
+	pd := &RouteMonitoringMsg{
+		CommonHeader: &CommonHeader{
+			MsgType: 100,
+		},
+	}
+
+	if pd.MsgType() != 100 {
+		t.Errorf("Unexpected result")
+	}
+}
 func TestDecodeRouteMonitoringMsg(t *testing.T) {
 	tests := []struct {
 		name     string

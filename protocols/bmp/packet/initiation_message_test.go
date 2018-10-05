@@ -7,6 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestInitiationMessageMsgType(t *testing.T) {
+	pd := &InitiationMessage{
+		CommonHeader: &CommonHeader{
+			MsgType: 100,
+		},
+	}
+
+	if pd.MsgType() != 100 {
+		t.Errorf("Unexpected result")
+	}
+}
 func TestDecodeInitiationMessage(t *testing.T) {
 	tests := []struct {
 		name     string

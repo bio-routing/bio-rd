@@ -7,6 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestTerminationMessageType(t *testing.T) {
+	pd := &TerminationMessage{
+		CommonHeader: &CommonHeader{
+			MsgType: 100,
+		},
+	}
+
+	if pd.MsgType() != 100 {
+		t.Errorf("Unexpected result")
+	}
+}
 func TestDecodeTerminationMessage(t *testing.T) {
 	tests := []struct {
 		name     string

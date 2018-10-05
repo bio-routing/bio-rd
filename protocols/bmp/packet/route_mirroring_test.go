@@ -7,6 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRouteMirrorType(t *testing.T) {
+	pd := &RouteMirroringMsg{
+		CommonHeader: &CommonHeader{
+			MsgType: 100,
+		},
+	}
+
+	if pd.MsgType() != 100 {
+		t.Errorf("Unexpected result")
+	}
+}
 func TestDecodeRouteMirroringMsg(t *testing.T) {
 	tests := []struct {
 		name     string

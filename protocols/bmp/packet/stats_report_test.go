@@ -7,6 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestStatsReportMsgType(t *testing.T) {
+	pd := &StatsReport{
+		CommonHeader: &CommonHeader{
+			MsgType: 100,
+		},
+	}
+
+	if pd.MsgType() != 100 {
+		t.Errorf("Unexpected result")
+	}
+}
+
 func TestDecodeStatsReport(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -7,6 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPeerDownMsgType(t *testing.T) {
+	pd := &PeerDownNotification{
+		CommonHeader: &CommonHeader{
+			MsgType: 100,
+		},
+	}
+
+	if pd.MsgType() != 100 {
+		t.Errorf("Unexpected result")
+	}
+}
+
 func TestDecodePeerDownNotification(t *testing.T) {
 	tests := []struct {
 		name     string
