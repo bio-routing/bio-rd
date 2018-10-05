@@ -5,11 +5,8 @@ import (
 	"fmt"
 )
 
-type Msg interface {
-	MsgType() uint8
-}
-
 const (
+	// MinLen is the minimal length of a BMP message
 	MinLen = 6
 
 	RouteMonitoringType       = 0
@@ -25,7 +22,15 @@ const (
 
 	ErroredPDU  = 0
 	MessageLost = 1
+
+	// BMPVersion is the supported BMP version
+	BMPVersion = 3
 )
+
+// Msg is an interface that every BMP message must fulfill
+type Msg interface {
+	MsgType() uint8
+}
 
 // Decode decodes a BMP message
 func Decode(msg []byte) (Msg, error) {
@@ -36,13 +41,18 @@ func Decode(msg []byte) (Msg, error) {
 		return nil, fmt.Errorf("Unable to decode common header: %v", err)
 	}
 
-	if ch.Version != 3 {
+	if ch.Version != BMPVersion {
 		return nil, fmt.Errorf("Unsupported BMP version: %d", ch.Version)
 	}
 
 	switch ch.MsgType {
 	case RouteMonitoringType:
+		rm, err := decodeRouteMonitoringMsg(buf, ch)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode route monitoring message: %v", err)
+		}
 
+		return rm, err
 	case StatisticsReportType:
 		sr, err := decodeStatsReport(buf, ch)
 		if err != nil {

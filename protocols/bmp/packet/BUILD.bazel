@@ -32,6 +32,8 @@ go_test(
         "peer_down_test.go",
         "peer_up_test.go",
         "per_peer_header_test.go",
+        "route_mirroring_test.go",
+        "route_monitoring_test.go",
         "stats_report_test.go",
         "termination_message_test.go",
     ],
