@@ -33,7 +33,6 @@ func decodeInitiationMessage(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 
 		im.TLVs = append(im.TLVs, tlv)
 		read += uint32(tlv.InformationLength) + MinInformationTLVLen
-		fmt.Printf("read: %d\n", read)
 	}
 
 	return im, nil

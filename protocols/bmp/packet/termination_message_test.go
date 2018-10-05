@@ -41,6 +41,9 @@ func TestDecodeTerminationMessage(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &TerminationMessage{
+				CommonHeader: &CommonHeader{
+					MsgLength: CommonHeaderLen + 17,
+				},
 				TLVs: []*InformationTLV{
 					{
 						InformationType:   1,

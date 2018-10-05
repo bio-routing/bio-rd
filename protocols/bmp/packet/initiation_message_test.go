@@ -41,6 +41,9 @@ func TestDecodeInitiationMessage(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &InitiationMessage{
+				CommonHeader: &CommonHeader{
+					MsgLength: CommonHeaderLen + 17,
+				},
 				TLVs: []*InformationTLV{
 					{
 						InformationType:   1,
