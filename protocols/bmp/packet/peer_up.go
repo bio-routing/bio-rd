@@ -71,7 +71,10 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 	msg := make([]byte, OpenMsgMinLen)
 
-	_, err := buf.Read(msg)
+	fields := []interface{}{
+		&msg,
+	}
+	err := decoder.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to read: %v", err)
 	}
@@ -81,7 +84,7 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 	}
 
 	optParams := make([]byte, msg[OpenMsgMinLen-1])
-	fields := []interface{}{
+	fields = []interface{}{
 		&optParams,
 	}
 
