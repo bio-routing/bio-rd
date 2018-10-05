@@ -84,12 +84,17 @@ func Decode(msg []byte) (Msg, error) {
 	case TerminationMessageType:
 		tm, err := decodeTerminationMessage(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decide termination message: %v", err)
+			return nil, fmt.Errorf("Unable to decode termination message: %v", err)
 		}
 
 		return tm, nil
 	case RouteMirroringMessageType:
+		rm, err := decodeRouteMirroringMsg(buf, ch)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode route mirroring message: %v", err)
+		}
 
+		return rm, nil
 	default:
 		return nil, fmt.Errorf("Unexpected message type: %d", ch.MsgType)
 

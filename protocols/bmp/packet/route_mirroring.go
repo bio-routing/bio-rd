@@ -12,6 +12,11 @@ type RouteMirroringMsg struct {
 	TLVs          []*InformationTLV
 }
 
+// MsgType returns the type of this message
+func (rm *RouteMirroringMsg) MsgType() uint8 {
+	return rm.CommonHeader.MsgType
+}
+
 func decodeRouteMirroringMsg(buf *bytes.Buffer, ch *CommonHeader) (*RouteMirroringMsg, error) {
 	rm := &RouteMirroringMsg{
 		CommonHeader: ch,
