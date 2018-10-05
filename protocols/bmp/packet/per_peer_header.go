@@ -7,6 +7,11 @@ import (
 	"github.com/bio-routing/tflow2/convert"
 )
 
+const (
+	// PerPeerHeaderLen is the length of a per peer header
+	PerPeerHeaderLen = 38
+)
+
 // PerPeerHeader represents a BMP per peer header
 type PerPeerHeader struct {
 	PeerType              uint8
