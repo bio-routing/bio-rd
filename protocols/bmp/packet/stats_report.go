@@ -20,11 +20,6 @@ func (s *StatsReport) MsgType() uint8 {
 	return s.CommonHeader.MsgType
 }
 
-// SetCommonHeader sets the common header
-func (s *StatsReport) SetCommonHeader(ch *CommonHeader) {
-	s.CommonHeader = ch
-}
-
 func decodeStatsReport(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	sr := &StatsReport{
 		CommonHeader: ch,
