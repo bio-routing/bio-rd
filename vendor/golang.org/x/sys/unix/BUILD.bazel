@@ -200,7 +200,7 @@ go_library(
         "ztypes_solaris_amd64.go",
     ],
     cgo = True,
-    importmap = "vendor/golang.org/x/sys/unix",
+    importmap = "github.com/bio-routing/bio-rd/vendor/golang.org/x/sys/unix",
     importpath = "golang.org/x/sys/unix",
     visibility = ["//visibility:public"],
 )

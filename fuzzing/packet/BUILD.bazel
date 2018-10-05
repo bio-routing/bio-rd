@@ -2,14 +2,13 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["main.go"],
-    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/golang/dep/hack/licenseok",
-    importpath = "github.com/golang/dep/hack/licenseok",
+    srcs = ["gen_initial_corpus.go"],
+    importpath = "github.com/bio-routing/bio-rd/fuzzing/packet",
     visibility = ["//visibility:private"],
 )
 
 go_binary(
-    name = "licenseok",
+    name = "packet",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )
