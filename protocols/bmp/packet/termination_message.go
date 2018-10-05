@@ -18,7 +18,8 @@ func (t *TerminationMessage) MsgType() uint8 {
 
 func decodeTerminationMessage(buf *bytes.Buffer, ch *CommonHeader) (*TerminationMessage, error) {
 	tm := &TerminationMessage{
-		TLVs: make([]*InformationTLV, 0, 2),
+		CommonHeader: ch,
+		TLVs:         make([]*InformationTLV, 0, 2),
 	}
 
 	read := uint32(0)

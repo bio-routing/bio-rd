@@ -8,12 +8,14 @@ import (
 )
 
 const (
+	// OpenMsgMinLen is the minimal length of a BGP open message
 	OpenMsgMinLen = 10
 )
 
 // PeerUpNotification represents a peer up notification
 type PeerUpNotification struct {
 	CommonHeader    *CommonHeader
+	PerPeerHeader   *PerPeerHeader
 	LocalAddress    [16]byte
 	LocalPort       uint16
 	RemotePort      uint16
@@ -28,7 +30,16 @@ func (p *PeerUpNotification) MsgType() uint8 {
 }
 
 func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotification, error) {
-	p := &PeerUpNotification{}
+	p := &PeerUpNotification{
+		CommonHeader: ch,
+	}
+
+	pph, err := decodePerPeerHeader(buf)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to decode per peer header: %v", err)
+	}
+
+	p.PerPeerHeader = pph
 
 	fields := []interface{}{
 		&p.LocalAddress,
@@ -36,7 +47,7 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 		&p.RemotePort,
 	}
 
-	err := decoder.Decode(buf, fields)
+	err = decoder.Decode(buf, fields)
 	if err != nil {
 		return nil, err
 	}

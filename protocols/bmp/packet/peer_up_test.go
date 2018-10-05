@@ -29,6 +29,15 @@ func TestDecodePeerUp(t *testing.T) {
 		{
 			name: "Full",
 			input: []byte{
+				1,
+				2,
+				0, 0, 0, 3,
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 0, 200, 124,
+				0, 0, 0, 123,
+				0, 0, 0, 100,
+				0, 0, 0, 200,
+
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 100,
 				0, 200,
@@ -55,6 +64,19 @@ func TestDecodePeerUp(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &PeerUpNotification{
+				CommonHeader: &CommonHeader{
+					MsgLength: 47,
+				},
+				PerPeerHeader: &PerPeerHeader{
+					PeerType:              1,
+					PeerFlags:             2,
+					PeerDistinguisher:     3,
+					PeerAddress:           [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					PeerAS:                51324,
+					PeerBGPID:             123,
+					Timestamp:             100,
+					TimestampMicroSeconds: 200,
+				},
 				LocalAddress: [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 				LocalPort:    100,
 				RemotePort:   200,
@@ -82,6 +104,15 @@ func TestDecodePeerUp(t *testing.T) {
 		{
 			name: "Full #2",
 			input: []byte{
+				1,
+				2,
+				0, 0, 0, 3,
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 0, 200, 124,
+				0, 0, 0, 123,
+				0, 0, 0, 100,
+				0, 0, 0, 200,
+
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 100,
 				0, 200,
@@ -106,6 +137,19 @@ func TestDecodePeerUp(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &PeerUpNotification{
+				CommonHeader: &CommonHeader{
+					MsgLength: 44,
+				},
+				PerPeerHeader: &PerPeerHeader{
+					PeerType:              1,
+					PeerFlags:             2,
+					PeerDistinguisher:     3,
+					PeerAddress:           [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					PeerAS:                51324,
+					PeerBGPID:             123,
+					Timestamp:             100,
+					TimestampMicroSeconds: 200,
+				},
 				LocalAddress: [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 				LocalPort:    100,
 				RemotePort:   200,
@@ -128,8 +172,32 @@ func TestDecodePeerUp(t *testing.T) {
 			},
 		},
 		{
+			name: "Incomplete #0",
+			input: []byte{
+				1,
+				2,
+				0, 0, 0, 3,
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 0, 200, 124,
+				0, 0, 0,
+			},
+			ch: &CommonHeader{
+				MsgLength: 47,
+			},
+			wantFail: true,
+		},
+		{
 			name: "Incomplete #1",
 			input: []byte{
+				1,
+				2,
+				0, 0, 0, 3,
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 0, 200, 124,
+				0, 0, 0, 123,
+				0, 0, 0, 100,
+				0, 0, 0, 200,
+
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 100,
 			},
@@ -141,6 +209,15 @@ func TestDecodePeerUp(t *testing.T) {
 		{
 			name: "Incomplete #2",
 			input: []byte{
+				1,
+				2,
+				0, 0, 0, 3,
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 0, 200, 124,
+				0, 0, 0, 123,
+				0, 0, 0, 100,
+				0, 0, 0, 200,
+
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 100,
 				0, 200,
@@ -158,6 +235,14 @@ func TestDecodePeerUp(t *testing.T) {
 		{
 			name: "Incomplete #3",
 			input: []byte{
+				1,
+				2,
+				0, 0, 0, 3,
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+				0, 0, 200, 124,
+				0, 0, 0, 123,
+				0, 0, 0, 100,
+				0, 0, 0, 200,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 100,
 				0, 200,

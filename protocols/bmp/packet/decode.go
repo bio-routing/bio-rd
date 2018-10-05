@@ -99,6 +99,4 @@ func Decode(msg []byte) (Msg, error) {
 		return nil, fmt.Errorf("Unexpected message type: %d", ch.MsgType)
 
 	}
-
-	return nil, fmt.Errorf("Unexpected message type: %d", ch.MsgType)
 }

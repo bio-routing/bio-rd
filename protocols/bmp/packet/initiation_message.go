@@ -18,7 +18,8 @@ func (im *InitiationMessage) MsgType() uint8 {
 
 func decodeInitiationMessage(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	im := &InitiationMessage{
-		TLVs: make([]*InformationTLV, 0, 2),
+		CommonHeader: ch,
+		TLVs:         make([]*InformationTLV, 0, 2),
 	}
 
 	read := uint32(0)
