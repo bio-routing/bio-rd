@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -33,6 +34,8 @@ func (r *router) serve() {
 			return
 		}
 
+		// TODO: Finish implementation
+		fmt.Printf("%v\n", bmpMsg)
 	}
 
 }

@@ -19,7 +19,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//util/decoder:go_default_library",
-        "@com_github_bio_routing_tflow2//convert:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
     ],
 )
 
