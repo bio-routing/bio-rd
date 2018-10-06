@@ -27,7 +27,7 @@ type Path struct {
 	Distance int64
 }
 
-// NewTopologay creates a new topology
+// NewTopology creates a new topology
 func NewTopologay(nodes []Node, edges []Edge) *Topology {
 	t := &Topology{
 		nodes: make(map[Node]int64),
