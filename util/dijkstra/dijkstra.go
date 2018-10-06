@@ -28,7 +28,7 @@ type Path struct {
 }
 
 // NewTopology creates a new topology
-func NewTopologay(nodes []Node, edges []Edge) *Topology {
+func NewTopology(nodes []Node, edges []Edge) *Topology {
 	t := &Topology{
 		nodes: make(map[Node]int64),
 		edges: make(map[Node]map[Node]int64),

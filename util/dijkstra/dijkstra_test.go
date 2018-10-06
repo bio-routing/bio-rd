@@ -234,7 +234,7 @@ func TestSPT(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		top := NewTopologay(test.nodes, test.edges)
+		top := NewTopology(test.nodes, test.edges)
 		spt := top.SPT(Node{Name: "A"})
 
 		assert.Equalf(t, test.expected, spt, "Test %q", test.name)
