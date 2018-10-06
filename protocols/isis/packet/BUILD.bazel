@@ -1,0 +1,53 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "csnp.go",
+        "decoder.go",
+        "header.go",
+        "hello.go",
+        "isis.go",
+        "lsp.go",
+        "lsp_entry.go",
+        "math.go",
+        "psnp.go",
+        "tlv.go",
+        "tlv_area_addresses.go",
+        "tlv_authentication.go",
+        "tlv_checksum.go",
+        "tlv_dynamic_hostname.go",
+        "tlv_extended_ip_reachability.go",
+        "tlv_extended_is_reachability.go",
+        "tlv_ip_interface_address.go",
+        "tlv_is_neighbors.go",
+        "tlv_is_reachability.go",
+        "tlv_p2p_adj_state.go",
+        "tlv_padding.go",
+        "tlv_protocols_supported.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/protocols/isis/packet",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//protocols/isis/types:go_default_library",
+        "//vendor/github.com/FMNSSun/libhash/fletcher:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "csnp_test.go",
+        "hello_test.go",
+        "isis_test.go",
+        "lsp_test.go",
+        "psnp_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//protocols/isis/types:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
+    ],
+)

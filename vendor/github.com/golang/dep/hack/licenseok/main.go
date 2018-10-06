@@ -1,3 +1,5 @@
+// +build ignore
+
 // Copyright 2017 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -156,7 +158,7 @@ func addLicense(b []byte, path string, fmode os.FileMode) error {
 }
 
 func hashBang(b []byte) []byte {
-	var line []byte
+	var line = make([]byte, 0, len(b))
 	for _, c := range b {
 		line = append(line, c)
 		if c == '\n' {

@@ -7,34 +7,31 @@ jobs:
     - stage: test
       go_import_path: github.com/golang/dep
       install:
-        - go get -u github.com/golang/lint/golint honnef.co/go/tools/cmd/megacheck
+        - make get-deps
         - npm install -g codeclimate-test-reporter
       env:
         - DEPTESTBYPASS501=1
       os: linux
-      go: 1.9.x
+      go: 1.10.x
       script:
-        - go test -i ./...
-        - ./hack/lint.bash
-        - ./hack/validate-vendor.bash
-        - ./hack/validate-licence.bash
+        - make validate test
         - ./hack/coverage.bash
       after_success:
         - codeclimate-test-reporter < coverage.txt
     # YAML alias, for settings shared across the simpler builds
     - &simple-test
-      go: 1.8.x
+      go: 1.9.x
       stage: test
       go_import_path: github.com/golang/dep
       install: skip
       env:
         - DEPTESTBYPASS501=1
-      script: go test -race $(go list ./... | grep -v vendor)
+      script: make test
     - <<: *simple-test
       go: tip
     - <<: *simple-test
       os: osx
-      go: 1.9.x
+      go: 1.10.x
       install:
         # brew takes horribly long to update itself despite the above caching
         # attempt; only bzr install if it's not on the $PATH
@@ -49,8 +46,11 @@ jobs:
         # for future safety.
         # Related: https://superuser.com/questions/1044130/why-am-i-having-how-can-i-fix-this-error-shell-session-update-command-not-f
         - trap EXIT
-        - go test -race ./...
-    - go: 1.9.x
+        - make test
+    - go: 1.10.x
+      # Run on OS X so that we get a CGO-enabled binary for this OS; see
+      # https://github.com/golang/dep/issues/1838 for more details.
+      os: osx
       stage: deploy
       go_import_path: github.com/golang/dep
       install: skip
