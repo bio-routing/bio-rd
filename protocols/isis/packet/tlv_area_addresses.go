@@ -7,10 +7,10 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
-// AreaAddressTLVType is the type value of an area address TLV
+// AreaAddressesTLVType is the type value of an area address TLV
 const AreaAddressesTLVType = 1
 
-// AreaAddressTLV represents an area address TLV
+// AreaAddressesTLV represents an area address TLV
 type AreaAddressesTLV struct {
 	TLVType   uint8
 	TLVLength uint8
@@ -47,11 +47,12 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 	return pdu, nil
 }
 
-func NewAreaAddressTLV(areas []types.AreaID) *AreaAddressesTLV {
+// NewAreaAddressesTLV creates a new area addresses TLV
+func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 	a := &AreaAddressesTLV{
-		TLVType: AreaAddressesTLVType,
+		TLVType:   AreaAddressesTLVType,
 		TLVLength: 0,
-		AreaIDs: make([]types.AreaID, len(areas)),
+		AreaIDs:   make([]types.AreaID, len(areas)),
 	}
 
 	for i, area := range areas {
