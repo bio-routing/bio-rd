@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -19,7 +20,7 @@ type L2Hello struct {
 
 type P2PHello struct {
 	CircuitType    uint8
-	SystemID       [6]byte
+	SystemID       types.SystemID
 	HoldingTimer   uint16
 	PDULength      uint16
 	LocalCircuitID uint8
@@ -28,7 +29,7 @@ type P2PHello struct {
 
 const (
 	P2PHelloMinSize = 20
-	ISISHeaderSize = 8
+	ISISHeaderSize  = 8
 	L2CircuitType   = 2
 )
 

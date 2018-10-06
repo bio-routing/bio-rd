@@ -3,8 +3,6 @@ package packet
 import (
 	"bytes"
 	"fmt"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // TLV is an interface that all TLVs must fulfill
@@ -67,13 +65,7 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 		case P2PAdjacencyStateTLVType:
 			tlv, _, err = readP2PAdjacencyStateTLV(buf, tlvType, tlvLength)
 		default:
-			log.Warningf("Unknown type: %d", tlvType)
-			nirvana := make([]byte, tlvLength)
-			_, err = buf.Read(nirvana)
-			if err != nil {
-				return nil, fmt.Errorf("Unable to read: %v", err)
-			}
-			continue
+			tlv, err = readUnknownTLV(buf, tlvType, tlvLength)
 		}
 
 		if err != nil {
