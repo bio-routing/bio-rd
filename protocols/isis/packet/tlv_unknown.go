@@ -46,7 +46,7 @@ func (u *UnknownTLV) Value() interface{} {
 	return u
 }
 
-// Serialize serializes a protocols supported TLV
+// Serialize serializes an unknown TLV
 func (u UnknownTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(u.TLVType)
 	buf.WriteByte(u.TLVLength)

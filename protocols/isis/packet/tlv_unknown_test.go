@@ -83,3 +83,19 @@ func TestUnknownTLVSerialize(t *testing.T) {
 		assert.Equalf(t, test.expected, buf.Bytes(), "Test %q", test.name)
 	}
 }
+
+func TestUnknownTLV(t *testing.T) {
+	tlv := &UnknownTLV{
+		TLVType:   100,
+		TLVLength: 1,
+		TLVValue:  []byte{1},
+	}
+
+	assert.Equal(t, uint8(100), tlv.Type())
+	assert.Equal(t, uint8(1), tlv.Length())
+	assert.Equal(t, &UnknownTLV{
+		TLVType:   100,
+		TLVLength: 1,
+		TLVValue:  []byte{1},
+	}, tlv.Value())
+}
