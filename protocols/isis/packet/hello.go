@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
+// L2Hello represents a broadcast L2 hello
 type L2Hello struct {
 	CircuitType  uint8
 	SystemID     [6]byte
@@ -18,6 +20,7 @@ type L2Hello struct {
 	TLVs         []TLV
 }
 
+// P2PHello represents a Point to Point Hello
 type P2PHello struct {
 	CircuitType    uint8
 	SystemID       types.SystemID
@@ -33,6 +36,7 @@ const (
 	L2CircuitType   = 2
 )
 
+// Serialize serializes a P2P Hello
 func (h *P2PHello) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.CircuitType)
 	buf.Write(h.SystemID[:])
@@ -45,7 +49,8 @@ func (h *P2PHello) Serialize(buf *bytes.Buffer) {
 	}
 }
 
-func decodeISISP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
+// DecodeP2PHello decodes a P2P Hello
+func DecodeP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
 	pdu := &P2PHello{}
 
 	fields := []interface{}{
@@ -56,7 +61,7 @@ func decodeISISP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
 		&pdu.LocalCircuitID,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
@@ -70,7 +75,8 @@ func decodeISISP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
 	return pdu, nil
 }
 
-func decodeISISL2Hello(buf *bytes.Buffer) (*L2Hello, error) {
+// DecodeL2Hello decodes an ISIS broadcast L2 hello
+func DecodeL2Hello(buf *bytes.Buffer) (*L2Hello, error) {
 	pdu := &L2Hello{}
 	reserved := uint8(0)
 	fields := []interface{}{
@@ -83,7 +89,7 @@ func decodeISISL2Hello(buf *bytes.Buffer) (*L2Hello, error) {
 		&pdu.DesignatedIS,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}

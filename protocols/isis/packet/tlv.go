@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/bio-routing/bio-rd/util/decode"
 )
 
 // TLV is an interface that all TLVs must fulfill
@@ -38,7 +40,7 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 	length := buf.Len()
 	read := uint16(0)
 	for read < uint16(length) {
-		err = decode(buf, headFields)
+		err = decode.Decode(buf, headFields)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode fields: %v", err)
 		}
@@ -47,10 +49,6 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 		read += uint16(tlvLength)
 
 		var tlv TLV
-
-		fmt.Printf("Decode: TLV Type = %d\n", tlvType)
-		fmt.Printf("Length: %d\n", tlvLength)
-
 		switch tlvType {
 		case DynamicHostNameTLVType:
 			tlv, err = readDynamicHostnameTLV(buf, tlvType, tlvLength)
@@ -64,6 +62,8 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 			tlv, err = readAreaAddressesTLV(buf, tlvType, tlvLength)
 		case P2PAdjacencyStateTLVType:
 			tlv, _, err = readP2PAdjacencyStateTLV(buf, tlvType, tlvLength)
+		case ISNeighborsTLVType:
+			tlv, _, err = readISNeighborsTLV(buf, tlvType, tlvLength)
 		default:
 			tlv, err = readUnknownTLV(buf, tlvType, tlvLength)
 		}

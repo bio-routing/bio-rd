@@ -3,8 +3,11 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/bio-routing/bio-rd/util/decode"
 )
 
+// ISISHeader represents an ISIS header
 type ISISHeader struct {
 	ProtoDiscriminator  uint8
 	LengthIndicator     uint8
@@ -15,18 +18,8 @@ type ISISHeader struct {
 	MaxAreaAddresses    uint8
 }
 
-func (h *ISISHeader) Serialize(buf *bytes.Buffer) {
-	buf.WriteByte(h.ProtoDiscriminator)
-	buf.WriteByte(h.LengthIndicator)
-	buf.WriteByte(h.ProtocolIDExtension)
-	buf.WriteByte(h.IDLength)
-	buf.WriteByte(h.PDUType)
-	buf.WriteByte(h.Version)
-	buf.WriteByte(0) // Reserved
-	buf.WriteByte(h.MaxAreaAddresses)
-}
-
-func decodeHeader(buf *bytes.Buffer) (*ISISHeader, error) {
+// DecodeHeader decodes an ISIS header
+func DecodeHeader(buf *bytes.Buffer) (*ISISHeader, error) {
 	h := &ISISHeader{}
 	dsap := uint8(0)
 	ssap := uint8(0)
@@ -47,10 +40,22 @@ func decodeHeader(buf *bytes.Buffer) (*ISISHeader, error) {
 		&h.MaxAreaAddresses,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
 	return h, nil
+}
+
+// Serialize serializes an ISIS header
+func (h *ISISHeader) Serialize(buf *bytes.Buffer) {
+	buf.WriteByte(h.ProtoDiscriminator)
+	buf.WriteByte(h.LengthIndicator)
+	buf.WriteByte(h.ProtocolIDExtension)
+	buf.WriteByte(h.IDLength)
+	buf.WriteByte(h.PDUType)
+	buf.WriteByte(h.Version)
+	buf.WriteByte(0) // Reserved
+	buf.WriteByte(h.MaxAreaAddresses)
 }

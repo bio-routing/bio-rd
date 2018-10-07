@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/bio-routing/bio-rd/util/decode"
 )
 
 // ProtocolsSupportedTLVType is the type value of an protocols supported TLV
@@ -29,7 +31,7 @@ func readProtocolsSupportedTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8
 
 	read := uint8(2)
 	for i := uint8(0); i < tlvLength; i++ {
-		err := decode(buf, fields)
+		err := decode.Decode(buf, fields)
 		if err != nil {
 			return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
 		}

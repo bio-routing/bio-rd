@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -39,7 +40,7 @@ func decodeLSPEntry(buf *bytes.Buffer) (*LSPEntry, error) {
 		&lspEntry.LSPID.PseudonodeID,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}

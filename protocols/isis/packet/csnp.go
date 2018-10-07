@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -129,7 +130,7 @@ func DecodeCSNP(buf *bytes.Buffer) (*CSNP, error) {
 		&csnp.EndLSPID.PseudonodeID,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}

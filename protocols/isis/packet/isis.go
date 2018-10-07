@@ -18,18 +18,20 @@ const (
 
 	DOWN_STATE         = 2
 	INITIALIZING_STATE = 1
-	UP_STATE = 0
+	UP_STATE           = 0
 )
 
+// ISISPacket represents an ISIS packet
 type ISISPacket struct {
 	Header *ISISHeader
 	Body   interface{}
 }
 
+// Decode decodes ISIS packets
 func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 	pkt := &ISISPacket{}
 
-	hdr, err := decodeHeader(buf)
+	hdr, err := DecodeHeader(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode header: %v", err)
 	}
@@ -37,7 +39,7 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 
 	switch pkt.Header.PDUType {
 	case P2P_HELLO:
-		p2pHello, err := decodeISISP2PHello(buf)
+		p2pHello, err := DecodeP2PHello(buf)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode P2P hello: %v", err)
 		}

@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/bio-routing/bio-rd/util/decode"
 )
 
 // ISNeighborsTLVType is the type value of an IS Neighbor TLV
@@ -27,7 +29,7 @@ func readISNeighborsTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ISN
 		&pdu.NeighborSNPA,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
 	}

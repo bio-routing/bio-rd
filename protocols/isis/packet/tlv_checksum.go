@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -41,7 +42,7 @@ func readChecksumTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*Checks
 		&pdu.Checksum,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}

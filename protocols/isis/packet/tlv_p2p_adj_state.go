@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/taktv6/tflow2/convert"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/taktv6/tflow2/convert"
 )
 
 const P2PAdjacencyStateTLVType = 240
@@ -44,7 +45,7 @@ func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8)
 		}
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -21,8 +22,8 @@ const ipv4AddressLength = 4
 
 func NewIPInterfaceAddressTLV(addr uint32) IPInterfaceAddressTLV {
 	return IPInterfaceAddressTLV{
-		TLVType: IPInterfaceAddressTLVType,
-		TLVLength: 4,
+		TLVType:     IPInterfaceAddressTLVType,
+		TLVLength:   4,
 		IPv4Address: addr,
 	}
 }
@@ -37,7 +38,7 @@ func readIPInterfaceAddressTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8
 		&pdu.IPv4Address,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
 	}
