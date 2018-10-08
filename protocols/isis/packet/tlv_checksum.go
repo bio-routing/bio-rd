@@ -8,6 +8,7 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
+// ChecksumTLVType is the type value of a checksum TLV
 const ChecksumTLVType = 12
 
 // ChecksumTLV represents a checksum TLV
@@ -18,18 +19,18 @@ type ChecksumTLV struct {
 }
 
 // Type gets the type of the TLV
-func (c *ChecksumTLV) Type() uint8 {
+func (c ChecksumTLV) Type() uint8 {
 	return c.TLVType
 }
 
 // Length gets the length of the TLV
-func (c *ChecksumTLV) Length() uint8 {
+func (c ChecksumTLV) Length() uint8 {
 	return c.TLVLength
 }
 
-// Value returns the checksum
-func (c *ChecksumTLV) Value() interface{} {
-	return c.Checksum
+// Value returns the TLV itself
+func (c ChecksumTLV) Value() interface{} {
+	return c
 }
 
 func readChecksumTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ChecksumTLV, error) {

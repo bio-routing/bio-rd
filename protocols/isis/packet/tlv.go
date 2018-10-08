@@ -55,15 +55,15 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 		case ChecksumTLVType:
 			tlv, err = readChecksumTLV(buf, tlvType, tlvLength)
 		case ProtocolsSupportedTLVType:
-			tlv, _, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
+			tlv, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
 		case IPInterfaceAddressTLVType:
-			tlv, _, err = readIPInterfaceAddressTLV(buf, tlvType, tlvLength)
+			tlv, err = readIPInterfaceAddressTLV(buf, tlvType, tlvLength)
 		case AreaAddressesTLVType:
 			tlv, err = readAreaAddressesTLV(buf, tlvType, tlvLength)
 		case P2PAdjacencyStateTLVType:
-			tlv, _, err = readP2PAdjacencyStateTLV(buf, tlvType, tlvLength)
+			tlv, err = readP2PAdjacencyStateTLV(buf, tlvType, tlvLength)
 		case ISNeighborsTLVType:
-			tlv, _, err = readISNeighborsTLV(buf, tlvType, tlvLength)
+			tlv, err = readISNeighborsTLV(buf, tlvType, tlvLength)
 		default:
 			tlv, err = readUnknownTLV(buf, tlvType, tlvLength)
 		}

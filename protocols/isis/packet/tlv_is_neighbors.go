@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
 )
 
@@ -14,13 +15,13 @@ const ISNeighborsTLVType = 6
 type ISNeighborsTLV struct {
 	TLVType      uint8
 	TLVLength    uint8
-	NeighborSNPA [6]byte
+	NeighborSNPA types.SystemID
 }
 
 // ISNeighborsTLVLength is the length of an IS Neighbor TLV
 const ISNeighborsTLVLength = 8
 
-func readISNeighborsTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ISNeighborsTLV, uint8, error) {
+func readISNeighborsTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ISNeighborsTLV, error) {
 	pdu := &ISNeighborsTLV{
 		TLVType:   tlvType,
 		TLVLength: tlvLength,
@@ -31,10 +32,10 @@ func readISNeighborsTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ISN
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
-	return pdu, ISNeighborsTLVLength, nil
+	return pdu, nil
 }
 
 // Type returns the type of the TLV
@@ -47,8 +48,9 @@ func (i ISNeighborsTLV) Length() uint8 {
 	return i.TLVLength
 }
 
+// Value returns the TLV itself
 func (i ISNeighborsTLV) Value() interface{} {
-	return i.NeighborSNPA
+	return i
 }
 
 // Serialize serializes an WriteByte into a buffer

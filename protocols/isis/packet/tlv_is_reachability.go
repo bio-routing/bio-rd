@@ -1,7 +1,9 @@
 package packet
 
+// ISReachabilityTLVType is the type value of an IS reachability TLV
 const ISReachabilityTLVType = 2
 
+// ISReachabilityTLV represents an IS reachability TLV
 type ISReachabilityTLV struct {
 	TLVType          uint8
 	TLVLength        uint8

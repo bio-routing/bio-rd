@@ -18,17 +18,16 @@ type IPInterfaceAddressTLV struct {
 	IPv4Address uint32
 }
 
-const ipv4AddressLength = 4
-
-func NewIPInterfaceAddressTLV(addr uint32) IPInterfaceAddressTLV {
-	return IPInterfaceAddressTLV{
+// NewIPInterfaceAddressTLV creates a new IPInterfaceAddressTLV
+func NewIPInterfaceAddressTLV(addr uint32) *IPInterfaceAddressTLV {
+	return &IPInterfaceAddressTLV{
 		TLVType:     IPInterfaceAddressTLVType,
 		TLVLength:   4,
 		IPv4Address: addr,
 	}
 }
 
-func readIPInterfaceAddressTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*IPInterfaceAddressTLV, uint8, error) {
+func readIPInterfaceAddressTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*IPInterfaceAddressTLV, error) {
 	pdu := &IPInterfaceAddressTLV{
 		TLVType:   tlvType,
 		TLVLength: tlvLength,
@@ -40,10 +39,10 @@ func readIPInterfaceAddressTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
-	return pdu, ipv4AddressLength, nil
+	return pdu, nil
 }
 
 // Type returns the type of the TLV

@@ -7,6 +7,7 @@ import (
 	"github.com/bio-routing/bio-rd/util/decode"
 )
 
+// DynamicHostNameTLVType is the type value of dynamic hostname TLV
 const DynamicHostNameTLVType = 137
 
 // DynamicHostNameTLV represents a dynamic Hostname TLV
@@ -26,9 +27,9 @@ func (d *DynamicHostNameTLV) Length() uint8 {
 	return d.TLVLength
 }
 
-// Value returns the dynamic hostname
+// Value returns the TLV itself
 func (d *DynamicHostNameTLV) Value() interface{} {
-	return d.Hostname
+	return d
 }
 
 func readDynamicHostnameTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*DynamicHostNameTLV, error) {

@@ -14,14 +14,14 @@ const ProtocolsSupportedTLVType = 129
 type ProtocolsSupportedTLV struct {
 	TLVType                 uint8
 	TLVLength               uint8
-	NerworkLayerProtocolIDs []uint8
+	NetworkLayerProtocolIDs []uint8
 }
 
-func readProtocolsSupportedTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ProtocolsSupportedTLV, uint8, error) {
+func readProtocolsSupportedTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ProtocolsSupportedTLV, error) {
 	pdu := &ProtocolsSupportedTLV{
 		TLVType:                 tlvType,
 		TLVLength:               tlvLength,
-		NerworkLayerProtocolIDs: make([]uint8, tlvLength),
+		NetworkLayerProtocolIDs: make([]uint8, tlvLength),
 	}
 
 	protoID := uint8(0)
@@ -29,24 +29,22 @@ func readProtocolsSupportedTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8
 		&protoID,
 	}
 
-	read := uint8(2)
 	for i := uint8(0); i < tlvLength; i++ {
 		err := decode.Decode(buf, fields)
 		if err != nil {
-			return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
+			return nil, fmt.Errorf("Unable to decode fields: %v", err)
 		}
-		pdu.NerworkLayerProtocolIDs[i] = protoID
-		read++
+		pdu.NetworkLayerProtocolIDs[i] = protoID
 	}
 
-	return pdu, read, nil
+	return pdu, nil
 }
 
 func NewProtocolsSupportedTLV(protocols []uint8) ProtocolsSupportedTLV {
 	return ProtocolsSupportedTLV{
 		TLVType:                 ProtocolsSupportedTLVType,
 		TLVLength:               uint8(len(protocols)),
-		NerworkLayerProtocolIDs: protocols,
+		NetworkLayerProtocolIDs: protocols,
 	}
 }
 
@@ -69,5 +67,5 @@ func (p ProtocolsSupportedTLV) Value() interface{} {
 func (p ProtocolsSupportedTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(p.TLVType)
 	buf.WriteByte(p.TLVLength)
-	buf.Write(p.NerworkLayerProtocolIDs)
+	buf.Write(p.NetworkLayerProtocolIDs)
 }

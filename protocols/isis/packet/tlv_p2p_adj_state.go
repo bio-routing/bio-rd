@@ -9,8 +9,10 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
+// P2PAdjacencyStateTLVType is the type value of an P2P adjacency state TLV
 const P2PAdjacencyStateTLVType = 240
 
+// P2PAdjacencyStateTLV represents an P2P adjacency state TLV
 type P2PAdjacencyStateTLV struct {
 	TLVType                        uint8
 	TLVLength                      uint8
@@ -20,23 +22,20 @@ type P2PAdjacencyStateTLV struct {
 	NeighborExtendedLocalCircuitID uint32
 }
 
-func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*P2PAdjacencyStateTLV, uint8, error) {
+func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*P2PAdjacencyStateTLV, error) {
 	pdu := &P2PAdjacencyStateTLV{
 		TLVType:   tlvType,
 		TLVLength: tlvLength,
 	}
 
-	read := uint8(0)
 	fields := make([]interface{}, 0)
 	switch pdu.TLVLength {
 	case 5:
-		read = 5
 		fields = []interface{}{
 			&pdu.AdjacencyState,
 			&pdu.ExtendedLocalCircuitID,
 		}
 	case 15:
-		read = 15
 		fields = []interface{}{
 			&pdu.AdjacencyState,
 			&pdu.ExtendedLocalCircuitID,
@@ -47,14 +46,15 @@ func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8)
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, 0, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
-	return pdu, read, nil
+	return pdu, nil
 }
 
-func NewP2PAdjacencyStateTLV(adjacencyState uint8, extendedLocalCircuitID uint32) P2PAdjacencyStateTLV {
-	return P2PAdjacencyStateTLV{
+// NewP2PAdjacencyStateTLV creates a new P2PAdjacencyStateTLV
+func NewP2PAdjacencyStateTLV(adjacencyState uint8, extendedLocalCircuitID uint32) *P2PAdjacencyStateTLV {
+	return &P2PAdjacencyStateTLV{
 		TLVType:                P2PAdjacencyStateTLVType,
 		TLVLength:              5,
 		AdjacencyState:         adjacencyState,

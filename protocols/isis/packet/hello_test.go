@@ -238,7 +238,7 @@ func TestDecodeISISHello(t *testing.T) {
 					&ProtocolsSupportedTLV{
 						TLVType:                 129,
 						TLVLength:               2,
-						NerworkLayerProtocolIDs: []byte{0xcc, 0x8e},
+						NetworkLayerProtocolIDs: []byte{0xcc, 0x8e},
 					},
 					&IPInterfaceAddressTLV{
 						TLVType:     132,

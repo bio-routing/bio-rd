@@ -74,7 +74,7 @@ func TestDecode(t *testing.T) {
 						&ProtocolsSupportedTLV{
 							TLVType:                 129,
 							TLVLength:               2,
-							NerworkLayerProtocolIDs: []uint8{0xcc, 0x8e},
+							NetworkLayerProtocolIDs: []uint8{0xcc, 0x8e},
 						},
 						&IPInterfaceAddressTLV{
 							TLVType:     132,
