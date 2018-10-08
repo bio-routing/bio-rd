@@ -15,16 +15,19 @@ const (
 	LSPDUMinLen = 19
 )
 
+// LSPID represents a Link State Packet ID
 type LSPID struct {
 	SystemID     types.SystemID
 	PseudonodeID uint16
 }
 
+// Serialize serializes an LSPID
 func (l *LSPID) Serialize(buf *bytes.Buffer) {
 	buf.Write(l.SystemID[:])
 	buf.Write(convert.Uint16Byte(l.PseudonodeID))
 }
 
+// LSPDU represents a link state PDU
 type LSPDU struct {
 	Length            uint16
 	RemainingLifetime uint16
@@ -35,6 +38,7 @@ type LSPDU struct {
 	TLVs              []TLV
 }
 
+// SetChecksum sets the checksum of an LSPDU
 func (l *LSPDU) SetChecksum() {
 	buf := bytes.NewBuffer(nil)
 	l.Serialize(buf)
@@ -46,6 +50,7 @@ func (l *LSPDU) SetChecksum() {
 	l.Checksum = uint16(csum[0])*256 + uint16(csum[1])
 }
 
+// Serialize serializes a linke state PDU
 func (l *LSPDU) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(l.Length))
 	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
@@ -59,6 +64,7 @@ func (l *LSPDU) Serialize(buf *bytes.Buffer) {
 	}
 }
 
+// DecodeLSPDU decodes an LSPDU
 func DecodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 	pdu := &LSPDU{}
 

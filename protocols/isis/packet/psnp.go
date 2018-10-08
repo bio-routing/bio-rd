@@ -7,10 +7,12 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
+	umath "github.com/bio-routing/bio-rd/util/math"
 	"github.com/taktv6/tflow2/convert"
 )
 
 const (
+	// PSNPMinLen is the minimal length of PSNP PDU
 	PSNPMinLen = 8
 )
 
@@ -30,7 +32,7 @@ func NewPSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []P
 
 	for i := 0; i < numPSNPs; i++ {
 		start := i * lspsPerPSNP
-		end := min(lspsPerPSNP, left)
+		end := umath.Min(lspsPerPSNP, left)
 
 		slice := lspEntries[start : start+end]
 		PSNP := newPSNP(sourceID, slice)

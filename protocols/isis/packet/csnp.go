@@ -8,6 +8,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
+	umath "github.com/bio-routing/bio-rd/util/math"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -68,7 +69,7 @@ func NewCSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []C
 
 	for i := 0; i < numCSNPs; i++ {
 		start := i * lspsPerCSNP
-		end := min(lspsPerCSNP, left)
+		end := umath.Min(lspsPerCSNP, left)
 
 		slice := lspEntries[start : start+end]
 		csnp := newCSNP(sourceID, slice)
