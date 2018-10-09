@@ -40,7 +40,7 @@ func (s initializingState) run() (state, string) {
 						foundSelf = true
 					}
 				case packet.ProtocolsSupportedTLVType:
-					if !s.fsm.neighbor.ifa.compareSupportedProtocols(tlv.(*packet.ProtocolsSupportedTLV).NerworkLayerProtocolIDs) {
+					if !s.fsm.neighbor.ifa.compareSupportedProtocols(tlv.(*packet.ProtocolsSupportedTLV).NetworkLayerProtocolIDs) {
 						return newDownState(s.fsm), "Supported protocols mismatch"
 					}
 					protocolsSupportedTLVfound = true
@@ -60,6 +60,7 @@ func (s initializingState) run() (state, string) {
 			}
 
 			if foundSelf {
+				s.fsm.neighbor.ifa.isisServer.lsdb.setSRMAny(s.fsm.neighbor.ifa)
 				return newUpState(s.fsm), "Found myself in P2PAdjacencyTLV"
 			}
 
