@@ -8,6 +8,75 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLSPIDCompare(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        LSPID
+		b        LSPID
+		expected int
+	}{
+		{
+			name:     "Test #1",
+			a:        LSPID{},
+			b:        LSPID{},
+			expected: 0,
+		},
+		{
+			name: "Test #2",
+			a: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 6},
+				PseudonodeID: 100,
+			},
+			b: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 7},
+				PseudonodeID: 100,
+			},
+			expected: -1,
+		},
+		{
+			name: "Test #3",
+			a: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 8},
+				PseudonodeID: 100,
+			},
+			b: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 7},
+				PseudonodeID: 100,
+			},
+			expected: 1,
+		},
+		{
+			name: "Test #4",
+			a: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 7},
+				PseudonodeID: 101,
+			},
+			b: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 7},
+				PseudonodeID: 100,
+			},
+			expected: 1,
+		},
+		{
+			name: "Test #4",
+			a: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 7},
+				PseudonodeID: 101,
+			},
+			b: LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 7},
+				PseudonodeID: 102,
+			},
+			expected: -1,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.a.Compare(test.b)
+		assert.Equalf(t, test.expected, res, "Test %q", test.name)
+	}
+}
+
 func TestSerializeLSPDU(t *testing.T) {
 	tests := []struct {
 		name     string

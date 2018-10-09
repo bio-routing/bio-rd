@@ -27,6 +27,29 @@ func (l *LSPID) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(l.PseudonodeID))
 }
 
+// Compare returns 1 if l is bigger m, 0 if they are equal, else -1
+func (l *LSPID) Compare(m LSPID) int {
+	for i := 0; i < 6; i++ {
+		if l.SystemID[i] > m.SystemID[i] {
+			return 1
+		}
+
+		if l.SystemID[i] < m.SystemID[i] {
+			return -1
+		}
+	}
+
+	if l.PseudonodeID > m.PseudonodeID {
+		return 1
+	}
+
+	if l.PseudonodeID < m.PseudonodeID {
+		return -1
+	}
+
+	return 0
+}
+
 // LSPDU represents a link state PDU
 type LSPDU struct {
 	Length            uint16
