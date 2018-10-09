@@ -7,6 +7,7 @@ import (
 	"github.com/taktv6/tflow2/convert"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/util/decode"
 )
 
 // MultiProtocolReachNLRI represents network layer reachability information for one prefix of an IP address family (rfc4760)
@@ -55,7 +56,7 @@ func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error)
 		&nextHopLength,
 		&variable,
 	}
-	err := decode(bytes.NewBuffer(b), fields)
+	err := decode.Decode(bytes.NewBuffer(b), fields)
 	if err != nil {
 		return MultiProtocolReachNLRI{}, err
 	}

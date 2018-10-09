@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -46,7 +47,7 @@ func deserializeMultiProtocolUnreachNLRI(b []byte) (MultiProtocolUnreachNLRI, er
 		&n.SAFI,
 		&prefixes,
 	}
-	err := decode(bytes.NewBuffer(b), fields)
+	err := decode.Decode(bytes.NewBuffer(b), fields)
 	if err != nil {
 		return MultiProtocolUnreachNLRI{}, err
 	}
