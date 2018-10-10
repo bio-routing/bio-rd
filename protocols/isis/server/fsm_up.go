@@ -40,91 +40,101 @@ func (s upState) run() (state, string) {
 			case packet.P2P_HELLO:
 				return s.processP2PHello(pkt.Body.(*packet.P2PHello))
 			default:
+				s.uninit()
 				return newDownState(s.fsm), "Received unexpected packet"
 			}
 		}
 	}
 }
 
-func (s upState) holdTimerExpired() (state, string) {
+func (s *upState) uninit() {
+	close(s.fsm.stopCh)
+}
+
+func (s *upState) holdTimerExpired() (state, string) {
+	s.uninit()
 	return newDownState(s.fsm), "Hold timer expired"
 }
 
 func (s *upState) sender() {
 	t := time.NewTicker(time.Millisecond * 100)
 	for {
-		<-t.C
-		lspdus, psnpEntries := s.fsm.neighbor.ifa.isisServer.lsdb.scanSRMSSN(s.fsm.neighbor.ifa)
+		select {
+		case <-s.fsm.stopCh:
+			return
+		case <-t.C:
+			lspdus, psnpEntries := s.fsm.neighbor.ifa.isisServer.lsdb.scanSRMSSN(s.fsm.neighbor.ifa)
 
-		for _, lspdu := range lspdus {
-			lspBuf := bytes.NewBuffer(nil)
-			lspdu.Serialize(lspBuf)
+			for _, lspdu := range lspdus {
+				lspBuf := bytes.NewBuffer(nil)
+				lspdu.Serialize(lspBuf)
 
-			hdrBuf := bytes.NewBuffer(nil)
-			hdr := &packet.ISISHeader{
-				ProtoDiscriminator:  0x83,
-				LengthIndicator:     20,
-				ProtocolIDExtension: 1,
-				IDLength:            0,
-				PDUType:             packet.L2_LS_PDU_TYPE,
-				Version:             1,
-				MaxAreaAddresses:    0,
+				hdrBuf := bytes.NewBuffer(nil)
+				hdr := &packet.ISISHeader{
+					ProtoDiscriminator:  0x83,
+					LengthIndicator:     20,
+					ProtocolIDExtension: 1,
+					IDLength:            0,
+					PDUType:             packet.L2_LS_PDU_TYPE,
+					Version:             1,
+					MaxAreaAddresses:    0,
+				}
+				hdr.Serialize(hdrBuf)
+
+				hdrBuf.Write(lspBuf.Bytes())
+				fmt.Printf("Sending LSP: %v\n", hdrBuf.Bytes())
+
+				err := s.fsm.neighbor.ifa.sendPacket(hdrBuf.Bytes(), AllP2PISS)
+				if err != nil {
+					log.Fatalf("failed to send packet: %v", err)
+				}
 			}
-			hdr.Serialize(hdrBuf)
 
-			hdrBuf.Write(lspBuf.Bytes())
-			fmt.Printf("Sending LSP: %v\n", hdrBuf.Bytes())
+			psnps := packet.NewPSNPs(s.fsm.neighbor.ifa.isisServer.systemID(), psnpEntries, 1492)
+			for _, psnp := range psnps {
+				psnpBuf := bytes.NewBuffer(nil)
+				psnp.Serialize(psnpBuf)
 
-			err := s.fsm.neighbor.ifa.sendPacket(hdrBuf.Bytes(), AllP2PISS)
-			if err != nil {
-				log.Fatalf("failed to send packet: %v", err)
-			}
-		}
+				hdrBuf := bytes.NewBuffer(nil)
+				hdr := &packet.ISISHeader{
+					ProtoDiscriminator:  0x83,
+					LengthIndicator:     20,
+					ProtocolIDExtension: 1,
+					IDLength:            0,
+					PDUType:             packet.L2_PSNP_TYPE,
+					Version:             1,
+					MaxAreaAddresses:    0,
+				}
+				hdr.Serialize(hdrBuf)
 
-		psnps := packet.NewPSNPs(s.fsm.neighbor.ifa.isisServer.systemID(), psnpEntries, 1492)
-		for _, psnp := range psnps {
-			psnpBuf := bytes.NewBuffer(nil)
-			psnp.Serialize(psnpBuf)
+				hdrBuf.Write(psnpBuf.Bytes())
+				fmt.Printf("Sending PSNP: %v\n", hdrBuf.Bytes())
 
-			hdrBuf := bytes.NewBuffer(nil)
-			hdr := &packet.ISISHeader{
-				ProtoDiscriminator:  0x83,
-				LengthIndicator:     20,
-				ProtocolIDExtension: 1,
-				IDLength:            0,
-				PDUType:             packet.L2_PSNP_TYPE,
-				Version:             1,
-				MaxAreaAddresses:    0,
-			}
-			hdr.Serialize(hdrBuf)
-
-			hdrBuf.Write(psnpBuf.Bytes())
-			fmt.Printf("Sending PSNP: %v\n", hdrBuf.Bytes())
-
-			err := s.fsm.neighbor.ifa.sendPacket(hdrBuf.Bytes(), AllP2PISS)
-			if err != nil {
-				log.Fatalf("failed to send packet: %v", err)
+				err := s.fsm.neighbor.ifa.sendPacket(hdrBuf.Bytes(), AllP2PISS)
+				if err != nil {
+					log.Fatalf("failed to send packet: %v", err)
+				}
 			}
 		}
 	}
 }
 
-func (s upState) processCSNP(csnp *packet.CSNP) (state, string) {
+func (s *upState) processCSNP(csnp *packet.CSNP) (state, string) {
 	s.fsm.neighbor.ifa.isisServer.lsdb.processCSNP(s.fsm.neighbor.ifa, csnp)
-	return newUpState(s.fsm), "Received CSNP"
+	return s, "Received CSNP"
 }
 
-func (s upState) processPSNP(psnp *packet.PSNP) (state, string) {
+func (s *upState) processPSNP(psnp *packet.PSNP) (state, string) {
 	s.fsm.neighbor.ifa.isisServer.lsdb.processPSNP(s.fsm.neighbor.ifa, psnp)
-	return newUpState(s.fsm), "Received PSNP"
+	return s, "Received PSNP"
 }
 
-func (s upState) processL2LSPDU(ifa *netIf, pdu *packet.LSPDU) (state, string) {
+func (s *upState) processL2LSPDU(ifa *netIf, pdu *packet.LSPDU) (state, string) {
 	s.fsm.neighbor.ifa.isisServer.lsdb.processLSPDU(ifa, pdu)
-	return newUpState(s.fsm), "Found myself in P2PAdjacencyTLV"
+	return s, "Found myself in P2PAdjacencyTLV"
 }
 
-func (s upState) processP2PHello(hello *packet.P2PHello) (state, string) {
+func (s *upState) processP2PHello(hello *packet.P2PHello) (state, string) {
 	if !s.fsm.neighbor.ifa.p2p {
 		return newDownState(s.fsm), "Received P2PHello on non-P2P interface"
 	}
@@ -167,12 +177,12 @@ func (s upState) processP2PHello(hello *packet.P2PHello) (state, string) {
 			<-s.fsm.holdTimer.C
 		}
 		s.fsm.holdTimer.Reset(time.Second * time.Duration(s.fsm.neighbor.holdingTime))
-		return newUpState(s.fsm), "Found myself in P2PAdjacencyTLV"
+		return s, "Found myself in P2PAdjacencyTLV"
 	}
 
 	return newInitializingState(s.fsm), "Received valid P2PHello"
 }
 
-func (s upState) getState() uint8 {
+func (s *upState) getState() uint8 {
 	return packet.UP_STATE
 }

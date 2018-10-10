@@ -61,7 +61,9 @@ func (s initializingState) run() (state, string) {
 
 			if foundSelf {
 				s.fsm.neighbor.ifa.isisServer.lsdb.setSRMAny(s.fsm.neighbor.ifa)
-				return newUpState(s.fsm), "Found myself in P2PAdjacencyTLV"
+				newState := newUpState(s.fsm)
+				go newState.sender()
+				return newState, "Found myself in P2PAdjacencyTLV"
 			}
 
 			return newInitializingState(s.fsm), "Received valid P2PHello"

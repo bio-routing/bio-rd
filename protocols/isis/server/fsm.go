@@ -21,12 +21,14 @@ type FSM struct {
 	stateMu   sync.Mutex
 	pktCh     chan *packet.ISISPacket
 	holdTimer *time.Timer
+	stopCh    chan struct{}
 }
 
 func newFSM(n *neighbor) *FSM {
 	fsm := &FSM{
 		neighbor: n,
 		pktCh:    make(chan *packet.ISISPacket),
+		stopCh:   make(chan struct{}),
 	}
 
 	fsm.state = newInitializingState(fsm)
