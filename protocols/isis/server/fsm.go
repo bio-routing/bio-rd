@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	log "github.com/sirupsen/logrus"
@@ -15,10 +16,11 @@ type state interface {
 
 // FSM is the per neighbor finite state machine
 type FSM struct {
-	neighbor *neighbor
-	state    state
-	stateMu  sync.Mutex
-	pktCh    chan *packet.ISISPacket
+	neighbor  *neighbor
+	state     state
+	stateMu   sync.Mutex
+	pktCh     chan *packet.ISISPacket
+	holdTimer *time.Timer
 }
 
 func newFSM(n *neighbor) *FSM {

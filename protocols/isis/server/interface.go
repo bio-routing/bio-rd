@@ -17,7 +17,7 @@ import (
 var (
 	AllL1ISS  = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x14}
 	AllL2ISS  = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x15}
-	AllP2PISS = [6]byte{0x09, 0x00, 0x2b, 0x00, 0x00, 0x50}
+	AllP2PISS = [6]byte{0x09, 0x00, 0x2b, 0x00, 0x00, 0x05}
 	AllISS    = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
 	AllESS    = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
 )
@@ -146,7 +146,6 @@ func (n *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 		// TODO: Implement LAN support for L2
 		log.Errorf("L2 LAN support is not implemented yet")
 	default:
-		
 
 		log.Errorf("Unknown packet received from %v: %v", src, rawPkt)
 	}
@@ -154,7 +153,7 @@ func (n *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 
 func (n *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 	hello := pkt.Body.(*packet.P2PHello)
-	
+
 	for _, tlv := range hello.TLVs {
 		fmt.Printf("TLV Type: %d\n", tlv.Type())
 	}
@@ -228,13 +227,13 @@ func (n *netIf) sendP2PHello() error {
 	p.Serialize(helloBuf)
 
 	hdr := packet.ISISHeader{
-		ProtoDiscriminator: 0x83,
-		LengthIndicator: 20,
+		ProtoDiscriminator:  0x83,
+		LengthIndicator:     20,
 		ProtocolIDExtension: 1,
-		IDLength: 0,
-		PDUType: packet.P2P_HELLO,
-		Version: 1,
-		MaxAreaAddresses: 0,	
+		IDLength:            0,
+		PDUType:             packet.P2P_HELLO,
+		Version:             1,
+		MaxAreaAddresses:    0,
 	}
 
 	hdrBuf := bytes.NewBuffer(nil)
@@ -265,7 +264,7 @@ func (n *netIf) p2pHelloTLVs() []packet.TLV {
 	}
 
 	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(n.supportedProtocols)
-	areaAddressesTLV := packet.NewAreaAddressTLV(n.getAreas())
+	areaAddressesTLV := packet.NewAreaAddressesTLV(n.getAreas())
 
 	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232236033) //FIXME: Insert address automatically
 

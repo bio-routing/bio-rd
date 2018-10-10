@@ -15,15 +15,15 @@ type lsdb struct {
 
 type lsdbEntry struct {
 	lspdu    *packet.LSPDU
-	srmFlags map[string]struct{}
-	ssnFlags map[string]struct{}
+	srmFlags map[*netIf]struct{}
+	ssnFlags map[*netIf]struct{}
 }
 
 func newLSDBEntry(lspdu *packet.LSPDU) *lsdbEntry {
 	return &lsdbEntry{
 		lspdu:    lspdu,
-		srmFlags: make(map[string]struct{}),
-		ssnFlags: make(map[string]struct{}),
+		srmFlags: make(map[*netIf]struct{}),
+		ssnFlags: make(map[*netIf]struct{}),
 	}
 }
 
@@ -60,6 +60,35 @@ func newLSDB(server *ISISServer) *lsdb {
 
 	lsdb.lsps[localLSPID] = newLSDBEntry(localLSPDU)
 	return lsdb
+}
+
+func (lsdb *lsdb) scanSRMSSN(ifa *netIf) ([]*packet.LSPDU, []*packet.LSPEntry) {
+	// We're breaking the rule of single resposibility here for performance reason.
+	// Scans for SRM and SSN are synchronized anyways and this way we save an unnecessary
+	// Lock() / Unlock() cycle and a map walk.
+
+	lspdus := make([]*packet.LSPDU, 0)
+	psnpEntries := make([]*packet.LSPEntry, 0)
+
+	lsdb.lspsMu.Lock()
+	for lspid, lsp := range lsdb.lsps {
+		if _, ok := lsp.srmFlags[ifa]; ok {
+			lspdus = append(lspdus, lsp.lspdu)
+			delete(lsdb.lsps[lspid].srmFlags, ifa)
+		}
+		if _, ok := lsp.ssnFlags[ifa]; ok {
+			psnpEntries = append(psnpEntries, &packet.LSPEntry{
+				SequenceNumber:    lsp.lspdu.SequenceNumber,
+				RemainingLifetime: lsp.lspdu.RemainingLifetime,
+				LSPChecksum:       lsp.lspdu.Checksum,
+				LSPID:             lsp.lspdu.LSPID,
+			})
+			delete(lsdb.lsps[lspid].ssnFlags, ifa)
+		}
+	}
+
+	lsdb.lspsMu.Unlock()
+	return lspdus, psnpEntries
 }
 
 func lspEntryToLSPDU(lspEntry packet.LSPEntry) *packet.LSPDU {
@@ -223,17 +252,17 @@ func (lsdb *lsdb) setSRMAnyIf(lspid packet.LSPID) {
 }
 
 func (e *lsdbEntry) setSRM(ifa *netIf) {
-	e.srmFlags[ifa.name] = struct{}{}
+	e.srmFlags[ifa] = struct{}{}
 }
 
 func (e *lsdbEntry) clearSRM(ifa *netIf) {
-	delete(e.srmFlags, ifa.name)
+	delete(e.srmFlags, ifa)
 }
 
 func (e *lsdbEntry) setSSN(ifa *netIf) {
-	e.ssnFlags[ifa.name] = struct{}{}
+	e.ssnFlags[ifa] = struct{}{}
 }
 
 func (e *lsdbEntry) clearSSN(ifa *netIf) {
-	delete(e.ssnFlags, ifa.name)
+	delete(e.ssnFlags, ifa)
 }
