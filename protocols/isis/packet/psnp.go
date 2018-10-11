@@ -20,11 +20,11 @@ const (
 type PSNP struct {
 	PDULength  uint16
 	SourceID   types.SystemID
-	LSPEntries []LSPEntry
+	LSPEntries []*LSPEntry
 }
 
 // NewPSNPs creates the necessary number of PSNP PDUs to carry all LSPEntries
-func NewPSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []PSNP {
+func NewPSNPs(sourceID types.SystemID, lspEntries []*LSPEntry, maxPDULen int) []PSNP {
 	left := len(lspEntries)
 	lspsPerPSNP := (maxPDULen - PSNPMinLen) / LSPEntryLen
 	numPSNPs := int(math.Ceil(float64(left) / float64(lspsPerPSNP)))
@@ -46,7 +46,7 @@ func NewPSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []P
 	return res
 }
 
-func newPSNP(sourceID types.SystemID, lspEntries []LSPEntry) *PSNP {
+func newPSNP(sourceID types.SystemID, lspEntries []*LSPEntry) *PSNP {
 	if len(lspEntries) == 0 {
 		return nil
 	}
@@ -85,13 +85,13 @@ func DecodePSNP(buf *bytes.Buffer) (*PSNP, error) {
 	}
 
 	nEntries := (psnp.PDULength - PSNPMinLen) / LSPEntryLen
-	psnp.LSPEntries = make([]LSPEntry, nEntries)
+	psnp.LSPEntries = make([]*LSPEntry, nEntries)
 	for i := uint16(0); i < nEntries; i++ {
 		lspEntry, err := decodeLSPEntry(buf)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to get LSPEntries: %v", err)
 		}
-		psnp.LSPEntries[i] = *lspEntry
+		psnp.LSPEntries[i] = lspEntry
 	}
 
 	return psnp, nil
