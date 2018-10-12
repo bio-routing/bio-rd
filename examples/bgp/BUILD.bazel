@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "main.go",
+        "main_ipv4.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/examples/bgp",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//config:go_default_library",
+        "//net:go_default_library",
+        "//protocols/bgp/server:go_default_library",
+        "//routingtable:go_default_library",
+        "//routingtable/filter:go_default_library",
+        "//routingtable/locRIB:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "bgp",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
