@@ -9,7 +9,7 @@ import (
 
 const (
 	// OpenMsgMinLen is the minimal length of a BGP open message
-	OpenMsgMinLen = 10
+	OpenMsgMinLen = 29
 )
 
 // PeerUpNotification represents a peer up notification
@@ -80,6 +80,7 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 }
 
 func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
+	fmt.Printf("Buf: %v\n", buf.Bytes())
 	msg := make([]byte, OpenMsgMinLen)
 
 	fields := []interface{}{
@@ -87,7 +88,7 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 	}
 	err := decoder.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read: %v", err)
+		return nil, fmt.Errorf("Unable to read 1: %v", err)
 	}
 
 	if msg[OpenMsgMinLen-1] == 0 {
@@ -101,7 +102,7 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 
 	err = decoder.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read: %v", err)
+		return nil, fmt.Errorf("Unable to read 2: %v", err)
 	}
 
 	msg = append(msg, optParams...)

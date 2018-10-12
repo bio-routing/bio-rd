@@ -19,6 +19,7 @@ type PeerInfo struct {
 	States   []string
 }
 
+// peer represents a BGP peer
 type peer struct {
 	server   *bgpServer
 	addr     bnet.IP
@@ -120,7 +121,7 @@ func isEstablishedState(s state) bool {
 	return false
 }
 
-// NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
+// newPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
 func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	if c.LocalAS == 0 {

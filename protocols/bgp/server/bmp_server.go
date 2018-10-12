@@ -41,6 +41,7 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 		reconnectTimer:   time.NewTimer(time.Duration(0)),
 		rib4:             rib4,
 		rib6:             rib6,
+		neighbors:        make(map[[16]byte]*neighbor),
 	}
 
 	b.routersMu.Lock()
@@ -64,19 +65,20 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 
 			r.reconnectTime = 0
 			r.con = c
+			log.Infof("Connected to %s", r.address.String())
 			r.serve()
 		}
 	}(r)
 }
 
-func recvMsg(c net.Conn) (msg []byte, err error) {
+func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, defaultBufferLen)
 	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
 	if err != nil {
 		return nil, fmt.Errorf("Read failed: %v", err)
 	}
 
-	l := convert.Uint32b(buffer[1:3])
+	l := convert.Uint32b(buffer[1:5])
 	if l > defaultBufferLen {
 		tmp := buffer
 		buffer = make([]byte, l)
@@ -89,5 +91,5 @@ func recvMsg(c net.Conn) (msg []byte, err error) {
 		return nil, fmt.Errorf("Read failed: %v", err)
 	}
 
-	return buffer, nil
+	return buffer[0:toRead], nil
 }

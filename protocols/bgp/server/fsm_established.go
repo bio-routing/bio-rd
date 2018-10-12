@@ -162,7 +162,7 @@ func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (
 		fmt.Println(data)
 		return s.notification()
 	case packet.UpdateMsg:
-		return s.update(msg)
+		return s.update(msg.Body.(*packet.BGPUpdate))
 	case packet.KeepaliveMsg:
 		return s.keepaliveReceived()
 	default:
@@ -178,12 +178,10 @@ func (s *establishedState) notification() (state, string) {
 	return newIdleState(s.fsm), "Received NOTIFICATION"
 }
 
-func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
+func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 	if s.fsm.holdTime != 0 {
 		s.fsm.holdTimer.Reset(s.fsm.holdTime)
 	}
-
-	u := msg.Body.(*packet.BGPUpdate)
 
 	if s.fsm.ipv4Unicast != nil {
 		s.fsm.ipv4Unicast.processUpdate(u)
@@ -193,7 +191,7 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 		s.fsm.ipv6Unicast.processUpdate(u)
 	}
 
-	afi, safi := u.AddressFamily()
+	afi, safi := s.updateAddressFamily(u)
 
 	if safi != packet.UnicastSAFI {
 		// only unicast support, so other SAFIs are ignored
@@ -214,6 +212,26 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
+}
+
+func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16, safi uint8) {
+	if u.WithdrawnRoutes != nil || u.NLRI != nil {
+		return packet.IPv4AFI, packet.UnicastSAFI
+	}
+
+	for cur := u.PathAttributes; cur != nil; cur = cur.Next {
+		if cur.TypeCode == packet.MultiProtocolReachNLRICode {
+			a := cur.Value.(packet.MultiProtocolReachNLRI)
+			return a.AFI, a.SAFI
+		}
+
+		if cur.TypeCode == packet.MultiProtocolUnreachNLRICode {
+			a := cur.Value.(packet.MultiProtocolUnreachNLRI)
+			return a.AFI, a.SAFI
+		}
+	}
+
+	return
 }
 
 func (s *establishedState) keepaliveReceived() (state, string) {

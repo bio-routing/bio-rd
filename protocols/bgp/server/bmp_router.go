@@ -7,14 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bio-routing/bio-rd/protocols/bmp/packet"
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	"github.com/bio-routing/tflow2/convert"
 	log "github.com/sirupsen/logrus"
-
-	bgppkt "github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/taktv6/tflow2/convert"
 )
 
 type router struct {
@@ -36,43 +33,43 @@ type neighbor struct {
 	peerAS   uint32
 	address  [16]byte
 	routerID uint32
-	ipv4     *adjRIBIn.AdjRIBIn
-	ipv6     *adjRIBIn.AdjRIBIn
+	fsm      *FSM
 }
 
 func (r *router) serve() {
 	for {
-		msg, err := recvMsg(r.con)
+		msg, err := recvBMPMsg(r.con)
 		if err != nil {
 			log.Errorf("Unable to get message: %v", err)
 			return
 		}
 
-		bmpMsg, err := packet.Decode(msg)
+		bmpMsg, err := bmppkt.Decode(msg)
 		if err != nil {
 			log.Errorf("Unable to decode BMP message: %v", err)
+			fmt.Printf("msg: %v\n", msg)
 			return
 		}
 
 		fmt.Printf("%v\n", bmpMsg)
 
 		switch bmpMsg.MsgType() {
-		case packet.PeerUpNotificationType:
-			r.processPeerUpNotification(bmpMsg.(*packet.PeerUpNotification))
-		case packet.PeerDownNotificationType:
-			r.processPeerDownNotification(bmpMsg.(*packet.PeerDownNotification))
-		case packet.InitiationMessageType:
-			r.processInitiationMsg(bmpMsg.(*packet.InitiationMessage))
-		case packet.TerminationMessageType:
-			r.processTerminationMsg(bmpMsg.(*packet.TerminationMessage))
+		case bmppkt.PeerUpNotificationType:
+			r.processPeerUpNotification(bmpMsg.(*bmppkt.PeerUpNotification))
+		case bmppkt.PeerDownNotificationType:
+			r.processPeerDownNotification(bmpMsg.(*bmppkt.PeerDownNotification))
+		case bmppkt.InitiationMessageType:
+			r.processInitiationMsg(bmpMsg.(*bmppkt.InitiationMessage))
+		case bmppkt.TerminationMessageType:
+			r.processTerminationMsg(bmpMsg.(*bmppkt.TerminationMessage))
 			return
-
+		case bmppkt.RouteMonitoringType:
+			r.processRouteMonitoringMsg(bmpMsg.(*bmppkt.RouteMonitoringMsg))
 		}
-
 	}
 }
 
-func (r *router) processRouteMonitoringMsg(msg *packet.RouteMonitoringMsg) {
+func (r *router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	r.neighborsMu.Lock()
 	defer r.neighborsMu.Unlock()
 
@@ -81,26 +78,17 @@ func (r *router) processRouteMonitoringMsg(msg *packet.RouteMonitoringMsg) {
 		return
 	}
 
-	bgpUpdate, err := bgppkt.DecodeUpdateMsg(bytes.NewBuffer(msg.BGPUpdate), uint16(len(msg.BGPUpdate)), nil)
+	bgpUpdate, err := packet.DecodeUpdateMsg(bytes.NewBuffer(msg.BGPUpdate[19:]), uint16(len(msg.BGPUpdate[19:])), nil)
 	if err != nil {
 		log.Errorf("Unable to decode BGP update message from %v on %s: %v", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
 	}
 
-	afi, safi := bgpUpdate.AddressFamily()
-	if safi != bgppkt.UnicastSAFI {
-		// only unicast support, so other SAFIs are ignored
-		return
-	}
-
-	switch afi {
-	case bgppkt.IPv4AFI:
-
-	case bgppkt.IPv6AFI:
-
-	}
+	n := r.neighbors[msg.PerPeerHeader.PeerAddress]
+	s := n.fsm.state.(*establishedState)
+	s.update(bgpUpdate)
 }
 
-func (r *router) processInitiationMsg(msg *packet.InitiationMessage) {
+func (r *router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
 	const (
 		stringType   = 0
 		sysDescrType = 1
@@ -123,7 +111,7 @@ func (r *router) processInitiationMsg(msg *packet.InitiationMessage) {
 	log.Info(logMsg)
 }
 
-func (r *router) processTerminationMsg(msg *packet.TerminationMessage) {
+func (r *router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 	const (
 		stringType = 0
 		reasonType = 1
@@ -165,7 +153,7 @@ func (r *router) processTerminationMsg(msg *packet.TerminationMessage) {
 	}
 }
 
-func (r *router) processPeerDownNotification(msg *packet.PeerDownNotification) {
+func (r *router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 	r.neighborsMu.Lock()
 	defer r.neighborsMu.Unlock()
 
@@ -177,7 +165,7 @@ func (r *router) processPeerDownNotification(msg *packet.PeerDownNotification) {
 	delete(r.neighbors, msg.PerPeerHeader.PeerAddress)
 }
 
-func (r *router) processPeerUpNotification(msg *packet.PeerUpNotification) {
+func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) {
 	r.neighborsMu.Lock()
 	defer r.neighborsMu.Unlock()
 
@@ -186,13 +174,14 @@ func (r *router) processPeerUpNotification(msg *packet.PeerUpNotification) {
 		return
 	}
 
-	sentOpen, err := bgppkt.DecodeOpenMsg(bytes.NewBuffer(msg.SentOpenMsg))
+	fmt.Printf("msg.SentOpenMsg[19:]: %v\n", msg.SentOpenMsg[19:])
+	sentOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.SentOpenMsg[19:]))
 	if err != nil {
 		log.Warningf("Unable to decode sent open message sent from %v to %v: %v", r.address.String(), msg.PerPeerHeader.PeerAddress, err)
 		return
 	}
 
-	recvOpen, err := bgppkt.DecodeOpenMsg(bytes.NewBuffer(msg.ReceivedOpenMsg))
+	recvOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.ReceivedOpenMsg[19:]))
 	if err != nil {
 		log.Warningf("Unable to decode received open message sent from %v to %v: %v", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
 		return
@@ -201,12 +190,15 @@ func (r *router) processPeerUpNotification(msg *packet.PeerUpNotification) {
 	localAS := uint32(sentOpen.ASN)
 	// TODO: Get 32bit ASN from OPEN message
 
-	r.neighbors[msg.PerPeerHeader.PeerAddress] = &neighbor{
+	fsm := &FSM{}
+	fsm.state = newEstablishedState(fsm)
+	n := &neighbor{
 		localAS:  localAS,
 		peerAS:   msg.PerPeerHeader.PeerAS,
 		address:  msg.PerPeerHeader.PeerAddress,
 		routerID: recvOpen.BGPIdentifier,
-		ipv4:     adjRIBIn.New(nil, routingtable.NewContributingASNs(), recvOpen.BGPIdentifier, 0),
-		ipv6:     adjRIBIn.New(nil, routingtable.NewContributingASNs(), recvOpen.BGPIdentifier, 0),
+		fsm:      fsm,
 	}
+
+	r.neighbors[msg.PerPeerHeader.PeerAddress] = n
 }

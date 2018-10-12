@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/bio-routing/bio-rd/protocols/bmp/server"
+	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/sirupsen/logrus"
 )
@@ -15,7 +15,7 @@ func main() {
 
 	rib := locRIB.New()
 	b := server.NewServer()
-	b.AddRouter(net.IP{127, 0, 0, 1}, 1234, rib, nil)
+	b.AddRouter(net.IP{10, 0, 255, 0}, 30119, rib, nil)
 
 	go func() {
 		for {
