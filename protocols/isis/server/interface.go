@@ -37,6 +37,7 @@ type netIf struct {
 	l2                 *level
 	socket             int
 	supportedProtocols []uint8
+	stop               chan struct{}
 }
 
 type level struct {
@@ -54,6 +55,7 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 		passive:            c.Passive,
 		p2p:                c.P2P,
 		supportedProtocols: []uint8{NLPID_IPv4, NLPID_IPv6},
+		stop:               make(chan struct{}),
 	}
 
 	if c.ISISLevel1Config != nil {
@@ -93,14 +95,14 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 	return &nif, nil
 }
 
-func (n *netIf) compareSupportedProtocols(protocols []uint8) bool {
-	if len(n.supportedProtocols) != len(protocols) {
+func (ifa *netIf) compareSupportedProtocols(protocols []uint8) bool {
+	if len(ifa.supportedProtocols) != len(protocols) {
 		return false
 	}
 
 	for _, p := range protocols {
 		found := false
-		for _, q := range n.supportedProtocols {
+		for _, q := range ifa.supportedProtocols {
 			if p == q {
 				found = true
 			}
@@ -114,21 +116,26 @@ func (n *netIf) compareSupportedProtocols(protocols []uint8) bool {
 	return true
 }
 
-func (n *netIf) startReceiver() {
-	go func(n *netIf) {
+func (ifa *netIf) startReceiver() {
+	go func(ifa *netIf) {
 		for {
-			rawPkt, src, err := n.recvPacket()
-			if err != nil {
-				log.Errorf("recvPacket() failed: %v", err)
+			select {
+			case <-ifa.stop:
 				return
-			}
+			default:
+				rawPkt, src, err := ifa.recvPacket()
+				if err != nil {
+					log.Errorf("recvPacket() failed: %v", err)
+					return
+				}
 
-			n.processIngressPacket(rawPkt, src)
+				ifa.processIngressPacket(rawPkt, src)
+			}
 		}
 	}(n)
 }
 
-func (n *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
+func (ifa *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 	pkt, err := packet.Decode(bytes.NewBuffer(rawPkt))
 	if err != nil {
 		log.Errorf("Unable to decode packet from %v: %v: %v", src, rawPkt, err)
@@ -138,7 +145,7 @@ func (n *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 	switch pkt.Header.PDUType {
 	case packet.P2P_HELLO:
 		log.Infof("Received P2P hello: %v", rawPkt)
-		n.processIngressP2PHello(pkt)
+		ifa.processIngressP2PHello(pkt)
 	case packet.L1_LAN_HELLO_TYPE:
 		// TODO: Implement LAN support for L1
 		log.Errorf("L1 LAN support is not implemented yet")
@@ -151,7 +158,7 @@ func (n *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 	}
 }
 
-func (n *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
+func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 	hello := pkt.Body.(*packet.P2PHello)
 
 	for _, tlv := range hello.TLVs {
@@ -163,30 +170,30 @@ func (n *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 		// TODO: Implement P2P L1 support
 		return
 	case 2:
-		n.l2.neighborsMu.RLock()
-		if _, ok := n.l2.neighbors[hello.SystemID]; !ok {
+		ifa.l2.neighborsMu.RLock()
+		if _, ok := ifa.l2.neighbors[hello.SystemID]; !ok {
 			neighbor := &neighbor{
 				systemID:       hello.SystemID,
 				ifa:            n,
 				holdingTime:    hello.HoldingTimer,
 				localCircuitID: hello.LocalCircuitID,
 			}
-			n.l2.neighborsMu.RUnlock()
-			n.l2.neighborsMu.Lock()
-			n.l2.neighbors[hello.SystemID] = neighbor
-			n.l2.neighborsMu.Unlock()
+			ifa.l2.neighborsMu.RUnlock()
+			ifa.l2.neighborsMu.Lock()
+			ifa.l2.neighbors[hello.SystemID] = neighbor
+			ifa.l2.neighborsMu.Unlock()
 
-			n.l2.neighborsMu.RLock()
+			ifa.l2.neighborsMu.RLock()
 
-			fsm := newFSM(n.l2.neighbors[hello.SystemID])
-			n.l2.neighbors[hello.SystemID].fsm = fsm
+			fsm := newFSM(ifa.l2.neighbors[hello.SystemID])
+			ifa.l2.neighbors[hello.SystemID].fsm = fsm
 			go fsm.run()
 
 			return
 		}
 
-		neighbor := n.l2.neighbors[hello.SystemID]
-		n.l2.neighborsMu.RUnlock()
+		neighbor := ifa.l2.neighbors[hello.SystemID]
+		ifa.l2.neighborsMu.RUnlock()
 
 		neighbor.fsm.receive(pkt)
 	case 3:
@@ -194,28 +201,32 @@ func (n *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 	}
 }
 
-func (n *netIf) helloSender() {
-	n.p2pHelloSender()
+func (ifa *netIf) helloSender() {
+	ifa.p2pHelloSender()
 }
 
-func (n *netIf) p2pHelloSender() {
-	t := time.NewTicker(time.Duration(n.l2.HelloInterval) * time.Second)
+func (ifa *netIf) p2pHelloSender() {
+	t := time.NewTicker(time.Duration(ifa.l2.HelloInterval) * time.Second)
 	for {
-		<-t.C
-		err := n.sendP2PHello()
-		if err != nil {
-			log.Errorf("Unable to send hello packet: %v", err)
+		select {
+		case <-t.C:
+			err := ifa.sendP2PHello()
+			if err != nil {
+				log.Errorf("Unable to send hello packet: %v", err)
+			}
+		case <-ifa.stop:
+			return
 		}
 	}
 }
 
-func (n *netIf) sendP2PHello() error {
+func (ifa *netIf) sendP2PHello() error {
 	p := packet.P2PHello{
 		CircuitType:  packet.L2CircuitType,
-		SystemID:     n.isisServer.systemID(),
-		HoldingTimer: n.l2.HoldTime,
+		SystemID:     ifa.isisServer.systemID(),
+		HoldingTimer: ifa.l2.HoldTime,
 		PDULength:    packet.P2PHelloMinSize,
-		TLVs:         n.p2pHelloTLVs(),
+		TLVs:         ifa.p2pHelloTLVs(),
 	}
 
 	for _, TLV := range p.TLVs {
@@ -243,7 +254,7 @@ func (n *netIf) sendP2PHello() error {
 
 	fmt.Printf("Sending Hello: %v\n", hdrBuf.Bytes())
 
-	err := n.sendPacket(hdrBuf.Bytes(), AllISS)
+	err := ifa.sendPacket(hdrBuf.Bytes(), AllISS)
 	if err != nil {
 		return fmt.Errorf("failed to send packet: %v", err)
 	}
@@ -251,9 +262,9 @@ func (n *netIf) sendP2PHello() error {
 	return nil
 }
 
-func (n *netIf) p2pHelloTLVs() []packet.TLV {
+func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 
-	l2AdjacencyState, neighborSystemID, neighborExtendedLocalCircuitID := n.p2pL2AdjacencyState()
+	l2AdjacencyState, neighborSystemID, neighborExtendedLocalCircuitID := ifa.p2pL2AdjacencyState()
 	p2pAdjStateTLV := packet.NewP2PAdjacencyStateTLV(l2AdjacencyState, 1234)
 
 	switch l2AdjacencyState {
@@ -263,8 +274,8 @@ func (n *netIf) p2pHelloTLVs() []packet.TLV {
 		p2pAdjStateTLV.NeighborExtendedLocalCircuitID = neighborExtendedLocalCircuitID
 	}
 
-	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(n.supportedProtocols)
-	areaAddressesTLV := packet.NewAreaAddressesTLV(n.getAreas())
+	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(ifa.supportedProtocols)
+	areaAddressesTLV := packet.NewAreaAddressesTLV(ifa.getAreas())
 
 	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232236033) //FIXME: Insert address automatically
 
@@ -276,9 +287,9 @@ func (n *netIf) p2pHelloTLVs() []packet.TLV {
 	}
 }
 
-func (n *netIf) getAreas() []types.AreaID {
-	areas := make([]types.AreaID, len(n.isisServer.config.NETs))
-	for i, NET := range n.isisServer.config.NETs {
+func (ifa *netIf) getAreas() []types.AreaID {
+	areas := make([]types.AreaID, len(ifa.isisServer.config.NETs))
+	for i, NET := range ifa.isisServer.config.NETs {
 		a := []byte{NET.AFI}
 		a = append(a, NET.AreaID...)
 		areas[i] = a
@@ -287,15 +298,15 @@ func (n *netIf) getAreas() []types.AreaID {
 	return areas
 }
 
-func (n *netIf) p2pL2AdjacencyState() (state uint8, neighbor types.SystemID, neighborExtendedLocalCircuitID uint32) {
-	n.l2.neighborsMu.RLock()
-	defer n.l2.neighborsMu.RUnlock()
+func (ifa *netIf) p2pL2AdjacencyState() (state uint8, neighbor types.SystemID, neighborExtendedLocalCircuitID uint32) {
+	ifa.l2.neighborsMu.RLock()
+	defer ifa.l2.neighborsMu.RUnlock()
 
-	if len(n.l2.neighbors) == 0 {
+	if len(ifa.l2.neighbors) == 0 {
 		return packet.DOWN_STATE, types.SystemID{}, 0
 	}
 
-	for systemID, neighbor := range n.l2.neighbors {
+	for systemID, neighbor := range ifa.l2.neighbors {
 		return neighbor.fsm.state.getState(), systemID, neighbor.extendedLocalCircuitID
 	}
 

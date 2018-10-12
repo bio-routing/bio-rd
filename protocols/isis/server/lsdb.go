@@ -62,6 +62,36 @@ func newLSDB(server *ISISServer) *lsdb {
 	return lsdb
 }
 
+func (lsdb *lsdb) clearSRMSSN(ifa *netIf) {
+	lsdb.lspsMu.Lock()
+
+	for lspid, lsp := range lsdb.lsps {
+		if _, ok := lsp.srmFlags[ifa]; ok {
+			delete(lsdb.lsps[lspid].srmFlags, ifa)
+		}
+		if _, ok := lsp.ssnFlags[ifa]; ok {
+			delete(lsdb.lsps[lspid].ssnFlags, ifa)
+		}
+	}
+
+	lsdb.lspsMu.Unlock()
+}
+
+func (lsdb *lsdb) decrementRemainingLifetimes() {
+	lsdb.lspsMu.Lock()
+
+	for lspid, lspdbEntry := range lsdb.lsps {
+		if lspdbEntry.lspdu.RemainingLifetime <= 1 {
+			delete(lsdb.lsps, lspid)
+			continue
+		}
+
+		lspdbEntry.lspdu.RemainingLifetime--
+	}
+
+	lsdb.lspsMu.Unlock()
+}
+
 func (lsdb *lsdb) scanSRMSSN(ifa *netIf) ([]*packet.LSPDU, []*packet.LSPEntry) {
 	// We're breaking the rule of single resposibility here for performance reason.
 	// Scans for SRM and SSN are synchronized anyways and this way we save an unnecessary
@@ -134,16 +164,16 @@ func (lsdb *lsdb) processLSPDU(ifa *netIf, lspdu *packet.LSPDU) {
 
 func (lsdb *lsdb) processPSNP(ifa *netIf, psnp *packet.PSNP) {
 	lsdb.lspsMu.Lock()
-	defer lsdb.lspsMu.Unlock()
 
 	for _, lspEntry := range psnp.LSPEntries {
 		lsdb.lsps[lspEntry.LSPID].clearSRM(ifa)
 	}
+
+	lsdb.lspsMu.Unlock()
 }
 
 func (lsdb *lsdb) processCSNP(ifa *netIf, csnp *packet.CSNP) {
 	lsdb.lspsMu.Lock()
-	defer lsdb.lspsMu.Unlock()
 
 	seenLSPIDs := make(map[packet.LSPID]struct{})
 
@@ -171,6 +201,9 @@ func (lsdb *lsdb) processCSNP(ifa *netIf, csnp *packet.CSNP) {
 		}
 
 		// LSP not in database
+		if lspEntry.RemainingLifetime == 0 {
+			continue
+		}
 		newLSPEntry := newLSDBEntry(lspEntryToLSPDU(lspEntry))
 		newLSPEntry.lspdu.SequenceNumber = 0
 		lsdb.lsps[newLSPEntry.lspdu.LSPID] = newLSPEntry
@@ -200,11 +233,12 @@ func (lsdb *lsdb) processCSNP(ifa *netIf, csnp *packet.CSNP) {
 
 		lsdb.lsps[lspEntry.lspdu.LSPID].setSRM(ifa)
 	}
+
+	lsdb.lspsMu.Unlock()
 }
 
 func (lsdb *lsdb) getCSNP() *packet.CSNP {
 	lsdb.lspsMu.RLock()
-	defer lsdb.lspsMu.RUnlock()
 
 	p := &packet.CSNP{
 		PDULength:  packet.CSNPMinLen,
@@ -230,12 +264,12 @@ func (lsdb *lsdb) getCSNP() *packet.CSNP {
 		i++
 	}
 
+	lsdb.lspsMu.RUnlock()
 	return p
 }
 
 func (lsdb *lsdb) setSRMAny(ifa *netIf) {
 	lsdb.lspsMu.Lock()
-	defer lsdb.lspsMu.Unlock()
 
 	for _, lsdbEntry := range lsdb.lsps {
 		if lsdbEntry.lspdu.SequenceNumber == 0 {
@@ -243,6 +277,8 @@ func (lsdb *lsdb) setSRMAny(ifa *netIf) {
 		}
 		lsdbEntry.setSRM(ifa)
 	}
+
+	lsdb.lspsMu.Unlock()
 }
 
 func (lsdb *lsdb) setSRMAnyIf(lspid packet.LSPID) {
