@@ -27,6 +27,7 @@ go_test(
     name = "go_default_test",
     srcs = [
         "common_header_test.go",
+        "decode_test.go",
         "information_tlv_test.go",
         "initiation_message_test.go",
         "peer_down_test.go",

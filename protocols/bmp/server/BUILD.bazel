@@ -13,5 +13,6 @@ go_library(
         "//protocols/bmp/packet:go_default_library",
         "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
     ],
 )

@@ -9,8 +9,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	"github.com/bio-routing/tflow2/convert"
 	log "github.com/sirupsen/logrus"
+	"github.com/taktv6/tflow2/convert"
 )
 
 const (
