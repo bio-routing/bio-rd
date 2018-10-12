@@ -7,6 +7,7 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
+// BGPUpdate represents a BGP Update message
 type BGPUpdate struct {
 	WithdrawnRoutesLen uint16
 	WithdrawnRoutes    *NLRI
@@ -86,6 +87,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// SerializeUpdateAddPath serializes an BGPUpdate with add-path to wire format
 func (b *BGPUpdate) SerializeUpdateAddPath(opt *EncodeOptions) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
@@ -143,4 +145,25 @@ func (b *BGPUpdate) SerializeUpdateAddPath(opt *EncodeOptions) ([]byte, error) {
 	buf.Write(nlriBuf.Bytes())
 
 	return buf.Bytes(), nil
+}
+
+// AddressFamily gets the address family of an update
+func (b *BGPUpdate) AddressFamily() (afi uint16, safi uint8) {
+	if b.WithdrawnRoutes != nil || b.NLRI != nil {
+		return IPv4AFI, UnicastSAFI
+	}
+
+	for cur := b.PathAttributes; cur != nil; cur = cur.Next {
+		if cur.TypeCode == MultiProtocolReachNLRICode {
+			a := cur.Value.(MultiProtocolReachNLRI)
+			return a.AFI, a.SAFI
+		}
+
+		if cur.TypeCode == MultiProtocolUnreachNLRICode {
+			a := cur.Value.(MultiProtocolUnreachNLRI)
+			return a.AFI, a.SAFI
+		}
+	}
+
+	return
 }

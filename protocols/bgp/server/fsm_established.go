@@ -193,7 +193,7 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 		s.fsm.ipv6Unicast.processUpdate(u)
 	}
 
-	afi, safi := s.updateAddressFamily(u)
+	afi, safi := u.AddressFamily()
 
 	if safi != packet.UnicastSAFI {
 		// only unicast support, so other SAFIs are ignored
@@ -214,26 +214,6 @@ func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
 	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
-}
-
-func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16, safi uint8) {
-	if u.WithdrawnRoutes != nil || u.NLRI != nil {
-		return packet.IPv4AFI, packet.UnicastSAFI
-	}
-
-	for cur := u.PathAttributes; cur != nil; cur = cur.Next {
-		if cur.TypeCode == packet.MultiProtocolReachNLRICode {
-			a := cur.Value.(packet.MultiProtocolReachNLRI)
-			return a.AFI, a.SAFI
-		}
-
-		if cur.TypeCode == packet.MultiProtocolUnreachNLRICode {
-			a := cur.Value.(packet.MultiProtocolUnreachNLRI)
-			return a.AFI, a.SAFI
-		}
-	}
-
-	return
 }
 
 func (s *establishedState) keepaliveReceived() (state, string) {

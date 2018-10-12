@@ -17,18 +17,21 @@ const (
 	defaultBufferLen = 4096
 )
 
+// BMPServer represents a BMP server
 type BMPServer struct {
 	routers       map[string]*router
 	routersMu     sync.RWMutex
 	reconnectTime uint
 }
 
+// NewServer creates a new BMP server
 func NewServer() *BMPServer {
 	return &BMPServer{
 		routers: make(map[string]*router),
 	}
 }
 
+// AddRouter adds a router to which we connect with BMP
 func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRIB) {
 	r := &router{
 		address:          addr,

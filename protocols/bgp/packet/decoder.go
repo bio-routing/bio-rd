@@ -30,9 +30,9 @@ func Decode(buf *bytes.Buffer, opt *DecodeOptions) (*BGPMessage, error) {
 func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOptions) (interface{}, error) {
 	switch msgType {
 	case OpenMsg:
-		return decodeOpenMsg(buf)
+		return DecodeOpenMsg(buf)
 	case UpdateMsg:
-		return decodeUpdateMsg(buf, l, opt)
+		return DecodeUpdateMsg(buf, l, opt)
 	case KeepaliveMsg:
 		return nil, nil // Nothing to decode in Keepalive message
 	case NotificationMsg:
@@ -41,7 +41,8 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOption
 	return nil, fmt.Errorf("Unknown message type: %d", msgType)
 }
 
-func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
+// DecodeUpdateMsg decodes a BGP Update Message
+func DecodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
 	msg := &BGPUpdate{}
 
 	err := decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
@@ -128,7 +129,8 @@ func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
 	return n, fmt.Errorf("Invalid error sub code: %d/%d", n.ErrorCode, n.ErrorSubcode)
 }
 
-func decodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
+// DecodeOpenMsg decodes a BGP Open Message
+func DecodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
 	msg, err := _decodeOpenMsg(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode OPEN message: %v", err)
