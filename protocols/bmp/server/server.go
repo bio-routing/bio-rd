@@ -9,6 +9,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/tflow2/convert"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,8 +18,9 @@ const (
 )
 
 type BMPServer struct {
-	routers   map[string]*router
-	routersMu sync.RWMutex
+	routers       map[string]*router
+	routersMu     sync.RWMutex
+	reconnectTime uint
 }
 
 func NewServer() *BMPServer {
@@ -29,12 +31,13 @@ func NewServer() *BMPServer {
 
 func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRIB) {
 	r := &router{
-		address:        addr,
-		port:           port,
-		reconnectTime:  0,
-		reconnectTimer: time.NewTimer(time.Duration(0)),
-		rib4:           rib4,
-		rib6:           rib6,
+		address:          addr,
+		port:             port,
+		reconnectTimeMin: 30,  // Suggested by RFC 7854
+		reconnectTimeMax: 720, // Suggested by RFC 7854
+		reconnectTimer:   time.NewTimer(time.Duration(0)),
+		rib4:             rib4,
+		rib6:             rib6,
 	}
 
 	b.routersMu.Lock()
@@ -48,8 +51,8 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 			if err != nil {
 				log.Infof("Unable to connect to BMP router: %v", err)
 				if r.reconnectTime == 0 {
-					r.reconnectTime = 30
-				} else if r.reconnectTime < 720 {
+					r.reconnectTime = r.reconnectTimeMin
+				} else if r.reconnectTime < r.reconnectTimeMax {
 					r.reconnectTime *= 2
 				}
 				r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
@@ -70,7 +73,7 @@ func recvMsg(c net.Conn) (msg []byte, err error) {
 		return nil, fmt.Errorf("Read failed: %v", err)
 	}
 
-	l := int(buffer[1])*256*256*256 + int(buffer[2])*256*256 + int(buffer[3])*256 + int(buffer[4])
+	l := convert.Uint32b(buffer[1:3])
 	if l > defaultBufferLen {
 		tmp := buffer
 		buffer = make([]byte, l)

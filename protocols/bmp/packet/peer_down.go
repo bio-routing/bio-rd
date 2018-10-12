@@ -7,6 +7,11 @@ import (
 	"github.com/bio-routing/bio-rd/util/decoder"
 )
 
+const (
+	reasonMin = 1
+	reasonMax = 3
+)
+
 // PeerDownNotification represents a peer down notification
 type PeerDownNotification struct {
 	CommonHeader  *CommonHeader
@@ -41,7 +46,7 @@ func decodePeerDownNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerDownN
 		return nil, err
 	}
 
-	if p.Reason < 1 || p.Reason > 3 {
+	if p.Reason < reasonMin || p.Reason > reasonMax {
 		return p, nil
 	}
 

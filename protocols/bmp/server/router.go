@@ -11,13 +11,15 @@ import (
 )
 
 type router struct {
-	address        net.IP
-	port           uint16
-	con            net.Conn
-	reconnectTime  int
-	reconnectTimer *time.Timer
-	rib4           *locRIB.LocRIB
-	rib6           *locRIB.LocRIB
+	address          net.IP
+	port             uint16
+	con              net.Conn
+	reconnectTimeMin int
+	reconnectTimeMax int
+	reconnectTime    int
+	reconnectTimer   *time.Timer
+	rib4             *locRIB.LocRIB
+	rib6             *locRIB.LocRIB
 }
 
 func (r *router) serve() {
