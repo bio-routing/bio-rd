@@ -9,8 +9,14 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
-// P2PAdjacencyStateTLVType is the type value of an P2P adjacency state TLV
-const P2PAdjacencyStateTLVType = 240
+const (
+	// P2PAdjacencyStateTLVType is the type value of an P2P adjacency state TLV
+	P2PAdjacencyStateTLVType = 240
+	// withoutNeighbor is the length of this TLV without a neighbor
+	withoutNeighbor = 5
+	//withNeighbor is the length of this TLV including a neighbor
+	withNeighbor = 15
+)
 
 // P2PAdjacencyStateTLV represents an P2P adjacency state TLV
 type P2PAdjacencyStateTLV struct {
@@ -30,12 +36,12 @@ func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8)
 
 	fields := make([]interface{}, 0)
 	switch pdu.TLVLength {
-	case 5:
+	case withoutNeighbor:
 		fields = []interface{}{
 			&pdu.AdjacencyState,
 			&pdu.ExtendedLocalCircuitID,
 		}
-	case 15:
+	case withNeighbor:
 		fields = []interface{}{
 			&pdu.AdjacencyState,
 			&pdu.ExtendedLocalCircuitID,
@@ -56,7 +62,7 @@ func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8)
 func NewP2PAdjacencyStateTLV(adjacencyState uint8, extendedLocalCircuitID uint32) *P2PAdjacencyStateTLV {
 	return &P2PAdjacencyStateTLV{
 		TLVType:                P2PAdjacencyStateTLVType,
-		TLVLength:              5,
+		TLVLength:              withoutNeighbor,
 		AdjacencyState:         adjacencyState,
 		ExtendedLocalCircuitID: extendedLocalCircuitID,
 	}
@@ -84,7 +90,7 @@ func (p P2PAdjacencyStateTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(p.AdjacencyState)
 	buf.Write(convert.Uint32Byte(p.ExtendedLocalCircuitID))
 
-	if p.TLVLength == 15 {
+	if p.TLVLength == withNeighbor {
 		buf.Write(p.NeighborSystemID[:])
 		buf.Write(convert.Uint32Byte(p.NeighborExtendedLocalCircuitID))
 	}
