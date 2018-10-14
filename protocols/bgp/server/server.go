@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	// BGPVersion is the supported BGP version
 	BGPVersion = 4
 )
 

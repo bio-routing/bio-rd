@@ -13,13 +13,14 @@ import (
 func main() {
 	logrus.Printf("This is a BMP speaker\n")
 
-	rib := locRIB.New()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 	b := server.NewServer()
-	b.AddRouter(net.IP{10, 0, 255, 0}, 30119, rib, nil)
+	b.AddRouter(net.IP{10, 0, 255, 0}, 30119, rib4, rib6)
 
 	go func() {
 		for {
-			fmt.Printf("LocRIB count: %d\n", rib.Count())
+			fmt.Printf("LocRIB4 count: %d\n", rib4.Count())
 			time.Sleep(time.Second * 10)
 		}
 	}()

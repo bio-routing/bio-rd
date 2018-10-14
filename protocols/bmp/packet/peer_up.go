@@ -80,7 +80,6 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 }
 
 func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
-	fmt.Printf("Buf: %v\n", buf.Bytes())
 	msg := make([]byte, OpenMsgMinLen)
 
 	fields := []interface{}{

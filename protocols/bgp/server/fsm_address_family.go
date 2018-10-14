@@ -32,6 +32,8 @@ type fsmAddressFamily struct {
 	addPathSend         routingtable.ClientOptions
 	addPathTXConfigured bool
 	addPathTX           bool
+	addPathRXConfigured bool
+	addPathRX           bool
 
 	multiProtocol bool
 

@@ -10,7 +10,7 @@ type Neighbor struct {
 	// Local address is the local address of the BGP TCP connection
 	LocalAddress bnet.IP
 
-	// Type is the type / protocol used for routing inforation communitation
+	// Type is the type / protocol used for routing information communication
 	Type uint8
 
 	// IBGP returns if local ASN is equal to remote ASN

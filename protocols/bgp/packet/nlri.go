@@ -9,6 +9,7 @@ import (
 	"github.com/taktv6/tflow2/convert"
 )
 
+// NLRI represents a Network Layer Reachability Information
 type NLRI struct {
 	PathIdentifier uint32
 	IP             uint32
@@ -16,7 +17,7 @@ type NLRI struct {
 	Next           *NLRI
 }
 
-func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
+func decodeNLRIs(buf *bytes.Buffer, length uint16, opt *DecodeOptions) (*NLRI, error) {
 	var ret *NLRI
 	var eol *NLRI
 	var nlri *NLRI
@@ -25,7 +26,8 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
 	p := uint16(0)
 
 	for p < length {
-		nlri, consumed, err = decodeNLRI(buf)
+		nlri, consumed, err = decodeNLRI(buf, opt)
+
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode NLRI: %v", err)
 		}
@@ -44,11 +46,17 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
 	return ret, nil
 }
 
-func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
+func decodeNLRI(buf *bytes.Buffer, opt *DecodeOptions) (*NLRI, uint8, error) {
 	var addr [4]byte
 	nlri := &NLRI{}
 
-	err := decode(buf, []interface{}{&nlri.Pfxlen})
+	fields := make([]interface{}, 0, 2)
+	if opt.AddPath {
+		fields = append(fields, &nlri.PathIdentifier)
+	}
+	fields = append(fields, &nlri.Pfxlen)
+
+	err := decode(buf, fields)
 	if err != nil {
 		return nil, 0, err
 	}

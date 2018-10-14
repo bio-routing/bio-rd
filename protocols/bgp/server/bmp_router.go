@@ -7,8 +7,12 @@ import (
 	"sync"
 	"time"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
+	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 	"github.com/taktv6/tflow2/convert"
@@ -34,6 +38,7 @@ type neighbor struct {
 	address  [16]byte
 	routerID uint32
 	fsm      *FSM
+	opt      *packet.DecodeOptions
 }
 
 func (r *router) serve() {
@@ -50,8 +55,6 @@ func (r *router) serve() {
 			fmt.Printf("msg: %v\n", msg)
 			return
 		}
-
-		fmt.Printf("%v\n", bmpMsg)
 
 		switch bmpMsg.MsgType() {
 		case bmppkt.PeerUpNotificationType:
@@ -78,14 +81,9 @@ func (r *router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 		return
 	}
 
-	bgpUpdate, err := packet.DecodeUpdateMsg(bytes.NewBuffer(msg.BGPUpdate[19:]), uint16(len(msg.BGPUpdate[19:])), nil)
-	if err != nil {
-		log.Errorf("Unable to decode BGP update message from %v on %s: %v", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
-	}
-
 	n := r.neighbors[msg.PerPeerHeader.PeerAddress]
 	s := n.fsm.state.(*establishedState)
-	s.update(bgpUpdate)
+	s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
 }
 
 func (r *router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
@@ -174,7 +172,6 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) {
 		return
 	}
 
-	fmt.Printf("msg.SentOpenMsg[19:]: %v\n", msg.SentOpenMsg[19:])
 	sentOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.SentOpenMsg[19:]))
 	if err != nil {
 		log.Warningf("Unable to decode sent open message sent from %v to %v: %v", r.address.String(), msg.PerPeerHeader.PeerAddress, err)
@@ -188,9 +185,91 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) {
 	}
 
 	localAS := uint32(sentOpen.ASN)
+
 	// TODO: Get 32bit ASN from OPEN message
 
-	fsm := &FSM{}
+	addrLen := 4
+	for i := 0; i < 12; i++ {
+		if msg.PerPeerHeader.PeerAddress[i] == 0 {
+			continue
+		}
+		addrLen = 16
+		break
+	}
+
+	peerAddress, err := bnet.IPFromBytes(msg.PerPeerHeader.PeerAddress[16-addrLen:])
+	if err != nil {
+		log.Warningf("Unable to convert peer address %v: %v", msg.PerPeerHeader.PeerAddress, err)
+		return
+	}
+	localAddress, err := bnet.IPFromBytes(msg.LocalAddress[16-addrLen:])
+	if err != nil {
+		log.Warningf("Unable to convert peer address %v: %v", msg.PerPeerHeader.PeerAddress, err)
+		return
+	}
+
+	fsm := &FSM{
+		peer: &peer{
+			peerASN:  msg.PerPeerHeader.PeerAS,
+			localASN: localAS,
+			ipv4:     &peerAddressFamily{},
+			ipv6:     &peerAddressFamily{},
+		},
+		supports4OctetASN: true,
+		supportsAddPathRX: true,
+	}
+
+	caps := getCaps(sentOpen.OptParams)
+	for _, cap := range caps {
+		switch cap.Code {
+		case packet.AddPathCapabilityCode:
+			addPathCap := cap.Value.(packet.AddPathCapability)
+			f := fsm.addressFamily(addPathCap.AFI, addPathCap.SAFI)
+			switch addPathCap.SendReceive {
+			case packet.AddPathReceive:
+				f.addPathRXConfigured = true
+			case packet.AddPathSend:
+				f.addPathTXConfigured = true
+			case packet.AddPathSendReceive:
+				f.addPathRXConfigured = true
+				f.addPathTXConfigured = true
+			}
+		case packet.ASN4CapabilityCode:
+			asn4Cap := cap.Value.(packet.ASN4Capability)
+			localAS = asn4Cap.ASN4
+			// TODO: Make 4Byte ASN configurable
+		case packet.MultiProtocolCapabilityCode:
+			mpCap := cap.Value.(packet.MultiProtocolCapability)
+			f := fsm.addressFamily(mpCap.AFI, mpCap.SAFI)
+			f.multiProtocol = true
+		}
+	}
+
+	rtNeighbor := &routingtable.Neighbor{
+		Address:      peerAddress,
+		LocalAddress: localAddress,
+		Type:         route.BGPPathType,
+		IBGP:         msg.PerPeerHeader.PeerAS == localAS,
+	}
+
+	fsm.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &peerAddressFamily{
+		rib:          r.rib4,
+		importFilter: filter.NewAcceptAllFilter(),
+		exportFilter: filter.NewDrainFilter(),
+	}, fsm)
+	fsm.ipv4Unicast.init(rtNeighbor)
+
+	fsm.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
+		rib:          r.rib6,
+		importFilter: filter.NewAcceptAllFilter(),
+		exportFilter: filter.NewDrainFilter(),
+	}, fsm)
+	fsm.ipv6Unicast.init(rtNeighbor)
+
+	fsm.state = newOpenSentState(fsm)
+	openSent := fsm.state.(*openSentState)
+	openSent.openMsgReceived(recvOpen)
+
 	fsm.state = newEstablishedState(fsm)
 	n := &neighbor{
 		localAS:  localAS,
@@ -198,7 +277,19 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) {
 		address:  msg.PerPeerHeader.PeerAddress,
 		routerID: recvOpen.BGPIdentifier,
 		fsm:      fsm,
+		opt:      fsm.decodeOptions(),
 	}
 
 	r.neighbors[msg.PerPeerHeader.PeerAddress] = n
+}
+
+func getCaps(optParams []packet.OptParam) packet.Capabilities {
+	for _, optParam := range optParams {
+		if optParam.Type != packet.CapabilitiesParamType {
+			continue
+		}
+
+		return optParam.Value.(packet.Capabilities)
+	}
+	return nil
 }

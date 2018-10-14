@@ -16,6 +16,41 @@ type BGPUpdate struct {
 	NLRI               *NLRI
 }
 
+// DecodeUpdateMsg decodes a BGP Update Message
+func DecodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
+	msg := &BGPUpdate{}
+
+	err := decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
+	if err != nil {
+		return msg, err
+	}
+
+	msg.WithdrawnRoutes, err = decodeNLRIs(buf, uint16(msg.WithdrawnRoutesLen), opt)
+	if err != nil {
+		return msg, err
+	}
+
+	err = decode(buf, []interface{}{&msg.TotalPathAttrLen})
+	if err != nil {
+		return msg, err
+	}
+
+	msg.PathAttributes, err = decodePathAttrs(buf, msg.TotalPathAttrLen, opt)
+	if err != nil {
+		return msg, err
+	}
+
+	nlriLen := uint16(l) - 4 - uint16(msg.TotalPathAttrLen) - uint16(msg.WithdrawnRoutesLen)
+	if nlriLen > 0 {
+		msg.NLRI, err = decodeNLRIs(buf, nlriLen, opt)
+		if err != nil {
+			return msg, err
+		}
+	}
+
+	return msg, nil
+}
+
 // SerializeUpdate serializes an BGPUpdate to wire format
 func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 	budget := MaxLen - MinLen

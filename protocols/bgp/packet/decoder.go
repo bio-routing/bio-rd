@@ -41,41 +41,6 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOption
 	return nil, fmt.Errorf("Unknown message type: %d", msgType)
 }
 
-// DecodeUpdateMsg decodes a BGP Update Message
-func DecodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
-	msg := &BGPUpdate{}
-
-	err := decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
-	if err != nil {
-		return msg, err
-	}
-
-	msg.WithdrawnRoutes, err = decodeNLRIs(buf, uint16(msg.WithdrawnRoutesLen))
-	if err != nil {
-		return msg, err
-	}
-
-	err = decode(buf, []interface{}{&msg.TotalPathAttrLen})
-	if err != nil {
-		return msg, err
-	}
-
-	msg.PathAttributes, err = decodePathAttrs(buf, msg.TotalPathAttrLen, opt)
-	if err != nil {
-		return msg, err
-	}
-
-	nlriLen := uint16(l) - 4 - uint16(msg.TotalPathAttrLen) - uint16(msg.WithdrawnRoutesLen)
-	if nlriLen > 0 {
-		msg.NLRI, err = decodeNLRIs(buf, nlriLen)
-		if err != nil {
-			return msg, err
-		}
-	}
-
-	return msg, nil
-}
-
 func decodeNotificationMsg(buf *bytes.Buffer) (*BGPNotification, error) {
 	msg := &BGPNotification{}
 

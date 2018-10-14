@@ -61,6 +61,7 @@ type FSM struct {
 	ipv6Unicast     *fsmAddressFamily
 
 	supports4OctetASN bool
+	supportsAddPathRX bool
 
 	neighborID uint32
 	state      state
@@ -243,6 +244,7 @@ func (fsm *FSM) msgReceiver() error {
 
 func (fsm *FSM) decodeOptions() *packet.DecodeOptions {
 	return &packet.DecodeOptions{
+		AddPath:     fsm.supportsAddPathRX,
 		Use32BitASN: fsm.supports4OctetASN,
 	}
 }

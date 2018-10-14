@@ -74,7 +74,7 @@ func BenchmarkDecodeUpdateMsg(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		buf := bytes.NewBuffer(input)
-		_, err := decodeUpdateMsg(buf, uint16(len(input)), &DecodeOptions{})
+		_, err := DecodeUpdateMsg(buf, uint16(len(input)), &DecodeOptions{})
 		if err != nil {
 			fmt.Printf("decodeUpdateMsg failed: %v\n", err)
 		}
@@ -1369,7 +1369,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			if l == 0 {
 				l = uint16(len(test.input))
 			}
-			msg, err := decodeUpdateMsg(buf, l, &DecodeOptions{})
+			msg, err := DecodeUpdateMsg(buf, l, &DecodeOptions{})
 
 			if err != nil && !test.wantFail {
 				t.Fatalf("Unexpected error in test %d: %v", test.testNum, err)
