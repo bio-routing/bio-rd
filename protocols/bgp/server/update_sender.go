@@ -45,7 +45,7 @@ func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
 		toSend:        make(map[string]*pathPfxs),
 		options: &packet.EncodeOptions{
 			Use32BitASN: fsm.supports4OctetASN,
-			UseAddPath:  f.addPathTX,
+			UseAddPath:  !f.addPathTX.BestOnly,
 		},
 	}
 }

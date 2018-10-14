@@ -47,6 +47,7 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 			AddPathSend: routingtable.ClientOptions{
 				MaxPaths: 10,
 			},
+			AddPathRecv: true,
 		},
 		RouteServerClient: true,
 	})
