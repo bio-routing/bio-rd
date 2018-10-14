@@ -49,9 +49,7 @@ func newFSMAddressFamily(afi uint16, safi uint8, peerAFI *peerAddressFamily, fsm
 		rib:          peerAFI.rib,
 		importFilter: peerAFI.importFilter,
 		exportFilter: peerAFI.exportFilter,
-
-		//addPathTXConfigured: peerAFI.addPathReceive, // at this point we switch from peers view to our view
-		//addPathSend:         peerAFI.addPathSend,
+		addPathTX:    routingtable.ClientOptions{BestOnly: true},
 	}
 }
 
