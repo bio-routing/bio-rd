@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -48,7 +49,7 @@ func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
 	var addr [4]byte
 	nlri := &NLRI{}
 
-	err := decode(buf, []interface{}{&nlri.Pfxlen})
+	err := decode.Decode(buf, []interface{}{&nlri.Pfxlen})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -56,7 +57,7 @@ func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
 	toCopy := uint8(math.Ceil(float64(nlri.Pfxlen) / float64(OctetLen)))
 	for i := uint8(0); i < net.IPv4len%OctetLen; i++ {
 		if i < toCopy {
-			err := decode(buf, []interface{}{&addr[i]})
+			err := decode.Decode(buf, []interface{}{&addr[i]})
 			if err != nil {
 				return nil, 0, err
 			}
