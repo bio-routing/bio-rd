@@ -640,7 +640,7 @@ func TestDecodeAggregator(t *testing.T) {
 				Length: 6,
 				Value: types.Aggregator{
 					ASN:     222,
-					Address: strAddr("10.20.30.40"),
+					Address: bnet.IPv4FromOctets(10, 20, 30, 40).ToUint32(),
 				},
 			},
 		},
@@ -1485,7 +1485,7 @@ func TestSerializeAggregator(t *testing.T) {
 				TypeCode: AggregatorAttr,
 				Value: types.Aggregator{
 					ASN:     174,
-					Address: strAddr("10.20.30.40"),
+					Address: bnet.IPv4FromOctets(10, 20, 30, 40).ToUint32(),
 				},
 			},
 			expected: []byte{
@@ -1869,7 +1869,7 @@ func TestSerialize(t *testing.T) {
 			name: "Withdraw only",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("100.110.120.0"),
+					IP:     bnet.IPv4FromOctets(100, 110, 120, 0),
 					Pfxlen: 24,
 				},
 			},
@@ -1886,7 +1886,7 @@ func TestSerialize(t *testing.T) {
 			name: "NLRI only",
 			msg: &BGPUpdate{
 				NLRI: &NLRI{
-					IP:     strAddr("100.110.128.0"),
+					IP:     bnet.IPv4FromOctets(100, 110, 128, 0),
 					Pfxlen: 17,
 				},
 			},
@@ -1925,10 +1925,10 @@ func TestSerialize(t *testing.T) {
 			name: "Full test",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
+					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
+						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
 						Pfxlen: 16,
 					},
 				},
@@ -1962,7 +1962,7 @@ func TestSerialize(t *testing.T) {
 											TypeCode: AggregatorAttr,
 											Value: types.Aggregator{
 												ASN:     200,
-												Address: strAddr("10.20.30.40"),
+												Address: bnet.IPv4FromOctets(10, 20, 30, 40).ToUint32(),
 											},
 										},
 									},
@@ -1972,10 +1972,10 @@ func TestSerialize(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					IP:     strAddr("8.8.8.0"),
+					IP:     bnet.IPv4FromOctets(8, 8, 8, 0),
 					Pfxlen: 24,
 					Next: &NLRI{
-						IP:     strAddr("185.65.240.0"),
+						IP:     bnet.IPv4FromOctets(185, 65, 240, 0),
 						Pfxlen: 22,
 					},
 				},
@@ -2042,7 +2042,7 @@ func TestSerialize(t *testing.T) {
 			name: "Reflected NLRI",
 			msg: &BGPUpdate{
 				NLRI: &NLRI{
-					IP:     strAddr("100.110.128.0"),
+					IP:     bnet.IPv4FromOctets(100, 110, 128, 0),
 					Pfxlen: 17,
 				},
 				PathAttributes: &PathAttribute{
@@ -2112,7 +2112,7 @@ func TestSerializeAddPath(t *testing.T) {
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
 					PathIdentifier: 257,
-					IP:             strAddr("100.110.120.0"),
+					IP:             bnet.IPv4FromOctets(100, 110, 120, 0),
 					Pfxlen:         24,
 				},
 			},
@@ -2131,7 +2131,7 @@ func TestSerializeAddPath(t *testing.T) {
 			msg: &BGPUpdate{
 				NLRI: &NLRI{
 					PathIdentifier: 257,
-					IP:             strAddr("100.110.128.0"),
+					IP:             bnet.IPv4FromOctets(100, 110, 128, 0),
 					Pfxlen:         17,
 				},
 			},
@@ -2171,10 +2171,10 @@ func TestSerializeAddPath(t *testing.T) {
 			name: "Full test",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
+					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
+						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
 						Pfxlen: 16,
 					},
 				},
@@ -2208,7 +2208,7 @@ func TestSerializeAddPath(t *testing.T) {
 											TypeCode: AggregatorAttr,
 											Value: types.Aggregator{
 												ASN:     200,
-												Address: strAddr("10.20.30.40"),
+												Address: bnet.IPv4FromOctets(10, 20, 30, 40).ToUint32(),
 											},
 										},
 									},
@@ -2218,10 +2218,10 @@ func TestSerializeAddPath(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					IP:     strAddr("8.8.8.0"),
+					IP:     bnet.IPv4FromOctets(8, 8, 8, 0),
 					Pfxlen: 24,
 					Next: &NLRI{
-						IP:     strAddr("185.65.240.0"),
+						IP:     bnet.IPv4FromOctets(185, 65, 240, 0),
 						Pfxlen: 22,
 					},
 				},

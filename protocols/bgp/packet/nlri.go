@@ -6,13 +6,14 @@ import (
 	"math"
 	"net"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
 type NLRI struct {
 	PathIdentifier uint32
-	IP             uint32
+	IP             bnet.IP
 	Pfxlen         uint8
 	Next           *NLRI
 }
@@ -46,7 +47,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
 }
 
 func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
-	var addr [4]byte
+	addr := make([]byte, 4)
 	nlri := &NLRI{}
 
 	err := decode.Decode(buf, []interface{}{&nlri.Pfxlen})
@@ -65,33 +66,28 @@ func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
 			addr[i] = 0
 		}
 	}
-	nlri.IP = fourBytesToUint32(addr)
+	nlri.IP, err = bnet.IPFromBytes(addr)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	return nlri, toCopy + 1, nil
 }
 
 func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
-	a := convert.Uint32Byte(n.IP)
-
-	addr := [4]byte{a[0], a[1], a[2], a[3]}
-	nBytes := BytesInAddr(n.Pfxlen)
-
 	buf.WriteByte(n.Pfxlen)
-	buf.Write(addr[:nBytes])
+	b := n.IP.Bytes()
+
+	nBytes := BytesInAddr(n.Pfxlen)
+	buf.Write(b[:nBytes])
 
 	return nBytes + 1
 }
 
 func (n *NLRI) serializeAddPath(buf *bytes.Buffer) uint8 {
-	a := convert.Uint32Byte(n.IP)
-
-	addr := [4]byte{a[0], a[1], a[2], a[3]}
-	nBytes := BytesInAddr(n.Pfxlen)
-
 	buf.Write(convert.Uint32Byte(n.PathIdentifier))
-	buf.WriteByte(n.Pfxlen)
-	buf.Write(addr[:nBytes])
 
-	return nBytes + 4
+	return uint8(n.serialize(buf) + 4)
 }
 
 // BytesInAddr gets the amount of bytes needed to encode an NLRI of prefix length pfxlen

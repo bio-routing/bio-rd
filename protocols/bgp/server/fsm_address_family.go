@@ -107,14 +107,14 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
 
 func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
+		pfx := bnet.NewPfx(r.IP, r.Pfxlen)
 		f.adjRIBIn.RemovePath(pfx, nil)
 	}
 }
 
 func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
+		pfx := bnet.NewPfx(r.IP, r.Pfxlen)
 
 		path := f.newRoutePath()
 		f.processAttributes(u.PathAttributes, path)

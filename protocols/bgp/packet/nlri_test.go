@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,13 +24,13 @@ func TestDecodeNLRIs(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     strAddr("192.168.0.0"),
+				IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
 				Pfxlen: 24,
 				Next: &NLRI{
-					IP:     strAddr("10.0.0.0"),
+					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
 					Pfxlen: 8,
 					Next: &NLRI{
-						IP:     strAddr("172.16.0.0"),
+						IP:     bnet.IPv4FromOctets(172, 16, 0, 0),
 						Pfxlen: 17,
 					},
 				},
@@ -76,7 +77,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     strAddr("192.168.0.0"),
+				IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
 				Pfxlen: 24,
 			},
 		},
@@ -87,7 +88,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     strAddr("192.168.0.128"),
+				IP:     bnet.IPv4FromOctets(192, 168, 0, 128),
 				Pfxlen: 25,
 			},
 		},
@@ -178,7 +179,7 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #1",
 			nlri: &NLRI{
-				IP:     strAddr("1.2.3.0"),
+				IP:     bnet.IPv4FromOctets(1, 2, 3, 0),
 				Pfxlen: 25,
 			},
 			expected: []byte{25, 1, 2, 3, 0},
@@ -186,7 +187,7 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #2",
 			nlri: &NLRI{
-				IP:     strAddr("1.2.3.0"),
+				IP:     bnet.IPv4FromOctets(1, 2, 3, 0),
 				Pfxlen: 24,
 			},
 			expected: []byte{24, 1, 2, 3},
@@ -194,7 +195,7 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #3",
 			nlri: &NLRI{
-				IP:     strAddr("100.200.128.0"),
+				IP:     bnet.IPv4FromOctets(100, 200, 128, 0),
 				Pfxlen: 17,
 			},
 			expected: []byte{17, 100, 200, 128},
@@ -219,7 +220,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 			name: "Test #1",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             strAddr("1.2.3.0"),
+				IP:             bnet.IPv4FromOctets(1, 2, 3, 0),
 				Pfxlen:         25,
 			},
 			expected: []byte{0, 0, 0, 100, 25, 1, 2, 3, 0},
@@ -228,7 +229,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 			name: "Test #2",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             strAddr("1.2.3.0"),
+				IP:             bnet.IPv4FromOctets(1, 2, 3, 0),
 				Pfxlen:         24,
 			},
 			expected: []byte{0, 0, 0, 100, 24, 1, 2, 3},
@@ -237,7 +238,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 			name: "Test #3",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             strAddr("100.200.128.0"),
+				IP:             bnet.IPv4FromOctets(100, 200, 128, 0),
 				Pfxlen:         17,
 			},
 			expected: []byte{0, 0, 0, 100, 17, 100, 200, 128},

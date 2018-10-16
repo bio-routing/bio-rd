@@ -8,7 +8,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 
-	"github.com/bio-routing/bio-rd/net"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,10 +49,10 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 			testUpdate: &packet.BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &packet.NLRI{
-					IP:     strAddr("10.0.0.0"),
+					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
 					Pfxlen: 8,
 					Next: &packet.NLRI{
-						IP:     strAddr("192.168.0.0"),
+						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
 						Pfxlen: 16,
 					},
 				},
@@ -79,10 +79,10 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 			testUpdate: &packet.BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &packet.NLRI{
-					IP:     strAddr("10.0.0.0"),
+					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
 					Pfxlen: 8,
 					Next: &packet.NLRI{
-						IP:     strAddr("192.168.0.0"),
+						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
 						Pfxlen: 16,
 					},
 				},
@@ -99,9 +99,4 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 			assert.Equal(t, test.expected, test.buf.Bytes())
 		})
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := net.StrToAddr(s)
-	return ret
 }

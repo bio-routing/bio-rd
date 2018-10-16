@@ -191,7 +191,7 @@ func (u *UpdateSender) bgpUpdate(pfxs []bnet.Prefix, pa *packet.PathAttribute, p
 	for _, pfx := range pfxs {
 		nlri = &packet.NLRI{
 			PathIdentifier: pathID,
-			IP:             pfx.Addr().ToUint32(),
+			IP:             pfx.Addr(),
 			Pfxlen:         pfx.Pfxlen(),
 			Next:           update.NLRI,
 		}
@@ -276,7 +276,7 @@ func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *rou
 	update := &packet.BGPUpdate{
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
-			IP:             pfx.Addr().ToUint32(),
+			IP:             pfx.Addr(),
 			Pfxlen:         pfx.Pfxlen(),
 		},
 	}
