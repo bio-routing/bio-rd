@@ -186,7 +186,7 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 		case CapabilitiesParamType:
 			caps, err := decodeCapabilities(buf, o.Length)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to decode capabilites: %v", err)
+				return nil, fmt.Errorf("Unable to decode capabilities: %v", err)
 			}
 
 			o.Value = caps

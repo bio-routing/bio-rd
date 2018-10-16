@@ -25,10 +25,10 @@ func SerializeNotificationMsg(msg *BGPNotification) []byte {
 }
 
 func SerializeOpenMsg(msg *BGPOpen) []byte {
-	optParmsBuf := bytes.NewBuffer(make([]byte, 0))
-	serializeOptParams(optParmsBuf, msg.OptParams)
-	optParms := optParmsBuf.Bytes()
-	openLen := uint16(len(optParms) + MinOpenLen)
+	optParamsBuf := bytes.NewBuffer(make([]byte, 0))
+	serializeOptParams(optParamsBuf, msg.OptParams)
+	optParams := optParamsBuf.Bytes()
+	openLen := uint16(len(optParams) + MinOpenLen)
 
 	buf := bytes.NewBuffer(make([]byte, 0, openLen))
 	serializeHeader(buf, openLen, OpenMsg)
@@ -38,8 +38,8 @@ func SerializeOpenMsg(msg *BGPOpen) []byte {
 	buf.Write(convert.Uint16Byte(msg.HoldTime))
 	buf.Write(convert.Uint32Byte(msg.BGPIdentifier))
 
-	buf.WriteByte(uint8(len(optParms)))
-	buf.Write(optParms)
+	buf.WriteByte(uint8(len(optParams)))
+	buf.Write(optParams)
 
 	return buf.Bytes()
 }

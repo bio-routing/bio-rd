@@ -59,7 +59,7 @@ func IPFromBytes(b []byte) (IP, error) {
 			uint16(b[14])<<8+uint16(b[15])), nil
 	}
 
-	return IP{}, fmt.Errorf("byte slice has an invalid legth. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
+	return IP{}, fmt.Errorf("byte slice has an invalid length. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
 }
 
 // IPFromString returns an IP address for a given string
