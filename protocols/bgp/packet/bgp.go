@@ -48,7 +48,7 @@ const (
 	// Update Msg Errors
 	MalformedAttributeList    = 1
 	UnrecognizedWellKnownAttr = 2
-	MissingWellKnonAttr       = 3
+	MissingWellKnownAttr      = 3
 	AttrFlagsError            = 4
 	AttrLengthError           = 5
 	InvalidOriginAttr         = 6
@@ -90,7 +90,7 @@ const (
 	ConnectionRejected            = 5
 	OtherConfigChange             = 8
 	ConnectionCollisionResolution = 7
-	OutOfResoutces                = 8
+	OutOfResources                = 8
 
 	IPv4AFI                      = 1
 	IPv6AFI                      = 2

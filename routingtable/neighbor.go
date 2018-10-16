@@ -19,7 +19,7 @@ type Neighbor struct {
 	// Local ASN of session
 	LocalASN uint32
 
-	// RouteServerClient incicates if the peer is a route server client
+	// RouteServerClient indicates if the peer is a route server client
 	RouteServerClient bool
 
 	// RouteReflectorClient indicates if the peer is a route reflector client

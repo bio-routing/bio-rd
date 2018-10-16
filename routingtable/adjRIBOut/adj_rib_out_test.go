@@ -861,7 +861,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 }
 
 /*
- * Test for AddPath capabale peer / AdjRIBOut
+ * Test for AddPath capable peer / AdjRIBOut
  */
 
 func TestAddPathIBGP(t *testing.T) {
