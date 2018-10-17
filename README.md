@@ -16,18 +16,19 @@ Build
 
 BGP
 ---
-´´´
+```
 cd examples/bgp
 go build
 ./bgp
-´´´
+```
 
 BMP
 ---
-´´´
+```
 cd examples/bmp
 go build
 ./bgp
+```
 
 Run Tests
 ---------
