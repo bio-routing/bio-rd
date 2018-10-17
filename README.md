@@ -9,17 +9,25 @@ A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustnes
 Building
 ========
 
-We use [Bazel](https://bazel.io) to build bio-rd.
+We use [Bazel](https://bazel.io) to test bio-rd.
 
 Build
 -----
 
-    bazel build //:bio-rd
-    bazel-bin/linux_amd64_stripped/bio-rd -arguments go -here
+BGP
+---
+´´´
+cd examples/bgp
+go build
+./bgp
+´´´
 
-or
-
-    bazel run //:bio-rd -- -arguments go -here
+BMP
+---
+´´´
+cd examples/bmp
+go build
+./bgp
 
 Run Tests
 ---------
