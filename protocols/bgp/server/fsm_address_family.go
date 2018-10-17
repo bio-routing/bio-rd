@@ -161,8 +161,8 @@ func (f *fsmAddressFamily) multiProtocolWithdraw(path *route.Path, nlri packet.M
 		return
 	}
 
-	for _, pfx := range nlri.Prefixes {
-		f.adjRIBIn.RemovePath(pfx, path)
+	for cur := nlri.NLRI; cur != nil; cur = cur.Next {
+		f.adjRIBIn.RemovePath(cur.Prefix, path)
 	}
 }
 
