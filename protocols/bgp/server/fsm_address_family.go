@@ -151,10 +151,6 @@ func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.Mul
 
 	path.BGPPath.NextHop = nlri.NextHop
 
-	if nlri.NLRI == nil {
-		return
-	}
-
 	for n := nlri.NLRI; n != nil; n = n.Next {
 		f.adjRIBIn.AddPath(n.Prefix, path)
 	}
