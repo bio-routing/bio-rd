@@ -311,10 +311,12 @@ func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx bnet.Prefi
 		PathAttributes: &packet.PathAttribute{
 			TypeCode: packet.MultiProtocolUnreachNLRICode,
 			Value: packet.MultiProtocolUnreachNLRI{
-				AFI:      u.addressFamily.afi,
-				SAFI:     u.addressFamily.safi,
-				Prefixes: []bnet.Prefix{pfx},
-				PathID:   pathID,
+				AFI:  u.addressFamily.afi,
+				SAFI: u.addressFamily.safi,
+				NLRI: &packet.NLRI{
+					PathIdentifier: pathID,
+					Prefix:         pfx,
+				},
 			},
 		},
 	}
