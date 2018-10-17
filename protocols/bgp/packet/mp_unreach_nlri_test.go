@@ -20,8 +20,8 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 			nlri: MultiProtocolUnreachNLRI{
 				AFI:  IPv6AFI,
 				SAFI: UnicastSAFI,
-				Prefixes: []bnet.Prefix{
-					bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+				NLRI: &NLRI{
+					Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
 				},
 			},
 			expected: []byte{
@@ -35,10 +35,10 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 			nlri: MultiProtocolUnreachNLRI{
 				AFI:  IPv6AFI,
 				SAFI: UnicastSAFI,
-				Prefixes: []bnet.Prefix{
-					bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+				NLRI: &NLRI{
+					PathIdentifier: 100,
+					Prefix:         bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
 				},
-				PathID: 100,
 			},
 			expected: []byte{
 				0x00, 0x02, // AFI

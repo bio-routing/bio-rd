@@ -1037,8 +1037,8 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 				Value: MultiProtocolUnreachNLRI{
 					AFI:  IPv6AFI,
 					SAFI: UnicastSAFI,
-					Prefixes: []bnet.Prefix{
-						bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
+					NLRI: &NLRI{
+						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44),
 					},
 				},
 			},
@@ -1073,7 +1073,7 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 			pa := &PathAttribute{
 				Length: l,
 			}
-			err := pa.decodeMultiProtocolUnreachNLRI(bytes.NewBuffer(test.input))
+			err := pa.decodeMultiProtocolUnreachNLRI(bytes.NewBuffer(test.input), false)
 
 			if test.wantFail {
 				if err != nil {
