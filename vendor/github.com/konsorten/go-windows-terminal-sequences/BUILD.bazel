@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["sequences.go"],
-    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/konsorten/go-windows-terminal-sequences",
+    importmap = "vendor/github.com/konsorten/go-windows-terminal-sequences",
     importpath = "github.com/konsorten/go-windows-terminal-sequences",
     visibility = ["//visibility:public"],
 )
