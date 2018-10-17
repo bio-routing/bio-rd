@@ -28,11 +28,7 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions
 	tempBuf.WriteByte(0) // RESERVED
 
 	for cur := n.NLRI; cur != nil; cur = cur.Next {
-		if opt.UseAddPath {
-			n.NLRI.serializeAddPath(tempBuf)
-		} else {
-			n.NLRI.serialize(tempBuf)
-		}
+		cur.serialize(tempBuf, opt.UseAddPath)
 	}
 
 	buf.Write(tempBuf.Bytes())
@@ -40,7 +36,7 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions
 	return uint16(tempBuf.Len())
 }
 
-func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error) {
+func deserializeMultiProtocolReachNLRI(b []byte, addPath bool) (MultiProtocolReachNLRI, error) {
 	n := MultiProtocolReachNLRI{}
 	nextHopLength := uint8(0)
 
@@ -80,7 +76,7 @@ func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error)
 	variable = variable[1+nextHopLength:] // 1 <- RESERVED field
 
 	buf := bytes.NewBuffer(variable)
-	nlri, err := decodeNLRIs(buf, uint16(buf.Len()), n.AFI)
+	nlri, err := decodeNLRIs(buf, uint16(buf.Len()), n.AFI, addPath)
 	if err != nil {
 		return MultiProtocolReachNLRI{}, err
 	}

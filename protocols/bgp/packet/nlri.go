@@ -6,16 +6,22 @@ import (
 	"math"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
+const (
+	pathIdentifierLen = 4
+)
+
+// NLRI represents a Network Layer Reachability Information
 type NLRI struct {
 	PathIdentifier uint32
 	Prefix         bnet.Prefix
 	Next           *NLRI
 }
 
-func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16) (*NLRI, error) {
+func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*NLRI, error) {
 	var ret *NLRI
 	var eol *NLRI
 	var nlri *NLRI
@@ -24,7 +30,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16) (*NLRI, error) {
 	p := uint16(0)
 
 	for p < length {
-		nlri, consumed, err = decodeNLRI(buf, afi)
+		nlri, consumed, err = decodeNLRI(buf, afi, addPath)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode NLRI: %v", err)
 		}
@@ -43,10 +49,22 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16) (*NLRI, error) {
 	return ret, nil
 }
 
-func decodeNLRI(buf *bytes.Buffer, afi uint16) (*NLRI, uint8, error) {
+func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, error) {
 	nlri := &NLRI{}
 
 	consumed := uint8(0)
+
+	if addPath {
+		err := decode.Decode(buf, []interface{}{
+			&nlri.PathIdentifier,
+		})
+		if err != nil {
+			return nil, consumed, fmt.Errorf("Unable to decode path identifier: %v", err)
+		}
+
+		consumed += pathIdentifierLen
+	}
+
 	pfxLen, err := buf.ReadByte()
 	if err != nil {
 		return nil, consumed, err
@@ -71,20 +89,22 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16) (*NLRI, uint8, error) {
 	return nlri, consumed, nil
 }
 
-func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
+func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool) uint8 {
+	numBytes := uint8(0)
+
+	if addPath {
+		buf.Write(convert.Uint32Byte(n.PathIdentifier))
+		numBytes += 4
+	}
+
 	buf.WriteByte(n.Prefix.Pfxlen())
-	b := n.Prefix.Addr().Bytes()
+	numBytes++
 
-	nBytes := BytesInAddr(n.Prefix.Pfxlen())
-	buf.Write(b[:nBytes])
+	pfxNumBytes := BytesInAddr(n.Prefix.Pfxlen())
+	buf.Write(n.Prefix.Addr().Bytes()[:pfxNumBytes])
+	numBytes += pfxNumBytes
 
-	return nBytes + 1
-}
-
-func (n *NLRI) serializeAddPath(buf *bytes.Buffer) uint8 {
-	buf.Write(convert.Uint32Byte(n.PathIdentifier))
-
-	return uint8(n.serialize(buf) + 4)
+	return numBytes
 }
 
 // BytesInAddr gets the amount of bytes needed to encode an NLRI of prefix length pfxlen

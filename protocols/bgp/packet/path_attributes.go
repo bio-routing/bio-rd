@@ -110,11 +110,11 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %v", err)
 		}
 	case MultiProtocolReachNLRICode:
-		if err := pa.decodeMultiProtocolReachNLRI(buf); err != nil {
+		if err := pa.decodeMultiProtocolReachNLRI(buf, opt.AddPath); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to multi protocol reachable NLRI: %v", err)
 		}
 	case MultiProtocolUnreachNLRICode:
-		if err := pa.decodeMultiProtocolUnreachNLRI(buf); err != nil {
+		if err := pa.decodeMultiProtocolUnreachNLRI(buf, opt.AddPath); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to multi protocol unreachable NLRI: %v", err)
 		}
 	case AS4AggregatorAttr:
@@ -134,7 +134,7 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 	return pa, consumed + pa.Length, nil
 }
 
-func (pa *PathAttribute) decodeMultiProtocolReachNLRI(buf *bytes.Buffer) error {
+func (pa *PathAttribute) decodeMultiProtocolReachNLRI(buf *bytes.Buffer, addPath bool) error {
 	b := make([]byte, pa.Length)
 	n, err := buf.Read(b)
 	if err != nil {
@@ -144,7 +144,7 @@ func (pa *PathAttribute) decodeMultiProtocolReachNLRI(buf *bytes.Buffer) error {
 		return fmt.Errorf("Unable to read %d bytes from buffer, only got %d bytes", pa.Length, n)
 	}
 
-	nlri, err := deserializeMultiProtocolReachNLRI(b)
+	nlri, err := deserializeMultiProtocolReachNLRI(b, addPath)
 	if err != nil {
 		return fmt.Errorf("Unable to decode MP_REACH_NLRI: %v", err)
 	}
@@ -153,7 +153,7 @@ func (pa *PathAttribute) decodeMultiProtocolReachNLRI(buf *bytes.Buffer) error {
 	return nil
 }
 
-func (pa *PathAttribute) decodeMultiProtocolUnreachNLRI(buf *bytes.Buffer) error {
+func (pa *PathAttribute) decodeMultiProtocolUnreachNLRI(buf *bytes.Buffer, addPath bool) error {
 	b := make([]byte, pa.Length)
 	n, err := buf.Read(b)
 	if err != nil {
@@ -163,7 +163,7 @@ func (pa *PathAttribute) decodeMultiProtocolUnreachNLRI(buf *bytes.Buffer) error
 		return fmt.Errorf("Unable to read %d bytes from buffer, only got %d bytes", pa.Length, n)
 	}
 
-	nlri, err := deserializeMultiProtocolUnreachNLRI(b)
+	nlri, err := deserializeMultiProtocolUnreachNLRI(b, addPath)
 	if err != nil {
 		return fmt.Errorf("Unable to decode MP_UNREACH_NLRI: %v", err)
 	}
