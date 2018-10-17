@@ -84,7 +84,7 @@ func TestReadGlobalConfig(t *testing.T) {
 
 	g := new(Global)
 
-	err := _readGlobalConfig(g)
+	err := g.ReadGlobalConfig()
 
 	if err != nil {
 		t.Fatalf("Error on reading global config file: %v", err)

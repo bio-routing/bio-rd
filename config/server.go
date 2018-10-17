@@ -46,12 +46,8 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 	return nil
 }
 
+//ReadGlobalConfig Search and read global config files in path ./, /etc/bio-rd/ or $HOME/.bio-rd/
 func (g *Global) ReadGlobalConfig() error {
-
-	return _readGlobalConfig(g)
-}
-
-func _readGlobalConfig(g *Global) error {
 
 	viper.SetConfigName("global")
 	viper.AddConfigPath("/etc/bio-rd/")
