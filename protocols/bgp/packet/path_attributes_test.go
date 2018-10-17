@@ -903,6 +903,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          []byte
+		addPath        bool
 		wantFail       bool
 		explicitLength uint16
 		expected       *PathAttribute
@@ -992,7 +993,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			pa := &PathAttribute{
 				Length: l,
 			}
-			err := pa.decodeMultiProtocolReachNLRI(bytes.NewBuffer(test.input))
+			err := pa.decodeMultiProtocolReachNLRI(bytes.NewBuffer(test.input), test.addPath)
 
 			if test.wantFail {
 				if err != nil {

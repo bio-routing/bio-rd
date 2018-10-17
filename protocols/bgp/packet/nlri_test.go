@@ -46,7 +46,7 @@ func TestDecodeNLRIs(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, err := decodeNLRIs(buf, uint16(len(test.input)), IPv4AFI)
+		res, err := decodeNLRIs(buf, uint16(len(test.input)), IPv4AFI, false)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -64,6 +64,7 @@ func TestDecodeNLRI(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    []byte
+		addPath  bool
 		wantFail bool
 		expected *NLRI
 	}{
@@ -101,6 +102,56 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: true,
 		},
+
+		{
+			name: "Valid NRLI #1 add path",
+			input: []byte{
+				0, 0, 0, 10, 24, 192, 168, 0,
+			},
+			addPath:  true,
+			wantFail: false,
+			expected: &NLRI{
+				PathIdentifier: 10,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
+			},
+		},
+		{
+			name: "Valid NRLI #2 add path",
+			input: []byte{
+				0, 0, 1, 0, 25, 192, 168, 0, 128,
+			},
+			addPath:  true,
+			wantFail: false,
+			expected: &NLRI{
+				PathIdentifier: 256,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128), 25),
+			},
+		},
+		{
+			name: "Incomplete path Identifier",
+			input: []byte{
+				0, 0, 0,
+			},
+			addPath:  true,
+			wantFail: true,
+		},
+		{
+			name: "Incomplete NLRI #1  add path",
+			input: []byte{
+				0, 0, 1, 0, 25, 192, 168, 0,
+			},
+			addPath:  true,
+			wantFail: true,
+		},
+		{
+			name: "Incomplete NLRI #2  add path",
+			input: []byte{
+				0, 0, 1, 0, 25,
+			},
+			addPath:  true,
+			wantFail: true,
+		},
+
 		{
 			name:     "Empty input",
 			input:    []byte{},
@@ -110,7 +161,7 @@ func TestDecodeNLRI(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, _, err := decodeNLRI(buf, IPv4AFI)
+		res, _, err := decodeNLRI(buf, IPv4AFI, test.addPath)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
