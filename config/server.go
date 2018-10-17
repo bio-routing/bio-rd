@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+//Global struct for global configuration
 type Global struct {
 	LocalASN         uint32
 	RouterID         uint32
@@ -22,8 +23,10 @@ type Global struct {
 	LoopbackIface    string
 }
 
+//BGPPORT default bgp port for default which is tcp 179
 const BGPPORT = uint16(179)
 
+//SetDefaultGlobalConfigValues maps default configuration values to Global struct
 func (g *Global) SetDefaultGlobalConfigValues() error {
 	if g.LocalAddressList == nil {
 		g.LocalAddressList = make([]net.IP, 0)
