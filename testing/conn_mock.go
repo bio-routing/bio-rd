@@ -8,7 +8,7 @@ import (
 type MockConn struct {
 	net.Conn
 
-	// Bytes are the bytes writen
+	// Bytes are the bytes written
 	Bytes []byte
 }
 

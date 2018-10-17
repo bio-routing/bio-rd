@@ -20,6 +20,8 @@
 
 # 'go build' binary
 bio-rd
+examples/bgp
+examples/bmp
 
 # bazel directories
 /bazel-*

@@ -11,21 +11,22 @@ import (
 
 // Peer defines the configuration for a BGP session
 type Peer struct {
-	AdminEnabled            bool
-	ReconnectInterval       time.Duration
-	KeepAlive               time.Duration
-	HoldTime                time.Duration
-	LocalAddress            bnet.IP
-	PeerAddress             bnet.IP
-	LocalAS                 uint32
-	PeerAS                  uint32
-	Passive                 bool
-	RouterID                uint32
-	RouteServerClient       bool
-	RouteReflectorClient    bool
-	RouteReflectorClusterID uint32
-	IPv4                    *AddressFamilyConfig
-	IPv6                    *AddressFamilyConfig
+	AdminEnabled               bool
+	ReconnectInterval          time.Duration
+	KeepAlive                  time.Duration
+	HoldTime                   time.Duration
+	LocalAddress               bnet.IP
+	PeerAddress                bnet.IP
+	LocalAS                    uint32
+	PeerAS                     uint32
+	Passive                    bool
+	RouterID                   uint32
+	RouteServerClient          bool
+	RouteReflectorClient       bool
+	RouteReflectorClusterID    uint32
+	AdvertiseIPv4MultiProtocol bool
+	IPv4                       *AddressFamilyConfig
+	IPv6                       *AddressFamilyConfig
 }
 
 // AddressFamilyConfig represents all configuration parameters specific for an address family

@@ -36,7 +36,7 @@ func (c *ContributingASNs) Add(asn uint32) {
 			cASN.count++
 
 			if cASN.count == math.MaxUint32 {
-				panic(fmt.Sprintf("Contributing ASNs counter overflow triggered for AS %d. Dyning of shame.", asn))
+				panic(fmt.Sprintf("Contributing ASNs counter overflow triggered for AS %d. Dying of shame.", asn))
 			}
 
 			return

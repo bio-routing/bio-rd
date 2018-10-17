@@ -2,11 +2,16 @@
 
 
 [[projects]]
-  branch = "parse-constraints-with-dash-in-pre"
+  branch = "master"
+  name = "github.com/FMNSSun/libhash"
+  packages = ["fletcher"]
+  revision = "dabbc4426b6df75633890dd58ac2129fb85b8f34"
+
+[[projects]]
+  branch = "2.x"
   name = "github.com/Masterminds/semver"
   packages = ["."]
-  revision = "a93e51b5a57ef416dac8bb02d11407b6f55d8929"
-  source = "https://github.com/carolynvs/semver.git"
+  revision = "3c92f33da7a84de8314f3ff82e5f919b89fd1492"
 
 [[projects]]
   name = "github.com/Masterminds/vcs"
@@ -15,10 +20,10 @@
   version = "v1.12.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/armon/go-radix"
   packages = ["."]
-  revision = "1fca145dffbcaa8fe914309b1ec0cfc67500fe61"
+  revision = "1a2de0c21c94309923825da3df33a4381872c795"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/boltdb/bolt"
@@ -29,8 +34,8 @@
 [[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -52,16 +57,17 @@
     "gps/internal/pb",
     "gps/paths",
     "gps/pkgtree",
-    "internal/fs",
+    "gps/verify",
+    "internal/fs"
   ]
-  revision = "37d9ea0ac16f0e0a05afc3b60e1ac8c364b6c329"
-  version = "v0.4.1"
+  revision = "224a564abe296670b692fe08bb63a3e4c4ad7978"
+  version = "v0.5.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "9eb2c01ac278a5d89ce4b2be68fe4500955d8179"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -87,6 +93,7 @@
   version = "v0.3.0"
 
 [[projects]]
+
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "c2353362d570a7bfa228149c62842019201cfb71"
@@ -103,6 +110,11 @@
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
+
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -143,8 +155,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
+  revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -182,26 +194,26 @@
 [[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
   name = "github.com/taktv6/tflow2"
   packages = ["convert"]
-  revision = "29f45a87a28db36122315ff06841919cc38d08ec"
+  revision = "c05b18bd57ea723faad165126ec38ae661bc1df6"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "b0697eccbea9adec5b7ba8008f4c33d98d733388"
+  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "afe8f62b1d6bbd81f31868121a50b06d8188e1f9"
+  revision = "146acd28ed5894421fb5aac80ca93bc1b1f46f87"
 
 [[projects]]
   branch = "master"
@@ -214,9 +226,9 @@
   name = "golang.org/x/sys"
   packages = [
     "unix",
-    "windows",
+    "windows"
   ]
-  revision = "bb9c189858d91f42db229b04d45a4c3d23a7662a"
+  revision = "4497e2df6f9e69048a54498c7affbbec3294ad47"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -235,7 +247,7 @@
   branch = "master"
   name = "golang.org/x/tools"
   packages = ["cover"]
-  revision = "25b95b48224cce18163c7d49dcfb89a2d5ecd209"
+  revision = "f60d9635b16a5a57b06eaa119614ba4df421966a"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -246,6 +258,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5f8b7ebf8a04fbb509af478647c32f569b4acefc4338c9e4793dc0cda94d1584"
+  inputs-digest = "ec525bd690a1530d850c09d334bc4cb35b167cd5f308ad5d30be88974d3242d7"
   solver-name = "gps-cdcl"
   solver-version = 1

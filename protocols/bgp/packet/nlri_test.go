@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,14 +24,11 @@ func TestDecodeNLRIs(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     strAddr("192.168.0.0"),
-				Pfxlen: 24,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
 				Next: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("172.16.0.0"),
-						Pfxlen: 17,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(172, 16, 0, 0), 17),
 					},
 				},
 			},
@@ -48,7 +46,7 @@ func TestDecodeNLRIs(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, err := decodeNLRIs(buf, uint16(len(test.input)))
+		res, err := decodeNLRIs(buf, uint16(len(test.input)), IPv4AFI, false)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -66,6 +64,7 @@ func TestDecodeNLRI(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    []byte
+		addPath  bool
 		wantFail bool
 		expected *NLRI
 	}{
@@ -76,8 +75,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     strAddr("192.168.0.0"),
-				Pfxlen: 24,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
 			},
 		},
 		{
@@ -87,8 +85,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     strAddr("192.168.0.128"),
-				Pfxlen: 25,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128), 25),
 			},
 		},
 		{
@@ -105,6 +102,56 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: true,
 		},
+
+		{
+			name: "Valid NRLI #1 add path",
+			input: []byte{
+				0, 0, 0, 10, 24, 192, 168, 0,
+			},
+			addPath:  true,
+			wantFail: false,
+			expected: &NLRI{
+				PathIdentifier: 10,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
+			},
+		},
+		{
+			name: "Valid NRLI #2 add path",
+			input: []byte{
+				0, 0, 1, 0, 25, 192, 168, 0, 128,
+			},
+			addPath:  true,
+			wantFail: false,
+			expected: &NLRI{
+				PathIdentifier: 256,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128), 25),
+			},
+		},
+		{
+			name: "Incomplete path Identifier",
+			input: []byte{
+				0, 0, 0,
+			},
+			addPath:  true,
+			wantFail: true,
+		},
+		{
+			name: "Incomplete NLRI #1  add path",
+			input: []byte{
+				0, 0, 1, 0, 25, 192, 168, 0,
+			},
+			addPath:  true,
+			wantFail: true,
+		},
+		{
+			name: "Incomplete NLRI #2  add path",
+			input: []byte{
+				0, 0, 1, 0, 25,
+			},
+			addPath:  true,
+			wantFail: true,
+		},
+
 		{
 			name:     "Empty input",
 			input:    []byte{},
@@ -114,7 +161,7 @@ func TestDecodeNLRI(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, _, err := decodeNLRI(buf)
+		res, _, err := decodeNLRI(buf, IPv4AFI, test.addPath)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -173,80 +220,62 @@ func TestNLRISerialize(t *testing.T) {
 	tests := []struct {
 		name     string
 		nlri     *NLRI
+		addPath  bool
 		expected []byte
 	}{
 		{
 			name: "Test #1",
 			nlri: &NLRI{
-				IP:     strAddr("1.2.3.0"),
-				Pfxlen: 25,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25),
 			},
 			expected: []byte{25, 1, 2, 3, 0},
 		},
 		{
 			name: "Test #2",
 			nlri: &NLRI{
-				IP:     strAddr("1.2.3.0"),
-				Pfxlen: 24,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24),
 			},
 			expected: []byte{24, 1, 2, 3},
 		},
 		{
 			name: "Test #3",
 			nlri: &NLRI{
-				IP:     strAddr("100.200.128.0"),
-				Pfxlen: 17,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17),
 			},
 			expected: []byte{17, 100, 200, 128},
 		},
-	}
-
-	for _, test := range tests {
-		buf := bytes.NewBuffer(nil)
-		test.nlri.serialize(buf)
-		res := buf.Bytes()
-		assert.Equal(t, test.expected, res)
-	}
-}
-
-func TestNLRIAddPathSerialize(t *testing.T) {
-	tests := []struct {
-		name     string
-		nlri     *NLRI
-		expected []byte
-	}{
 		{
-			name: "Test #1",
+			name: "with add-path #1",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             strAddr("1.2.3.0"),
-				Pfxlen:         25,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25),
 			},
+			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 25, 1, 2, 3, 0},
 		},
 		{
-			name: "Test #2",
+			name: "with add-path #2",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             strAddr("1.2.3.0"),
-				Pfxlen:         24,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24),
 			},
+			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 24, 1, 2, 3},
 		},
 		{
-			name: "Test #3",
+			name: "with add-path #3",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             strAddr("100.200.128.0"),
-				Pfxlen:         17,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17),
 			},
+			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 17, 100, 200, 128},
 		},
 	}
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(nil)
-		test.nlri.serializeAddPath(buf)
+		test.nlri.serialize(buf, test.addPath)
 		res := buf.Bytes()
 		assert.Equal(t, test.expected, res)
 	}

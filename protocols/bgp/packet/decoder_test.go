@@ -6,12 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/bio-routing/bio-rd/net"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/taktv6/tflow2/convert"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 type test struct {
@@ -36,11 +34,11 @@ func BenchmarkDecodeUpdateMsg(b *testing.B) {
 		2,      // Attribute Type code (AS Path)
 		12,     // Length
 		2,      // Type = AS_SEQUENCE
-		2,      // Path Segement Length
+		2,      // Path Segment Length
 		59, 65, // AS15169
 		12, 248, // AS3320
 		1,      // Type = AS_SET
-		2,      // Path Segement Length
+		2,      // Path Segment Length
 		59, 65, // AS15169
 		12, 248, // AS3320
 
@@ -211,11 +209,9 @@ func TestDecode(t *testing.T) {
 				Body: &BGPUpdate{
 					WithdrawnRoutesLen: 5,
 					WithdrawnRoutes: &NLRI{
-						IP:     strAddr("10.0.0.0"),
-						Pfxlen: 8,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 						Next: &NLRI{
-							IP:     strAddr("192.168.0.0"),
-							Pfxlen: 16,
+							Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 						},
 					},
 				},
@@ -431,11 +427,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 			},
@@ -457,11 +451,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 5,
@@ -491,7 +483,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				6,      // Length
 				2,      // Type = AS_SEQUENCE
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 			},
@@ -499,11 +491,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 14,
@@ -550,7 +540,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2, // Attribute Type code (AS Path)
 				6, // Length
 				1, // Type = AS_SET
-				0, // Path Segement Length
+				0, // Path Segment Length
 			},
 			wantFail: true,
 		},
@@ -569,7 +559,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				6,      // Length
 				3,      // Type = INVALID
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 			},
@@ -590,11 +580,11 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				12,     // Length
 				2,      // Type = AS_SEQUENCE
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 				1,      // Type = AS_SET
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 			},
@@ -602,11 +592,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 20,
@@ -660,11 +648,11 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				12,     // Length
 				2,      // Type = AS_SEQUENCE
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 				1,      // Type = AS_SET
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 
@@ -677,11 +665,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 27,
@@ -746,11 +732,11 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				12,     // Length
 				2,      // Type = AS_SEQUENCE
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 				1,      // Type = AS_SET
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 
@@ -768,11 +754,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 34,
@@ -845,11 +829,11 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				12,     // Length
 				2,      // Type = AS_SEQUENCE
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 				1,      // Type = AS_SET
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 
@@ -872,11 +856,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 41,
@@ -957,11 +939,11 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				12,     // Length
 				2,      // Type = AS_SEQUENCE
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 				1,      // Type = AS_SET
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 
@@ -988,11 +970,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 44,
@@ -1081,11 +1061,11 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				2,      // Attribute Type code (AS Path)
 				12,     // Length
 				2,      // Type = AS_SEQUENCE
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 				1,      // Type = AS_SET
-				2,      // Path Segement Length
+				2,      // Path Segment Length
 				59, 65, // AS15169
 				12, 248, // AS3320
 
@@ -1120,11 +1100,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 53,
@@ -1199,7 +1177,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 											TypeCode:       7,
 											Value: types.Aggregator{
 												ASN:     uint16(258),
-												Address: strAddr("10.11.12.13"),
+												Address: bnet.IPv4FromOctets(10, 11, 12, 13).ToUint32(),
 											},
 										},
 									},
@@ -1209,8 +1187,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					Pfxlen: 8,
-					IP:     strAddr("11.0.0.0"),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8),
 				},
 			},
 		},
@@ -1292,11 +1269,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     strAddr("10.0.0.0"),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     strAddr("192.168.0.0"),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 16,
@@ -1819,9 +1794,4 @@ func TestDecodeAddPathCapability(t *testing.T) {
 
 		assert.Equal(t, test.expected, cap)
 	}
-}
-
-func strAddr(s string) uint32 {
-	ret, _ := net.StrToAddr(s)
-	return ret
 }

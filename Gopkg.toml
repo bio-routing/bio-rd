@@ -48,3 +48,7 @@ required = ["github.com/golang/dep", "github.com/q3k/goveralls", "github.com/go-
 [[constraint]]
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
+
+  branch = "master"
+  name = "github.com/FMNSSun/libhash"
+
