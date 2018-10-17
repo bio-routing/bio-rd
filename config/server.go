@@ -34,6 +34,7 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 		g.LocalAddressList = append(g.LocalAddressList, net.ParseIP("::"))
 	}
 
+	//Set router Id if no override is set via config file
 	if g.RouterID == 0 {
 		rtrid, err := generateRouterID(g.LoopbackIface)
 		if err != nil {
@@ -42,6 +43,7 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 		g.RouterID = rtrid
 	}
 
+	//Set default port if no override is set via config file
 	if g.Port == 0 {
 		g.Port = BGPPORT
 	}
