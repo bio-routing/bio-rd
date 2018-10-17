@@ -15,7 +15,7 @@ func TestProcessTerms(t *testing.T) {
 		prefix         net.Prefix
 		path           *route.Path
 		term           *Term
-		exptectAccept  bool
+		expectAccept   bool
 		expectModified bool
 	}{
 		{
@@ -27,7 +27,7 @@ func TestProcessTerms(t *testing.T) {
 					&actions.AcceptAction{},
 				},
 			},
-			exptectAccept:  true,
+			expectAccept:   true,
 			expectModified: false,
 		},
 		{
@@ -39,7 +39,7 @@ func TestProcessTerms(t *testing.T) {
 					&actions.RejectAction{},
 				},
 			},
-			exptectAccept:  false,
+			expectAccept:   false,
 			expectModified: false,
 		},
 		{
@@ -52,7 +52,7 @@ func TestProcessTerms(t *testing.T) {
 					&actions.RejectAction{},
 				},
 			},
-			exptectAccept:  true,
+			expectAccept:   true,
 			expectModified: false,
 		},
 		{
@@ -65,7 +65,7 @@ func TestProcessTerms(t *testing.T) {
 					&actions.AcceptAction{},
 				},
 			},
-			exptectAccept:  true,
+			expectAccept:   true,
 			expectModified: true,
 		},
 	}
@@ -75,7 +75,7 @@ func TestProcessTerms(t *testing.T) {
 			f := NewFilter([]*Term{test.term})
 			p, reject := f.ProcessTerms(test.prefix, test.path)
 
-			assert.Equal(t, test.exptectAccept, !reject)
+			assert.Equal(t, test.expectAccept, !reject)
 
 			if test.expectModified {
 				assert.NotEqual(t, test.path, p)

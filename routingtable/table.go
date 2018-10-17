@@ -114,7 +114,7 @@ func (rt *RoutingTable) LPM(pfx net.Prefix) (res []*route.Route) {
 	return res
 }
 
-// Get get's the route for pfx from the LPM
+// Get gets the route for pfx from the LPM
 func (rt *RoutingTable) Get(pfx net.Prefix) *route.Route {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
@@ -134,7 +134,7 @@ func (rt *RoutingTable) get(pfx net.Prefix) *route.Route {
 	return res.route
 }
 
-// GetLonger get's prefix pfx and all it's more specifics from the LPM
+// GetLonger gets prefix pfx and all it's more specifics from the LPM
 func (rt *RoutingTable) GetLonger(pfx net.Prefix) (res []*route.Route) {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()

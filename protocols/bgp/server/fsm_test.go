@@ -76,11 +76,11 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 			2,      // Attribute Type code (AS Path)
 			12,     // Length
 			2,      // Type = AS_SEQUENCE
-			2,      // Path Segement Length
+			2,      // Path Segment Length
 			59, 65, // AS15169
 			12, 248, // AS3320
 			1,      // Type = AS_SET
-			2,      // Path Segement Length
+			2,      // Path Segment Length
 			59, 65, // AS15169
 			12, 248, // AS3320
 
@@ -188,11 +188,11 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 			2,      // Attribute Type code (AS Path)
 			12,     // Length
 			2,      // Type = AS_SEQUENCE
-			2,      // Path Segement Length
+			2,      // Path Segment Length
 			59, 65, // AS15169
 			12, 248, // AS3320
 			1,      // Type = AS_SET
-			2,      // Path Segement Length
+			2,      // Path Segment Length
 			59, 65, // AS15169
 			12, 248, // AS3320
 

@@ -70,7 +70,7 @@ func TestPathsDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "Disjunkt",
+			name: "Disjunct",
 			any: []*Path{
 				{
 					Type: 10,

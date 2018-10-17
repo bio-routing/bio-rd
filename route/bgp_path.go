@@ -121,7 +121,7 @@ func (b *BGPPath) Compare(c *BGPPath) int8 {
 		return 1
 	}
 
-	// e) TODO: interiour cost (hello IS-IS and OSPF)
+	// e) TODO: interior cost (hello IS-IS and OSPF)
 
 	// f) + RFC4456 9. (Route Reflection)
 	bgpIdentifierC := c.BGPIdentifier

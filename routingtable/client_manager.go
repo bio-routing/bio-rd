@@ -39,7 +39,7 @@ func NewClientManager(master RouteTableClient) ClientManager {
 	}
 }
 
-// GetOptions gets the options for a registred client
+// GetOptions gets the options for a registered client
 func (c *ClientManager) GetOptions(client RouteTableClient) ClientOptions {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
