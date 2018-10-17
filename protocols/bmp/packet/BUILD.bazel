@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "common_header.go",
+        "decode.go",
+        "information_tlv.go",
+        "initiation_message.go",
+        "peer_down.go",
+        "peer_up.go",
+        "per_peer_header.go",
+        "route_mirroring.go",
+        "route_monitoring.go",
+        "stats_report.go",
+        "termination_message.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/protocols/bmp/packet",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//util/decoder:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "common_header_test.go",
+        "decode_test.go",
+        "information_tlv_test.go",
+        "initiation_message_test.go",
+        "peer_down_test.go",
+        "peer_up_test.go",
+        "per_peer_header_test.go",
+        "route_mirroring_test.go",
+        "route_monitoring_test.go",
+        "stats_report_test.go",
+        "termination_message_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = ["//vendor/github.com/stretchr/testify/assert:go_default_library"],
+)

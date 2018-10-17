@@ -33,9 +33,9 @@ func NewTermConditionWithPrefixLists(filters ...*PrefixList) *TermCondition {
 
 func (f *TermCondition) Matches(p net.Prefix, pa *route.Path) bool {
 	return f.matchesPrefixListFilters(p) &&
-		f.machtchesRouteFilters(p) &&
-		f.machtchesCommunityFilters(pa) &&
-		f.machtchesLargeCommunityFilters(pa)
+		f.matchesRouteFilters(p) &&
+		f.matchesCommunityFilters(pa) &&
+		f.matchesLargeCommunityFilters(pa)
 }
 
 func (t *TermCondition) matchesPrefixListFilters(p net.Prefix) bool {
@@ -52,7 +52,7 @@ func (t *TermCondition) matchesPrefixListFilters(p net.Prefix) bool {
 	return false
 }
 
-func (t *TermCondition) machtchesRouteFilters(p net.Prefix) bool {
+func (t *TermCondition) matchesRouteFilters(p net.Prefix) bool {
 	if len(t.routeFilters) == 0 {
 		return true
 	}
@@ -66,7 +66,7 @@ func (t *TermCondition) machtchesRouteFilters(p net.Prefix) bool {
 	return false
 }
 
-func (t *TermCondition) machtchesCommunityFilters(pa *route.Path) bool {
+func (t *TermCondition) matchesCommunityFilters(pa *route.Path) bool {
 	if len(t.communityFilters) == 0 {
 		return true
 	}
@@ -84,7 +84,7 @@ func (t *TermCondition) machtchesCommunityFilters(pa *route.Path) bool {
 	return false
 }
 
-func (t *TermCondition) machtchesLargeCommunityFilters(pa *route.Path) bool {
+func (t *TermCondition) matchesLargeCommunityFilters(pa *route.Path) bool {
 	if len(t.largeCommunityFilters) == 0 {
 		return true
 	}

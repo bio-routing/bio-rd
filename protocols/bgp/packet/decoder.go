@@ -2,10 +2,10 @@ package packet
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"net"
 
+	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -44,17 +44,17 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOption
 func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
 	msg := &BGPUpdate{}
 
-	err := decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
+	err := decode.Decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
 	if err != nil {
 		return msg, err
 	}
 
-	msg.WithdrawnRoutes, err = decodeNLRIs(buf, uint16(msg.WithdrawnRoutesLen))
+	msg.WithdrawnRoutes, err = decodeNLRIs(buf, uint16(msg.WithdrawnRoutesLen), IPv4AFI)
 	if err != nil {
 		return msg, err
 	}
 
-	err = decode(buf, []interface{}{&msg.TotalPathAttrLen})
+	err = decode.Decode(buf, []interface{}{&msg.TotalPathAttrLen})
 	if err != nil {
 		return msg, err
 	}
@@ -66,7 +66,7 @@ func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdat
 
 	nlriLen := uint16(l) - 4 - uint16(msg.TotalPathAttrLen) - uint16(msg.WithdrawnRoutesLen)
 	if nlriLen > 0 {
-		msg.NLRI, err = decodeNLRIs(buf, nlriLen)
+		msg.NLRI, err = decodeNLRIs(buf, nlriLen, IPv4AFI)
 		if err != nil {
 			return msg, err
 		}
@@ -83,7 +83,7 @@ func decodeNotificationMsg(buf *bytes.Buffer) (*BGPNotification, error) {
 		&msg.ErrorSubcode,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return msg, err
 	}
@@ -147,7 +147,7 @@ func _decodeOpenMsg(buf *bytes.Buffer) (interface{}, error) {
 		&msg.OptParmLen,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return msg, err
 	}
@@ -175,7 +175,7 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 			&o.Length,
 		}
 
-		err := decode(buf, fields)
+		err := decode.Decode(buf, fields)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +186,7 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 		case CapabilitiesParamType:
 			caps, err := decodeCapabilities(buf, o.Length)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to decode capabilites: %v", err)
+				return nil, fmt.Errorf("Unable to decode capabilities: %v", err)
 			}
 
 			o.Value = caps
@@ -226,7 +226,7 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 		&cap.Length,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return cap, err
 	}
@@ -269,7 +269,7 @@ func decodeMultiProtocolCapability(buf *bytes.Buffer) (MultiProtocolCapability, 
 		&mpCap.AFI, &reserved, &mpCap.SAFI,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return mpCap, err
 	}
@@ -285,7 +285,7 @@ func decodeAddPathCapability(buf *bytes.Buffer) (AddPathCapability, error) {
 		&addPathCap.SendReceive,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return addPathCap, err
 	}
@@ -299,7 +299,7 @@ func decodeASN4Capability(buf *bytes.Buffer) (ASN4Capability, error) {
 		&asn4Cap.ASN4,
 	}
 
-	err := decode(buf, fields)
+	err := decode.Decode(buf, fields)
 	if err != nil {
 		return asn4Cap, err
 	}
@@ -383,7 +383,7 @@ func decodeHeader(buf *bytes.Buffer) (*BGPHeader, error) {
 		&hdr.Type,
 	}
 
-	err = decode(buf, fields)
+	err = decode.Decode(buf, fields)
 	if err != nil {
 		return hdr, BGPError{
 			ErrorCode:    Cease,
@@ -409,15 +409,4 @@ func decodeHeader(buf *bytes.Buffer) (*BGPHeader, error) {
 	}
 
 	return hdr, nil
-}
-
-func decode(buf *bytes.Buffer, fields []interface{}) error {
-	var err error
-	for _, field := range fields {
-		err = binary.Read(buf, binary.BigEndian, field)
-		if err != nil {
-			return fmt.Errorf("Unable to read from buffer: %v", err)
-		}
-	}
-	return nil
 }

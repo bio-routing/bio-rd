@@ -23,6 +23,7 @@ go_library(
         "//net:go_default_library",
         "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
+        "//util/decode:go_default_library",
         "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
     ],
 )

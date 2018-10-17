@@ -107,19 +107,16 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
 
 func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
-		f.adjRIBIn.RemovePath(pfx, nil)
+		f.adjRIBIn.RemovePath(r.Prefix, nil)
 	}
 }
 
 func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
-		pfx := bnet.NewPfx(bnet.IPv4(r.IP), r.Pfxlen)
-
 		path := f.newRoutePath()
 		f.processAttributes(u.PathAttributes, path)
 
-		f.adjRIBIn.AddPath(pfx, path)
+		f.adjRIBIn.AddPath(r.Prefix, path)
 	}
 }
 
@@ -154,8 +151,8 @@ func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.Mul
 
 	path.BGPPath.NextHop = nlri.NextHop
 
-	for _, pfx := range nlri.Prefixes {
-		f.adjRIBIn.AddPath(pfx, path)
+	for n := nlri.NLRI; n != nil; n = n.Next {
+		f.adjRIBIn.AddPath(n.Prefix, path)
 	}
 }
 

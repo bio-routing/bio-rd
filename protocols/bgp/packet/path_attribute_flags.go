@@ -1,10 +1,14 @@
 package packet
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/bio-routing/bio-rd/util/decode"
+)
 
 func decodePathAttrFlags(buf *bytes.Buffer, pa *PathAttribute) error {
 	flags := uint8(0)
-	err := decode(buf, []interface{}{&flags})
+	err := decode.Decode(buf, []interface{}{&flags})
 	if err != nil {
 		return err
 	}
