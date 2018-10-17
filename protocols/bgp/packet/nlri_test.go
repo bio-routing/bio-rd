@@ -24,14 +24,11 @@ func TestDecodeNLRIs(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-				Pfxlen: 24,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
 				Next: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(172, 16, 0, 0),
-						Pfxlen: 17,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(172, 16, 0, 0), 17),
 					},
 				},
 			},
@@ -49,7 +46,7 @@ func TestDecodeNLRIs(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, err := decodeNLRIs(buf, uint16(len(test.input)))
+		res, err := decodeNLRIs(buf, uint16(len(test.input)), IPv4AFI)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -77,8 +74,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-				Pfxlen: 24,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
 			},
 		},
 		{
@@ -88,8 +84,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				IP:     bnet.IPv4FromOctets(192, 168, 0, 128),
-				Pfxlen: 25,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128), 25),
 			},
 		},
 		{
@@ -115,7 +110,7 @@ func TestDecodeNLRI(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, _, err := decodeNLRI(buf)
+		res, _, err := decodeNLRI(buf, IPv4AFI)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -179,24 +174,21 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #1",
 			nlri: &NLRI{
-				IP:     bnet.IPv4FromOctets(1, 2, 3, 0),
-				Pfxlen: 25,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25),
 			},
 			expected: []byte{25, 1, 2, 3, 0},
 		},
 		{
 			name: "Test #2",
 			nlri: &NLRI{
-				IP:     bnet.IPv4FromOctets(1, 2, 3, 0),
-				Pfxlen: 24,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24),
 			},
 			expected: []byte{24, 1, 2, 3},
 		},
 		{
 			name: "Test #3",
 			nlri: &NLRI{
-				IP:     bnet.IPv4FromOctets(100, 200, 128, 0),
-				Pfxlen: 17,
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17),
 			},
 			expected: []byte{17, 100, 200, 128},
 		},
@@ -220,8 +212,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 			name: "Test #1",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             bnet.IPv4FromOctets(1, 2, 3, 0),
-				Pfxlen:         25,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25),
 			},
 			expected: []byte{0, 0, 0, 100, 25, 1, 2, 3, 0},
 		},
@@ -229,8 +220,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 			name: "Test #2",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             bnet.IPv4FromOctets(1, 2, 3, 0),
-				Pfxlen:         24,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24),
 			},
 			expected: []byte{0, 0, 0, 100, 24, 1, 2, 3},
 		},
@@ -238,8 +228,7 @@ func TestNLRIAddPathSerialize(t *testing.T) {
 			name: "Test #3",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				IP:             bnet.IPv4FromOctets(100, 200, 128, 0),
-				Pfxlen:         17,
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17),
 			},
 			expected: []byte{0, 0, 0, 100, 17, 100, 200, 128},
 		},

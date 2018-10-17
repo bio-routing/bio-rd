@@ -4,19 +4,17 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/taktv6/tflow2/convert"
-
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/taktv6/tflow2/convert"
 )
 
-// MultiProtocolReachNLRI represents network layer reachability information for one prefix of an IP address family (rfc4760)
+// MultiProtocolReachNLRI represents network layer reachability information for an IP address family (rfc4760)
 type MultiProtocolReachNLRI struct {
-	AFI      uint16
-	SAFI     uint8
-	NextHop  bnet.IP
-	Prefixes []bnet.Prefix
-	PathID   uint32
+	AFI     uint16
+	SAFI    uint8
+	NextHop bnet.IP
+	NLRI    *NLRI
 }
 
 func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
@@ -28,11 +26,13 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions
 	tempBuf.WriteByte(uint8(len(nextHop)))
 	tempBuf.Write(nextHop)
 	tempBuf.WriteByte(0) // RESERVED
-	for _, pfx := range n.Prefixes {
+
+	for cur := n.NLRI; cur != nil; cur = cur.Next {
 		if opt.UseAddPath {
-			tempBuf.Write(convert.Uint32Byte(n.PathID))
+			n.NLRI.serializeAddPath(tempBuf)
+		} else {
+			n.NLRI.serialize(tempBuf)
 		}
-		tempBuf.Write(serializePrefix(pfx))
 	}
 
 	buf.Write(tempBuf.Bytes())
@@ -73,34 +73,18 @@ func deserializeMultiProtocolReachNLRI(b []byte) (MultiProtocolReachNLRI, error)
 	}
 	budget -= int(nextHopLength)
 
-	n.Prefixes = make([]bnet.Prefix, 0)
 	if budget == 0 {
 		return n, nil
 	}
 
 	variable = variable[1+nextHopLength:] // 1 <- RESERVED field
 
-	idx := uint16(0)
-	for idx < uint16(len(variable)) {
-		pfxLen := variable[idx]
-		numBytes := uint16(BytesInAddr(pfxLen))
-		idx++
-
-		r := uint16(len(variable)) - idx
-		if r < numBytes {
-			return MultiProtocolReachNLRI{}, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", numBytes, r)
-		}
-
-		start := idx
-		end := idx + numBytes
-		pfx, err := deserializePrefix(variable[start:end], pfxLen, n.AFI)
-		if err != nil {
-			return MultiProtocolReachNLRI{}, err
-		}
-		n.Prefixes = append(n.Prefixes, pfx)
-
-		idx = idx + numBytes
+	buf := bytes.NewBuffer(variable)
+	nlri, err := decodeNLRIs(buf, uint16(buf.Len()), n.AFI)
+	if err != nil {
+		return MultiProtocolReachNLRI{}, err
 	}
+	n.NLRI = nlri
 
 	return n, nil
 }

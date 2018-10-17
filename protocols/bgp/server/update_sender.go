@@ -7,11 +7,10 @@ import (
 	"sync"
 	"time"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -191,8 +190,7 @@ func (u *UpdateSender) bgpUpdate(pfxs []bnet.Prefix, pa *packet.PathAttribute, p
 	for _, pfx := range pfxs {
 		nlri = &packet.NLRI{
 			PathIdentifier: pathID,
-			IP:             pfx.Addr(),
-			Pfxlen:         pfx.Pfxlen(),
+			Prefix:         pfx,
 			Next:           update.NLRI,
 		}
 		update.NLRI = nlri
@@ -207,11 +205,10 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 	attrs := &packet.PathAttribute{
 		TypeCode: packet.MultiProtocolReachNLRICode,
 		Value: packet.MultiProtocolReachNLRI{
-			AFI:      u.addressFamily.afi,
-			SAFI:     u.addressFamily.safi,
-			NextHop:  nextHop,
-			Prefixes: pfxs,
-			PathID:   pathID,
+			AFI:     u.addressFamily.afi,
+			SAFI:    u.addressFamily.safi,
+			NextHop: nextHop,
+			NLRI:    u.nlriForPrefixes(pfxs, pathID),
 		},
 	}
 	attrs.Next = pa
@@ -219,6 +216,27 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 	return &packet.BGPUpdate{
 		PathAttributes: attrs,
 	}
+}
+
+func (u *UpdateSender) nlriForPrefixes(pfxs []bnet.Prefix, pathID uint32) *packet.NLRI {
+	var prev, res *packet.NLRI
+	for _, pfx := range pfxs {
+		cur := &packet.NLRI{
+			Prefix:         pfx,
+			PathIdentifier: pathID,
+		}
+
+		if res == nil {
+			res = cur
+			prev = cur
+			continue
+		}
+
+		prev.Next = cur
+		prev = cur
+	}
+
+	return res
 }
 
 func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop bnet.IP) {
@@ -276,8 +294,7 @@ func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *rou
 	update := &packet.BGPUpdate{
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
-			IP:             pfx.Addr(),
-			Pfxlen:         pfx.Pfxlen(),
+			Prefix:         pfx,
 		},
 	}
 

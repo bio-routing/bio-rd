@@ -4,21 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"net"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/taktv6/tflow2/convert"
 )
 
 type NLRI struct {
 	PathIdentifier uint32
-	IP             bnet.IP
-	Pfxlen         uint8
+	Prefix         bnet.Prefix
 	Next           *NLRI
 }
 
-func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
+func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16) (*NLRI, error) {
 	var ret *NLRI
 	var eol *NLRI
 	var nlri *NLRI
@@ -27,7 +24,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
 	p := uint16(0)
 
 	for p < length {
-		nlri, consumed, err = decodeNLRI(buf)
+		nlri, consumed, err = decodeNLRI(buf, afi)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode NLRI: %v", err)
 		}
@@ -46,39 +43,39 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16) (*NLRI, error) {
 	return ret, nil
 }
 
-func decodeNLRI(buf *bytes.Buffer) (*NLRI, uint8, error) {
-	addr := make([]byte, 4)
+func decodeNLRI(buf *bytes.Buffer, afi uint16) (*NLRI, uint8, error) {
 	nlri := &NLRI{}
 
-	err := decode.Decode(buf, []interface{}{&nlri.Pfxlen})
+	consumed := uint8(0)
+	pfxLen, err := buf.ReadByte()
 	if err != nil {
-		return nil, 0, err
+		return nil, consumed, err
+	}
+	consumed++
+
+	numBytes := uint8(BytesInAddr(pfxLen))
+	bytes := make([]byte, numBytes)
+
+	r, err := buf.Read(bytes)
+	consumed += uint8(r)
+	if r < int(numBytes) {
+		return nil, consumed, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", numBytes, r)
 	}
 
-	toCopy := uint8(math.Ceil(float64(nlri.Pfxlen) / float64(OctetLen)))
-	for i := uint8(0); i < net.IPv4len%OctetLen; i++ {
-		if i < toCopy {
-			err := decode.Decode(buf, []interface{}{&addr[i]})
-			if err != nil {
-				return nil, 0, err
-			}
-		} else {
-			addr[i] = 0
-		}
-	}
-	nlri.IP, err = bnet.IPFromBytes(addr)
+	pfx, err := deserializePrefix(bytes, pfxLen, afi)
 	if err != nil {
-		return nil, 0, err
+		return nil, consumed, err
 	}
+	nlri.Prefix = pfx
 
-	return nlri, toCopy + 1, nil
+	return nlri, consumed, nil
 }
 
 func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
-	buf.WriteByte(n.Pfxlen)
-	b := n.IP.Bytes()
+	buf.WriteByte(n.Prefix.Pfxlen())
+	b := n.Prefix.Addr().Bytes()
 
-	nBytes := BytesInAddr(n.Pfxlen)
+	nBytes := BytesInAddr(n.Prefix.Pfxlen())
 	buf.Write(b[:nBytes])
 
 	return nBytes + 1

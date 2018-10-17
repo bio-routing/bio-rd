@@ -209,11 +209,9 @@ func TestDecode(t *testing.T) {
 				Body: &BGPUpdate{
 					WithdrawnRoutesLen: 5,
 					WithdrawnRoutes: &NLRI{
-						IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-						Pfxlen: 8,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 						Next: &NLRI{
-							IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-							Pfxlen: 16,
+							Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 						},
 					},
 				},
@@ -429,11 +427,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 			},
@@ -455,11 +451,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 5,
@@ -497,11 +491,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 14,
@@ -600,11 +592,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 20,
@@ -675,11 +665,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 27,
@@ -766,11 +754,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 34,
@@ -870,11 +856,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 41,
@@ -986,11 +970,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 44,
@@ -1118,11 +1100,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 53,
@@ -1207,8 +1187,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					Pfxlen: 8,
-					IP:     bnet.IPv4FromOctets(11, 0, 0, 0),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8),
 				},
 			},
 		},
@@ -1290,11 +1269,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 				TotalPathAttrLen: 16,

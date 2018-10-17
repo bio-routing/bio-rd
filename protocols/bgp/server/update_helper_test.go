@@ -6,9 +6,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,11 +48,9 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 			testUpdate: &packet.BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &packet.NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &packet.NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 			},
@@ -79,11 +76,9 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 			testUpdate: &packet.BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &packet.NLRI{
-					IP:     bnet.IPv4FromOctets(10, 0, 0, 0),
-					Pfxlen: 8,
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Next: &packet.NLRI{
-						IP:     bnet.IPv4FromOctets(192, 168, 0, 0),
-						Pfxlen: 16,
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
 			},
