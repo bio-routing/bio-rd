@@ -20,16 +20,18 @@ type AdjRIBIn struct {
 	contributingASNs *routingtable.ContributingASNs
 	routerID         uint32
 	clusterID        uint32
+	addPathRX        bool
 }
 
 // New creates a new Adjacency RIB In
-func New(exportFilter *filter.Filter, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32) *AdjRIBIn {
+func New(exportFilter *filter.Filter, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32, addPathRX bool) *AdjRIBIn {
 	a := &AdjRIBIn{
 		rt:               routingtable.NewRoutingTable(),
 		exportFilter:     exportFilter,
 		contributingASNs: contributingASNs,
 		routerID:         routerID,
 		clusterID:        clusterID,
+		addPathRX:        addPathRX,
 	}
 	a.ClientManager = routingtable.NewClientManager(a)
 	return a
@@ -82,8 +84,12 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 		}
 	}
 
-	oldPaths := a.rt.ReplacePath(pfx, p)
-	a.removePathsFromClients(pfx, oldPaths)
+	if a.addPathRX {
+		a.rt.AddPath(pfx, p)
+	} else {
+		oldPaths := a.rt.ReplacePath(pfx, p)
+		a.removePathsFromClients(pfx, oldPaths)
+	}
 
 	p, reject := a.exportFilter.ProcessTerms(pfx, p)
 	if reject {

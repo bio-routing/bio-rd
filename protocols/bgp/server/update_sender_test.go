@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/routingtable"
 
 	"github.com/stretchr/testify/assert"
 
@@ -24,12 +25,13 @@ func TestSender(t *testing.T) {
 		paths           []pathPfxs
 		generateNLRIs   uint64
 		expectedUpdates [][]byte
-		addPath         bool
+		addPath         routingtable.ClientOptions
 		afi             uint16
 	}{
 		{
-			name: "Two paths with 3 NLRIs each",
-			afi:  packet.IPv4AFI,
+			name:    "Two paths with 3 NLRIs each",
+			afi:     packet.IPv4AFI,
+			addPath: routingtable.ClientOptions{BestOnly: true},
 			paths: []pathPfxs{
 				{
 					path: &route.Path{
@@ -92,7 +94,7 @@ func TestSender(t *testing.T) {
 		{
 			name:    "Two paths with 3 NLRIs each with BGP Add Path",
 			afi:     packet.IPv4AFI,
-			addPath: true,
+			addPath: routingtable.ClientOptions{MaxPaths: 10},
 			paths: []pathPfxs{
 				{
 					path: &route.Path{
@@ -169,8 +171,9 @@ func TestSender(t *testing.T) {
 			},
 		},
 		{
-			name: "Overflow. Too many NLRIs.",
-			afi:  packet.IPv4AFI,
+			name:    "Overflow. Too many NLRIs.",
+			afi:     packet.IPv4AFI,
+			addPath: routingtable.ClientOptions{BestOnly: true},
 			paths: []pathPfxs{
 				{
 					path: &route.Path{
@@ -337,8 +340,9 @@ func TestSender(t *testing.T) {
 			},
 		},
 		{
-			name: "Overflow with IPv6. Too many NLRIs.",
-			afi:  packet.IPv6AFI,
+			name:    "Overflow with IPv6. Too many NLRIs.",
+			afi:     packet.IPv6AFI,
+			addPath: routingtable.ClientOptions{BestOnly: true},
 			paths: []pathPfxs{
 				{
 					path: &route.Path{
@@ -946,7 +950,7 @@ func TestSender(t *testing.T) {
 func TestWithdrawPrefix(t *testing.T) {
 	testcases := []struct {
 		name          string
-		addPathTX     bool
+		addPathTX     routingtable.ClientOptions
 		afi           uint16
 		multiProtocol bool
 		prefix        bnet.Prefix
@@ -958,7 +962,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			name:          "Non bgp withdraw with ADD-PATH",
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
-			addPathTX:     true,
+			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24),
 			path: &route.Path{
 				Type: route.StaticPathType,
@@ -970,7 +974,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			name:          "Nil BGPPathType with ADD-PATH",
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
-			addPathTX:     true,
+			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24),
 			path: &route.Path{
 				Type: route.BGPPathType,
@@ -982,7 +986,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			name:          "Normal withdraw with ADD-PATH",
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
-			addPathTX:     true,
+			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24),
 			path: &route.Path{
 				Type: route.BGPPathType,
@@ -1006,7 +1010,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			name:          "Normal withdraw without ADD-PATH",
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
-			addPathTX:     false,
+			addPathTX:     routingtable.ClientOptions{BestOnly: true},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24),
 			path: &route.Path{
 				Type: route.BGPPathType,
@@ -1029,7 +1033,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			name:          "IPv6 MP_UNREACH_NLRI",
 			afi:           packet.IPv6AFI,
 			multiProtocol: true,
-			addPathTX:     false,
+			addPathTX:     routingtable.ClientOptions{BestOnly: true},
 			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32),
 			path: &route.Path{
 				Type:    route.BGPPathType,
@@ -1053,7 +1057,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			name:          "IPv6 MP_UNREACH_NLRI with ADD-PATH",
 			afi:           packet.IPv6AFI,
 			multiProtocol: true,
-			addPathTX:     true,
+			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32),
 			path: &route.Path{
 				Type: route.BGPPathType,
@@ -1080,7 +1084,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			name:          "IPv6 MP_UNREACH_NLRI without multi protocol beeing negotiated",
 			afi:           packet.IPv6AFI,
 			multiProtocol: false,
-			addPathTX:     false,
+			addPathTX:     routingtable.ClientOptions{BestOnly: true},
 			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32),
 			path: &route.Path{
 				Type: route.BGPPathType,
@@ -1108,7 +1112,7 @@ func TestWithdrawPrefix(t *testing.T) {
 					safi:          packet.UnicastSAFI,
 				},
 				options: &packet.EncodeOptions{
-					UseAddPath: tc.addPathTX,
+					UseAddPath: !tc.addPathTX.BestOnly,
 				},
 			}
 
