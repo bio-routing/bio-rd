@@ -220,6 +220,7 @@ func TestNLRISerialize(t *testing.T) {
 	tests := []struct {
 		name     string
 		nlri     *NLRI
+		addPath  bool
 		expected []byte
 	}{
 		{
@@ -243,51 +244,38 @@ func TestNLRISerialize(t *testing.T) {
 			},
 			expected: []byte{17, 100, 200, 128},
 		},
-	}
-
-	for _, test := range tests {
-		buf := bytes.NewBuffer(nil)
-		test.nlri.serialize(buf)
-		res := buf.Bytes()
-		assert.Equal(t, test.expected, res)
-	}
-}
-
-func TestNLRIAddPathSerialize(t *testing.T) {
-	tests := []struct {
-		name     string
-		nlri     *NLRI
-		expected []byte
-	}{
 		{
-			name: "Test #1",
+			name: "with add-path #1",
 			nlri: &NLRI{
 				PathIdentifier: 100,
 				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25),
 			},
+			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 25, 1, 2, 3, 0},
 		},
 		{
-			name: "Test #2",
+			name: "with add-path #2",
 			nlri: &NLRI{
 				PathIdentifier: 100,
 				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24),
 			},
+			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 24, 1, 2, 3},
 		},
 		{
-			name: "Test #3",
+			name: "with add-path #3",
 			nlri: &NLRI{
 				PathIdentifier: 100,
 				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17),
 			},
+			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 17, 100, 200, 128},
 		},
 	}
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(nil)
-		test.nlri.serializeAddPath(buf)
+		test.nlri.serialize(buf, test.addPath)
 		res := buf.Bytes()
 		assert.Equal(t, test.expected, res)
 	}

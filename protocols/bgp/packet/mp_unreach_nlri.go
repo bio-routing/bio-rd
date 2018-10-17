@@ -21,10 +21,7 @@ func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptio
 	tempBuf.WriteByte(n.SAFI)
 
 	for cur := n.NLRI; cur != nil; cur = cur.Next {
-		if opt.UseAddPath {
-			tempBuf.Write(convert.Uint32Byte(cur.PathIdentifier))
-		}
-		tempBuf.Write(serializePrefix(cur.Prefix))
+		cur.serialize(tempBuf, opt.UseAddPath)
 	}
 
 	buf.Write(tempBuf.Bytes())
