@@ -17,6 +17,7 @@ func TestAddPath(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		addPath    bool
 		routes     []*route.Route
 		removePfx  net.Prefix
 		removePath *route.Path
@@ -104,10 +105,46 @@ func TestAddPath(t *testing.T) {
 			},
 			expected: []*route.Route{},
 		},
+		{
+			name:    "Add route (with BGP add path)",
+			addPath: true,
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 100,
+					},
+				}),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						LocalPref: 200,
+					},
+				}),
+			},
+			removePfx:  net.Prefix{},
+			removePath: nil,
+			expected: []*route.Route{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), []*route.Path{
+					{
+						Type: route.BGPPathType,
+						BGPPath: &route.BGPPath{
+							LocalPref: 100,
+						},
+					},
+					{
+						Type: route.BGPPathType,
+						BGPPath: &route.BGPPath{
+							LocalPref: 200,
+						},
+					},
+				}),
+			},
+		},
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), routerID, clusterID)
+		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), routerID, clusterID, test.addPath)
 		mc := routingtable.NewRTMockClient()
 		adjRIBIn.ClientManager.Register(mc)
 
@@ -130,12 +167,61 @@ func TestAddPath(t *testing.T) {
 func TestRemovePath(t *testing.T) {
 	tests := []struct {
 		name            string
+		addPath         bool
 		routes          []*route.Route
 		removePfx       net.Prefix
 		removePath      *route.Path
 		expected        []*route.Route
 		wantPropagation bool
 	}{
+		{
+			name:    "Remove an a path from existing route",
+			addPath: true,
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						PathIdentifier: 100,
+					},
+				}),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						PathIdentifier: 200,
+					},
+				}),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						PathIdentifier: 300,
+					},
+				}),
+			},
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
+			removePath: &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					PathIdentifier: 200,
+				},
+			},
+			expected: []*route.Route{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), []*route.Path{
+					{
+						Type: route.BGPPathType,
+						BGPPath: &route.BGPPath{
+							PathIdentifier: 100,
+						},
+					},
+					{
+						Type: route.BGPPathType,
+						BGPPath: &route.BGPPath{
+							PathIdentifier: 300,
+						},
+					},
+				}),
+			},
+			wantPropagation: true,
+		},
 		{
 			name: "Remove an existing route",
 			routes: []*route.Route{
@@ -201,7 +287,7 @@ func TestRemovePath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 1, 2)
+		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 1, 2, test.addPath)
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
 		}

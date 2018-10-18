@@ -202,21 +202,24 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 		return
 	}
 
+	peerAddressFamily := s.fsm.peer.addressFamily(addPathCap.AFI, addPathCap.SAFI)
+
 	switch addPathCap.SendReceive {
 	case packet.AddPathReceive:
-		if !f.addPathSend.BestOnly {
-			f.addPathTX = true
+		if !peerAddressFamily.addPathSend.BestOnly {
+			f.addPathTX = peerAddressFamily.addPathSend
 		}
 	case packet.AddPathSend:
-		if f.addPathTXConfigured {
-			f.addPathTX = true
+		if peerAddressFamily.addPathReceive {
+			f.addPathRX = true
 		}
 	case packet.AddPathSendReceive:
-		if !f.addPathSend.BestOnly {
-			f.addPathTX = true
+		if !peerAddressFamily.addPathSend.BestOnly {
+			f.addPathTX = peerAddressFamily.addPathSend
 		}
-		if f.addPathTXConfigured {
-			f.addPathTX = true
+
+		if peerAddressFamily.addPathReceive {
+			f.addPathRX = true
 		}
 	}
 }

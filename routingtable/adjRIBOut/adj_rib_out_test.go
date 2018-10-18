@@ -332,7 +332,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 
 	adjRIBOut := New(neighborBestOnlyEBGP, filter.NewAcceptAllFilter(), false)
 
-	tests := []struct {
+	testSteps := []struct {
 		name          string
 		routesAdd     []*route.Route
 		routesRemove  []*route.Route
@@ -511,7 +511,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		},
 	}
 
-	for i, test := range tests {
+	for i, test := range testSteps {
 		fmt.Printf("Running iBGP best only test #%d: %s\n", i+1, test.name)
 		for _, route := range test.routesAdd {
 			adjRIBOut.AddPath(route.Prefix(), route.Paths()[0])
@@ -1438,11 +1438,14 @@ func TestAddPathIBGP(t *testing.T) {
 			adjRIBOut.RemovePath(route.Prefix(), route.Paths()[0])
 		}
 
-		assert.Equal(t, test.expected, adjRIBOut.rt.Dump())
+		if !assert.Equalf(t, test.expected, adjRIBOut.rt.Dump(), "Test %q", test.name) {
+			return
+		}
 
 		actualCount := adjRIBOut.RouteCount()
 		if test.expectedCount != actualCount {
 			t.Errorf("Expected route count %d differs from actual route count %d!\n", test.expectedCount, actualCount)
+			return
 		}
 	}
 }

@@ -138,21 +138,30 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 		return false
 	}
 
-	a.rt.RemovePath(pfx, p)
-
-	// If the neighbar has AddPath capabilities, try to find the PathID
+	sentPath := p
 	if a.addPathTX {
-		pathID, err := a.pathIDManager.releasePath(p)
-		if err != nil {
-			log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
-			return true
+		for _, sentPath := range r.Paths() {
+			if sentPath.Select(p) != 0 {
+				continue
+			}
+
+			a.rt.RemovePath(pfx, sentPath)
+
+			_, err := a.pathIDManager.releasePath(p)
+			if err != nil {
+				log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
+				return true
+			}
 		}
 
-		p = p.Copy()
-		p.BGPPath.PathIdentifier = pathID
+		if sentPath == p {
+			return false
+		}
+	} else {
+		a.rt.RemovePath(pfx, p)
 	}
 
-	a.removePathFromClients(pfx, p)
+	a.removePathFromClients(pfx, sentPath)
 	return true
 }
 

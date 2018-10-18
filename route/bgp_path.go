@@ -73,8 +73,17 @@ func (b *BGPPath) ECMP(c *BGPPath) bool {
 	return b.LocalPref == c.LocalPref && b.ASPathLen == c.ASPathLen && b.MED == c.MED && b.Origin == c.Origin
 }
 
-// Compare returns negative if b < c, 0 if paths are equal, positive if b > c
-func (b *BGPPath) Compare(c *BGPPath) int8 {
+// Equal checks if paths are equal
+func (b *BGPPath) Equal(c *BGPPath) bool {
+	if b.PathIdentifier != c.PathIdentifier {
+		return false
+	}
+
+	return b.Select(c) == 0
+}
+
+// Select returns negative if b < c, 0 if paths are equal, positive if b > c
+func (b *BGPPath) Select(c *BGPPath) int8 {
 	if c.LocalPref < b.LocalPref {
 		return 1
 	}
