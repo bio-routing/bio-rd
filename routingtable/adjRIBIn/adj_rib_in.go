@@ -1,7 +1,6 @@
 package adjRIBIn
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -134,14 +133,11 @@ func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	oldPaths := r.Paths()
 	for _, path := range oldPaths {
 		if a.addPathRX {
-			fmt.Printf("Add Path RX!\n")
 			if path.BGPPath.PathIdentifier != p.BGPPath.PathIdentifier {
-				fmt.Printf("Path ID %v != %v. Ignoring.\n", path.BGPPath.PathIdentifier, p.BGPPath.PathIdentifier)
 				continue
 			}
 		}
 
-		fmt.Printf("Removing: %v => %v\n", pfx, *path.BGPPath)
 		a.rt.RemovePath(pfx, path)
 		removed = append(removed, path)
 	}
