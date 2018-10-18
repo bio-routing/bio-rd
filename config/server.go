@@ -23,8 +23,8 @@ type Global struct {
 	LoopbackIface    string
 }
 
-//BGPPORT default bgp port for default which is tcp 179
-const BGPPORT = uint16(179)
+//BGPPort default bgp port for default which is tcp 179
+const BGPPort = uint16(179)
 
 //SetDefaultGlobalConfigValues maps default configuration values to Global struct
 func (g *Global) SetDefaultGlobalConfigValues() error {
@@ -34,7 +34,6 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 		g.LocalAddressList = append(g.LocalAddressList, net.ParseIP("::"))
 	}
 
-	//Set router Id if no override is set via config file
 	if g.RouterID == 0 {
 		rtrid, err := generateRouterID(g.LoopbackIface)
 		if err != nil {
@@ -43,9 +42,8 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 		g.RouterID = rtrid
 	}
 
-	//Set default port if no override is set via config file
 	if g.Port == 0 {
-		g.Port = BGPPORT
+		g.Port = BGPPort
 	}
 
 	return nil
@@ -54,6 +52,7 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 //ReadGlobalConfig Search and read global config files in path ./, /etc/bio-rd/ or $HOME/.bio-rd/
 func (g *Global) ReadGlobalConfig() error {
 
+	//Searching for Config starting with name global
 	viper.SetConfigName("global")
 	viper.AddConfigPath("/etc/bio-rd/")
 	home, err := homedir.Dir()
