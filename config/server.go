@@ -23,7 +23,7 @@ type Global struct {
 	LoopbackIface    string
 }
 
-//BGPPort default bgp port for default which is tcp 179
+//BGPPort default port for BGP (tcp/179)
 const BGPPort = uint16(179)
 
 //SetDefaultGlobalConfigValues maps default configuration values to Global struct
