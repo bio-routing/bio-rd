@@ -10,8 +10,8 @@ type Path struct {
 	BGPPath    *BGPPath
 }
 
-// Compare returns negative if p < q, 0 if paths are equal, positive if p > q
-func (p *Path) Compare(q *Path) int8 {
+// Select returns negative if p < q, 0 if paths are equal, positive if p > q
+func (p *Path) Select(q *Path) int8 {
 	switch {
 	case p == nil && q == nil:
 		return 0
@@ -32,9 +32,9 @@ func (p *Path) Compare(q *Path) int8 {
 
 	switch p.Type {
 	case BGPPathType:
-		return p.BGPPath.Compare(q.BGPPath)
+		return p.BGPPath.Select(q.BGPPath)
 	case StaticPathType:
-		return p.StaticPath.Compare(q.StaticPath)
+		return p.StaticPath.Select(q.StaticPath)
 	}
 
 	panic("Unknown path type")
@@ -55,7 +55,19 @@ func (p *Path) Equal(q *Path) bool {
 	if p == nil || q == nil {
 		return false
 	}
-	return p.Compare(q) == 0
+
+	if p.Type != q.Type {
+		return false
+	}
+
+	switch p.Type {
+	case BGPPathType:
+		return p.BGPPath.Equal(q.BGPPath)
+	case StaticPathType:
+		return p.StaticPath.Equal(q.StaticPath)
+	}
+
+	return p.Select(q) == 0
 }
 
 // PathsDiff gets the list of elements contained by a but not b

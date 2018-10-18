@@ -168,7 +168,7 @@ func (a *LocRIB) ContainsPfxPath(pfx net.Prefix, p *route.Path) bool {
 	}
 
 	for _, path := range r.Paths() {
-		if path.Compare(p) == 0 {
+		if path.Equal(p) {
 			return true
 		}
 	}

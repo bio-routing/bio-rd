@@ -185,7 +185,7 @@ func (r *Route) PathSelection() {
 	defer r.mu.Unlock()
 
 	sort.Slice(r.paths, func(i, j int) bool {
-		return r.paths[i].Compare(r.paths[j]) == -1
+		return r.paths[i].Select(r.paths[j]) == -1
 	})
 
 	r.updateEqualPathCount()

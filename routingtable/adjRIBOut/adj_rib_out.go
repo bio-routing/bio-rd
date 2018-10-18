@@ -138,9 +138,17 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 		return false
 	}
 
-	a.rt.RemovePath(pfx, p)
+	if a.addPathTX {
+		for _, q := range r.Paths() {
+			if q.Select(p) == 0 {
+				a.rt.RemovePath(pfx, q)
+			}
+		}
+	} else {
+		a.rt.RemovePath(pfx, p)
+	}
 
-	// If the neighbar has AddPath capabilities, try to find the PathID
+	// If the neighbor has AddPath capabilities, try to find the PathID
 	if a.addPathTX {
 		pathID, err := a.pathIDManager.releasePath(p)
 		if err != nil {
