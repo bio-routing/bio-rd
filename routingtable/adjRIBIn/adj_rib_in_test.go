@@ -222,7 +222,7 @@ func TestRemovePath(t *testing.T) {
 			},
 			wantPropagation: true,
 		},
-		/*{
+		{
 			name: "Remove an existing route",
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
@@ -283,7 +283,7 @@ func TestRemovePath(t *testing.T) {
 				}),
 			},
 			wantPropagation: false,
-		},*/
+		},
 	}
 
 	for _, test := range tests {
