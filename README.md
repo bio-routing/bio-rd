@@ -13,22 +13,12 @@ We use [Bazel](https://bazel.io) to test bio-rd.
 
 Build
 -----
-
-BGP
----
+ 
 ```
-cd examples/bgp
 bazel build //...
-./bgp
 ```
+Now you can find binaries under bazel-bin/examples/
 
-BMP
----
-```
-cd examples/bmp
-bazel build //...
-./bmp
-```
 
 Run Tests
 ---------
