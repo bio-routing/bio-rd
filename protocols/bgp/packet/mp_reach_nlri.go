@@ -28,11 +28,7 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions
 	tempBuf.WriteByte(0) // RESERVED
 
 	for cur := n.NLRI; cur != nil; cur = cur.Next {
-		if opt.UseAddPath {
-			n.NLRI.serializeAddPath(tempBuf)
-		} else {
-			n.NLRI.serialize(tempBuf)
-		}
+		cur.serialize(tempBuf, opt.UseAddPath)
 	}
 
 	buf.Write(tempBuf.Bytes())

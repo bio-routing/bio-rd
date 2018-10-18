@@ -89,20 +89,22 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 	return nlri, consumed, nil
 }
 
-func (n *NLRI) serialize(buf *bytes.Buffer) uint8 {
+func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool) uint8 {
+	numBytes := uint8(0)
+
+	if addPath {
+		buf.Write(convert.Uint32Byte(n.PathIdentifier))
+		numBytes += 4
+	}
+
 	buf.WriteByte(n.Prefix.Pfxlen())
-	b := n.Prefix.Addr().Bytes()
+	numBytes++
 
-	nBytes := BytesInAddr(n.Prefix.Pfxlen())
-	buf.Write(b[:nBytes])
+	pfxNumBytes := BytesInAddr(n.Prefix.Pfxlen())
+	buf.Write(n.Prefix.Addr().Bytes()[:pfxNumBytes])
+	numBytes += pfxNumBytes
 
-	return nBytes + 1
-}
-
-func (n *NLRI) serializeAddPath(buf *bytes.Buffer) uint8 {
-	buf.Write(convert.Uint32Byte(n.PathIdentifier))
-
-	return uint8(n.serialize(buf) + 4)
+	return numBytes
 }
 
 // BytesInAddr gets the amount of bytes needed to encode an NLRI of prefix length pfxlen
