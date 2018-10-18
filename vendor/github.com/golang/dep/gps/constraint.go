@@ -169,12 +169,6 @@ func (c semverConstraint) typedString() string {
 
 func (c semverConstraint) Matches(v Version) bool {
 	switch tv := v.(type) {
-	case versionTypeUnion:
-		for _, elem := range tv {
-			if c.Matches(elem) {
-				return true
-			}
-		}
 	case semVersion:
 		return c.c.Matches(tv.sv) == nil
 	case versionPair:
@@ -194,12 +188,6 @@ func (c semverConstraint) Intersect(c2 Constraint) Constraint {
 	switch tc := c2.(type) {
 	case anyConstraint:
 		return c
-	case versionTypeUnion:
-		for _, elem := range tc {
-			if rc := c.Intersect(elem); rc != none {
-				return rc
-			}
-		}
 	case semverConstraint:
 		rc := c.c.Intersect(tc.c)
 		if !semver.IsNone(rc) {
@@ -372,27 +360,6 @@ func pcSliceToMap(l []ProjectConstraint, r ...[]ProjectConstraint) ProjectConstr
 	}
 
 	return final
-}
-
-func (m ProjectConstraints) asSortedSlice() []ProjectConstraint {
-	pcs := make([]ProjectConstraint, len(m))
-
-	k := 0
-	for pr, pp := range m {
-		pcs[k] = ProjectConstraint{
-			Ident: ProjectIdentifier{
-				ProjectRoot: pr,
-				Source:      pp.Source,
-			},
-			Constraint: pp.Constraint,
-		}
-		k++
-	}
-
-	sort.SliceStable(pcs, func(i, j int) bool {
-		return pcs[i].Ident.Less(pcs[j].Ident)
-	})
-	return pcs
 }
 
 // overrideAll treats the receiver ProjectConstraints map as a set of override

@@ -2,7 +2,7 @@
 title: The Solver
 ---
 
-At the heart of dep is a constraint solving engine - a [CDCL]()-style [SMT]() solver, tailored specifically to the domain of Go package management. It lives in the `github.com/golang/dep/gps` package, and is where the work of determining a valid, transitively complete dependency graph (aka, the contents of `Gopkg.lock`) is performed.
+At the heart of dep is a constraint solving engine - a [CDCL](https://en.wikipedia.org/wiki/Conflict-Driven_Clause_Learning)-style solver (albeit light on the "CL" part), tailored specifically to the domain of Go package management. It lives in the `github.com/golang/dep/gps` package, and is where the work of determining a valid, transitively complete dependency graph (aka, the contents of `Gopkg.lock`) is performed.
 
 This page will eventually detail the solver's mechanics, but in the meantime, there are [docs for an older version of the solver](https://github.com/sdboyer/gps/wiki/gps-for-Contributors) that are still accurate enough to provide a rough picture of its behavior.
 
@@ -13,21 +13,21 @@ The solver guarantees certain invariants in every complete solution it returns. 
 * All rules specified in activated `[[constraint]]` stanzas in both the current project and dependency projects will be satisfied, unless superseded by a `[[override]]` stanza in the current project.
 * For all import paths pointing into a given project, the version of the project selected will contain "valid" Go packages in the corresponding directory.
 * If an [import comment](https://golang.org/cmd/go/#hdr-Import_path_checking) is specified by a package, any import paths addressing that package will be of the form specified in the comment.
-* For any given import path, all instances of that import path will use the exact same casing. 
+* For any given import path, all instances of that import path will use the exact same casing.
 
 The solver is an iterative algorithm, working its way project-by-project through possible dependency graphs. In order to select a project, it must first prove that, to the best of its current knowledge, all of the above conditions are met. When the solver cannot find a solution, failure is defined in terms of a project's version's inability to meet one of the above criteria.
 
 ### `[[constraint]]` rules
 
-As described in the `Gopkg.toml` docs, each [`[[constraint]]`](gopkg.toml.md#constraint) stanza is associated with a single project, and each stanza can contain both [a version rule](Gopkg.toml.md#version-rules) and a [source rule](Gopkg.toml.md#source). For any given project `P`, all dependers on `P` whose constraint rules are "activated" must express mutually compatible rules. That means:
+As described in the `Gopkg.toml` docs, each [`[[constraint]]`](Gopkg.toml.md#constraint) stanza is associated with a single project, and each stanza can contain both [a version rule](Gopkg.toml.md#version-rules) and a [source rule](Gopkg.toml.md#source). For any given project `P`, all dependers on `P` whose constraint rules are "activated" must express mutually compatible rules. That means:
 
-* For version rules, all activated constraints on `P` must [intersect](https://en.wikipedia.org/wiki/Intersection_(set_theory)), and and there must be at least one published version must exist in the intersecting space. Intersection varies depending on version rule type:
+* For version rules, all activated constraints on `P` must [intersect](<https://en.wikipedia.org/wiki/Intersection_(set_theory)>), and and there must be at least one published version must exist in the intersecting space. Intersection varies depending on version rule type:
   * For `revision` and `branch`, it must be a string-literal match.
   * For `version`, if the string is not a valid semantic version, then it must be a string-literal match.
   * For `version` that are valid semantic version ranges, intersection is standard set-theoretic intersection of the possible values in each range range. Semantic versions without ranges are treated as a single element set (e.g., `version = "=v1.0.0"`) for intersection purposes.
 * For `source` rules, all projects with a particular dependency must either express a string-equal `source` value, or have no `source` value at all. This allows one dependency to specify an alternate `source`, and other dependencies to play along if they have no opinion. (NB: this play-along behavior may be removed in a future version.)
 
-If the current project's `Gopkg.toml` has an [`[[override]]`](gopkg.toml.md#override) on `P`, then all `[[constraint]]` declarations (including any in the current project) are ignored, obviating the possibility of conflict.
+If the current project's `Gopkg.toml` has an [`[[override]]`](Gopkg.toml.md#override) on `P`, then all `[[constraint]]` declarations (including any in the current project) are ignored, obviating the possibility of conflict.
 
 #### Activated constraints
 
@@ -47,7 +47,7 @@ The reasoning behind this behavior is explained further [in this gist](https://g
 
 ### Package validity
 
-dep does only superficial validaton of code in packages, but it does do some. For a package to be considered valid, three things must be true:
+dep does only superficial validation of code in packages, but it does do some. For a package to be considered valid, three things must be true:
 
 * There must be at least one `.go` file.
 * No errors are reported from [`parser.ParseFile()`](https://golang.org/pkg/go/parser/#ParseFile) when called with [`parser.ImportsOnly|parser.ParseComments`](https://golang.org/pkg/go/parser/#Mode) on any file in the package directory.
