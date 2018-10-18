@@ -3,6 +3,7 @@ package config
 import (
 	"net"
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -89,8 +90,9 @@ func TestReadGlobalConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error on reading global config file: %v", err)
 	} else {
-		if g.LoopbackIface != "lo" {
-			t.Errorf("Except lo as LoopbackIface")
+		loopbackIfaceRegex := regexp.MustCompile("lo[0-9]*")
+		if !loopbackIfaceRegex.MatchString(g.LoopbackIface) {
+			t.Errorf("Expected lo[0-9] as LoopbackIface")
 		}
 	}
 
