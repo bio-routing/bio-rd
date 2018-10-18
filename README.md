@@ -18,7 +18,7 @@ BGP
 ---
 ```
 cd examples/bgp
-go build
+bazel build //...
 ./bgp
 ```
 
@@ -26,8 +26,8 @@ BMP
 ---
 ```
 cd examples/bmp
-go build
-./bgp
+bazel build //...
+./bmp
 ```
 
 Run Tests
