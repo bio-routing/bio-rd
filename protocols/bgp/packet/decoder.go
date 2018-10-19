@@ -30,7 +30,7 @@ func Decode(buf *bytes.Buffer, opt *DecodeOptions) (*BGPMessage, error) {
 func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOptions) (interface{}, error) {
 	switch msgType {
 	case OpenMsg:
-		return decodeOpenMsg(buf)
+		return DecodeOpenMsg(buf)
 	case UpdateMsg:
 		return decodeUpdateMsg(buf, l, opt)
 	case KeepaliveMsg:
@@ -128,7 +128,8 @@ func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
 	return n, fmt.Errorf("Invalid error sub code: %d/%d", n.ErrorCode, n.ErrorSubcode)
 }
 
-func decodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
+// DecodeOpenMsg decodes a BGP OPEN message
+func DecodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
 	msg, err := _decodeOpenMsg(buf)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode OPEN message: %v", err)
@@ -241,13 +242,13 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 	case AddPathCapabilityCode:
 		addPathCap, err := decodeAddPathCapability(buf)
 		if err != nil {
-			return cap, fmt.Errorf("Unable to decode add path capability")
+			return cap, fmt.Errorf("Unable to decode add path capability: %v", err)
 		}
 		cap.Value = addPathCap
 	case ASN4CapabilityCode:
 		asn4Cap, err := decodeASN4Capability(buf)
 		if err != nil {
-			return cap, fmt.Errorf("Unable to decode 4 octet ASN capability")
+			return cap, fmt.Errorf("Unable to decode 4 octet ASN capability: %v", err)
 		}
 		cap.Value = asn4Cap
 	default:

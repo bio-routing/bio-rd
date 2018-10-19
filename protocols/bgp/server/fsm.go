@@ -29,6 +29,7 @@ type state interface {
 
 // FSM implements the BGP finite state machine (RFC4271)
 type FSM struct {
+	isBMP       bool
 	peer        *peer
 	eventCh     chan int
 	con         net.Conn

@@ -92,7 +92,7 @@ func (s *openSentState) msgReceived(data []byte, opt *packet.DecodeOptions) (sta
 	case packet.NotificationMsg:
 		return s.notification(msg)
 	case packet.OpenMsg:
-		return s.openMsgReceived(msg)
+		return s.openMsgReceived(msg.Body.(*packet.BGPOpen))
 	default:
 		return s.unexpectedMessage()
 	}
@@ -106,11 +106,15 @@ func (s *openSentState) unexpectedMessage() (state, string) {
 	return newIdleState(s.fsm), "FSM Error"
 }
 
-func (s *openSentState) openMsgReceived(msg *packet.BGPMessage) (state, string) {
-	openMsg := msg.Body.(*packet.BGPOpen)
+func (s *openSentState) openMsgReceived(openMsg *packet.BGPOpen) (state, string) {
 	s.peerASNRcvd = uint32(openMsg.ASN)
 
 	s.fsm.neighborID = openMsg.BGPIdentifier
+
+	if s.fsm.isBMP {
+		return s.handleOpenMessage(openMsg)
+	}
+
 	stopTimer(s.fsm.connectRetryTimer)
 	if s.fsm.peer.collisionHandling(s.fsm) {
 		return s.cease()

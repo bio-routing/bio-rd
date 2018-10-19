@@ -65,6 +65,12 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	f.rib.RegisterWithOptions(f.adjRIBOut, f.addPathTX)
 }
 
+func (f *fsmAddressFamily) bmpInit() {
+	f.adjRIBIn = adjRIBIn.New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+
+	f.adjRIBIn.Register(f.rib)
+}
+
 func (f *fsmAddressFamily) dispose() {
 	if !f.initialized {
 		return

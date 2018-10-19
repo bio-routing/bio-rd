@@ -20,10 +20,11 @@ type PeerInfo struct {
 }
 
 type peer struct {
-	server   *bgpServer
-	addr     bnet.IP
-	peerASN  uint32
-	localASN uint32
+	server    *bgpServer
+	addr      bnet.IP
+	localAddr bnet.IP
+	peerASN   uint32
+	localASN  uint32
 
 	// guarded by fsmsMu
 	fsms   []*FSM
