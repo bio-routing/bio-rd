@@ -11,15 +11,16 @@ gazelle:
 test: $(NAME)
 	bazel test //...
 
-vendor:
+dep:
 	bazel build //vendor/github.com/golang/dep/cmd/dep
-	bazel-bin/vendor/github.com/golang/dep/cmd/dep/linux_amd64_stripped/dep use
+
+dep-clean:
 	# hack: dep of dep gives us these, and it breaks gazelle
 	rm -rf vendor/github.com/golang/dep/cmd/dep/testdata
 	rm -rf vendor/github.com/golang/dep/internal/fs/testdata/symlinks/dir-symlink
 
-clean:
+clean: dep-clean
 	bazel clean
 	rm $(NAME)
 
-.PHONY: $(NAME) gazelle clean
+.PHONY: $(NAME) gazelle clean dep dep-clean
