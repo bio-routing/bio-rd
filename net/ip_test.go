@@ -13,7 +13,7 @@ func TestCompare(t *testing.T) {
 		name     string
 		ip       IP
 		other    IP
-		expected int
+		expected int8
 	}{
 		{
 			name: "equal",

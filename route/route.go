@@ -6,19 +6,27 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/vishvananda/netlink"
 )
 
-// StaticPathType indicats a path is a static path
-const StaticPathType = 1
+const (
+	_ = iota // 0
 
-// BGPPathType indicates a path is a BGP path
-const BGPPathType = 2
+	// StaticPathType indicats a path is a static path
+	StaticPathType
 
-// OSPFPathType indicates a path is an OSPF path
-const OSPFPathType = 3
+	// BGPPathType indicates a path is a BGP path
+	BGPPathType
 
-// ISISPathType indicates a path is an ISIS path
-const ISISPathType = 4
+	// OSPFPathType indicates a path is an OSPF path
+	OSPFPathType
+
+	// ISISPathType indicates a path is an ISIS path
+	ISISPathType
+
+	// NetlinkPathType indicates a path is an Netlink/Kernel path
+	NetlinkPathType
+)
 
 // Route links a prefix to paths
 type Route struct {
@@ -191,6 +199,44 @@ func (r *Route) PathSelection() {
 	r.updateEqualPathCount()
 }
 
+func (r *Route) Equal(other *Route) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	a := r.pfx.Equal(other.pfx)
+	b := r.ecmpPaths == other.ecmpPaths
+	c := true
+
+	if r.paths == nil && other.paths == nil {
+		c = true
+		return a && b && c
+	}
+
+	if len(r.paths) != len(other.paths) {
+		c = false
+		return a && b && c
+	}
+
+	for _, myP := range r.paths {
+		if !r.compareItemExists(myP, other.paths) {
+			c = false
+			return a && b && c
+		}
+	}
+
+	return a && b && c
+}
+
+func (r *Route) compareItemExists(needle *Path, haystack []*Path) bool {
+	for _, compare := range haystack {
+		if needle.Equal(compare) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (r *Route) updateEqualPathCount() {
 	count := uint(1)
 	for i := 0; i < len(r.paths)-1; i++ {
@@ -228,4 +274,50 @@ func (r *Route) Print() string {
 	}
 
 	return ret
+}
+
+// NetlinkRouteDiff gets the list of elements contained by a but not b
+func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
+	ret := make([]netlink.Route, 0)
+
+	for _, pa := range a {
+		if !netlinkRoutesContains(pa, b) {
+			ret = append(ret, pa)
+		}
+	}
+
+	return ret
+}
+
+func netlinkRoutesContains(needle netlink.Route, haystack []netlink.Route) bool {
+	for _, p := range haystack {
+
+		probeMaskSize, probeMaskBits := p.Dst.Mask.Size()
+		needleMaskSize, needleMaskBits := needle.Dst.Mask.Size()
+
+		if p.LinkIndex == needle.LinkIndex &&
+			p.ILinkIndex == needle.ILinkIndex &&
+			p.Scope == needle.Scope &&
+
+			p.Dst.IP.Equal(needle.Dst.IP) &&
+			probeMaskSize == needleMaskSize &&
+			probeMaskBits == needleMaskBits &&
+
+			p.Src.Equal(needle.Src) &&
+			p.Gw.Equal(needle.Gw) &&
+
+			p.Protocol == needle.Protocol &&
+			p.Priority == needle.Priority &&
+			p.Table == needle.Table &&
+			p.Type == needle.Type &&
+			p.Tos == needle.Tos &&
+			p.Flags == needle.Flags &&
+			p.MTU == needle.MTU &&
+			p.AdvMSS == needle.AdvMSS {
+
+			return true
+		}
+	}
+
+	return false
 }

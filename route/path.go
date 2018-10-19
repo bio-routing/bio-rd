@@ -2,12 +2,16 @@ package route
 
 import (
 	"fmt"
+	"log"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 type Path struct {
-	Type       uint8
-	StaticPath *StaticPath
-	BGPPath    *BGPPath
+	Type        uint8
+	StaticPath  *StaticPath
+	BGPPath     *BGPPath
+	NetlinkPath *NetlinkPath
 }
 
 // Select returns negative if p < q, 0 if paths are equal, positive if p > q
@@ -35,6 +39,8 @@ func (p *Path) Select(q *Path) int8 {
 		return p.BGPPath.Select(q.BGPPath)
 	case StaticPathType:
 		return p.StaticPath.Select(q.StaticPath)
+	case NetlinkPathType:
+		return p.NetlinkPath.Select(q.NetlinkPath)
 	}
 
 	panic("Unknown path type")
@@ -46,6 +52,8 @@ func (p *Path) ECMP(q *Path) bool {
 		return p.BGPPath.ECMP(q.BGPPath)
 	case StaticPathType:
 		return p.StaticPath.ECMP(q.StaticPath)
+	case NetlinkPathType:
+		return p.NetlinkPath.ECMP(q.NetlinkPath)
 	}
 
 	panic("Unknown path type")
@@ -93,6 +101,19 @@ func pathsContains(needle *Path, haystack []*Path) bool {
 	return false
 }
 
+func (p *Path) String() string {
+	switch p.Type {
+	case StaticPathType:
+		return "not implemented yet"
+	case BGPPathType:
+		return p.BGPPath.String()
+	case NetlinkPathType:
+		return p.NetlinkPath.String()
+	default:
+		return "Unknown paty type. Probably not implemented yet"
+	}
+}
+
 func (p *Path) Print() string {
 	protocol := ""
 	switch p.Type {
@@ -100,6 +121,8 @@ func (p *Path) Print() string {
 		protocol = "static"
 	case BGPPathType:
 		protocol = "BGP"
+	case NetlinkPathType:
+		protocol = "Netlink"
 	}
 
 	ret := fmt.Sprintf("\tProtocol: %s\n", protocol)
@@ -108,6 +131,8 @@ func (p *Path) Print() string {
 		ret += "Not implemented yet"
 	case BGPPathType:
 		ret += p.BGPPath.Print()
+	case NetlinkPathType:
+		ret += p.NetlinkPath.Print()
 	}
 
 	return ret
@@ -123,4 +148,19 @@ func (p *Path) Copy() *Path {
 	cp.StaticPath = cp.StaticPath.Copy()
 
 	return &cp
+}
+
+func (p *Path) NextHop() bnet.IP {
+	switch p.Type {
+	case BGPPathType:
+		return p.BGPPath.NextHop
+	case StaticPathType:
+		return p.StaticPath.NextHop
+	case NetlinkPathType:
+		return p.NetlinkPath.NextHop
+	default:
+		log.Panic("Type %d not implemented (yet)", p.Type)
+	}
+
+	return bnet.IP{}
 }
