@@ -58,7 +58,8 @@ func newRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRI
 	}
 }
 
-func (r *router) serve() {
+func (r *router) serve(con net.Conn) {
+	r.con = con
 	r.runMu.Lock()
 	defer r.con.Close()
 	defer r.runMu.Unlock()
@@ -176,8 +177,7 @@ func (r *router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 
 	r.con.Close()
 	for n := range r.neighbors {
-		// TODO: Cleanup after neighbors
-		delete(r.neighbors, n)
+		r.peerDown(n)
 	}
 }
 
@@ -190,8 +190,21 @@ func (r *router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 		return
 	}
 
-	delete(r.neighbors, msg.PerPeerHeader.PeerAddress)
-	// TODO: Cleanup after neighbor
+	r.peerDown(msg.PerPeerHeader.PeerAddress)
+}
+
+func (r *router) peerDown(addr [16]byte) {
+	if r.neighbors[addr].fsm != nil {
+		if r.neighbors[addr].fsm.ipv4Unicast != nil {
+			r.neighbors[addr].fsm.ipv4Unicast.bmpDispose()
+		}
+
+		if r.neighbors[addr].fsm.ipv6Unicast != nil {
+			r.neighbors[addr].fsm.ipv6Unicast.bmpDispose()
+		}
+	}
+
+	delete(r.neighbors, addr)
 }
 
 func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error {

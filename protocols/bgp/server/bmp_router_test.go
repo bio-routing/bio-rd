@@ -17,6 +17,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBMPRouterServe(t *testing.T) {
+	tests := []struct {
+		name     string
+		msg      []byte
+		wantFail bool
+	}{
+		{
+			name:     "Test #1",
+			msg:      []byte{1, 2, 3},
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		addr := net.IP{10, 20, 30, 40}
+		port := uint16(123)
+		rib4 := locRIB.New()
+		rib6 := locRIB.New()
+		conA, conB := net.Pipe()
+
+		r := newRouter(addr, port, rib4, rib6)
+		buf := bytes.NewBuffer(nil)
+		r.logger.Out = buf
+		go r.serve(conA)
+
+		conB.Write(test.msg)
+
+		assert.Equalf(t, 0, len(buf.Bytes()), "Test %q", test.name)
+	}
+}
+
+func TestStartStopBMP(t *testing.T) {
+	addr := net.IP{10, 20, 30, 40}
+	port := uint16(123)
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
+
+	con := biotesting.NewMockConn()
+
+	r := newRouter(addr, port, rib4, rib6)
+	go r.serve(con)
+
+	r.stop <- struct{}{}
+
+	r.runMu.Lock()
+	assert.Equal(t, true, r.con.(*biotesting.MockConn).Closed)
+}
+
 func TestConfigureBySentOpen(t *testing.T) {
 	tests := []struct {
 		name     string

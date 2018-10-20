@@ -37,6 +37,19 @@ func New(exportFilter *filter.Filter, contributingASNs *routingtable.Contributin
 	return a
 }
 
+// Flush drops all routes from the AdjRIBIn
+func (a *AdjRIBIn) Flush() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	routes := a.rt.Dump()
+	for _, route := range routes {
+		for _, path := range route.Paths() {
+			a.removePath(route.Prefix(), path)
+		}
+	}
+}
+
 // UpdateNewClient sends current state to a new client
 func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 	a.mu.RLock()
@@ -124,6 +137,11 @@ func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	return a.removePath(pfx, p)
+}
+
+// removePath removes the path for prefix `pfx`
+func (a *AdjRIBIn) removePath(pfx net.Prefix, p *route.Path) bool {
 	r := a.rt.Get(pfx)
 	if r == nil {
 		return false

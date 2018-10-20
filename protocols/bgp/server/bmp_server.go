@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 	"github.com/taktv6/tflow2/convert"
@@ -55,9 +55,8 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 			}
 
 			r.reconnectTime = 0
-			r.con = c
 			log.Infof("Connected to %s", r.address.String())
-			r.serve()
+			r.serve(c)
 		}
 	}(r)
 }
@@ -75,7 +74,7 @@ func (b *BMPServer) RemoveRouter(addr net.IP, port uint16) {
 
 func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, defaultBufferLen)
-	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
+	_, err = io.ReadFull(c, buffer[0:bmppkt.MinLen])
 	if err != nil {
 		return nil, fmt.Errorf("Read failed: %v", err)
 	}
@@ -88,7 +87,7 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 	}
 
 	toRead := l
-	_, err = io.ReadFull(c, buffer[packet.MinLen:toRead])
+	_, err = io.ReadFull(c, buffer[bmppkt.MinLen:toRead])
 	if err != nil {
 		return nil, fmt.Errorf("Read failed: %v", err)
 	}
