@@ -6,7 +6,7 @@ go_library(
     importpath = "github.com/bio-routing/bio-rd/examples/bmp",
     visibility = ["//visibility:private"],
     deps = [
-        "//protocols/bmp/server:go_default_library",
+        "//protocols/bgp/server:go_default_library",
         "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],

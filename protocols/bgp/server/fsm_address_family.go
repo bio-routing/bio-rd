@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -114,8 +113,7 @@ func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
 		path := f.newRoutePath()
 		f.processAttributes(u.PathAttributes, path)
 
-		err := f.adjRIBIn.AddPath(r.Prefix, path)
-		fmt.Printf("add path err: %v\n", err)
+		f.adjRIBIn.AddPath(r.Prefix, path)
 	}
 }
 

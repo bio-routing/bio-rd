@@ -72,7 +72,6 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 
 	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
 	if p.BGPPath.OriginatorID == a.routerID {
-		panic("FKJK")
 		return nil
 	}
 
