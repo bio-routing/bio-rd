@@ -112,8 +112,7 @@ func (r *router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 
 	n := r.neighbors[msg.PerPeerHeader.PeerAddress]
 	s := n.fsm.state.(*establishedState)
-	_, reason := s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
-	fmt.Printf("Reason: %v\n", reason)
+	s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
 }
 
 func (r *router) processInitiationMsg(msg *bmppkt.InitiationMessage) {

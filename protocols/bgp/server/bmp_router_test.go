@@ -267,6 +267,7 @@ func TestProcessPeerUpNotification(t *testing.T) {
 							neighborID: 169090610,
 							state:      &establishedState{},
 							peer: &peer{
+								routerID:  169090600,
 								addr:      bnet.IPv4FromOctets(10, 0, 255, 1),
 								localAddr: bnet.IPv4FromOctets(10, 0, 255, 0),
 								peerASN:   100,
@@ -277,7 +278,7 @@ func TestProcessPeerUpNotification(t *testing.T) {
 							ipv4Unicast: &fsmAddressFamily{
 								afi:          1,
 								safi:         1,
-								adjRIBIn:     adjRIBIn.New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, 0, 0, false),
+								adjRIBIn:     adjRIBIn.New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, 169090600, 0, false),
 								importFilter: filter.NewAcceptAllFilter(),
 							},
 						},

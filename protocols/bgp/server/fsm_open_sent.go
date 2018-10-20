@@ -141,7 +141,6 @@ func (s *openSentState) handleOpenMessage(openMsg *packet.BGPOpen) (state, strin
 	s.processOpenOptions(openMsg.OptParams)
 
 	if s.peerASNRcvd != s.fsm.peer.peerASN {
-		fmt.Printf("s.peerASNRcvd != s.fsm.peer.peerASN: %v != %v\n", s.peerASNRcvd, s.fsm.peer.peerASN)
 		s.fsm.sendNotification(packet.OpenMessageError, packet.BadPeerAS)
 		return newCeaseState(), fmt.Sprintf("Bad Peer AS %d, expected: %d", s.peerASNRcvd, s.fsm.peer.peerASN)
 	}
