@@ -199,6 +199,7 @@ func (r *Route) PathSelection() {
 	r.updateEqualPathCount()
 }
 
+// Euql compares Are two routes and return true if they are equal
 func (r *Route) Equal(other *Route) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()

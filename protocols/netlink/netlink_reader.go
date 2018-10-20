@@ -1,4 +1,4 @@
-package proto_netlink
+package protocolnetlink
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+// NetlinkReader read routes from the Linux Kernel and propagates it to the locRIB
 type NetlinkReader struct {
 	options *config.Netlink
 	routingtable.ClientManager
@@ -23,6 +24,7 @@ type NetlinkReader struct {
 	routes []netlink.Route
 }
 
+// NewNetlinkReader creates a new reader object and returns the pointer to it
 func NewNetlinkReader(options *config.Netlink) *NetlinkReader {
 	nr := &NetlinkReader{
 		options: options,
@@ -34,7 +36,7 @@ func NewNetlinkReader(options *config.Netlink) *NetlinkReader {
 	return nr
 }
 
-// Read routes from kernel
+// Read reads routes from the kernel
 func (nr *NetlinkReader) Read() {
 	log.WithField("rt_table", nr.options.RoutingTable).Info("Started netlink server")
 
@@ -65,7 +67,7 @@ func createPathFromRoute(r *netlink.Route) (*route.Path, error) {
 	nlPath, err := route.NewNlPathFromRoute(r, true)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error while creating path object from route object", err)
+		return nil, fmt.Errorf("Error while creating path object from route object: %v", err)
 	}
 
 	return &route.Path{
@@ -194,30 +196,34 @@ func routeLogFields(route netlink.Route) log.Fields {
 	}
 }
 
-// Not supported
+// AddPath is Not supported
 func (nr *NetlinkReader) AddPath(bnet.Prefix, *route.Path) error {
 	return fmt.Errorf("Not supported")
 }
 
-// Not supported
+// RemovePath is Not supported
 func (nr *NetlinkReader) RemovePath(bnet.Prefix, *route.Path) bool {
 	return false
 }
 
-// Not supported
+// UpdateNewClient is currently not supported
 func (nr *NetlinkReader) UpdateNewClient(routingtable.RouteTableClient) error {
 	return fmt.Errorf("Not supported")
 }
 
+// Register is currently not supported
 func (nr *NetlinkReader) Register(routingtable.RouteTableClient) {
 }
 
+// RegisterWithOptions is Not supported
 func (nr *NetlinkReader) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
 }
 
+// Unregister is Not supported
 func (nr *NetlinkReader) Unregister(routingtable.RouteTableClient) {
 }
 
+// RouteCount retuns the number of routes stored in the internal routing table
 func (nr *NetlinkReader) RouteCount() int64 {
 	nr.mu.RLock()
 	defer nr.mu.RUnlock()

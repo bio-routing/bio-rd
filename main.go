@@ -44,7 +44,7 @@ func main() {
 	startBGPServer(b, rib, cfg)
 
 	// Netlink communication
-	n := proto_netlink.NewNetlinkServer(&config.Netlink{
+	n := protocolnetlink.NewNetlink(&config.Netlink{
 		HoldTime:       time.Second * 15,
 		UpdateInterval: time.Second * 15,
 		RoutingTable:   config.RtMain,

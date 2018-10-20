@@ -8,9 +8,8 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-const (
-	ProtoBio = 45
-)
+// ProtoBio is the protocol number constant for bio from /etc/iproute2/rt_protos
+const ProtoBio = 45
 
 // NetlinkPath represents a path learned via Netlink of a route
 type NetlinkPath struct {
@@ -24,6 +23,7 @@ type NetlinkPath struct {
 	Kernel   bool // True if the route is already installed in the kernel
 }
 
+// NewNlPathFromBgpPath creates a new NetlinkPath object from a BGPPath object
 func NewNlPathFromBgpPath(p *BGPPath) *NetlinkPath {
 	return &NetlinkPath{
 		Src:      p.Source,
@@ -33,6 +33,7 @@ func NewNlPathFromBgpPath(p *BGPPath) *NetlinkPath {
 	}
 }
 
+// NewNlPathFromRoute creates a new NetlinkPath object from a netlink.Route object
 func NewNlPathFromRoute(r *netlink.Route, kernel bool) (*NetlinkPath, error) {
 	var src bnet.IP
 	var dst bnet.Prefix
@@ -81,7 +82,7 @@ func NewNlPathFromRoute(r *netlink.Route, kernel bool) (*NetlinkPath, error) {
 	}, nil
 }
 
-// Compare returns negative if s < t, 0 if paths are equal, positive if s > t
+// Select compares s with t and returns negative if s < t, 0 if paths are equal, positive if s > t
 func (s *NetlinkPath) Select(t *NetlinkPath) int8 {
 	if !s.Dst.Equal(t.Dst) {
 		return 1
@@ -135,6 +136,7 @@ func (s *NetlinkPath) ECMP(t *NetlinkPath) bool {
 	return true
 }
 
+// Copy duplicates the current object
 func (s *NetlinkPath) Copy() *NetlinkPath {
 	if s == nil {
 		return nil
@@ -144,7 +146,7 @@ func (s *NetlinkPath) Copy() *NetlinkPath {
 	return &cp
 }
 
-// get all known information about a route in a machine readable form
+// Print all known information about a route in logfile friendly format
 func (s *NetlinkPath) String() string {
 	ret := fmt.Sprintf("Destination: %s, ", s.Dst.String())
 	ret += fmt.Sprintf("Source: %s, ", s.Src.String())
@@ -156,7 +158,7 @@ func (s *NetlinkPath) String() string {
 	return ret
 }
 
-// Pretty Print all known information about a route in human readable form
+// Print all known information about a route in human readable form
 func (s *NetlinkPath) Print() string {
 	ret := fmt.Sprintf("\t\tDestination: %s\n", s.Dst.String())
 	ret += fmt.Sprintf("\t\tSource: %s\n", s.Src.String())

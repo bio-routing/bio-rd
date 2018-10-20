@@ -1,4 +1,4 @@
-package proto_netlink
+package protocolnetlink
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+// NetlinkWriter is a locRIB subscriber which serializes routes from the locRIB to the Linux Kernel routing stack
 type NetlinkWriter struct {
 	options *config.Netlink
 	filter  *filter.Filter
@@ -22,6 +23,7 @@ type NetlinkWriter struct {
 	pt map[bnet.Prefix][]*route.Path
 }
 
+// NewNetlinkWriter creates a new NetlinkWriter object and returns the pointer to it
 func NewNetlinkWriter(options *config.Netlink) *NetlinkWriter {
 	return &NetlinkWriter{
 		options: options,
@@ -30,22 +32,22 @@ func NewNetlinkWriter(options *config.Netlink) *NetlinkWriter {
 	}
 }
 
-// Not supported
+// UpdateNewClient Not supported for NetlinkWriter, since the writer is not observable
 func (nw *NetlinkWriter) UpdateNewClient(routingtable.RouteTableClient) error {
 	return fmt.Errorf("Not supported")
 }
 
-// Not supported
+// Register Not supported for NetlinkWriter, since the writer is not observable
 func (nw *NetlinkWriter) Register(routingtable.RouteTableClient) {
 	log.Error("Not supported")
 }
 
-// Not supported
+// RegisterWithOptions Not supported, since the writer is not observable
 func (nw *NetlinkWriter) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
 	log.Error("Not supported")
 }
 
-// Not supported
+// Unregister is not supported, since the writer is not observable
 func (nw *NetlinkWriter) Unregister(routingtable.RouteTableClient) {
 	log.Error("Not supported")
 }
@@ -57,9 +59,7 @@ func (nw *NetlinkWriter) RouteCount() int64 {
 	return int64(len(nw.pt))
 }
 
-// Add a path to the Kernel using netlink
-// This function is triggered by the loc_rib, cause we are subscribed as
-// client in the loc_rib
+// AddPath adds a path to the Kernel using netlink. This function is triggered by the loc_rib, cause we are subscribed as client in the loc_rib
 func (nw *NetlinkWriter) AddPath(pfx bnet.Prefix, path *route.Path) error {
 	// check if for this prefix already a route is existing
 	existingPaths, ok := nw.pt[pfx]
@@ -88,9 +88,7 @@ func (nw *NetlinkWriter) AddPath(pfx bnet.Prefix, path *route.Path) error {
 	return nw.addKernel(pfx, path)
 }
 
-// Remove a path from the Kernel using netlink
-// This function is triggered by the loc_rib, cause we are subscribed as
-// client in the loc_rib
+// RemovePath removes a path from the Kernel using netlink This function is triggered by the loc_rib, cause we are subscribed as client in the loc_rib
 func (nw *NetlinkWriter) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 	// check if for this prefix already a route is existing
 	existingPaths, ok := nw.pt[pfx]

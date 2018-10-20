@@ -101,6 +101,7 @@ func pathsContains(needle *Path, haystack []*Path) bool {
 	return false
 }
 
+// Print all known information about a route in logfile friendly format
 func (p *Path) String() string {
 	switch p.Type {
 	case StaticPathType:
@@ -114,6 +115,7 @@ func (p *Path) String() string {
 	}
 }
 
+// Print all known information about a route in human readable form
 func (p *Path) Print() string {
 	protocol := ""
 	switch p.Type {
@@ -138,6 +140,7 @@ func (p *Path) Print() string {
 	return ret
 }
 
+// Copy a route
 func (p *Path) Copy() *Path {
 	if p == nil {
 		return nil
@@ -150,6 +153,7 @@ func (p *Path) Copy() *Path {
 	return &cp
 }
 
+// NextHop returns the next hop IP Address
 func (p *Path) NextHop() bnet.IP {
 	switch p.Type {
 	case BGPPathType:

@@ -234,7 +234,7 @@ func (b *BGPPath) better(c *BGPPath) bool {
 	return false
 }
 
-// Print all known information about a route in human readable form
+// Print all known information about a route in logfile friendly format
 func (b *BGPPath) String() string {
 	origin := ""
 	switch b.Origin {
@@ -273,7 +273,7 @@ func (b *BGPPath) String() string {
 	return ret
 }
 
-// Pretty Print all known information about a route in human readable form
+// Print all known information about a route in human readable form
 func (b *BGPPath) Print() string {
 	origin := ""
 	switch b.Origin {

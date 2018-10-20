@@ -1,4 +1,4 @@
-package proto_netlink
+package protocolnetlink
 
 import (
 	"github.com/bio-routing/bio-rd/config"
@@ -6,16 +6,18 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
-type NetlinkServer struct {
+// Netlink is the netlink module which handles the entire NetlinkCommunication
+type Netlink struct {
 	locRib *locRIB.LocRIB
 
 	writer *NetlinkWriter
 	reader *NetlinkReader
 }
 
-func NewNetlinkServer(options *config.Netlink, locRib *locRIB.LocRIB) *NetlinkServer {
+// NewNetlink creates a new Netlink object and returns the pointer to it
+func NewNetlink(options *config.Netlink, locRib *locRIB.LocRIB) *Netlink {
 
-	n := &NetlinkServer{
+	n := &Netlink{
 		locRib: locRib,
 		writer: NewNetlinkWriter(options),
 		reader: NewNetlinkReader(options),
@@ -23,7 +25,8 @@ func NewNetlinkServer(options *config.Netlink, locRib *locRIB.LocRIB) *NetlinkSe
 	return n
 }
 
-func (n *NetlinkServer) Start() {
+// Start the Netlink module
+func (n *Netlink) Start() {
 	// connect all RIBs
 	options := routingtable.ClientOptions{
 		BestOnly: false,

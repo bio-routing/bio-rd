@@ -22,6 +22,7 @@ func NewPfx(addr IP, pfxlen uint8) Prefix {
 	}
 }
 
+// NewPfxFromIPNet creates a Prefix object from an net.IPNet object
 func NewPfxFromIPNet(ipNet *net.IPNet) Prefix {
 	ones, _ := ipNet.Mask.Size()
 	ip, _ := IPFromBytes(ipNet.IP)
@@ -71,6 +72,7 @@ func (pfx Prefix) String() string {
 	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
 }
 
+// GetIPNet returns the net.IP object for a Prefix object
 func (pfx Prefix) GetIPNet() *net.IPNet {
 	var dstNetwork net.IPNet
 	dstNetwork.IP = pfx.Addr().Bytes()
