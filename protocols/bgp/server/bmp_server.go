@@ -33,20 +33,11 @@ func NewServer() *BMPServer {
 
 // AddRouter adds a router to which we connect with BMP
 func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRIB) {
-	r := &router{
-		address:          addr,
-		port:             port,
-		reconnectTimeMin: 30,  // Suggested by RFC 7854
-		reconnectTimeMax: 720, // Suggested by RFC 7854
-		reconnectTimer:   time.NewTimer(time.Duration(0)),
-		rib4:             rib4,
-		rib6:             rib6,
-		neighbors:        make(map[[16]byte]*neighbor),
-	}
-
 	b.routersMu.Lock()
+	defer b.routersMu.Unlock()
+
+	r := newRouter(addr, port, rib4, rib6)
 	b.routers[fmt.Sprintf("%s:%d", r.address.String(), r.port)] = r
-	b.routersMu.Unlock()
 
 	go func(r *router) {
 		for {
@@ -69,6 +60,17 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 			r.serve()
 		}
 	}(r)
+}
+
+// RemoveRouter removes a BMP monitored router
+func (b *BMPServer) RemoveRouter(addr net.IP, port uint16) {
+	b.routersMu.Lock()
+	defer b.routersMu.Unlock()
+
+	id := fmt.Sprintf("%s:%d", addr.String(), port)
+	r := b.routers[id]
+	r.stop <- struct{}{}
+	delete(b.routers, id)
 }
 
 func recvBMPMsg(c net.Conn) (msg []byte, err error) {

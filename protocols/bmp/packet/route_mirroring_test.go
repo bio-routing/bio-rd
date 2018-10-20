@@ -31,7 +31,7 @@ func TestDecodeRouteMirroringMsg(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -78,7 +78,7 @@ func TestDecodeRouteMirroringMsg(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 			},
@@ -92,7 +92,7 @@ func TestDecodeRouteMirroringMsg(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,

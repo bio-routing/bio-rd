@@ -9,14 +9,14 @@ import (
 
 const (
 	// PerPeerHeaderLen is the length of a per peer header
-	PerPeerHeaderLen = 38
+	PerPeerHeaderLen = 42
 )
 
 // PerPeerHeader represents a BMP per peer header
 type PerPeerHeader struct {
 	PeerType              uint8
 	PeerFlags             uint8
-	PeerDistinguisher     uint32
+	PeerDistinguisher     uint64
 	PeerAddress           [16]byte
 	PeerAS                uint32
 	PeerBGPID             uint32
@@ -28,7 +28,7 @@ type PerPeerHeader struct {
 func (p *PerPeerHeader) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(p.PeerType)
 	buf.WriteByte(p.PeerFlags)
-	buf.Write(convert.Uint32Byte(p.PeerDistinguisher))
+	buf.Write(convert.Uint64Byte(p.PeerDistinguisher))
 	buf.Write(p.PeerAddress[:])
 	buf.Write(convert.Uint32Byte(p.PeerAS))
 	buf.Write(convert.Uint32Byte(p.PeerBGPID))

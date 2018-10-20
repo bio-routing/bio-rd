@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"net"
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -10,6 +12,8 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	biotesting "github.com/bio-routing/bio-rd/testing"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -316,4 +320,252 @@ func TestProcessPeerUpNotification(t *testing.T) {
 		assert.Equalf(t, test.expected, test.router, "Test %q", test.name)
 	}
 
+}
+
+func TestProcessRouteMonitoringMsg(t *testing.T) {
+	tests := []struct {
+		name           string
+		r              *router
+		msg            *bmppkt.RouteMonitoringMsg
+		expectedLogBuf string
+		logOnly        bool
+		expected       *router
+	}{
+		{
+			name: "Unknown peer address",
+			r: &router{
+				address: net.IP{10, 20, 30, 40},
+				logger:  log.New(),
+			},
+			msg: &bmppkt.RouteMonitoringMsg{
+				PerPeerHeader: &bmppkt.PerPeerHeader{
+					PeerAddress: [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+				},
+			},
+			expectedLogBuf: "level=error msg=\"Received route monitoring message for non-existent neighbor [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16] on 10.20.30.40\"",
+			logOnly:        true,
+			expected:       &router{},
+		},
+	}
+
+	for _, test := range tests {
+		logBuf := bytes.NewBuffer(nil)
+		test.r.logger.Out = logBuf
+		test.r.logger.Formatter = biotesting.NewLogFormatter()
+
+		test.expected.logger = test.r.logger
+
+		test.r.processRouteMonitoringMsg(test.msg)
+
+		assert.Equalf(t, test.expectedLogBuf, string(logBuf.Bytes()), "Test %q", test.name)
+		if test.logOnly {
+			continue
+		}
+
+		assert.Equalf(t, test.expected, test.r, "Test %q", test.name)
+	}
+}
+
+func TestProcessInitiationMsg(t *testing.T) {
+	tests := []struct {
+		name        string
+		r           *router
+		msg         *bmppkt.InitiationMessage
+		expectedLog string
+	}{
+		{
+			name: "Test #1",
+			r: &router{
+				address: net.IP{10, 20, 30, 40},
+				logger:  log.New(),
+			},
+			msg: &bmppkt.InitiationMessage{
+				TLVs: []*bmppkt.InformationTLV{
+					{
+						InformationType: 0,
+						Information:     []byte("Foo Bar"),
+					},
+					{
+						InformationType: 1,
+						Information:     []byte("SYS DESCR"),
+					},
+					{
+						InformationType: 2,
+						Information:     []byte("core01.fra01"),
+					},
+				},
+			},
+			expectedLog: "level=info msg=\"Received initiation message from 10.20.30.40: Message: \\\"Foo Bar\\\" sysDescr.: SYS DESCR sysName.: core01.fra01\"",
+		},
+	}
+
+	for _, test := range tests {
+		logBuf := bytes.NewBuffer(nil)
+		test.r.logger.Out = logBuf
+		test.r.logger.Formatter = biotesting.NewLogFormatter()
+
+		test.r.processInitiationMsg(test.msg)
+
+		assert.Equalf(t, test.expectedLog, string(logBuf.Bytes()), "Test %q", test.name)
+	}
+}
+
+func TestProcessTerminationMsg(t *testing.T) {
+	tests := []struct {
+		name        string
+		r           *router
+		msg         *bmppkt.TerminationMessage
+		expectedLog string
+		expected    *router
+	}{
+		{
+			name: "Test shutdown",
+			r: &router{
+				con:     &biotesting.MockConn{},
+				address: net.IP{10, 20, 30, 40},
+				logger:  log.New(),
+				neighbors: map[[16]byte]*neighbor{
+					[16]byte{1, 2, 3}: &neighbor{},
+				},
+			},
+			msg: &bmppkt.TerminationMessage{
+				TLVs: []*bmppkt.InformationTLV{
+					{
+						InformationType: 0, // string type
+						Information:     []byte("Foo Bar"),
+					},
+				},
+			},
+			expectedLog: "level=warning msg=\"Received termination message from 10.20.30.40: Message: \\\"Foo Bar\\\"\"",
+			expected: &router{
+				con: &biotesting.MockConn{
+					Closed: true,
+				},
+				address:   net.IP{10, 20, 30, 40},
+				neighbors: map[[16]byte]*neighbor{},
+			},
+		},
+		{
+			name: "Test logs",
+			r: &router{
+				con:     &biotesting.MockConn{},
+				address: net.IP{10, 20, 30, 40},
+				logger:  log.New(),
+				neighbors: map[[16]byte]*neighbor{
+					[16]byte{1, 2, 3}: &neighbor{},
+				},
+			},
+			msg: &bmppkt.TerminationMessage{
+				TLVs: []*bmppkt.InformationTLV{
+					{
+						InformationType: 1, // reason type
+						Information:     []byte{0, 0},
+					},
+					{
+						InformationType: 1, // reason type
+						Information:     []byte{0, 1},
+					},
+					{
+						InformationType: 1, // reason type
+						Information:     []byte{0, 2},
+					},
+					{
+						InformationType: 1, // reason type
+						Information:     []byte{0, 3},
+					},
+					{
+						InformationType: 1, // reason type
+						Information:     []byte{0, 4},
+					},
+				},
+			},
+			expectedLog: "level=warning msg=\"Received termination message from 10.20.30.40: Session administratively downUnespcified reasonOut of resourcesRedundant connectionSession permanently administratively closed\"",
+			expected: &router{
+				con: &biotesting.MockConn{
+					Closed: true,
+				},
+				address:   net.IP{10, 20, 30, 40},
+				neighbors: map[[16]byte]*neighbor{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		logBuf := bytes.NewBuffer(nil)
+		test.r.logger.Out = logBuf
+		test.r.logger.Formatter = biotesting.NewLogFormatter()
+
+		test.expected.logger = test.r.logger
+
+		test.r.processTerminationMsg(test.msg)
+
+		assert.Equalf(t, test.expectedLog, string(logBuf.Bytes()), "Test %q", test.name)
+		assert.Equalf(t, test.expected, test.r, "Test %q", test.name)
+	}
+}
+
+func TestProcessPeerDownNotification(t *testing.T) {
+	tests := []struct {
+		name        string
+		r           *router
+		msg         *bmppkt.PeerDownNotification
+		expectedLog string
+		expected    *router
+	}{
+		{
+			name: "Peer down notification for existing peer",
+			r: &router{
+				address: net.IP{10, 20, 30, 40},
+				logger:  log.New(),
+				neighbors: map[[16]byte]*neighbor{
+					[16]byte{1, 2, 3}: &neighbor{},
+				},
+			},
+			msg: &bmppkt.PeerDownNotification{
+				PerPeerHeader: &bmppkt.PerPeerHeader{
+					PeerAddress: [16]byte{1, 2, 3},
+				},
+			},
+			expectedLog: "",
+			expected: &router{
+				address:   net.IP{10, 20, 30, 40},
+				neighbors: map[[16]byte]*neighbor{},
+			},
+		},
+		{
+			name: "Peer down notification for non-existing peer",
+			r: &router{
+				address: net.IP{10, 20, 30, 40},
+				logger:  log.New(),
+				neighbors: map[[16]byte]*neighbor{
+					[16]byte{1, 2, 3}: &neighbor{},
+				},
+			},
+			msg: &bmppkt.PeerDownNotification{
+				PerPeerHeader: &bmppkt.PerPeerHeader{
+					PeerAddress: [16]byte{10, 20, 30},
+				},
+			},
+			expectedLog: "level=warning msg=\"Received peer down notification for [10 20 30 0 0 0 0 0 0 0 0 0 0 0 0 0]: Peer doesn't exist.\"",
+			expected: &router{
+				address: net.IP{10, 20, 30, 40},
+				neighbors: map[[16]byte]*neighbor{
+					[16]byte{1, 2, 3}: &neighbor{},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		logBuf := bytes.NewBuffer(nil)
+		test.r.logger.Out = logBuf
+		test.r.logger.Formatter = biotesting.NewLogFormatter()
+
+		test.expected.logger = test.r.logger
+
+		test.r.processPeerDownNotification(test.msg)
+
+		assert.Equalf(t, test.expectedLog, string(logBuf.Bytes()), "Test %q", test.name)
+		assert.Equalf(t, test.expected, test.r, "Test %q", test.name)
+	}
 }

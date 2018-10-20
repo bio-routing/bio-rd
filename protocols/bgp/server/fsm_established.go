@@ -153,16 +153,19 @@ func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (
 			s.fsm.sendNotification(bgperr.ErrorCode, bgperr.ErrorSubCode)
 		}
 		stopTimer(s.fsm.connectRetryTimer)
-		s.fsm.con.Close()
+		if s.fsm.con != nil {
+			s.fsm.con.Close()
+		}
 		s.fsm.connectRetryCounter++
-		return newIdleState(s.fsm), "Failed to decode BGP message"
+		return newIdleState(s.fsm), fmt.Sprintf("Failed to decode BGP message: %v", err)
 	}
+
 	switch msg.Header.Type {
 	case packet.NotificationMsg:
 		fmt.Println(data)
 		return s.notification()
 	case packet.UpdateMsg:
-		return s.update(msg)
+		return s.update(msg.Body.(*packet.BGPUpdate))
 	case packet.KeepaliveMsg:
 		return s.keepaliveReceived()
 	default:
@@ -178,12 +181,10 @@ func (s *establishedState) notification() (state, string) {
 	return newIdleState(s.fsm), "Received NOTIFICATION"
 }
 
-func (s *establishedState) update(msg *packet.BGPMessage) (state, string) {
+func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 	if s.fsm.holdTime != 0 {
 		s.fsm.holdTimer.Reset(s.fsm.holdTime)
 	}
-
-	u := msg.Body.(*packet.BGPUpdate)
 
 	if s.fsm.ipv4Unicast != nil {
 		s.fsm.ipv4Unicast.processUpdate(u)

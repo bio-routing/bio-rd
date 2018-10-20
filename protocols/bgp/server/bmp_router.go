@@ -29,6 +29,9 @@ type router struct {
 	rib6             *locRIB.LocRIB
 	neighbors        map[[16]byte]*neighbor
 	neighborsMu      sync.Mutex
+	logger           *log.Logger
+	runMu            sync.Mutex
+	stop             chan struct{}
 }
 
 type neighbor struct {
@@ -40,24 +43,51 @@ type neighbor struct {
 	opt      *packet.DecodeOptions
 }
 
+func newRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRIB) *router {
+	return &router{
+		address:          addr,
+		port:             port,
+		reconnectTimeMin: 30,  // Suggested by RFC 7854
+		reconnectTimeMax: 720, // Suggested by RFC 7854
+		reconnectTimer:   time.NewTimer(time.Duration(0)),
+		rib4:             rib4,
+		rib6:             rib6,
+		neighbors:        make(map[[16]byte]*neighbor),
+		logger:           log.New(),
+		stop:             make(chan struct{}),
+	}
+}
+
 func (r *router) serve() {
+	r.runMu.Lock()
+	defer r.con.Close()
+	defer r.runMu.Unlock()
+
 	for {
+		select {
+		case <-r.stop:
+			return
+		default:
+		}
+
 		msg, err := recvBMPMsg(r.con)
 		if err != nil {
-			log.Errorf("Unable to get message: %v", err)
+			r.logger.Errorf("Unable to get message: %v", err)
 			return
 		}
 
 		bmpMsg, err := bmppkt.Decode(msg)
 		if err != nil {
-			log.Errorf("Unable to decode BMP message: %v", err)
-			fmt.Printf("msg: %v\n", msg)
+			r.logger.Errorf("Unable to decode BMP message: %v", err)
 			return
 		}
 
 		switch bmpMsg.MsgType() {
 		case bmppkt.PeerUpNotificationType:
-			r.processPeerUpNotification(bmpMsg.(*bmppkt.PeerUpNotification))
+			err = r.processPeerUpNotification(bmpMsg.(*bmppkt.PeerUpNotification))
+			if err != nil {
+				r.logger.Errorf("Unable to process peer up notification: %v", err)
+			}
 		case bmppkt.PeerDownNotificationType:
 			r.processPeerDownNotification(bmpMsg.(*bmppkt.PeerDownNotification))
 		case bmppkt.InitiationMessageType:
@@ -76,13 +106,14 @@ func (r *router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	defer r.neighborsMu.Unlock()
 
 	if _, ok := r.neighbors[msg.PerPeerHeader.PeerAddress]; !ok {
-		log.Errorf("Received route monitoring message for non-existent neighbor %v on %s", msg.PerPeerHeader.PeerAddress, r.address.String())
+		r.logger.Errorf("Received route monitoring message for non-existent neighbor %v on %s", msg.PerPeerHeader.PeerAddress, r.address.String())
 		return
 	}
 
 	n := r.neighbors[msg.PerPeerHeader.PeerAddress]
 	s := n.fsm.state.(*establishedState)
-	s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
+	_, reason := s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
+	fmt.Printf("Reason: %v\n", reason)
 }
 
 func (r *router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
@@ -105,7 +136,7 @@ func (r *router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
 		}
 	}
 
-	log.Info(logMsg)
+	r.logger.Info(logMsg)
 }
 
 func (r *router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
@@ -142,10 +173,11 @@ func (r *router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 		}
 	}
 
-	log.Warning(logMsg)
+	r.logger.Warning(logMsg)
 
 	r.con.Close()
 	for n := range r.neighbors {
+		// TODO: Cleanup after neighbors
 		delete(r.neighbors, n)
 	}
 }
@@ -155,11 +187,12 @@ func (r *router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 	defer r.neighborsMu.Unlock()
 
 	if _, ok := r.neighbors[msg.PerPeerHeader.PeerAddress]; !ok {
-		log.Warningf("Received peer down notification for %v: Peer doesn't exist.", msg.PerPeerHeader.PeerAddress)
+		r.logger.Warningf("Received peer down notification for %v: Peer doesn't exist.", msg.PerPeerHeader.PeerAddress)
 		return
 	}
 
 	delete(r.neighbors, msg.PerPeerHeader.PeerAddress)
+	// TODO: Cleanup after neighbor
 }
 
 func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error {
@@ -204,6 +237,7 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	fsm := &FSM{
 		isBMP: true,
 		peer: &peer{
+			routerID:  sentOpen.BGPIdentifier,
 			addr:      peerAddress,
 			localAddr: localAddress,
 			peerASN:   msg.PerPeerHeader.PeerAS,
