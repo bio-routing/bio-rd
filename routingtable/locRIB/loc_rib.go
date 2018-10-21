@@ -64,7 +64,6 @@ func (a *LocRIB) RouteCount() int64 {
 func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-
 	logrus.WithFields(map[string]interface{}{
 		"Prefix": pfx,
 		"Route":  p,

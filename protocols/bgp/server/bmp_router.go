@@ -267,12 +267,11 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	}, fsm)
 	fsm.ipv4Unicast.bmpInit()
 
-	/*fsm.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
+	fsm.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
 		rib:          r.rib6,
 		importFilter: filter.NewAcceptAllFilter(),
-		//exportFilter: filter.NewDrainFilter(),
 	}, fsm)
-	fsm.ipv6Unicast.bmpInit()*/
+	fsm.ipv6Unicast.bmpInit()
 
 	fsm.state = newOpenSentState(fsm)
 	openSent := fsm.state.(*openSentState)
@@ -318,12 +317,6 @@ func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 		case packet.ASN4CapabilityCode:
 			asn4Cap := cap.Value.(packet.ASN4Capability)
 			p.localASN = asn4Cap.ASN4
-			// TODO: Make 4Byte ASN configurable
-		case packet.MultiProtocolCapabilityCode:
-			/*mpCap := cap.Value.(packet.MultiProtocolCapability)
-			p := fsm.peer.addressFamily(mpCap.AFI, mpCap.SAFI)
-			p.multiProtocol = true*/
-			// FIXME!
 		}
 	}
 }

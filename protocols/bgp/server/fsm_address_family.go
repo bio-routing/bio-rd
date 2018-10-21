@@ -103,13 +103,11 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
 		return
 	}
 
-	if f.multiProtocol {
-		f.multiProtocolUpdates(u)
-		return
+	f.multiProtocolUpdates(u)
+	if f.afi == packet.IPv4AFI {
+		f.withdraws(u)
+		f.updates(u)
 	}
-
-	f.withdraws(u)
-	f.updates(u)
 }
 
 func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
@@ -200,6 +198,8 @@ func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *
 			path.BGPPath.OriginatorID = pa.Value.(uint32)
 		case packet.ClusterListAttr:
 			path.BGPPath.ClusterList = pa.Value.([]uint32)
+		case packet.MultiProtocolReachNLRICode:
+		case packet.MultiProtocolUnreachNLRICode:
 		default:
 			unknownAttr := f.processUnknownAttribute(pa)
 			if unknownAttr != nil {
