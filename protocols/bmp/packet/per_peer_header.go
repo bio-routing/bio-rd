@@ -57,3 +57,11 @@ func decodePerPeerHeader(buf *bytes.Buffer) (*PerPeerHeader, error) {
 
 	return p, nil
 }
+
+// GetIPVersion gets the IP version of the BGP session
+func (p *PerPeerHeader) GetIPVersion() uint8 {
+	if p.PeerFlags>>7 == 1 {
+		return 6
+	}
+	return 4
+}

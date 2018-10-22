@@ -234,12 +234,8 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	}
 
 	addrLen := net.IPv4len
-	for i := 0; i < net.IPv6len-net.IPv4len; i++ {
-		if msg.PerPeerHeader.PeerAddress[i] == 0 {
-			continue
-		}
+	if msg.PerPeerHeader.GetIPVersion() == 6 {
 		addrLen = net.IPv6len
-		break
 	}
 
 	// bnet.IPFromBytes can only fail if length of argument is not 4 or 16. However, length is ensured here.

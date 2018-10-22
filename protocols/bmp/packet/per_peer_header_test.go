@@ -113,4 +113,47 @@ func TestDecodePerPeerHeader(t *testing.T) {
 
 		assert.Equalf(t, test.expected, p, "Test %q", test.name)
 	}
+
+}
+
+func TestGetIPVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *PerPeerHeader
+		expected uint8
+	}{
+		{
+			name: "IPv4",
+			p: &PerPeerHeader{
+				PeerFlags: 0,
+			},
+			expected: 4,
+		},
+		{
+			name: "IPv4 #2",
+			p: &PerPeerHeader{
+				PeerFlags: 127,
+			},
+			expected: 4,
+		},
+		{
+			name: "IPv6",
+			p: &PerPeerHeader{
+				PeerFlags: 128,
+			},
+			expected: 6,
+		},
+		{
+			name: "IPv6 #2",
+			p: &PerPeerHeader{
+				PeerFlags: 129,
+			},
+			expected: 6,
+		},
+	}
+
+	for _, test := range tests {
+		v := test.p.GetIPVersion()
+		assert.Equal(t, test.expected, v)
+	}
 }
