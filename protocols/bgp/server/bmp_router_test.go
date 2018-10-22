@@ -302,10 +302,10 @@ func TestProcessPeerUpNotification(t *testing.T) {
 				rib6: locRIB.New(),
 				neighbors: map[[16]byte]*neighbor{
 					[16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 255, 1}: {
-						localAS:  200,
-						peerAS:   100,
-						address:  [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 255, 1},
-						routerID: 169090610,
+						localAS:     200,
+						peerAS:      100,
+						peerAddress: [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 255, 1},
+						routerID:    169090610,
 						opt: &packet.DecodeOptions{
 							AddPath:     false,
 							Use32BitASN: false,

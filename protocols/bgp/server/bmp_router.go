@@ -35,12 +35,12 @@ type router struct {
 }
 
 type neighbor struct {
-	localAS  uint32
-	peerAS   uint32
-	address  [16]byte
-	routerID uint32
-	fsm      *FSM
-	opt      *packet.DecodeOptions
+	localAS     uint32
+	peerAS      uint32
+	peerAddress [16]byte
+	routerID    uint32
+	fsm         *FSM
+	opt         *packet.DecodeOptions
 }
 
 func newRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRIB) *router {
@@ -275,12 +275,12 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	fsm.state = newEstablishedState(fsm)
 	n := &neighbor{
-		localAS:  fsm.peer.localASN,
-		peerAS:   msg.PerPeerHeader.PeerAS,
-		address:  msg.PerPeerHeader.PeerAddress,
-		routerID: recvOpen.BGPIdentifier,
-		fsm:      fsm,
-		opt:      fsm.decodeOptions(),
+		localAS:     fsm.peer.localASN,
+		peerAS:      msg.PerPeerHeader.PeerAS,
+		peerAddress: msg.PerPeerHeader.PeerAddress,
+		routerID:    recvOpen.BGPIdentifier,
+		fsm:         fsm,
+		opt:         fsm.decodeOptions(),
 	}
 
 	r.neighbors[msg.PerPeerHeader.PeerAddress] = n
