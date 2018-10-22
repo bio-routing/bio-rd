@@ -199,36 +199,38 @@ func (r *Route) PathSelection() {
 	r.updateEqualPathCount()
 }
 
-// Euql compares Are two routes and return true if they are equal
+// Equal compares if two routes are the same
 func (r *Route) Equal(other *Route) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	a := r.pfx.Equal(other.pfx)
-	b := r.ecmpPaths == other.ecmpPaths
-	c := true
+	pfxEqual := r.pfx.Equal(other.pfx)
+	ecmpPathsEqual := r.ecmpPaths == other.ecmpPaths
+	pathsEqual := comparePathSlice(r.paths, other.paths)
 
-	if r.paths == nil && other.paths == nil {
-		c = true
-		return a && b && c
+	return pfxEqual && ecmpPathsEqual && pathsEqual
+}
+
+// Compare two path pointer slices if they are equal
+func comparePathSlice(left, right []*Path) bool {
+	if left == nil && right == nil {
+		return true
 	}
 
-	if len(r.paths) != len(other.paths) {
-		c = false
-		return a && b && c
+	if len(left) != len(right) {
+		return false
 	}
 
-	for _, myP := range r.paths {
-		if !r.compareItemExists(myP, other.paths) {
-			c = false
-			return a && b && c
+	for _, leftPath := range left {
+		if !compareItemExists(leftPath, right) {
+			return false
 		}
 	}
 
-	return a && b && c
+	return true
 }
 
-func (r *Route) compareItemExists(needle *Path, haystack []*Path) bool {
+func compareItemExists(needle *Path, haystack []*Path) bool {
 	for _, compare := range haystack {
 		if needle.Equal(compare) {
 			return true

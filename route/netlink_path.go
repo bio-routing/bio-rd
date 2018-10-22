@@ -133,7 +133,7 @@ func (s *NetlinkPath) Select(t *NetlinkPath) int8 {
 
 // ECMP determines if path s and t are equal in terms of ECMP
 func (s *NetlinkPath) ECMP(t *NetlinkPath) bool {
-	return true
+	return false
 }
 
 // Copy duplicates the current object

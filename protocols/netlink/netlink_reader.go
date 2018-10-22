@@ -14,6 +14,12 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+// Constants for IP family
+const (
+	IPFamily4 = 4 // IPv4
+	IPFamily6 = 6 // IPv6
+)
+
 // NetlinkReader read routes from the Linux Kernel and propagates it to the locRIB
 type NetlinkReader struct {
 	options *config.Netlink
@@ -45,7 +51,7 @@ func (nr *NetlinkReader) Read() {
 
 	for {
 		// Family doesn't matter. I only filter by the rt_table here
-		routes, err := netlink.RouteListFiltered(4, &netlink.Route{Table: nr.options.RoutingTable}, netlink.RT_FILTER_TABLE)
+		routes, err := netlink.RouteListFiltered(IPFamily4, &netlink.Route{Table: nr.options.RoutingTable}, netlink.RT_FILTER_TABLE)
 		if err != nil {
 			log.WithError(err).Panic("Failed to read routes from kernel")
 		}
@@ -84,39 +90,45 @@ func (nr *NetlinkReader) propagateChanges(routes []netlink.Route) {
 
 // Add given paths to clients
 func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
-	for _, client := range nr.ClientManager.Clients() {
-		// only advertise changed routes
+	// only advertise changed routes
+	nr.mu.RLock()
+	advertise := route.NetlinkRouteDiff(routes, nr.routes)
+	nr.mu.RUnlock()
 
-		nr.mu.RLock()
-		advertise := route.NetlinkRouteDiff(routes, nr.routes)
-		nr.mu.RUnlock()
+	for _, r := range advertise {
+		// Is it a BIO-Written route? if so, skip it, dont advertise it
+		if r.Protocol == route.ProtoBio {
+			log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
+			continue
+		}
 
-		for _, r := range advertise {
-			// Is it a BIO-Written route? if so, skip it, dont advertise it
-			if r.Protocol == route.ProtoBio {
-				log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
+		// create pfx and path from route
+		pfx := bnet.NewPfxFromIPNet(r.Dst)
+		path, err := createPathFromRoute(&r)
+		if err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"prefix": pfx.String(),
+				"path":   path.String(),
+			}).Error("Unable to create path")
+			continue
+		}
+
+		// Apply filter (if existing)
+		if nr.filter != nil {
+			var reject bool
+			// TODO: Implement filter that cann handle netlinkRoute objects
+			path, reject = nr.filter.ProcessTerms(pfx, path)
+			if reject {
+				log.WithError(err).WithFields(log.Fields{
+					"prefix": pfx.String(),
+					"path":   path.String(),
+				}).Debug("Skipping route due to filter")
+
 				continue
 			}
+		}
 
-			// create pfx and path from route
-			pfx := bnet.NewPfxFromIPNet(r.Dst)
-			path, err := createPathFromRoute(&r)
-			if err != nil {
-				log.WithError(err).Error("Unable to create path")
-				continue
-			}
-
-			// Apply filter (if existing)
-			if nr.filter != nil {
-				var reject bool
-				// TODO: Implement filter that cann handle netlinkRoute objects
-				path, reject = nr.filter.ProcessTerms(pfx, path)
-				if reject {
-					log.Debug("Skipping route due to filter")
-					continue
-				}
-			}
-
+		for _, client := range nr.ClientManager.Clients() {
 			log.WithFields(log.Fields{
 				"pfx":  pfx,
 				"path": path,
@@ -128,42 +140,46 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 
 // Remove given paths from clients
 func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
-	for _, client := range nr.ClientManager.Clients() {
-		// If there where no routes yet, just skip this funktion. There's nothing to delete
-		nr.mu.RLock()
-		if len(nr.routes) == 0 {
-			nr.mu.RUnlock()
-			break
+	nr.mu.RLock()
+
+	// get the number of routes
+	routeLength := len(nr.routes)
+
+	// If there where no routes yet, just skip this funktion. There's nothing to delete
+	if routeLength == 0 {
+		nr.mu.RUnlock()
+		return
+	}
+
+	// only withdraw changed routes
+	withdraw := route.NetlinkRouteDiff(nr.routes, routes)
+	nr.mu.RUnlock()
+
+	for _, r := range withdraw {
+		// Is it a BIO-Written route? if so, skip it, dont advertise it
+		if r.Protocol == route.ProtoBio {
+			continue
 		}
 
-		// only withdraw changed routes
-		withdraw := route.NetlinkRouteDiff(nr.routes, routes)
-		nr.mu.RUnlock()
+		// create pfx and path from route
+		pfx := bnet.NewPfxFromIPNet(r.Dst)
+		path, err := createPathFromRoute(&r)
+		if err != nil {
+			log.WithError(err).Error("Unable to create path")
+			continue
+		}
 
-		for _, r := range withdraw {
-			// Is it a BIO-Written route? if so, skip it, dont advertise it
-			if r.Protocol == route.ProtoBio {
+		// Apply filter (if existing)
+		if nr.filter != nil {
+			var reject bool
+			// TODO: Implement filter that cann handle netlinkRoute objects
+			path, reject = nr.filter.ProcessTerms(pfx, path)
+			if reject {
 				continue
 			}
+		}
 
-			// create pfx and path from route
-			pfx := bnet.NewPfxFromIPNet(r.Dst)
-			path, err := createPathFromRoute(&r)
-			if err != nil {
-				log.WithError(err).Error("Unable to create path")
-				continue
-			}
-
-			// Apply filter (if existing)
-			if nr.filter != nil {
-				var reject bool
-				// TODO: Implement filter that cann handle netlinkRoute objects
-				path, reject = nr.filter.ProcessTerms(pfx, path)
-				if reject {
-					continue
-				}
-			}
-
+		for _, client := range nr.ClientManager.Clients() {
 			log.WithFields(log.Fields{
 				"pfx":  pfx,
 				"path": path,
