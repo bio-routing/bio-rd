@@ -1449,6 +1449,8 @@ func TestIntegrationPeerUpRouteMonitorIPv6WithClientBeforeBMPPeer(t *testing.T) 
 		name               string
 		afi                uint8
 		unregister         bool
+		doubleSubscribe    bool
+		doubleUnsubscribe  bool
 		input              []byte
 		expectedRouteCount int
 	}{
@@ -1572,6 +1574,240 @@ func TestIntegrationPeerUpRouteMonitorIPv6WithClientBeforeBMPPeer(t *testing.T) 
 			name:       "IPv4 with unregister",
 			afi:        packet.IPv4AFI,
 			unregister: true,
+			input: []byte{
+				// Common Header
+				3,            // Version
+				0, 0, 0, 142, // Message Length
+				3, // Msg Type = Peer Up Notification
+
+				// Per Peer Header
+				0,                      // Peer Type
+				0,                      // Peer Flags
+				0, 0, 0, 0, 0, 0, 0, 0, // Peer Distinguisher
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, // 10.20.30.40 peer address
+				0, 0, 0, 100, // Peer AS
+				0, 0, 0, 255, // Peer BGP ID
+				0, 0, 0, 0, // Timestamp s
+				0, 0, 0, 0, // Timestamp µs
+
+				// Peer Up Notification
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 41, // 10.20.30.41 local address
+				0, 123, // Local Port
+				0, 234, // Remote Port
+
+				// Sent OPEN message
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 37, // Length
+				1,      // Open message type
+				4,      // BGP Version
+				0, 200, // AS
+				0, 180, // Hold Time
+				1, 0, 0, 1, // BGP Identifier
+				8, // Opt param length
+				2, 6,
+				1, 4, // MP BGP
+				0, 2, // IPv6
+				0, 1, // Unicast
+
+				// Received OPEN message
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 37, // Length
+				1,      // Open message type
+				4,      // BGP Version
+				0, 100, // AS
+				0, 180, // Hold Time
+				1, 0, 0, 255, // BGP Identifier
+				8, // Opt param length
+				2, 6,
+				1, 4, // MP BGP
+				0, 2, // IPv6
+				0, 1, // Unicast
+
+				// SECOND MESSAGE:
+
+				// Common Header
+				3,            // Version
+				0, 0, 0, 116, // Message Length
+				0, // Msg Type = Route Monitoring Message
+
+				// Per Peer Header
+				0,                      // Peer Type
+				0,                      // Peer Flags
+				0, 0, 0, 0, 0, 0, 0, 0, // Peer Distinguisher
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, // 10.20.30.40 peer address
+				0, 0, 0, 100, // Peer AS
+				0, 0, 0, 255, // Peer BGP ID
+				0, 0, 0, 0, // Timestamp s
+				0, 0, 0, 0, // Timestamp µs
+
+				// BGP Update
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 68, // Length
+				2, // Update
+
+				0, 0, // Withdrawn Routes Length
+				0, 41, // Total Path Attribute Length
+
+				255,  // Attribute flags
+				1,    // Attribute Type code (ORIGIN)
+				0, 1, // Length
+				2, // INCOMPLETE
+
+				0,      // Attribute flags
+				2,      // Attribute Type code (AS Path)
+				12,     // Length
+				2,      // Type = AS_SEQUENCE
+				2,      // Path Segment Length
+				59, 65, // AS15169
+				12, 248, // AS3320
+				1,      // Type = AS_SET
+				2,      // Path Segment Length
+				59, 65, // AS15169
+				12, 248, // AS3320
+
+				0,              // Attribute flags
+				3,              // Attribute Type code (Next Hop)
+				4,              // Length
+				10, 11, 12, 13, // Next Hop
+
+				0,          // Attribute flags
+				4,          // Attribute Type code (MED)
+				4,          // Length
+				0, 0, 1, 0, // MED 256
+
+				0,          // Attribute flags
+				5,          // Attribute Type code (Local Pref)
+				4,          // Length
+				0, 0, 1, 0, // Local Pref 256
+
+				// NLRI
+				24,
+				192, 168, 0,
+			},
+			expectedRouteCount: 1,
+		},
+		{
+			name:              "IPv4 with double unregister",
+			afi:               packet.IPv4AFI,
+			doubleUnsubscribe: true,
+			unregister:        true,
+			input: []byte{
+				// Common Header
+				3,            // Version
+				0, 0, 0, 142, // Message Length
+				3, // Msg Type = Peer Up Notification
+
+				// Per Peer Header
+				0,                      // Peer Type
+				0,                      // Peer Flags
+				0, 0, 0, 0, 0, 0, 0, 0, // Peer Distinguisher
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, // 10.20.30.40 peer address
+				0, 0, 0, 100, // Peer AS
+				0, 0, 0, 255, // Peer BGP ID
+				0, 0, 0, 0, // Timestamp s
+				0, 0, 0, 0, // Timestamp µs
+
+				// Peer Up Notification
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 41, // 10.20.30.41 local address
+				0, 123, // Local Port
+				0, 234, // Remote Port
+
+				// Sent OPEN message
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 37, // Length
+				1,      // Open message type
+				4,      // BGP Version
+				0, 200, // AS
+				0, 180, // Hold Time
+				1, 0, 0, 1, // BGP Identifier
+				8, // Opt param length
+				2, 6,
+				1, 4, // MP BGP
+				0, 2, // IPv6
+				0, 1, // Unicast
+
+				// Received OPEN message
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 37, // Length
+				1,      // Open message type
+				4,      // BGP Version
+				0, 100, // AS
+				0, 180, // Hold Time
+				1, 0, 0, 255, // BGP Identifier
+				8, // Opt param length
+				2, 6,
+				1, 4, // MP BGP
+				0, 2, // IPv6
+				0, 1, // Unicast
+
+				// SECOND MESSAGE:
+
+				// Common Header
+				3,            // Version
+				0, 0, 0, 116, // Message Length
+				0, // Msg Type = Route Monitoring Message
+
+				// Per Peer Header
+				0,                      // Peer Type
+				0,                      // Peer Flags
+				0, 0, 0, 0, 0, 0, 0, 0, // Peer Distinguisher
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, // 10.20.30.40 peer address
+				0, 0, 0, 100, // Peer AS
+				0, 0, 0, 255, // Peer BGP ID
+				0, 0, 0, 0, // Timestamp s
+				0, 0, 0, 0, // Timestamp µs
+
+				// BGP Update
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 68, // Length
+				2, // Update
+
+				0, 0, // Withdrawn Routes Length
+				0, 41, // Total Path Attribute Length
+
+				255,  // Attribute flags
+				1,    // Attribute Type code (ORIGIN)
+				0, 1, // Length
+				2, // INCOMPLETE
+
+				0,      // Attribute flags
+				2,      // Attribute Type code (AS Path)
+				12,     // Length
+				2,      // Type = AS_SEQUENCE
+				2,      // Path Segment Length
+				59, 65, // AS15169
+				12, 248, // AS3320
+				1,      // Type = AS_SET
+				2,      // Path Segment Length
+				59, 65, // AS15169
+				12, 248, // AS3320
+
+				0,              // Attribute flags
+				3,              // Attribute Type code (Next Hop)
+				4,              // Length
+				10, 11, 12, 13, // Next Hop
+
+				0,          // Attribute flags
+				4,          // Attribute Type code (MED)
+				4,          // Length
+				0, 0, 1, 0, // MED 256
+
+				0,          // Attribute flags
+				5,          // Attribute Type code (Local Pref)
+				4,          // Length
+				0, 0, 1, 0, // Local Pref 256
+
+				// NLRI
+				24,
+				192, 168, 0,
+			},
+			expectedRouteCount: 1,
+		},
+		{
+			name:            "IPv4 with double register",
+			afi:             packet.IPv4AFI,
+			doubleSubscribe: true,
+			unregister:      true,
 			input: []byte{
 				// Common Header
 				3,            // Version
@@ -1820,9 +2056,15 @@ func TestIntegrationPeerUpRouteMonitorIPv6WithClientBeforeBMPPeer(t *testing.T) 
 
 		client := locRIB.New()
 		r.subscribeRIBs(client, test.afi)
+		if test.doubleSubscribe {
+			r.subscribeRIBs(client, test.afi)
+		}
 
 		if test.unregister {
 			r.unsubscribeRIBs(client, test.afi)
+			if test.doubleUnsubscribe {
+				r.unsubscribeRIBs(client, test.afi)
+			}
 		}
 
 		go r.serve(conB)
