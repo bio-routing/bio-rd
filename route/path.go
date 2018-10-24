@@ -2,11 +2,11 @@ package route
 
 import (
 	"fmt"
-	"log"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
+// Path represents a network path
 type Path struct {
 	Type        uint8
 	StaticPath  *StaticPath
@@ -46,6 +46,7 @@ func (p *Path) Select(q *Path) int8 {
 	panic("Unknown path type")
 }
 
+// ECMP checks if path p and q are equal enough to be considered for ECMP usage
 func (p *Path) ECMP(q *Path) bool {
 	switch p.Type {
 	case BGPPathType:
@@ -59,6 +60,7 @@ func (p *Path) ECMP(q *Path) bool {
 	panic("Unknown path type")
 }
 
+// Equal checks if paths p and q are equal
 func (p *Path) Equal(q *Path) bool {
 	if p == nil || q == nil {
 		return false
@@ -162,9 +164,7 @@ func (p *Path) NextHop() bnet.IP {
 		return p.StaticPath.NextHop
 	case NetlinkPathType:
 		return p.NetlinkPath.NextHop
-	default:
-		log.Panic("Type %d not implemented (yet)", p.Type)
 	}
 
-	return bnet.IP{}
+	panic("Unknown path type")
 }

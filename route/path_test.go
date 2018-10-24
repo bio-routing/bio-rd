@@ -3,8 +3,168 @@ package route
 import (
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestPathNextHop(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *Path
+		expected bnet.IP
+	}{
+		{
+			name: "BGP Path",
+			p: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					NextHop: bnet.IPv4(123),
+				},
+			},
+			expected: bnet.IPv4(123),
+		},
+		{
+			name: "Static Path",
+			p: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: bnet.IPv4(456),
+				},
+			},
+			expected: bnet.IPv4(456),
+		},
+		{
+			name: "Netlink Path",
+			p: &Path{
+				Type: NetlinkPathType,
+				NetlinkPath: &NetlinkPath{
+					NextHop: bnet.IPv4(1000),
+				},
+			},
+			expected: bnet.IPv4(1000),
+		},
+	}
+
+	for _, test := range tests {
+		res := test.p.NextHop()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestPathCopy(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *Path
+		expected *Path
+	}{
+		{
+			name: "nil test",
+		},
+	}
+
+	for _, test := range tests {
+		res := test.p.Copy()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestEqual(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *Path
+		q        *Path
+		expected bool
+	}{
+		{
+			name:     "Different types",
+			p:        &Path{Type: 100},
+			q:        &Path{Type: 200},
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.p.Equal(test.q)
+		assert.Equalf(t, test.expected, res, test.name)
+	}
+}
+
+func TestSelect(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *Path
+		q        *Path
+		expected int8
+	}{
+		{
+			name:     "All nil",
+			expected: 0,
+		},
+		{
+			name:     "p nil",
+			q:        &Path{},
+			expected: -1,
+		},
+		{
+			name:     "q nil",
+			p:        &Path{},
+			expected: 1,
+		},
+		{
+			name:     "p > q",
+			p:        &Path{Type: 20},
+			q:        &Path{Type: 10},
+			expected: 1,
+		},
+		{
+			name:     "p < q",
+			p:        &Path{Type: 10},
+			q:        &Path{Type: 20},
+			expected: -1,
+		},
+		{
+			name: "Static",
+			p: &Path{
+				Type:       StaticPathType,
+				StaticPath: &StaticPath{},
+			},
+			q: &Path{
+				Type:       StaticPathType,
+				StaticPath: &StaticPath{},
+			},
+			expected: 0,
+		},
+		{
+			name: "BGP",
+			p: &Path{
+				Type:    BGPPathType,
+				BGPPath: &BGPPath{},
+			},
+			q: &Path{
+				Type:    BGPPathType,
+				BGPPath: &BGPPath{},
+			},
+			expected: 0,
+		},
+		{
+			name: "Netlink",
+			p: &Path{
+				Type:        NetlinkPathType,
+				NetlinkPath: &NetlinkPath{},
+			},
+			q: &Path{
+				Type:        NetlinkPathType,
+				NetlinkPath: &NetlinkPath{},
+			},
+			expected: 0,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.p.Select(test.q)
+		assert.Equalf(t, test.expected, res, "Test %q", test.name)
+	}
+}
 
 func TestPathsDiff(t *testing.T) {
 	tests := []struct {
