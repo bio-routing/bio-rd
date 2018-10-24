@@ -1,10 +1,63 @@
 package net
 
 import (
+	gonet "net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGetIPNet(t *testing.T) {
+	tests := []struct {
+		name     string
+		pfx      Prefix
+		expected *gonet.IPNet
+	}{
+		{
+			name: "Some prefix IPv4",
+			pfx:  NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
+			expected: &gonet.IPNet{
+				IP:   gonet.IP{127, 0, 0, 0},
+				Mask: gonet.IPMask{255, 0, 0, 0},
+			},
+		},
+		{
+			name: "Some prefix IPv6",
+			pfx:  NewPfx(IPv6FromBlocks(0xffff, 0xffff, 0xffff, 0xffff, 0x0, 0x0, 0x0, 0x0), 64),
+			expected: &gonet.IPNet{
+				IP:   gonet.IP{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+				Mask: gonet.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := test.pfx.GetIPNet()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestNewPfxFromIPNet(t *testing.T) {
+	tests := []struct {
+		name     string
+		ipNet    *gonet.IPNet
+		expected Prefix
+	}{
+		{
+			name: "Some Prefix",
+			ipNet: &gonet.IPNet{
+				IP:   gonet.IP{127, 0, 0, 0},
+				Mask: gonet.IPMask{255, 0, 0, 0},
+			},
+			expected: NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
+		},
+	}
+
+	for _, test := range tests {
+		res := NewPfxFromIPNet(test.ipNet)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
 
 func TestNewPfx(t *testing.T) {
 	p := NewPfx(IPv4(123), 11)
@@ -371,6 +424,11 @@ func TestStrToAddr(t *testing.T) {
 		wantFail bool
 		expected uint32
 	}{
+		{
+			name:     "Non numeric",
+			input:    "10.10.10.a",
+			wantFail: true,
+		},
 		{
 			name:     "Invalid address #1",
 			input:    "10.10.10",
