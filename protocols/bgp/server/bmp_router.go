@@ -18,6 +18,7 @@ import (
 )
 
 type router struct {
+	name             string
 	address          net.IP
 	port             uint16
 	con              net.Conn
@@ -32,6 +33,9 @@ type router struct {
 	logger           *log.Logger
 	runMu            sync.Mutex
 	stop             chan struct{}
+
+	ribClients   map[afiClient]struct{}
+	ribClientsMu sync.Mutex
 }
 
 type neighbor struct {
@@ -55,6 +59,64 @@ func newRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRI
 		neighbors:        make(map[[16]byte]*neighbor),
 		logger:           log.New(),
 		stop:             make(chan struct{}),
+		ribClients:       make(map[afiClient]struct{}),
+	}
+}
+
+func (r *router) subscribeRIBs(client routingtable.RouteTableClient, afi uint8) {
+	ac := afiClient{
+		afi:    afi,
+		client: client,
+	}
+
+	r.ribClientsMu.Lock()
+	defer r.ribClientsMu.Unlock()
+	if _, ok := r.ribClients[ac]; ok {
+		return
+	}
+	r.ribClients[ac] = struct{}{}
+
+	r.neighborsMu.Lock()
+	defer r.neighborsMu.Unlock()
+	for _, n := range r.neighbors {
+		/*if !n.fsm.ribsInitialized {
+			fmt.Printf("Uninitialized\n")
+			continue
+		}*/
+		if afi == packet.IPv4AFI {
+			n.fsm.ipv4Unicast.adjRIBIn.Register(client)
+		}
+		if afi == packet.IPv6AFI {
+			n.fsm.ipv6Unicast.adjRIBIn.Register(client)
+		}
+	}
+}
+
+func (r *router) unsubscribeRIBs(client routingtable.RouteTableClient, afi uint8) {
+	ac := afiClient{
+		afi:    afi,
+		client: client,
+	}
+
+	r.ribClientsMu.Lock()
+	defer r.ribClientsMu.Unlock()
+	if _, ok := r.ribClients[ac]; !ok {
+		return
+	}
+	delete(r.ribClients, ac)
+
+	r.neighborsMu.Lock()
+	defer r.neighborsMu.Unlock()
+	for _, n := range r.neighbors {
+		if !n.fsm.ribsInitialized {
+			continue
+		}
+		if afi == packet.IPv4AFI {
+			n.fsm.ipv4Unicast.adjRIBIn.Unregister(client)
+		}
+		if afi == packet.IPv6AFI {
+			n.fsm.ipv6Unicast.adjRIBIn.Unregister(client)
+		}
 	}
 }
 
@@ -132,6 +194,7 @@ func (r *router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
 		case sysDescrType:
 			logMsg += fmt.Sprintf(" sysDescr.: %s", string(tlv.Information))
 		case sysNameType:
+			r.name = string(tlv.Information)
 			logMsg += fmt.Sprintf(" sysName.: %s", string(tlv.Information))
 		}
 	}
@@ -284,7 +347,23 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	}
 
 	r.neighbors[msg.PerPeerHeader.PeerAddress] = n
+
+	r.ribClientsMu.Lock()
+	defer r.ribClientsMu.Unlock()
+	n.registerClients(r.ribClients)
+
 	return nil
+}
+
+func (n *neighbor) registerClients(clients map[afiClient]struct{}) {
+	for ac := range clients {
+		if ac.afi == packet.IPv4AFI {
+			n.fsm.ipv4Unicast.adjRIBIn.Unregister(ac.client)
+		}
+		if ac.afi == packet.IPv6AFI {
+			n.fsm.ipv6Unicast.adjRIBIn.Unregister(ac.client)
+		}
+	}
 }
 
 func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {

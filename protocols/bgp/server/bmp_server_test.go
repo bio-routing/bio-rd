@@ -13,7 +13,8 @@ import (
 func TestNewServer(t *testing.T) {
 	s := NewServer()
 	assert.Equal(t, &BMPServer{
-		routers: map[string]*router{},
+		routers:    map[string]*router{},
+		ribClients: map[string]map[afiClient]struct{}{},
 	}, s)
 }
 
