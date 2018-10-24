@@ -122,7 +122,7 @@ func (b *BMPServer) RemoveRouter(addr net.IP, port uint16) {
 	b.gloablMu.Lock()
 	defer b.gloablMu.Unlock()
 
-	id := fmt.Sprintf("%s:%d", addr.String(), port)
+	id := addr.String()
 	r := b.routers[id]
 	r.stop <- struct{}{}
 	delete(b.routers, id)
