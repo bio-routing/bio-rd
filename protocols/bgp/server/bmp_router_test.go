@@ -8,6 +8,7 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -623,4 +624,50 @@ func TestProcessPeerDownNotification(t *testing.T) {
 		assert.Equalf(t, test.expectedLog, string(logBuf.Bytes()), "Test %q", test.name)
 		assert.Equalf(t, test.expected, test.r, "Test %q", test.name)
 	}
+}
+
+func TestRegisterClients(t *testing.T) {
+	n := &neighbor{
+		fsm: &FSM{
+			ipv4Unicast: &fsmAddressFamily{
+				adjRIBIn: locRIB.New(),
+			},
+			ipv6Unicast: &fsmAddressFamily{
+				adjRIBIn: locRIB.New(),
+			},
+		},
+	}
+
+	client4 := locRIB.New()
+	client6 := locRIB.New()
+	ac4 := afiClient{
+		afi:    packet.IPv4AFI,
+		client: client4,
+	}
+	ac6 := afiClient{
+		afi:    packet.IPv6AFI,
+		client: client6,
+	}
+	clients4 := map[afiClient]struct{}{
+		ac4: struct{}{},
+	}
+	clients6 := map[afiClient]struct{}{
+		ac6: struct{}{},
+	}
+
+	n.registerClients(clients4)
+	n.registerClients(clients6)
+	n.fsm.ipv4Unicast.adjRIBIn.AddPath(bnet.NewPfx(bnet.IPv4(0), 0), &route.Path{
+		BGPPath: &route.BGPPath{
+			LocalPref: 100,
+		},
+	})
+	n.fsm.ipv6Unicast.adjRIBIn.AddPath(bnet.NewPfx(bnet.IPv6(0, 0), 0), &route.Path{
+		BGPPath: &route.BGPPath{
+			LocalPref: 200,
+		},
+	})
+
+	assert.Equal(t, int64(1), n.fsm.ipv4Unicast.adjRIBIn.RouteCount())
+	assert.Equal(t, int64(1), n.fsm.ipv6Unicast.adjRIBIn.RouteCount())
 }

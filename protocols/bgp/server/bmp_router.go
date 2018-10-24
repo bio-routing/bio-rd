@@ -79,10 +79,6 @@ func (r *router) subscribeRIBs(client routingtable.RouteTableClient, afi uint8) 
 	r.neighborsMu.Lock()
 	defer r.neighborsMu.Unlock()
 	for _, n := range r.neighbors {
-		/*if !n.fsm.ribsInitialized {
-			fmt.Printf("Uninitialized\n")
-			continue
-		}*/
 		if afi == packet.IPv4AFI {
 			n.fsm.ipv4Unicast.adjRIBIn.Register(client)
 		}
@@ -358,10 +354,10 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 func (n *neighbor) registerClients(clients map[afiClient]struct{}) {
 	for ac := range clients {
 		if ac.afi == packet.IPv4AFI {
-			n.fsm.ipv4Unicast.adjRIBIn.Unregister(ac.client)
+			n.fsm.ipv4Unicast.adjRIBIn.Register(ac.client)
 		}
 		if ac.afi == packet.IPv6AFI {
-			n.fsm.ipv6Unicast.adjRIBIn.Unregister(ac.client)
+			n.fsm.ipv6Unicast.adjRIBIn.Register(ac.client)
 		}
 	}
 }
