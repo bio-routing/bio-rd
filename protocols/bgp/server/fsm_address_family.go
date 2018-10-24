@@ -53,6 +53,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 
 	f.adjRIBIn = adjRIBIn.New(f.importFilter, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 	contributingASNs.Add(f.fsm.peer.localASN)
+
 	f.adjRIBIn.Register(f.rib)
 
 	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, !f.addPathTX.BestOnly)
@@ -68,7 +69,9 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 func (f *fsmAddressFamily) bmpInit() {
 	f.adjRIBIn = adjRIBIn.New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 
-	f.adjRIBIn.Register(f.rib)
+	if f.rib != nil {
+		f.adjRIBIn.Register(f.rib)
+	}
 }
 
 func (f *fsmAddressFamily) bmpDispose() {
