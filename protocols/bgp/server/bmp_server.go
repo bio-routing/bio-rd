@@ -83,6 +83,7 @@ func (b *BMPServer) UnsubscribeRIBs(client routingtable.RouteTableClient, rtr ne
 		return
 	}
 
+	delete(b.ribClients[rtrStr], ac)
 	b.routers[rtrStr].unsubscribeRIBs(client, afi)
 }
 
