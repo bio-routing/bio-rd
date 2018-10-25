@@ -19,16 +19,16 @@ type NetlinkWriter struct {
 	filter  *filter.Filter
 
 	// Routingtable for buffering, to ensure no double writes (a.k.a rtnetlink: file exists)
-	mu sync.RWMutex
-	pt map[bnet.Prefix][]*route.Path
+	mu        sync.RWMutex
+	pathTable map[bnet.Prefix][]*route.Path
 }
 
 // NewNetlinkWriter creates a new NetlinkWriter object and returns the pointer to it
 func NewNetlinkWriter(options *config.Netlink) *NetlinkWriter {
 	return &NetlinkWriter{
-		options: options,
-		filter:  options.ExportFilter,
-		pt:      make(map[bnet.Prefix][]*route.Path),
+		options:   options,
+		filter:    options.ExportFilter,
+		pathTable: make(map[bnet.Prefix][]*route.Path),
 	}
 }
 
@@ -56,19 +56,19 @@ func (nw *NetlinkWriter) Unregister(routingtable.RouteTableClient) {
 func (nw *NetlinkWriter) RouteCount() int64 {
 	nw.mu.RLock()
 	defer nw.mu.RUnlock()
-	return int64(len(nw.pt))
+	return int64(len(nw.pathTable))
 }
 
 // AddPath adds a path to the Kernel using netlink. This function is triggered by the loc_rib, cause we are subscribed as client in the loc_rib
 func (nw *NetlinkWriter) AddPath(pfx bnet.Prefix, path *route.Path) error {
 	// check if for this prefix already a route is existing
-	existingPaths, ok := nw.pt[pfx]
+	existingPaths, ok := nw.pathTable[pfx]
 
 	// if no route exists, add that route
 	if existingPaths == nil || !ok {
 		paths := make([]*route.Path, 1)
 		paths = append(paths, path)
-		nw.pt[pfx] = paths
+		nw.pathTable[pfx] = paths
 
 		// add the route to kernel
 		return nw.addKernel(pfx, path)
@@ -82,7 +82,7 @@ func (nw *NetlinkWriter) AddPath(pfx bnet.Prefix, path *route.Path) error {
 	}
 
 	existingPaths = append(existingPaths, path)
-	nw.pt[pfx] = existingPaths
+	nw.pathTable[pfx] = existingPaths
 
 	// now add to netlink
 	return nw.addKernel(pfx, path)
@@ -91,7 +91,7 @@ func (nw *NetlinkWriter) AddPath(pfx bnet.Prefix, path *route.Path) error {
 // RemovePath removes a path from the Kernel using netlink This function is triggered by the loc_rib, cause we are subscribed as client in the loc_rib
 func (nw *NetlinkWriter) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 	// check if for this prefix already a route is existing
-	existingPaths, ok := nw.pt[pfx]
+	existingPaths, ok := nw.pathTable[pfx]
 
 	// if no route exists, nothing to do
 	if existingPaths == nil || !ok {
@@ -118,7 +118,7 @@ func (nw *NetlinkWriter) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 
 	if remove {
 		existingPaths = append(existingPaths[:removeIdx], existingPaths[removeIdx+1:]...)
-		nw.pt[pfx] = existingPaths
+		nw.pathTable[pfx] = existingPaths
 	}
 
 	return true
@@ -201,8 +201,8 @@ func (nw *NetlinkWriter) createRouteFromNetlink(pfx bnet.Prefix, path *route.Pat
 		Gw:       nlPath.NextHop.Bytes(),
 		Priority: nlPath.Priority,
 		Type:     nlPath.Type,
-		Table:    nw.options.RoutingTable, // config dependent
-		Protocol: route.ProtoBio,          // fix
+		Table:    int(nw.options.RoutingTable), // config dependent
+		Protocol: route.ProtoBio,               // fix
 	}, nil
 }
 
@@ -220,8 +220,8 @@ func (nw *NetlinkWriter) createRouteFromBGPPath(pfx bnet.Prefix, path *route.Pat
 	return &netlink.Route{
 		Dst:      pfx.GetIPNet(),
 		Gw:       bgpPath.NextHop.Bytes(),
-		Table:    nw.options.RoutingTable, // config dependent
-		Protocol: route.ProtoBio,          // fix
+		Table:    int(nw.options.RoutingTable), // config dependent
+		Protocol: route.ProtoBio,               // fix
 	}, nil
 
 }

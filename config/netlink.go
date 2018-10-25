@@ -8,10 +8,10 @@ import (
 
 // Constants for default routing tables in the Linux Kernel
 const (
-	RtLocal   int = 255 // according to man ip-route: 255 is reserved fro built-in use
-	RtMain    int = 254 // This is the default table where routes are inserted
-	RtDefault int = 253 // according to man ip-route: 253 is reserved fro built-in use
-	RtUnspec  int = 0   // according to man ip-route: 0 is reserved fro built-in use
+	RtLocal   uint32 = 255 // according to man ip-route: 255 is reserved for built-in use
+	RtMain    uint32 = 254 // This is the default table where routes are inserted
+	RtDefault uint32 = 253 // according to man ip-route: 253 is reserved for built-in use
+	RtUnspec  uint32 = 0   // according to man ip-route: 0 is reserved for built-in use
 
 )
 
@@ -19,7 +19,7 @@ const (
 type Netlink struct {
 	HoldTime       time.Duration
 	UpdateInterval time.Duration
-	RoutingTable   int
+	RoutingTable   uint32
 	ImportFilter   *filter.Filter // Which routes are imported from the Kernel
 	ExportFilter   *filter.Filter // Which routes are exported to the Kernel
 }

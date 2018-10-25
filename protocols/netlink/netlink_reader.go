@@ -44,14 +44,12 @@ func NewNetlinkReader(options *config.Netlink) *NetlinkReader {
 
 // Read reads routes from the kernel
 func (nr *NetlinkReader) Read() {
-	log.WithField("rt_table", nr.options.RoutingTable).Info("Started netlink server")
-
 	// Start fetching the kernel routes after the hold time
 	time.Sleep(nr.options.HoldTime)
 
 	for {
 		// Family doesn't matter. I only filter by the rt_table here
-		routes, err := netlink.RouteListFiltered(IPFamily4, &netlink.Route{Table: nr.options.RoutingTable}, netlink.RT_FILTER_TABLE)
+		routes, err := netlink.RouteListFiltered(int(IPFamily4), &netlink.Route{Table: int(nr.options.RoutingTable)}, netlink.RT_FILTER_TABLE)
 		if err != nil {
 			log.WithError(err).Panic("Failed to read routes from kernel")
 		}
@@ -96,8 +94,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 	nr.mu.RUnlock()
 
 	for _, r := range advertise {
-		// Is it a BIO-Written route? if so, skip it, dont advertise it
-		if r.Protocol == route.ProtoBio {
+		if isBioRoute(r) {
 			log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
 			continue
 		}
@@ -113,7 +110,6 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 			continue
 		}
 
-		// Apply filter (if existing)
 		if nr.filter != nil {
 			var reject bool
 			// TODO: Implement filter that cann handle netlinkRoute objects
@@ -136,6 +132,11 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 			client.AddPath(pfx, path)
 		}
 	}
+}
+
+// Is route a BIO-Written route?
+func isBioRoute(r netlink.Route) bool {
+	return uint32(r.Protocol) == route.ProtoBio
 }
 
 // Remove given paths from clients
@@ -169,7 +170,6 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 			continue
 		}
 
-		// Apply filter (if existing)
 		if nr.filter != nil {
 			var reject bool
 			// TODO: Implement filter that cann handle netlinkRoute objects

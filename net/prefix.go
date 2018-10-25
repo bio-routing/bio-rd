@@ -3,7 +3,7 @@ package net
 import (
 	"fmt"
 	"math"
-	"net"
+	gonet "net"
 	"strconv"
 	"strings"
 )
@@ -22,8 +22,8 @@ func NewPfx(addr IP, pfxlen uint8) Prefix {
 	}
 }
 
-// NewPfxFromIPNet creates a Prefix object from an net.IPNet object
-func NewPfxFromIPNet(ipNet *net.IPNet) Prefix {
+// NewPfxFromIPNet creates a Prefix object from an gonet.IPNet object
+func NewPfxFromIPNet(ipNet *gonet.IPNet) Prefix {
 	ones, _ := ipNet.Mask.Size()
 	ip, _ := IPFromBytes(ipNet.IP)
 
@@ -72,16 +72,16 @@ func (pfx Prefix) String() string {
 	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
 }
 
-// GetIPNet returns the net.IP object for a Prefix object
-func (pfx Prefix) GetIPNet() *net.IPNet {
-	var dstNetwork net.IPNet
+// GetIPNet returns the gonet.IP object for a Prefix object
+func (pfx Prefix) GetIPNet() *gonet.IPNet {
+	var dstNetwork gonet.IPNet
 	dstNetwork.IP = pfx.Addr().Bytes()
 
 	pfxLen := int(pfx.Pfxlen())
 	if pfx.Addr().IsIPv4() {
-		dstNetwork.Mask = net.CIDRMask(pfxLen, 32)
+		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 32)
 	} else {
-		dstNetwork.Mask = net.CIDRMask(pfxLen, 128)
+		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 128)
 	}
 
 	return &dstNetwork
