@@ -4,12 +4,20 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
-// ProtoBio is the protocol number constant for bio from /etc/iproute2/rt_protos
-const ProtoBio = 45
+const (
+	ProtoUnspec   = 0  // unspec (from /etc/iproute2/rt_protos)
+	ProtoRedirect = 1  // redirect (from /etc/iproute2/rt_protos)
+	ProtoKernel   = 2  // kernel (from /etc/iproute2/rt_protos)
+	ProtoBoot     = 3  // boot (from /etc/iproute2/rt_protos)
+	ProtoStatic   = 4  // static (from /etc/iproute2/rt_protos)
+	ProtoZebra    = 11 // zebra (from /etc/iproute2/rt_protos)
+	ProtoBird     = 12 // bird (from /etc/iproute2/rt_protos)
+	ProtoDHCP     = 16 // dhcp (from /etc/iproute2/rt_protos)
+	ProtoBio      = 45 // bio
+)
 
 // NetlinkPath represents a path learned via Netlink of a route
 type NetlinkPath struct {
@@ -64,9 +72,6 @@ func NewNlPathFromRoute(r *netlink.Route, kernel bool) (*NetlinkPath, error) {
 		src, _ = bnet.IPFromBytes(r.Src)
 		dst = bnet.NewPfxFromIPNet(r.Dst)
 	}
-
-	log.Warnf("IPFromBytes: %v goes to %v", r.Src, src)
-	log.Warnf("IPFromBytes: %v goes to %v", r.Dst, dst)
 
 	nextHop, _ := bnet.IPFromBytes(r.Gw)
 
