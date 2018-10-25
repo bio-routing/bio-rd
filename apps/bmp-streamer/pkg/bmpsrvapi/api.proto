@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package bmpsrvapi;
+
+service RIBService {
+    rpc adjRIBInStream(AdjRIBInStreamRequest) returns (stream RIBUpdate);
+}
+
+message AdjRIBInStreamRequest {
+    IP router = 1;
+}
+
+message RIBUpdate {
+    IP peer = 1;
+    bool advertisement = 2;
+    Route route = 3;
+}
+
+message Route {
+    Prefix pfx = 1;
+    Path path = 2;
+}
+
+message Prefix {
+    IP address = 1;
+    uint32 pfxlen = 2;
+}
+
+message IP {
+    uint64 higher = 1;
+    uint64 lower = 2;
+    uint32 IP_version = 3;
+}
+
+message Path {
+    uint32 type = 1;
+    BGPPath BGP_path = 2;
+}
+
+message BGPPath {
+    uint32 path_identifier = 1;
+    IP next_hop = 2;
+    uint32 local_pref = 3;
+    repeated ASPathSegment AS_path = 4;
+    uint32 origin = 5;
+    uint32 MED = 6;
+    bool EBGP = 7;
+    uint32 BGP_identifier = 8;
+    IP source = 9;
+    repeated uint32 communities = 10;
+    repeated LargeCommunity large_communities = 11;
+    uint32 originator_id = 12;
+    repeated uint32 cluster_list = 13;
+    repeated UnknownAttribute unknown_attributes = 14;
+}
+
+message ASPathSegment {
+    bool AS_sequence = 1;
+    repeated uint32 ASNs = 2;
+}
+
+message LargeCommunity {
+    uint32 global_administrator = 1;
+    uint32 data_part1 = 2;
+    uint32 data_part2 = 3;
+}
+
+message UnknownAttribute {
+    bool optional = 1;
+    bool transitive = 2;
+    bool partial = 3;
+    uint32 type_code = 4;
+    bytes value = 5;
+}

@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	projectRoot string = "src/github.com/golang/notexist"
+	projectRoot = "src/github.com/golang/notexist"
 )
 
 // RunFunc defines the function signature for an integration test command to execute.
@@ -42,6 +42,13 @@ type TestProject struct {
 
 // NewTestProject initializes a new test's project directory.
 func NewTestProject(t *testing.T, initPath, wd string, run RunFunc) *TestProject {
+	// Cleaning up the GIT_DIR variable is useful when running tests under git
+	// rebase. In any case, since we're operating with temporary clones,
+	// no pre-existing value could be useful here.
+	// We do it globally because the internal runs don't actually use the
+	// TestProject's environment.
+	os.Unsetenv("GIT_DIR")
+
 	new := &TestProject{
 		t:      t,
 		origWd: wd,
@@ -168,7 +175,11 @@ func (p *TestProject) DoRun(args []string) error {
 		p.t.Logf("running testdep %v", args)
 	}
 	prog := filepath.Join(p.origWd, "testdep"+test.ExeSuffix)
-	newargs := append([]string{args[0], "-v"}, args[1:]...)
+
+	newargs := args
+	if args[0] != "check" {
+		newargs = append([]string{args[0], "-v"}, args[1:]...)
+	}
 
 	p.stdout.Reset()
 	p.stderr.Reset()

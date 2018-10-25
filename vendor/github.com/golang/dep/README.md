@@ -7,9 +7,13 @@
 
 ## Dep
 
-`dep` is a prototype dependency management tool for Go. It requires Go 1.8 or newer to compile. **`dep` is safe for production use.**
+`dep` is a dependency management tool for Go. It requires Go 1.9 or newer to compile.
 
-`dep` is the official _experiment_, but not yet the official tool. Check out the [Roadmap](https://github.com/golang/dep/wiki/Roadmap) for more on what this means!
+`dep` was the "official experiment." The Go toolchain, as of 1.11, has
+(experimentally) adopted an approach that sharply diverges from `dep`. As a
+result, we are continuing development of `dep`, but gearing work  primarily
+towards the development of an alternative prototype for versioning behavior in
+the toolchain.
 
 For guides and reference materials about `dep`, see [the documentation](https://golang.github.io/dep).
 
@@ -24,6 +28,17 @@ $ brew install dep
 $ brew upgrade dep
 ```
 
+On other platforms you can use the `install.sh` script:
+
+```sh
+$ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+```
+
+It will install into your `$GOPATH/bin` directory by default or any other directory you specify using the `INSTALL_DIRECTORY` environment variable.
+
+If your platform is not supported, you'll need to build it manually or let the team know and we'll consider adding your platform
+to the release builds.
+
 If you're interested in hacking on `dep`, you can install via `go get`:
 
 ```sh
@@ -36,7 +51,7 @@ Feedback is greatly appreciated.
 At this stage, the maintainers are most interested in feedback centered on the user experience (UX) of the tool.
 Do you have workflows that the tool supports well, or doesn't support at all?
 Do any of the commands have surprising effects, output, or results?
-If not, please file an issue, describing what you did or wanted to do, what you expected to happen, and what actually happened.
+Let us know by filing an issue, describing what you did or wanted to do, what you expected to happen, and what actually happened.
 
 ## Contributing
 

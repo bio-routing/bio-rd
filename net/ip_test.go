@@ -8,6 +8,68 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLower(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected uint64
+	}{
+		{
+			name:     "Test",
+			ip:       IP{lower: 100},
+			expected: 100,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.ip.Lower()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestHigher(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected uint64
+	}{
+		{
+			name:     "Test",
+			ip:       IP{higher: 200},
+			expected: 200,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.ip.Higher()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestIPVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected uint8
+	}{
+		{
+			name:     "Test",
+			ip:       IP{ipVersion: 4},
+			expected: 4,
+		},
+		{
+			name:     "Test",
+			ip:       IP{ipVersion: 6},
+			expected: 6,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.ip.IPVersion()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
 func TestCompare(t *testing.T) {
 	tests := []struct {
 		name     string

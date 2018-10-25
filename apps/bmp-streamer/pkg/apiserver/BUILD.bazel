@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["server.go"],
+    importpath = "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/apiserver",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//apps/bmp-streamer/pkg/bmpsrvapi:go_default_library",
+        "//net:go_default_library",
+        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bgp/server:go_default_library",
+        "//protocols/bgp/types:go_default_library",
+        "//route:go_default_library",
+        "//routingtable:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["server_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//apps/bmp-streamer/pkg/bmpsrvapi:go_default_library",
+        "//net:go_default_library",
+        "//protocols/bgp/types:go_default_library",
+        "//route:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)
