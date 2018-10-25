@@ -60,6 +60,42 @@ func TestDecodeNLRIs(t *testing.T) {
 	}
 }
 
+func TestDecodeNLRIv6(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		addPath  bool
+		wantFail bool
+		expected *NLRI
+	}{
+		{
+			name: "IPv6 default",
+			input: []byte{
+				0,
+			},
+			wantFail: false,
+			expected: &NLRI{
+				Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0), 0),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(test.input)
+		res, _, err := decodeNLRI(buf, IPv6AFI, test.addPath)
+
+		if test.wantFail && err == nil {
+			t.Errorf("Expected error did not happen for test %q", test.name)
+		}
+
+		if !test.wantFail && err != nil {
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+		}
+
+		assert.Equal(t, test.expected, res)
+	}
+}
+
 func TestDecodeNLRI(t *testing.T) {
 	tests := []struct {
 		name     string

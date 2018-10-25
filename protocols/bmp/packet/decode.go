@@ -61,7 +61,7 @@ func Decode(msg []byte) (Msg, error) {
 
 		return sr, nil
 	case PeerDownNotificationType:
-		pd, err := decodePeerUpNotification(buf, ch)
+		pd, err := decodePeerDownNotification(buf, ch)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode peer down notification: %v", err)
 		}

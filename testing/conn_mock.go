@@ -1,34 +1,32 @@
 package testing
 
 import (
+	"bytes"
 	"net"
 )
 
 // MockConn mock an connection
 type MockConn struct {
 	net.Conn
-
-	// Bytes are the bytes written
-	Bytes []byte
+	Buf    *bytes.Buffer
+	Closed bool
 }
 
 func NewMockConn() *MockConn {
 	return &MockConn{
-		Bytes: make([]byte, 0),
+		Buf: bytes.NewBuffer(nil),
 	}
 }
 
 func (m *MockConn) Write(b []byte) (int, error) {
-	m.Bytes = append(m.Bytes, b...)
-	return len(b), nil
+	return m.Buf.Write(b)
 }
 
 func (m *MockConn) Read(b []byte) (n int, err error) {
-	count := len(b)
-	if count > len(m.Bytes) {
-		count = len(m.Bytes)
-	}
+	return m.Buf.Read(b)
+}
 
-	copy(b, m.Bytes[0:count])
-	return count, nil
+func (m *MockConn) Close() error {
+	m.Closed = true
+	return nil
 }

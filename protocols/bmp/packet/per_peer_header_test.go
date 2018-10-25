@@ -28,7 +28,7 @@ func TestPerPeerHeaderSerialize(t *testing.T) {
 			expected: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -59,7 +59,7 @@ func TestDecodePerPeerHeader(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -83,7 +83,7 @@ func TestDecodePerPeerHeader(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -112,5 +112,48 @@ func TestDecodePerPeerHeader(t *testing.T) {
 		}
 
 		assert.Equalf(t, test.expected, p, "Test %q", test.name)
+	}
+
+}
+
+func TestGetIPVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *PerPeerHeader
+		expected uint8
+	}{
+		{
+			name: "IPv4",
+			p: &PerPeerHeader{
+				PeerFlags: 0,
+			},
+			expected: 4,
+		},
+		{
+			name: "IPv4 #2",
+			p: &PerPeerHeader{
+				PeerFlags: 127,
+			},
+			expected: 4,
+		},
+		{
+			name: "IPv6",
+			p: &PerPeerHeader{
+				PeerFlags: 128,
+			},
+			expected: 6,
+		},
+		{
+			name: "IPv6 #2",
+			p: &PerPeerHeader{
+				PeerFlags: 129,
+			},
+			expected: 6,
+		},
+	}
+
+	for _, test := range tests {
+		v := test.p.GetIPVersion()
+		assert.Equal(t, test.expected, v)
 	}
 }

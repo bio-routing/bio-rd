@@ -26,11 +26,11 @@ func TestDecode(t *testing.T) {
 		{
 			name: "Route monitoring ok",
 			input: []byte{
-				3, 0, 0, 0, 6 + 38 + 4, 0,
+				3, 0, 0, 0, 6 + PerPeerHeaderLen + 4, 0,
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -43,7 +43,7 @@ func TestDecode(t *testing.T) {
 			expected: &RouteMonitoringMsg{
 				CommonHeader: &CommonHeader{
 					Version:   3,
-					MsgLength: 6 + 38 + 4,
+					MsgLength: 6 + PerPeerHeaderLen + 4,
 					MsgType:   0,
 				},
 				PerPeerHeader: &PerPeerHeader{
@@ -62,11 +62,11 @@ func TestDecode(t *testing.T) {
 		{
 			name: "Route monitoring nok",
 			input: []byte{
-				3, 0, 0, 0, 6 + 38 + 4, 0,
+				3, 0, 0, 0, 6 + PerPeerHeaderLen + 4, 0,
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -80,11 +80,11 @@ func TestDecode(t *testing.T) {
 		{
 			name: "Statistic report ok",
 			input: []byte{
-				3, 0, 0, 0, 6 + 9 + 38, 1,
+				3, 0, 0, 0, 6 + 9 + PerPeerHeaderLen, 1,
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -98,7 +98,7 @@ func TestDecode(t *testing.T) {
 			expected: &StatsReport{
 				CommonHeader: &CommonHeader{
 					Version:   3,
-					MsgLength: 6 + 9 + 38,
+					MsgLength: 6 + 9 + PerPeerHeaderLen,
 					MsgType:   1,
 				},
 				PerPeerHeader: &PerPeerHeader{
@@ -124,11 +124,11 @@ func TestDecode(t *testing.T) {
 		{
 			name: "Statistic report nok",
 			input: []byte{
-				3, 0, 0, 0, 6 + 9 + 38, 1,
+				3, 0, 0, 0, 6 + 9 + PerPeerHeaderLen, 1,
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 			},
@@ -137,11 +137,11 @@ func TestDecode(t *testing.T) {
 		{
 			name: "peer down ok",
 			input: []byte{
-				3, 0, 0, 0, 6 + 9 + 38, 1,
+				3, 0, 0, 0, 6 + 9 + PerPeerHeaderLen, 1,
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -155,7 +155,7 @@ func TestDecode(t *testing.T) {
 			expected: &StatsReport{
 				CommonHeader: &CommonHeader{
 					Version:   3,
-					MsgLength: 6 + 9 + 38,
+					MsgLength: 6 + 9 + PerPeerHeaderLen,
 					MsgType:   1,
 				},
 				PerPeerHeader: &PerPeerHeader{
@@ -181,11 +181,11 @@ func TestDecode(t *testing.T) {
 		{
 			name: "peer down nok",
 			input: []byte{
-				3, 0, 0, 0, 6 + 9 + 38, 1,
+				3, 0, 0, 0, 6 + 9 + PerPeerHeaderLen, 1,
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -204,7 +204,7 @@ func TestDecode(t *testing.T) {
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -216,6 +216,9 @@ func TestDecode(t *testing.T) {
 				0, 200,
 
 				// OPEN Sent
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 34,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -224,6 +227,9 @@ func TestDecode(t *testing.T) {
 				1, 2, 3, 4, 5,
 
 				// OPEN Recv
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 29,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -253,6 +259,9 @@ func TestDecode(t *testing.T) {
 				LocalPort:    100,
 				RemotePort:   200,
 				SentOpenMsg: []byte{
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 34,
+					1,
 					4,    // Version
 					1, 0, // ASN
 					2, 0, // Hold Time
@@ -261,7 +270,9 @@ func TestDecode(t *testing.T) {
 					1, 2, 3, 4, 5,
 				},
 				ReceivedOpenMsg: []byte{
-					// OPEN Recv
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 29,
+					1,
 					4,    // Version
 					1, 0, // ASN
 					2, 0, // Hold Time
@@ -280,7 +291,7 @@ func TestDecode(t *testing.T) {
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -374,7 +385,7 @@ func TestDecode(t *testing.T) {
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -416,7 +427,7 @@ func TestDecode(t *testing.T) {
 
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0,
