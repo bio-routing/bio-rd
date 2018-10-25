@@ -3,6 +3,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
+        "bmp_router.go",
+        "bmp_server.go",
         "fake_conn.go",
         "fsm.go",
         "fsm_active.go",
@@ -29,6 +31,7 @@ go_library(
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
         "//protocols/bgp/types:go_default_library",
+        "//protocols/bmp/packet:go_default_library",
         "//route:go_default_library",
         "//routingtable:go_default_library",
         "//routingtable/adjRIBIn:go_default_library",
@@ -36,12 +39,15 @@ go_library(
         "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
     ],
 )
 
 go_test(
     name = "go_default_test",
     srcs = [
+        "bmp_router_test.go",
+        "bmp_server_test.go",
         "fsm_address_family_test.go",
         "fsm_open_sent_test.go",
         "fsm_test.go",
@@ -55,11 +61,14 @@ go_test(
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
         "//protocols/bgp/types:go_default_library",
+        "//protocols/bmp/packet:go_default_library",
         "//route:go_default_library",
         "//routingtable:go_default_library",
+        "//routingtable/adjRIBIn:go_default_library",
         "//routingtable/filter:go_default_library",
         "//routingtable/locRIB:go_default_library",
         "//testing:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

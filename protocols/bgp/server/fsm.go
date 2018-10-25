@@ -29,6 +29,7 @@ type state interface {
 
 // FSM implements the BGP finite state machine (RFC4271)
 type FSM struct {
+	isBMP       bool
 	peer        *peer
 	eventCh     chan int
 	con         net.Conn
@@ -330,6 +331,10 @@ func recvMsg(c net.Conn) (msg []byte, err error) {
 }
 
 func stopTimer(t *time.Timer) {
+	if t == nil {
+		return
+	}
+
 	if !t.Stop() {
 		select {
 		case <-t.C:

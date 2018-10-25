@@ -57,7 +57,7 @@ func decodePeerDownNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerDownN
 
 	err = decoder.Decode(buf, fields)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Unable to read Data: %v", err)
 	}
 
 	return p, nil
