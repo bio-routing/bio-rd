@@ -18,6 +18,7 @@ func TestPeerUpMsgType(t *testing.T) {
 		t.Errorf("Unexpected result")
 	}
 }
+
 func TestDecodePeerUp(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -31,7 +32,7 @@ func TestDecodePeerUp(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -43,6 +44,9 @@ func TestDecodePeerUp(t *testing.T) {
 				0, 200,
 
 				// OPEN Sent
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 34,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -51,6 +55,9 @@ func TestDecodePeerUp(t *testing.T) {
 				1, 2, 3, 4, 5,
 
 				// OPEN Recv
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 29,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -60,12 +67,12 @@ func TestDecodePeerUp(t *testing.T) {
 				120, 140, 160, // Information
 			},
 			ch: &CommonHeader{
-				MsgLength: 47,
+				MsgLength: 126,
 			},
 			wantFail: false,
 			expected: &PeerUpNotification{
 				CommonHeader: &CommonHeader{
-					MsgLength: 47,
+					MsgLength: 126,
 				},
 				PerPeerHeader: &PerPeerHeader{
 					PeerType:              1,
@@ -81,6 +88,9 @@ func TestDecodePeerUp(t *testing.T) {
 				LocalPort:    100,
 				RemotePort:   200,
 				SentOpenMsg: []byte{
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 34,
+					1,
 					4,    // Version
 					1, 0, // ASN
 					2, 0, // Hold Time
@@ -89,7 +99,9 @@ func TestDecodePeerUp(t *testing.T) {
 					1, 2, 3, 4, 5,
 				},
 				ReceivedOpenMsg: []byte{
-					// OPEN Recv
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 29,
+					1,
 					4,    // Version
 					1, 0, // ASN
 					2, 0, // Hold Time
@@ -106,7 +118,7 @@ func TestDecodePeerUp(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -118,6 +130,9 @@ func TestDecodePeerUp(t *testing.T) {
 				0, 200,
 
 				// OPEN Sent
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 34,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -126,6 +141,9 @@ func TestDecodePeerUp(t *testing.T) {
 				1, 2, 3, 4, 5,
 
 				// OPEN Recv
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 29,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -133,12 +151,12 @@ func TestDecodePeerUp(t *testing.T) {
 				0, // Opt Parm Len
 			},
 			ch: &CommonHeader{
-				MsgLength: 44,
+				MsgLength: 82,
 			},
 			wantFail: false,
 			expected: &PeerUpNotification{
 				CommonHeader: &CommonHeader{
-					MsgLength: 44,
+					MsgLength: 82,
 				},
 				PerPeerHeader: &PerPeerHeader{
 					PeerType:              1,
@@ -154,6 +172,9 @@ func TestDecodePeerUp(t *testing.T) {
 				LocalPort:    100,
 				RemotePort:   200,
 				SentOpenMsg: []byte{
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 34,
+					1,
 					4,    // Version
 					1, 0, // ASN
 					2, 0, // Hold Time
@@ -162,7 +183,9 @@ func TestDecodePeerUp(t *testing.T) {
 					1, 2, 3, 4, 5,
 				},
 				ReceivedOpenMsg: []byte{
-					// OPEN Recv
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 29,
+					1,
 					4,    // Version
 					1, 0, // ASN
 					2, 0, // Hold Time
@@ -176,13 +199,13 @@ func TestDecodePeerUp(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0,
 			},
 			ch: &CommonHeader{
-				MsgLength: 47,
+				MsgLength: 51,
 			},
 			wantFail: true,
 		},
@@ -191,7 +214,7 @@ func TestDecodePeerUp(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -202,7 +225,7 @@ func TestDecodePeerUp(t *testing.T) {
 				0, 100,
 			},
 			ch: &CommonHeader{
-				MsgLength: 47,
+				MsgLength: 51,
 			},
 			wantFail: true,
 		},
@@ -211,7 +234,7 @@ func TestDecodePeerUp(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -223,12 +246,15 @@ func TestDecodePeerUp(t *testing.T) {
 				0, 200,
 
 				// OPEN Sent
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 29,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
 			},
 			ch: &CommonHeader{
-				MsgLength: 47,
+				MsgLength: 89,
 			},
 			wantFail: true,
 		},
@@ -237,7 +263,7 @@ func TestDecodePeerUp(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -248,12 +274,15 @@ func TestDecodePeerUp(t *testing.T) {
 				0, 200,
 
 				// OPEN Sent
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 29,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
 			},
 			ch: &CommonHeader{
-				MsgLength: 47,
+				MsgLength: 88,
 			},
 			wantFail: true,
 		},
@@ -265,6 +294,9 @@ func TestDecodePeerUp(t *testing.T) {
 				0, 200,
 
 				// OPEN Sent
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 29,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -273,6 +305,9 @@ func TestDecodePeerUp(t *testing.T) {
 				1, 2, 3, 4, 5,
 
 				// OPEN Recv
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 29,
+				1,
 				4,    // Version
 				1, 0, // ASN
 				2, 0, // Hold Time
@@ -280,7 +315,7 @@ func TestDecodePeerUp(t *testing.T) {
 				3, // Opt Parm Len
 			},
 			ch: &CommonHeader{
-				MsgLength: 47,
+				MsgLength: 85,
 			},
 			wantFail: true,
 		},

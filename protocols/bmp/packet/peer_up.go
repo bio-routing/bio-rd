@@ -9,7 +9,7 @@ import (
 
 const (
 	// OpenMsgMinLen is the minimal length of a BGP open message
-	OpenMsgMinLen = 10
+	OpenMsgMinLen = 29
 )
 
 // PeerUpNotification represents a peer up notification

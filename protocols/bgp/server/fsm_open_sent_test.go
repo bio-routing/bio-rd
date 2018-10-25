@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net"
 	"testing"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -69,7 +70,19 @@ func TestOpenMsgReceived(t *testing.T) {
 			fsm := newFSM(&peer{
 				peerASN: test.asn,
 			})
-			fsm.con = &btesting.MockConn{}
+
+			conA, conB := net.Pipe()
+			fsm.con = conB
+
+			go func() {
+				for {
+					buf := make([]byte, 1)
+					_, err := conA.Read(buf)
+					if err != nil {
+						return
+					}
+				}
+			}()
 
 			s := &openSentState{
 				fsm: fsm,

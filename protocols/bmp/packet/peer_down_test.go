@@ -32,7 +32,7 @@ func TestDecodePeerDownNotification(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -43,12 +43,12 @@ func TestDecodePeerDownNotification(t *testing.T) {
 				1, 2, 3,
 			},
 			ch: &CommonHeader{
-				MsgLength: CommonHeaderLen + 4 + 38,
+				MsgLength: CommonHeaderLen + 4 + PerPeerHeaderLen,
 			},
 			wantFail: false,
 			expected: &PeerDownNotification{
 				CommonHeader: &CommonHeader{
-					MsgLength: CommonHeaderLen + 4 + 38,
+					MsgLength: CommonHeaderLen + 4 + PerPeerHeaderLen,
 				},
 				PerPeerHeader: &PerPeerHeader{
 					PeerType:              1,
@@ -71,7 +71,7 @@ func TestDecodePeerDownNotification(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
@@ -106,7 +106,7 @@ func TestDecodePeerDownNotification(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0,
@@ -121,7 +121,7 @@ func TestDecodePeerDownNotification(t *testing.T) {
 			input: []byte{
 				1,
 				2,
-				0, 0, 0, 3,
+				0, 0, 0, 0, 0, 0, 0, 3,
 				1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 				0, 0, 200, 124,
 				0, 0, 0, 123,
