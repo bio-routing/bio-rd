@@ -8,6 +8,7 @@ go_library(
     ],
     importpath = "github.com/bio-routing/bio-rd/net",
     visibility = ["//visibility:public"],
+    deps = ["//net/api:go_default_library"],
 )
 
 go_test(
@@ -17,5 +18,8 @@ go_test(
         "prefix_test.go",
     ],
     embed = [":go_default_library"],
-    deps = ["//vendor/github.com/stretchr/testify/assert:go_default_library"],
+    deps = [
+        "//net/api:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
+    ],
 )
