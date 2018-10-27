@@ -52,18 +52,18 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, er
 	if r.Src == nil && r.Dst != nil {
 		dst = bnet.NewPfxFromIPNet(r.Dst)
 		if dst.Addr().IsIPv4() {
-			src = bnet.IPv4FromOctets(0, 0, 0, 0)
+			src = bnet.IPv4(0)
 		} else {
-			src = bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0)
+			src = bnet.IPv6(0, 0)
 		}
 	}
 
 	if r.Src != nil && r.Dst == nil {
 		src, _ = bnet.IPFromBytes(r.Src)
 		if src.IsIPv4() {
-			dst = bnet.NewPfx(bnet.IPv4FromOctets(0, 0, 0, 0), 0)
+			dst = bnet.NewPfx(bnet.IPv4(0), 0)
 		} else {
-			dst = bnet.NewPfx(bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0), 0)
+			dst = bnet.NewPfx(bnet.IPv6(0, 0), 0)
 		}
 	}
 
@@ -111,19 +111,19 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, er
 
 // Select compares s with t and returns negative if s < t, 0 if paths are equal, positive if s > t
 func (s *NetlinkPath) Select(t *NetlinkPath) int8 {
-	if s.NextHop.Compare(t.NextHop) > 0 {
+	if s.NextHop.Compare(t.NextHop) < 0 {
 		return -1
 	}
 
-	if s.NextHop.Compare(t.NextHop) < 0 {
+	if s.NextHop.Compare(t.NextHop) > 0 {
 		return 1
 	}
 
-	if s.Src.Compare(t.Src) > 0 {
+	if s.Src.Compare(t.Src) < 0 {
 		return -1
 	}
 
-	if s.Src.Compare(t.Src) < 0 {
+	if s.Src.Compare(t.Src) > 0 {
 		return 1
 	}
 
@@ -156,28 +156,7 @@ func (s *NetlinkPath) Select(t *NetlinkPath) int8 {
 
 // ECMP determines if path s and t are equal in terms of ECMP
 func (s *NetlinkPath) ECMP(t *NetlinkPath) bool {
-
-	if s.Src != t.Src {
-		return false
-	}
-
-	if s.Priority != t.Priority {
-		return false
-	}
-
-	if s.Protocol != t.Protocol {
-		return false
-	}
-
-	if s.Type != t.Type {
-		return false
-	}
-
-	if s.Table != t.Table {
-		return false
-	}
-
-	return true
+	return s.Src == t.Src && s.Priority == t.Priority && s.Protocol == t.Protocol && s.Type == t.Type && s.Table == t.Table
 }
 
 // Copy duplicates the current object

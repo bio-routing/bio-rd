@@ -15,7 +15,6 @@ go_library(
     deps = [
         "//net:go_default_library",
         "//protocols/bgp/types:go_default_library",
-        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
         "//vendor/github.com/vishvananda/netlink:go_default_library",
     ],
