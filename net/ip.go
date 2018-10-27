@@ -230,11 +230,11 @@ func (ip IP) ToNetIP() net.IP {
 
 // BitAtPosition returns the bit at position pos
 func (ip IP) BitAtPosition(pos uint8) bool {
-	if !ip.isLegacy {
-		return ip.bitAtPositionIPv6(pos)
+	if ip.isLegacy {
+		return ip.bitAtPositionIPv4(pos)
 	}
 
-	return ip.bitAtPositionIPv4(pos)
+	return ip.bitAtPositionIPv6(pos)
 }
 
 func (ip IP) bitAtPositionIPv4(pos uint8) bool {
