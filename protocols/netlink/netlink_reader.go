@@ -66,20 +66,6 @@ func (nr *NetlinkReader) Read() {
 	}
 }
 
-// create a path from a route
-func createPathFromRoute(r *netlink.Route) (*route.Path, error) {
-	nlPath, err := route.NewNlPathFromRoute(r, true)
-
-	if err != nil {
-		return nil, fmt.Errorf("Error while creating path object from route object: %v", err)
-	}
-
-	return &route.Path{
-		Type:        route.NetlinkPathType,
-		NetlinkPath: nlPath,
-	}, nil
-}
-
 // propagate changes to all subscribed clients
 func (nr *NetlinkReader) propagateChanges(routes []netlink.Route) {
 	nr.removePathsFromClients(routes)
@@ -88,66 +74,63 @@ func (nr *NetlinkReader) propagateChanges(routes []netlink.Route) {
 
 // Add given paths to clients
 func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
+	// If there where no routes yet, just skip this funktion. There's nothing to delete
+	if len(routes) == 0 {
+		nr.mu.RUnlock()
+		return
+	}
+
 	// only advertise changed routes
 	nr.mu.RLock()
 	advertise := route.NetlinkRouteDiff(routes, nr.routes)
 	nr.mu.RUnlock()
 
-	for _, r := range advertise {
-		if isBioRoute(r) {
-			log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
-			continue
-		}
-
-		// create pfx and path from route
-		pfx := bnet.NewPfxFromIPNet(r.Dst)
-		path, err := createPathFromRoute(&r)
-		if err != nil {
-			log.WithError(err).WithFields(log.Fields{
-				"prefix": pfx.String(),
-				"path":   path.String(),
-			}).Error("Unable to create path")
-			continue
-		}
-
-		if nr.filter != nil {
-			var reject bool
-			// TODO: Implement filter that cann handle netlinkRoute objects
-			path, reject = nr.filter.ProcessTerms(pfx, path)
-			if reject {
-				log.WithError(err).WithFields(log.Fields{
-					"prefix": pfx.String(),
-					"path":   path.String(),
-				}).Debug("Skipping route due to filter")
-
+	for _, client := range nr.ClientManager.Clients() {
+		for _, r := range advertise {
+			if isBioRoute(r) {
+				log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
 				continue
 			}
-		}
 
-		for _, client := range nr.ClientManager.Clients() {
-			log.WithFields(log.Fields{
-				"pfx":  pfx,
-				"path": path,
-			}).Debug("NetlinkReader - client.AddPath")
-			client.AddPath(pfx, path)
+			// create pfx and path from route
+			pfx, paths, err := route.NewPathsFromNlRoute(r, true)
+			if err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"prefix": pfx.String(),
+				}).Error("Unable to create path")
+				continue
+			}
+
+			for _, path := range paths {
+				var p *route.Path
+				if nr.filter != nil {
+					var reject bool
+					p, reject := nr.filter.ProcessTerms(pfx, path)
+					if reject {
+						log.WithError(err).WithFields(log.Fields{
+							"prefix": pfx.String(),
+							"path":   p.String(),
+						}).Debug("Skipping route due to filter")
+						continue
+					}
+				}
+
+				log.WithFields(log.Fields{
+					"pfx":  pfx,
+					"path": p,
+				}).Debug("NetlinkReader - client.AddPath")
+				client.AddPath(pfx, p)
+			}
 		}
 	}
-}
-
-// Is route a BIO-Written route?
-func isBioRoute(r netlink.Route) bool {
-	return uint32(r.Protocol) == route.ProtoBio
 }
 
 // Remove given paths from clients
 func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 	nr.mu.RLock()
 
-	// get the number of routes
-	routeLength := len(nr.routes)
-
 	// If there where no routes yet, just skip this funktion. There's nothing to delete
-	if routeLength == 0 {
+	if len(nr.routes) == 0 {
 		nr.mu.RUnlock()
 		return
 	}
@@ -156,37 +139,49 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 	withdraw := route.NetlinkRouteDiff(nr.routes, routes)
 	nr.mu.RUnlock()
 
-	for _, r := range withdraw {
-		// Is it a BIO-Written route? if so, skip it, dont advertise it
-		if r.Protocol == route.ProtoBio {
-			continue
-		}
-
-		// create pfx and path from route
-		pfx := bnet.NewPfxFromIPNet(r.Dst)
-		path, err := createPathFromRoute(&r)
-		if err != nil {
-			log.WithError(err).Error("Unable to create path")
-			continue
-		}
-
-		if nr.filter != nil {
-			var reject bool
-			// TODO: Implement filter that cann handle netlinkRoute objects
-			path, reject = nr.filter.ProcessTerms(pfx, path)
-			if reject {
+	for _, client := range nr.ClientManager.Clients() {
+		for _, r := range withdraw {
+			if isBioRoute(r) {
+				log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
 				continue
 			}
-		}
 
-		for _, client := range nr.ClientManager.Clients() {
-			log.WithFields(log.Fields{
-				"pfx":  pfx,
-				"path": path,
-			}).Debug("NetlinkReader - client.RemovePath")
-			client.RemovePath(pfx, path)
+			// create pfx and path from route
+			pfx, paths, err := route.NewPathsFromNlRoute(r, true)
+			if err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"prefix": pfx.String(),
+				}).Error("Unable to create path")
+				continue
+			}
+
+			for _, path := range paths {
+				var p *route.Path
+				if nr.filter != nil {
+					var reject bool
+					p, reject = nr.filter.ProcessTerms(pfx, path)
+					if reject {
+						log.WithError(err).WithFields(log.Fields{
+							"prefix": pfx.String(),
+							"path":   p.String(),
+						}).Debug("Skipping route due to filter")
+						continue
+					}
+				}
+
+				log.WithFields(log.Fields{
+					"pfx":  pfx,
+					"path": p,
+				}).Debug("NetlinkReader - client.RemovePath")
+				client.RemovePath(pfx, p)
+			}
 		}
 	}
+}
+
+// Is route a BIO-Written route?
+func isBioRoute(r netlink.Route) bool {
+	return uint32(r.Protocol) == route.ProtoBio
 }
 
 func routeLogFields(route netlink.Route) log.Fields {
