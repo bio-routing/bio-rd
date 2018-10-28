@@ -186,5 +186,13 @@ func (a *AdjRIBIn) Register(client routingtable.RouteTableClient) {
 
 // Unregister unregisters a client
 func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
-	a.clientManager.Unregister(client)
+	if !a.clientManager.Unregister(client) {
+		return
+	}
+
+	for _, r := range a.rt.Dump() {
+		for _, p := range r.Paths() {
+			client.RemovePath(r.Prefix(), p)
+		}
+	}
 }

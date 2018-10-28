@@ -13,15 +13,17 @@ type RemovePathParams struct {
 }
 
 type RTMockClient struct {
-	removePathParams RemovePathParams
+	removed []*RemovePathParams
 }
 
 func NewRTMockClient() *RTMockClient {
-	return &RTMockClient{}
+	return &RTMockClient{
+		removed: make([]*RemovePathParams, 0),
+	}
 }
 
-func (m *RTMockClient) GetRemovePathParams() RemovePathParams {
-	return m.removePathParams
+func (m *RTMockClient) Removed() []*RemovePathParams {
+	return m.removed
 }
 
 func (m *RTMockClient) AddPath(pfx net.Prefix, p *route.Path) error {
@@ -46,8 +48,12 @@ func (m *RTMockClient) Unregister(RouteTableClient) {
 
 // RemovePath removes the path for prefix `pfx`
 func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
-	m.removePathParams.Pfx = pfx
-	m.removePathParams.Path = p
+	params := &RemovePathParams{
+		Path: p,
+		Pfx:  pfx,
+	}
+	m.removed = append(m.removed, params)
+
 	return true
 }
 
