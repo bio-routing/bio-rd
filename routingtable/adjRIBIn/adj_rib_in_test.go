@@ -309,13 +309,7 @@ func TestRemovePath(t *testing.T) {
 			assert.Equal(t, test.removePath, removePathParams.Path)
 		} else {
 			r := mc.Removed()
-			assert.Equalf(t, 1, len(r), "Test %q failed: Call to RemovePath did not propagate prefix", test.name)
-
-			removePathParams := r[0]
-			uninitialized := net.Prefix{}
-			if removePathParams.Pfx != uninitialized {
-				t.Errorf("Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
-			}
+			assert.Equalf(t, 0, len(r), "Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
 		}
 
 		assert.Equal(t, test.expected, adjRIBIn.rt.Dump())
