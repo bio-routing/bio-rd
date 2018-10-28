@@ -3,8 +3,111 @@ package net
 import (
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net/api"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestPrefixToProto(t *testing.T) {
+	tests := []struct {
+		name     string
+		pfx      Prefix
+		expected api.Prefix
+	}{
+		{
+			name: "IPv4",
+			pfx: Prefix{
+				addr: IP{
+					lower:    200,
+					isLegacy: true,
+				},
+				pfxlen: 24,
+			},
+			expected: api.Prefix{
+				Address: &api.IP{
+					Lower:    200,
+					IsLegacy: true,
+				},
+				Pfxlen: 24,
+			},
+		},
+		{
+			name: "IPv6",
+			pfx: Prefix{
+				addr: IP{
+					higher:   100,
+					lower:    200,
+					isLegacy: false,
+				},
+				pfxlen: 64,
+			},
+			expected: api.Prefix{
+				Address: &api.IP{
+					Higher:   100,
+					Lower:    200,
+					IsLegacy: false,
+				},
+				Pfxlen: 64,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := test.pfx.ToProto()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestNewPrefixFromProtoPrefix(t *testing.T) {
+	tests := []struct {
+		name     string
+		proto    api.Prefix
+		expected Prefix
+	}{
+		{
+			name: "IPv4",
+			proto: api.Prefix{
+				Address: &api.IP{
+					Higher:   0,
+					Lower:    2000,
+					IsLegacy: true,
+				},
+				Pfxlen: 24,
+			},
+			expected: Prefix{
+				addr: IP{
+					higher:   0,
+					lower:    2000,
+					isLegacy: true,
+				},
+				pfxlen: 24,
+			},
+		},
+		{
+			name: "IPv6",
+			proto: api.Prefix{
+				Address: &api.IP{
+					Higher:   1000,
+					Lower:    2000,
+					IsLegacy: false,
+				},
+				Pfxlen: 64,
+			},
+			expected: Prefix{
+				addr: IP{
+					higher:   1000,
+					lower:    2000,
+					isLegacy: false,
+				},
+				pfxlen: 64,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := NewPrefixFromProtoPrefix(test.proto)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
 
 func TestNewPfx(t *testing.T) {
 	p := NewPfx(IPv4(123), 11)
