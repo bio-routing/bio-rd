@@ -11,7 +11,6 @@ type RouteTableClient interface {
 	RemovePath(net.Prefix, *route.Path) bool
 	UpdateNewClient(RouteTableClient) error
 	Register(RouteTableClient)
-	RegisterWithOptions(RouteTableClient, ClientOptions)
 	Unregister(RouteTableClient)
 	RouteCount() int64
 }

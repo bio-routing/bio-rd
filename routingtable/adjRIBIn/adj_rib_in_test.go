@@ -3,12 +3,11 @@ package adjRIBIn
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddPath(t *testing.T) {
@@ -146,7 +145,7 @@ func TestAddPath(t *testing.T) {
 	for _, test := range tests {
 		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), routerID, clusterID, test.addPath)
 		mc := routingtable.NewRTMockClient()
-		adjRIBIn.ClientManager.Register(mc)
+		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
@@ -293,7 +292,7 @@ func TestRemovePath(t *testing.T) {
 		}
 
 		mc := routingtable.NewRTMockClient()
-		adjRIBIn.ClientManager.Register(mc)
+		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{})
 		adjRIBIn.RemovePath(test.removePfx, test.removePath)
 
 		if test.wantPropagation {

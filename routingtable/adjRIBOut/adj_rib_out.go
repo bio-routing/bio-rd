@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"sync"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 	log "github.com/sirupsen/logrus"
 )
 
 // AdjRIBOut represents an Adjacency RIB Out with BGP add path
 type AdjRIBOut struct {
-	routingtable.ClientManager
+	clientManager *routingtable.ClientManager
 	rt            *routingtable.RoutingTable
 	neighbor      *routingtable.Neighbor
 	addPathTX     bool
@@ -32,7 +31,7 @@ func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter, addPathTX
 		exportFilter:  exportFilter,
 		addPathTX:     addPathTX,
 	}
-	a.ClientManager = routingtable.NewClientManager(a)
+	a.clientManager = routingtable.NewClientManager(a)
 	return a
 }
 
@@ -110,7 +109,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		a.removePathsFromClients(pfx, oldPaths)
 	}
 
-	for _, client := range a.ClientManager.Clients() {
+	for _, client := range a.clientManager.Clients() {
 		err := client.AddPath(pfx, p)
 		if err != nil {
 			log.WithField("Sender", "AdjRIBOutAddPath").WithError(err).Error("Could not send update to client")
@@ -204,7 +203,7 @@ func (a *AdjRIBOut) removePathsFromClients(pfx bnet.Prefix, paths []*route.Path)
 }
 
 func (a *AdjRIBOut) removePathFromClients(pfx bnet.Prefix, path *route.Path) {
-	for _, client := range a.ClientManager.Clients() {
+	for _, client := range a.clientManager.Clients() {
 		client.RemovePath(pfx, path)
 	}
 }
@@ -235,4 +234,14 @@ func (a *AdjRIBOut) Dump() string {
 	}
 
 	return ret
+}
+
+// Register registers a client for updates
+func (a *AdjRIBOut) Register(client routingtable.RouteTableClient) {
+	a.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
+}
+
+// Unregister unregisters a client
+func (a *AdjRIBOut) Unregister(client routingtable.RouteTableClient) {
+	a.clientManager.Unregister(client)
 }
