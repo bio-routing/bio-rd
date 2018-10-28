@@ -3,11 +3,10 @@ package apiserver
 import (
 	"fmt"
 
-	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpsrvapi"
+	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpstreamer"
 	net "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 )
@@ -26,72 +25,8 @@ func New(bmpServer *server.BMPServer) *APIServer {
 
 func (u update) toRIBUpdate() *pb.RIBUpdate {
 	toSend := &pb.RIBUpdate{
-		Peer: &pb.IP{},
-		Route: &pb.Route{
-			Pfx: &pb.Prefix{
-				Address: &pb.IP{},
-			},
-			Path: &pb.Path{
-				Type: route.BGPPathType,
-				BGPPath: &pb.BGPPath{
-					NextHop: &pb.IP{},
-					Source:  &pb.IP{},
-				},
-			},
-		},
-	}
-
-	toSend.Advertisement = u.advertisement
-	toSend.Peer.Lower = u.path.BGPPath.Source.Lower()
-	toSend.Peer.Higher = u.path.BGPPath.Source.Higher()
-	toSend.Peer.IPVersion = uint32(u.path.BGPPath.Source.IPVersion())
-	toSend.Route.Pfx.Pfxlen = uint32(u.prefix.Pfxlen())
-	toSend.Route.Pfx.Address.Lower = u.prefix.Addr().Lower()
-	toSend.Route.Pfx.Address.Higher = u.prefix.Addr().Higher()
-	toSend.Route.Pfx.Address.IPVersion = uint32(u.prefix.Addr().IPVersion())
-	toSend.Route.Path.BGPPath.NextHop.Lower = u.path.BGPPath.NextHop.Lower()
-	toSend.Route.Path.BGPPath.NextHop.Higher = u.path.BGPPath.NextHop.Higher()
-	toSend.Route.Path.BGPPath.NextHop.IPVersion = uint32(u.path.BGPPath.NextHop.IPVersion())
-	toSend.Route.Path.BGPPath.Source.Lower = u.path.BGPPath.Source.Lower()
-	toSend.Route.Path.BGPPath.Source.Higher = u.path.BGPPath.Source.Higher()
-	toSend.Route.Path.BGPPath.Source.IPVersion = uint32(u.path.BGPPath.Source.IPVersion())
-	toSend.Route.Path.BGPPath.EBGP = u.path.BGPPath.EBGP
-	toSend.Route.Path.BGPPath.BGPIdentifier = u.path.BGPPath.BGPIdentifier
-	toSend.Route.Path.BGPPath.ClusterList = u.path.BGPPath.ClusterList
-	toSend.Route.Path.BGPPath.Communities = u.path.BGPPath.Communities
-	toSend.Route.Path.BGPPath.LocalPref = u.path.BGPPath.LocalPref
-	toSend.Route.Path.BGPPath.MED = u.path.BGPPath.MED
-	toSend.Route.Path.BGPPath.PathIdentifier = u.path.BGPPath.PathIdentifier
-	toSend.Route.Path.BGPPath.Origin = uint32(u.path.BGPPath.Origin)
-
-	toSend.Route.Path.BGPPath.LargeCommunities = make([]*pb.LargeCommunity, len(u.path.BGPPath.LargeCommunities))
-	for i, com := range u.path.BGPPath.LargeCommunities {
-		toSend.Route.Path.BGPPath.LargeCommunities[i] = &pb.LargeCommunity{
-			GlobalAdministrator: com.GlobalAdministrator,
-			DataPart1:           com.DataPart1,
-			DataPart2:           com.DataPart2,
-		}
-	}
-
-	toSend.Route.Path.BGPPath.ASPath = make([]*pb.ASPathSegment, len(u.path.BGPPath.ASPath))
-	for i, pathSegment := range u.path.BGPPath.ASPath {
-		newSegment := &pb.ASPathSegment{
-			ASSequence: pathSegment.Type == types.ASSequence,
-			ASNs:       make([]uint32, len(pathSegment.ASNs)),
-		}
-		copy(newSegment.ASNs, pathSegment.ASNs)
-		toSend.Route.Path.BGPPath.ASPath[i] = newSegment
-	}
-
-	toSend.Route.Path.BGPPath.UnknownAttributes = make([]*pb.UnknownAttribute, len(u.path.BGPPath.UnknownAttributes))
-	for i, attr := range u.path.BGPPath.UnknownAttributes {
-		toSend.Route.Path.BGPPath.UnknownAttributes[i] = &pb.UnknownAttribute{
-			Optional:   attr.Optional,
-			Transitive: attr.Transitive,
-			Partial:    attr.Partial,
-			TypeCode:   uint32(attr.TypeCode),
-			Value:      attr.Value,
-		}
+		Peer:  u.route.Paths()[0].BGPPath.Source.ToProto(),
+		Route: u.route.ToProto(),
 	}
 
 	return toSend
@@ -103,12 +38,10 @@ func (a *APIServer) AdjRIBInStream(req *pb.AdjRIBInStreamRequest, stream pb.RIBS
 	r6 := newRIBClient()
 
 	addr := net.IP{}
-	if req.Router.IPVersion == 4 {
+	if req.Router.IsLegacy {
 		addr = net.IPv4(uint32(req.Router.Lower))
-	} else if req.Router.IPVersion == 6 {
-		addr = net.IPv6(req.Router.Higher, req.Router.Lower)
 	} else {
-		return fmt.Errorf("Unknown IP version: %d", req.Router.IPVersion)
+		addr = net.IPv6(req.Router.Higher, req.Router.Lower)
 	}
 
 	ret := make(chan error)
@@ -147,8 +80,7 @@ func (a *APIServer) AdjRIBInStream(req *pb.AdjRIBInStreamRequest, stream pb.RIBS
 
 type update struct {
 	advertisement bool
-	prefix        net.Prefix
-	path          *route.Path
+	route         *route.Route
 }
 
 type ribClient struct {
@@ -164,8 +96,7 @@ func newRIBClient() *ribClient {
 func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
 	r.ch <- update{
 		advertisement: true,
-		prefix:        pfx,
-		path:          path,
+		route:         route.NewRoute(pfx, path),
 	}
 
 	return nil
@@ -174,8 +105,7 @@ func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
 func (r *ribClient) RemovePath(pfx net.Prefix, path *route.Path) bool {
 	r.ch <- update{
 		advertisement: false,
-		prefix:        pfx,
-		path:          path,
+		route:         route.NewRoute(pfx, path),
 	}
 
 	return false

@@ -47,21 +47,6 @@ func (ip IP) IsLegacy() bool {
 	return ip.isLegacy
 }
 
-// Lower gets the lower half of the IP address
-func (ip IP) Lower() uint64 {
-	return ip.lower
-}
-
-// Higher gets the higher half of the IP address
-func (ip IP) Higher() uint64 {
-	return ip.higher
-}
-
-// IPVersion gets the version of the IP address
-func (ip IP) IPVersion() uint8 {
-	return ip.ipVersion
-}
-
 // IPv4 returns a new `IP` representing an IPv4 address
 func IPv4(val uint32) IP {
 	return IP{

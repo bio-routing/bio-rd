@@ -9,7 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/lib/grpchelper"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 
-	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpsrvapi"
+	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpstreamer"
 
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"

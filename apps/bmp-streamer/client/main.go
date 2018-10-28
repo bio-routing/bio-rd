@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpsrvapi"
+	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpstreamer"
 	"github.com/bio-routing/bio-rd/net"
+	netapi "github.com/bio-routing/bio-rd/net/api"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -29,10 +30,10 @@ func main() {
 
 	c := pb.NewRIBServiceClient(conn)
 	streamClient, err := c.AdjRIBInStream(context.Background(), &pb.AdjRIBInStreamRequest{
-		Router: &pb.IP{
-			Higher:    rtr.Higher(),
-			Lower:     rtr.Lower(),
-			IPVersion: uint32(rtr.Version()),
+		Router: &netapi.IP{
+			Higher:   rtr.Higher(),
+			Lower:    rtr.Lower(),
+			IsLegacy: true,
 		},
 	})
 

@@ -2,12 +2,24 @@ package route
 
 import (
 	"fmt"
+
+	api "github.com/bio-routing/bio-rd/route/api"
 )
 
+// Path represents a network path
 type Path struct {
 	Type       uint8
 	StaticPath *StaticPath
 	BGPPath    *BGPPath
+}
+
+// ToProto converts Path to Proto Path
+func (p *Path) ToProto() *api.Path {
+	return &api.Path{
+		Type:       uint32(p.Type),
+		BGPPath:    p.BGPPath.ToProto(),
+		StaticPath: p.StaticPath.ToProto(),
+	}
 }
 
 // Select returns negative if p < q, 0 if paths are equal, positive if p > q

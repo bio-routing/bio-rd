@@ -24,8 +24,8 @@ func NewPrefixFromProtoPrefix(pfx api.Prefix) Prefix {
 }
 
 // ToProto converts prefix to proto prefix
-func (pfx Prefix) ToProto() api.Prefix {
-	return api.Prefix{
+func (pfx Prefix) ToProto() *api.Prefix {
+	return &api.Prefix{
 		Address: pfx.addr.ToProto(),
 		Pfxlen:  uint32(pfx.pfxlen),
 	}

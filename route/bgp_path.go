@@ -9,6 +9,9 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+
+	netapi "github.com/bio-routing/bio-rd/net/api"
+	api "github.com/bio-routing/bio-rd/route/api"
 )
 
 // BGPPath represents a set of BGP path attributes
@@ -30,6 +33,64 @@ type BGPPath struct {
 	UnknownAttributes []types.UnknownPathAttribute
 	OriginatorID      uint32
 	ClusterList       []uint32
+}
+
+// ToProto converts BGPPath to api.BGPPath
+func (b *BGPPath) ToProto() *api.BGPPath {
+	if b == nil {
+		return nil
+	}
+
+	ret := &api.BGPPath{
+		NextHop: &netapi.IP{},
+		Source:  &netapi.IP{},
+	}
+	ret.NextHop.Lower = b.NextHop.Lower()
+	ret.NextHop.Higher = b.NextHop.Higher()
+	ret.NextHop.IsLegacy = b.NextHop.IsLegacy()
+	ret.Source.Lower = b.Source.Lower()
+	ret.Source.Higher = b.Source.Higher()
+	ret.Source.IsLegacy = b.Source.IsLegacy()
+	ret.EBGP = b.EBGP
+	ret.BGPIdentifier = b.BGPIdentifier
+	ret.ClusterList = b.ClusterList
+	ret.Communities = b.Communities
+	ret.LocalPref = b.LocalPref
+	ret.MED = b.MED
+	ret.PathIdentifier = b.PathIdentifier
+	ret.Origin = uint32(b.Origin)
+
+	ret.LargeCommunities = make([]*api.LargeCommunity, len(b.LargeCommunities))
+	for i, com := range b.LargeCommunities {
+		ret.LargeCommunities[i] = &api.LargeCommunity{
+			GlobalAdministrator: com.GlobalAdministrator,
+			DataPart1:           com.DataPart1,
+			DataPart2:           com.DataPart2,
+		}
+	}
+
+	ret.ASPath = make([]*api.ASPathSegment, len(b.ASPath))
+	for i, pathSegment := range b.ASPath {
+		newSegment := &api.ASPathSegment{
+			ASSequence: pathSegment.Type == types.ASSequence,
+			ASNs:       make([]uint32, len(pathSegment.ASNs)),
+		}
+		copy(newSegment.ASNs, pathSegment.ASNs)
+		ret.ASPath[i] = newSegment
+	}
+
+	ret.UnknownAttributes = make([]*api.UnknownAttribute, len(b.UnknownAttributes))
+	for i, attr := range b.UnknownAttributes {
+		ret.UnknownAttributes[i] = &api.UnknownAttribute{
+			Optional:   attr.Optional,
+			Transitive: attr.Transitive,
+			Partial:    attr.Partial,
+			TypeCode:   uint32(attr.TypeCode),
+			Value:      attr.Value,
+		}
+	}
+
+	return ret
 }
 
 // Length get's the length of serialized path
