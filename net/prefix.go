@@ -5,12 +5,30 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/bio-routing/bio-rd/net/api"
 )
 
 // Prefix represents an IPv4 prefix
 type Prefix struct {
 	addr   IP
 	pfxlen uint8
+}
+
+// NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
+func NewPrefixFromProtoPrefix(pfx api.Prefix) Prefix {
+	return Prefix{
+		addr:   IPFromProtoIP(*pfx.Address),
+		pfxlen: uint8(pfx.Pfxlen),
+	}
+}
+
+// ToProto converts prefix to proto prefix
+func (pfx Prefix) ToProto() api.Prefix {
+	return api.Prefix{
+		Address: pfx.addr.ToProto(),
+		Pfxlen:  uint32(pfx.pfxlen),
+	}
 }
 
 // NewPfx creates a new Prefix
@@ -66,7 +84,7 @@ func (pfx Prefix) Contains(x Prefix) bool {
 		return false
 	}
 
-	if pfx.addr.ipVersion == 4 {
+	if pfx.addr.isLegacy {
 		return pfx.containsIPv4(x)
 	}
 
@@ -99,7 +117,7 @@ func (pfx Prefix) Equal(x Prefix) bool {
 
 // GetSupernet gets the next common supernet of pfx and x
 func (pfx Prefix) GetSupernet(x Prefix) Prefix {
-	if pfx.addr.ipVersion == 4 {
+	if pfx.addr.isLegacy {
 		return pfx.supernetIPv4(x)
 	}
 

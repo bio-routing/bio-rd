@@ -38,6 +38,7 @@ func TestSender(t *testing.T) {
 						Type: 2,
 						BGPPath: &route.BGPPath{
 							LocalPref: 100,
+							NextHop:   bnet.IPv4(0),
 						},
 					},
 					pfxs: []bnet.Prefix{
@@ -52,6 +53,7 @@ func TestSender(t *testing.T) {
 						Type: 2,
 						BGPPath: &route.BGPPath{
 							LocalPref: 200,
+							NextHop:   bnet.IPv4(0),
 						},
 					},
 					pfxs: []bnet.Prefix{
@@ -101,6 +103,7 @@ func TestSender(t *testing.T) {
 						Type: 2,
 						BGPPath: &route.BGPPath{
 							LocalPref: 100,
+							NextHop:   bnet.IPv4(0),
 						},
 					},
 					pfxs: []bnet.Prefix{
@@ -115,6 +118,7 @@ func TestSender(t *testing.T) {
 						Type: 2,
 						BGPPath: &route.BGPPath{
 							LocalPref: 200,
+							NextHop:   bnet.IPv4(0),
 						},
 					},
 					pfxs: []bnet.Prefix{
@@ -180,6 +184,7 @@ func TestSender(t *testing.T) {
 						Type: 2,
 						BGPPath: &route.BGPPath{
 							LocalPref: 100,
+							NextHop:   bnet.IPv4(0),
 						},
 					},
 				},
