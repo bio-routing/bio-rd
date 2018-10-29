@@ -11,7 +11,7 @@ func TestPrefixToProto(t *testing.T) {
 	tests := []struct {
 		name     string
 		pfx      Prefix
-		expected api.Prefix
+		expected *api.Prefix
 	}{
 		{
 			name: "IPv4",
@@ -22,7 +22,7 @@ func TestPrefixToProto(t *testing.T) {
 				},
 				pfxlen: 24,
 			},
-			expected: api.Prefix{
+			expected: &api.Prefix{
 				Address: &api.IP{
 					Lower:    200,
 					IsLegacy: true,
@@ -40,7 +40,7 @@ func TestPrefixToProto(t *testing.T) {
 				},
 				pfxlen: 64,
 			},
-			expected: api.Prefix{
+			expected: &api.Prefix{
 				Address: &api.IP{
 					Higher:   100,
 					Lower:    200,

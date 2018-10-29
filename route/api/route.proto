@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package bio.route;
+go_package api;
 
 import "github.com/bio-routing/bio-rd/net/api/net.proto";
 

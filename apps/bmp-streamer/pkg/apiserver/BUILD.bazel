@@ -6,11 +6,10 @@ go_library(
     importpath = "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/apiserver",
     visibility = ["//visibility:public"],
     deps = [
-        "//apps/bmp-streamer/pkg/bmpsrvapi:go_default_library",
+        "//apps/bmp-streamer/pkg/bmpstreamer:go_default_library",
         "//net:go_default_library",
         "//protocols/bgp/packet:go_default_library",
         "//protocols/bgp/server:go_default_library",
-        "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
         "//routingtable:go_default_library",
     ],
@@ -21,10 +20,12 @@ go_test(
     srcs = ["server_test.go"],
     embed = [":go_default_library"],
     deps = [
-        "//apps/bmp-streamer/pkg/bmpsrvapi:go_default_library",
+        "//apps/bmp-streamer/pkg/bmpstreamer:go_default_library",
         "//net:go_default_library",
+        "//net/api:go_default_library",
         "//protocols/bgp/types:go_default_library",
         "//route:go_default_library",
-        "@com_github_stretchr_testify//assert:go_default_library",
+        "//route/api:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

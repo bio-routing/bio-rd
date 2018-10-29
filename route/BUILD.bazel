@@ -13,7 +13,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//net:go_default_library",
+        "//net/api:go_default_library",
         "//protocols/bgp/types:go_default_library",
+        "//route/api:go_default_library",
         "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
     ],
 )
@@ -25,11 +27,14 @@ go_test(
         "bgp_test.go",
         "path_test.go",
         "route_test.go",
+        "static_test.go",
     ],
     embed = [":go_default_library"],
     deps = [
         "//net:go_default_library",
+        "//net/api:go_default_library",
         "//protocols/bgp/types:go_default_library",
+        "//route/api:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

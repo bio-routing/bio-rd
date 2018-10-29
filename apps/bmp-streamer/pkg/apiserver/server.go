@@ -25,8 +25,9 @@ func New(bmpServer *server.BMPServer) *APIServer {
 
 func (u update) toRIBUpdate() *pb.RIBUpdate {
 	toSend := &pb.RIBUpdate{
-		Peer:  u.route.Paths()[0].BGPPath.Source.ToProto(),
-		Route: u.route.ToProto(),
+		Advertisement: u.advertisement,
+		Peer:          u.route.Paths()[0].BGPPath.Source.ToProto(),
+		Route:         u.route.ToProto(),
 	}
 
 	return toSend

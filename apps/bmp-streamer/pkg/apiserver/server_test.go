@@ -3,10 +3,12 @@ package apiserver
 import (
 	"testing"
 
-	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpsrvapi"
+	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpstreamer"
 	"github.com/bio-routing/bio-rd/net"
+	apinet "github.com/bio-routing/bio-rd/net/api"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
+	apiroute "github.com/bio-routing/bio-rd/route/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,8 +22,7 @@ func TestUpdateToRIBUpdate(t *testing.T) {
 			name: "Basics advert.",
 			u: update{
 				advertisement: true,
-				prefix:        net.NewPfx(net.IPv4(200), 8),
-				path: &route.Path{
+				route: route.NewRoute(net.NewPfx(net.IPv4(200), 8), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						PathIdentifier: 10,
@@ -58,61 +59,63 @@ func TestUpdateToRIBUpdate(t *testing.T) {
 						OriginatorID: 5,
 						ClusterList:  []uint32{3, 4, 5},
 					},
-				},
+				}),
 			},
 			expected: &pb.RIBUpdate{
-				Peer: &pb.IP{
-					Lower:     220,
-					IPVersion: 4,
+				Peer: &apinet.IP{
+					Lower:    220,
+					IsLegacy: true,
 				},
 				Advertisement: true,
-				Route: &pb.Route{
-					Pfx: &pb.Prefix{
-						Address: &pb.IP{
-							Lower:     200,
-							IPVersion: 4,
+				Route: &apiroute.Route{
+					Pfx: &apinet.Prefix{
+						Address: &apinet.IP{
+							Lower:    200,
+							IsLegacy: true,
 						},
 						Pfxlen: 8,
 					},
-					Path: &pb.Path{
-						Type: route.BGPPathType,
-						BGPPath: &pb.BGPPath{
-							PathIdentifier: 10,
-							NextHop: &pb.IP{
-								Lower:     210,
-								IPVersion: 4,
-							},
-							LocalPref: 20,
-							ASPath: []*pb.ASPathSegment{
-								{
-									ASSequence: true,
-									ASNs:       []uint32{100, 200, 300},
+					Paths: []*apiroute.Path{
+						{
+							Type: route.BGPPathType,
+							BGPPath: &apiroute.BGPPath{
+								PathIdentifier: 10,
+								NextHop: &apinet.IP{
+									Lower:    210,
+									IsLegacy: true,
 								},
-							},
-							Origin:        1,
-							MED:           1000,
-							EBGP:          true,
-							BGPIdentifier: 1337,
-							Source: &pb.IP{
-								Lower:     220,
-								IPVersion: 4,
-							},
-							Communities: []uint32{10000, 20000},
-							LargeCommunities: []*pb.LargeCommunity{
-								{
-									GlobalAdministrator: 1,
-									DataPart1:           2,
-									DataPart2:           3,
+								LocalPref: 20,
+								ASPath: []*apiroute.ASPathSegment{
+									{
+										ASSequence: true,
+										ASNs:       []uint32{100, 200, 300},
+									},
 								},
-							},
-							ClusterList: []uint32{3, 4, 5},
-							UnknownAttributes: []*pb.UnknownAttribute{
-								{
-									Optional:   true,
-									Transitive: true,
-									Partial:    true,
-									TypeCode:   222,
-									Value:      []byte{1, 1, 1, 1},
+								Origin:        1,
+								MED:           1000,
+								EBGP:          true,
+								BGPIdentifier: 1337,
+								Source: &apinet.IP{
+									Lower:    220,
+									IsLegacy: true,
+								},
+								Communities: []uint32{10000, 20000},
+								LargeCommunities: []*apiroute.LargeCommunity{
+									{
+										GlobalAdministrator: 1,
+										DataPart1:           2,
+										DataPart2:           3,
+									},
+								},
+								ClusterList: []uint32{3, 4, 5},
+								UnknownAttributes: []*apiroute.UnknownAttribute{
+									{
+										Optional:   true,
+										Transitive: true,
+										Partial:    true,
+										TypeCode:   222,
+										Value:      []byte{1, 1, 1, 1},
+									},
 								},
 							},
 						},
