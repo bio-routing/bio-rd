@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 package bio.net;
-go_package api;
 
 message Prefix {
     IP address = 1;
