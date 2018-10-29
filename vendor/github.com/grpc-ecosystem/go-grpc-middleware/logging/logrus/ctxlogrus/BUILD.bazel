@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "context.go",
+        "doc.go",
+        "noop.go",
+    ],
+    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus",
+    importpath = "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/tags:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/golang.org/x/net/context:go_default_library",
+    ],
+)

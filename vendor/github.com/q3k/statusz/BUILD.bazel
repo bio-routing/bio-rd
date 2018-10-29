@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["statusz.go"],
+    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/q3k/statusz",
+    importpath = "github.com/q3k/statusz",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/golang/glog:go_default_library",
+        "//vendor/github.com/shirou/gopsutil/load:go_default_library",
+    ],
+)

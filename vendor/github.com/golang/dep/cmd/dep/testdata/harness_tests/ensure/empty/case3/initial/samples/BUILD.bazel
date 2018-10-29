@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["samples.go"],
+    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/golang/dep/cmd/dep/testdata/harness_tests/ensure/empty/case3/initial/samples",
+    importpath = "github.com/golang/dep/cmd/dep/testdata/harness_tests/ensure/empty/case3/initial/samples",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_sdboyer_deptestdos//:go_default_library"],
+)

@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["subsamples.go"],
+    importmap = "github.com/bio-routing/bio-rd/vendor/github.com/golang/dep/cmd/dep/testdata/harness_tests/ensure/pkg-ignored/wildcard-other-root/initial/samples/subsamples",
+    importpath = "github.com/golang/dep/cmd/dep/testdata/harness_tests/ensure/pkg-ignored/wildcard-other-root/initial/samples/subsamples",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_sdboyer_dep_test//:go_default_library"],
+)

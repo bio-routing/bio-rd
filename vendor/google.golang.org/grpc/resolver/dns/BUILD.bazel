@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "dns_resolver.go",
+        "go19.go",
+        "pre_go19.go",
+    ],
+    importmap = "github.com/bio-routing/bio-rd/vendor/google.golang.org/grpc/resolver/dns",
+    importpath = "google.golang.org/grpc/resolver/dns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/golang.org/x/net/context:go_default_library",
+        "//vendor/google.golang.org/grpc/grpclog:go_default_library",
+        "//vendor/google.golang.org/grpc/internal/backoff:go_default_library",
+        "//vendor/google.golang.org/grpc/internal/grpcrand:go_default_library",
+        "//vendor/google.golang.org/grpc/resolver:go_default_library",
+    ],
+)
