@@ -49,6 +49,7 @@ go_library(
         "ioctl.go",
         "openbsd_pledge.go",
         "pagesize_unix.go",
+        "race.go",
         "race0.go",
         "sockcmsg_linux.go",
         "sockcmsg_unix.go",
