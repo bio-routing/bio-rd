@@ -17,8 +17,8 @@ go_library(
         "//vendor/github.com/prometheus/client_golang/prometheus/promhttp:go_default_library",
         "//vendor/github.com/q3k/statusz:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/google.golang.org/grpc:go_default_library",
         "//vendor/google.golang.org/grpc/codes:go_default_library",
         "//vendor/google.golang.org/grpc/reflection:go_default_library",
-        "//vendor/google.golang.org/grpc:go_default_library",
     ],
 )

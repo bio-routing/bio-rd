@@ -20,7 +20,7 @@ go_proto_library(
     deps = [
         "//net/api:go_default_library",
         "//route/api:go_default_library",
-        "//vendor/google.golang.org/grpc:go_default_library",
+        "//vendor/google.golang.org/grpc:go_default_library",  # keep
     ],
 )
 

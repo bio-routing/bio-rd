@@ -22,9 +22,9 @@ go_library(
         "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/tags/logrus:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/golang.org/x/net/context:go_default_library",
+        "//vendor/google.golang.org/grpc:go_default_library",
         "//vendor/google.golang.org/grpc/codes:go_default_library",
         "//vendor/google.golang.org/grpc/grpclog:go_default_library",
-        "//vendor/google.golang.org/grpc:go_default_library",
         "@com_github_golang_protobuf//jsonpb:go_default_library_gen",
     ],
 )
