@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "helper.go",
+        "log.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/lib/grpchelper",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware:go_default_library",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus:go_default_library",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/recovery:go_default_library",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/tags:go_default_library",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-prometheus:go_default_library",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp:go_default_library",
+        "//vendor/github.com/q3k/statusz:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/google.golang.org/grpc:go_default_library",
+        "//vendor/google.golang.org/grpc/codes:go_default_library",
+        "//vendor/google.golang.org/grpc/reflection:go_default_library",
+    ],
+)
