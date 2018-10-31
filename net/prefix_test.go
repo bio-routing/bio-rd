@@ -4,57 +4,108 @@ import (
 	gonet "net"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net/api"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetIPNet(t *testing.T) {
+func TestPrefixToProto(t *testing.T) {
 	tests := []struct {
 		name     string
 		pfx      Prefix
-		expected *gonet.IPNet
+		expected api.Prefix
 	}{
 		{
-			name: "Some prefix IPv4",
-			pfx:  NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
-			expected: &gonet.IPNet{
-				IP:   gonet.IP{127, 0, 0, 0},
-				Mask: gonet.IPMask{255, 0, 0, 0},
+			name: "IPv4",
+			pfx: Prefix{
+				addr: IP{
+					lower:    200,
+					isLegacy: true,
+				},
+				pfxlen: 24,
+			},
+			expected: api.Prefix{
+				Address: &api.IP{
+					Lower:    200,
+					IsLegacy: true,
+				},
+				Pfxlen: 24,
 			},
 		},
 		{
-			name: "Some prefix IPv6",
-			pfx:  NewPfx(IPv6FromBlocks(0xffff, 0xffff, 0xffff, 0xffff, 0x0, 0x0, 0x0, 0x0), 64),
-			expected: &gonet.IPNet{
-				IP:   gonet.IP{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-				Mask: gonet.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
+			name: "IPv6",
+			pfx: Prefix{
+				addr: IP{
+					higher:   100,
+					lower:    200,
+					isLegacy: false,
+				},
+				pfxlen: 64,
+			},
+			expected: api.Prefix{
+				Address: &api.IP{
+					Higher:   100,
+					Lower:    200,
+					IsLegacy: false,
+				},
+				Pfxlen: 64,
 			},
 		},
 	}
 
 	for _, test := range tests {
-		res := test.pfx.GetIPNet()
+		res := test.pfx.ToProto()
 		assert.Equal(t, test.expected, res, test.name)
 	}
 }
 
-func TestNewPfxFromIPNet(t *testing.T) {
+func TestNewPrefixFromProtoPrefix(t *testing.T) {
 	tests := []struct {
 		name     string
-		ipNet    *gonet.IPNet
+		proto    api.Prefix
 		expected Prefix
 	}{
 		{
-			name: "Some Prefix",
-			ipNet: &gonet.IPNet{
-				IP:   gonet.IP{127, 0, 0, 0},
-				Mask: gonet.IPMask{255, 0, 0, 0},
+			name: "IPv4",
+			proto: api.Prefix{
+				Address: &api.IP{
+					Higher:   0,
+					Lower:    2000,
+					IsLegacy: true,
+				},
+				Pfxlen: 24,
 			},
-			expected: NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
+			expected: Prefix{
+				addr: IP{
+					higher:   0,
+					lower:    2000,
+					isLegacy: true,
+				},
+				pfxlen: 24,
+			},
+		},
+		{
+			name: "IPv6",
+			proto: api.Prefix{
+				Address: &api.IP{
+					Higher:   1000,
+					Lower:    2000,
+					IsLegacy: false,
+				},
+				Pfxlen: 64,
+			},
+			expected: Prefix{
+				addr: IP{
+					higher:   1000,
+					lower:    2000,
+					isLegacy: false,
+				},
+				pfxlen: 64,
+			},
 		},
 	}
 
 	for _, test := range tests {
-		res := NewPfxFromIPNet(test.ipNet)
+		res := NewPrefixFromProtoPrefix(test.proto)
 		assert.Equal(t, test.expected, res, test.name)
 	}
 }

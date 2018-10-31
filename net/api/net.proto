@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package api;
+
+message Prefix {
+    IP address = 1;
+    uint32 pfxlen = 2;
+}
+
+message IP {
+    uint64 higher = 1;
+    uint64 lower = 2;
+    bool is_legacy = 3;
+}

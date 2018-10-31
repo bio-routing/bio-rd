@@ -3,20 +3,55 @@ package net
 import (
 	"fmt"
 	"net"
+
+	"github.com/bio-routing/bio-rd/net/api"
 )
 
 // IP represents an IPv4 or IPv6 address
 type IP struct {
-	higher    uint64
-	lower     uint64
-	ipVersion uint8
+	higher   uint64
+	lower    uint64
+	isLegacy bool
+}
+
+// IPFromProtoIP creates an IP address from a proto IP
+func IPFromProtoIP(addr api.IP) IP {
+	return IP{
+		higher:   addr.Higher,
+		lower:    addr.Lower,
+		isLegacy: addr.IsLegacy,
+	}
+}
+
+// ToProto converts an IP to a proto IP
+func (ip IP) ToProto() *api.IP {
+	return &api.IP{
+		Lower:    ip.lower,
+		Higher:   ip.higher,
+		IsLegacy: ip.isLegacy,
+	}
+}
+
+// Lower gets the lower half of the IP address
+func (ip IP) Lower() uint64 {
+	return ip.lower
+}
+
+// Higher gets the higher half of the IP address
+func (ip IP) Higher() uint64 {
+	return ip.higher
+}
+
+// IsLegacy returns true for IPv6, else false
+func (ip IP) IsLegacy() bool {
+	return ip.isLegacy
 }
 
 // IPv4 returns a new `IP` representing an IPv4 address
 func IPv4(val uint32) IP {
 	return IP{
-		lower:     uint64(val),
-		ipVersion: 4,
+		lower:    uint64(val),
+		isLegacy: true,
 	}
 }
 
@@ -28,9 +63,9 @@ func IPv4FromOctets(o1, o2, o3, o4 uint8) IP {
 // IPv6 returns a new `IP` representing an IPv6 address
 func IPv6(higher, lower uint64) IP {
 	return IP{
-		higher:    higher,
-		lower:     lower,
-		ipVersion: 6,
+		higher:   higher,
+		lower:    lower,
+		isLegacy: false,
 	}
 }
 
@@ -104,7 +139,7 @@ func (ip IP) Compare(other IP) int8 {
 }
 
 func (ip IP) String() string {
-	if ip.ipVersion == 6 {
+	if !ip.isLegacy {
 		return ip.stringIPv6()
 	}
 
@@ -131,7 +166,7 @@ func (ip IP) stringIPv4() string {
 
 // Bytes returns the byte representation of an IP address
 func (ip IP) Bytes() []byte {
-	if ip.ipVersion == 6 {
+	if !ip.isLegacy {
 		return ip.bytesIPv6()
 	}
 
@@ -150,12 +185,12 @@ func (ip IP) bytesIPv4() []byte {
 
 // IsIPv4 returns if the `IP` is of address family IPv4
 func (ip IP) IsIPv4() bool {
-	return ip.ipVersion == 4
+	return ip.isLegacy
 }
 
 // SizeBytes returns the number of bytes required to represent the `IP`
 func (ip IP) SizeBytes() uint8 {
-	if ip.ipVersion == 4 {
+	if ip.isLegacy {
 		return 4
 	}
 
@@ -195,11 +230,11 @@ func (ip IP) ToNetIP() net.IP {
 
 // BitAtPosition returns the bit at position pos
 func (ip IP) BitAtPosition(pos uint8) bool {
-	if ip.ipVersion == 6 {
-		return ip.bitAtPositionIPv6(pos)
+	if ip.isLegacy {
+		return ip.bitAtPositionIPv4(pos)
 	}
 
-	return ip.bitAtPositionIPv4(pos)
+	return ip.bitAtPositionIPv6(pos)
 }
 
 func (ip IP) bitAtPositionIPv4(pos uint8) bool {
