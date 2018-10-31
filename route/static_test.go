@@ -22,8 +22,8 @@ func TestStaticToProto(t *testing.T) {
 			},
 			expected: &api.StaticPath{
 				NextHop: &apinet.IP{
-					IsLegacy: true,
-					Lower:    123,
+					Version: apinet.IP_IPv4,
+					Lower:   123,
 				},
 			},
 		},

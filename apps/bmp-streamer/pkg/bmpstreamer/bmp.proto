@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package bmpstreamer;
 
-import "net/api/net.proto";
-import "route/api/route.proto";
+import "github.com/bio-routing/bio-rd/net/api/net.proto";
+import "github.com/bio-routing/bio-rd/route/api/route.proto";
 
 service RIBService {
     rpc adjRIBInStream(AdjRIBInStreamRequest) returns (stream RIBUpdate);

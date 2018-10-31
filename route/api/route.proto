@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package bio.route;
 
-import "net/api/net.proto";
+import "github.com/bio-routing/bio-rd/net/api/net.proto";
 
 message Route {
     bio.net.Prefix pfx = 1;

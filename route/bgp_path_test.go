@@ -184,8 +184,8 @@ func TestBGPPathToProto(t *testing.T) {
 			expected: &pb.BGPPath{
 				PathIdentifier: 10,
 				NextHop: &netapi.IP{
-					Lower:    210,
-					Version: api.IP_IPv4,
+					Lower:   210,
+					Version: netapi.IP_IPv4,
 				},
 				LocalPref: 20,
 				ASPath: []*pb.ASPathSegment{
@@ -199,8 +199,8 @@ func TestBGPPathToProto(t *testing.T) {
 				EBGP:          true,
 				BGPIdentifier: 1337,
 				Source: &netapi.IP{
-					Lower:    220,
-					IsLegacy: true,
+					Lower:   220,
+					Version: netapi.IP_IPv4,
 				},
 				Communities: []uint32{10000, 20000},
 				LargeCommunities: []*pb.LargeCommunity{

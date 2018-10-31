@@ -5,7 +5,7 @@ proto_library(
     name = "bio_route_proto",
     srcs = ["route.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//net/api:bio_net_proto"],
+    deps = ["//github.com/bio-routing/bio-rd/net/api:api_proto"],
 )
 
 go_proto_library(
@@ -13,7 +13,7 @@ go_proto_library(
     importpath = "github.com/bio-routing/bio-rd/route/api",
     proto = ":bio_route_proto",
     visibility = ["//visibility:public"],
-    deps = ["//net/api:go_default_library"],
+    deps = ["//github.com/bio-routing/bio-rd/net/api:go_default_library"],
 )
 
 go_library(

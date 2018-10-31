@@ -63,26 +63,26 @@ func TestUpdateToRIBUpdate(t *testing.T) {
 			},
 			expected: &pb.RIBUpdate{
 				Peer: &apinet.IP{
-					Lower:    220,
-					IsLegacy: true,
+					Lower:   220,
+					Version: apinet.IP_IPv4,
 				},
 				Advertisement: true,
 				Route: &apiroute.Route{
 					Pfx: &apinet.Prefix{
 						Address: &apinet.IP{
-							Lower:    200,
-							IsLegacy: true,
+							Lower:   200,
+							Version: apinet.IP_IPv4,
 						},
 						Pfxlen: 8,
 					},
 					Paths: []*apiroute.Path{
 						{
-							Type: route.BGPPathType,
+							Type: apiroute.Path_BGP,
 							BGPPath: &apiroute.BGPPath{
 								PathIdentifier: 10,
 								NextHop: &apinet.IP{
-									Lower:    210,
-									IsLegacy: true,
+									Lower:   210,
+									Version: apinet.IP_IPv4,
 								},
 								LocalPref: 20,
 								ASPath: []*apiroute.ASPathSegment{
@@ -96,8 +96,8 @@ func TestUpdateToRIBUpdate(t *testing.T) {
 								EBGP:          true,
 								BGPIdentifier: 1337,
 								Source: &apinet.IP{
-									Lower:    220,
-									IsLegacy: true,
+									Lower:   220,
+									Version: apinet.IP_IPv4,
 								},
 								Communities: []uint32{10000, 20000},
 								LargeCommunities: []*apiroute.LargeCommunity{

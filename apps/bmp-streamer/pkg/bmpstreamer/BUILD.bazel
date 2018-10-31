@@ -6,8 +6,8 @@ proto_library(
     srcs = ["bmp.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "//net/api:bio_net_proto",
-        "//route/api:bio_route_proto",
+        "//github.com/bio-routing/bio-rd/net/api:api_proto",
+        "//github.com/bio-routing/bio-rd/route/api:api_proto",
     ],
 )
 
@@ -18,8 +18,8 @@ go_proto_library(
     proto = ":bmpstreamer_proto",
     visibility = ["//visibility:public"],
     deps = [
-        "//net/api:go_default_library",
-        "//route/api:go_default_library",
+        "//github.com/bio-routing/bio-rd/net/api:go_default_library",
+        "//github.com/bio-routing/bio-rd/route/api:go_default_library",
         "//vendor/google.golang.org/grpc:go_default_library",  # keep
     ],
 )
