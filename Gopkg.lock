@@ -52,7 +52,7 @@
     "gps/paths",
     "gps/pkgtree",
     "gps/verify",
-    "internal/fs"
+    "internal/fs",
   ]
   revision = "224a564abe296670b692fe08bb63a3e4c4ad7978"
   version = "v0.5.0"
@@ -130,6 +130,21 @@
   revision = "c05b18bd57ea723faad165126ec38ae661bc1df6"
 
 [[projects]]
+  name = "github.com/vishvananda/netlink"
+  packages = [
+    ".",
+    "nl",
+  ]
+  revision = "a2ad57a690f3caf3015351d2d6e1c0b95c349752"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/vishvananda/netns"
+  packages = ["."]
+  revision = "13995c7128ccc8e51e9a6bd2b551020a27180abd"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -152,7 +167,7 @@
   name = "golang.org/x/sys"
   packages = [
     "unix",
-    "windows"
+    "windows",
   ]
   revision = "4497e2df6f9e69048a54498c7affbbec3294ad47"
 
@@ -165,6 +180,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ec525bd690a1530d850c09d334bc4cb35b167cd5f308ad5d30be88974d3242d7"
+  inputs-digest = "b06675ba943a08e455d38c9e661639629eca92a2747f433e91e8c772edb644c1"
   solver-name = "gps-cdcl"
   solver-version = 1
