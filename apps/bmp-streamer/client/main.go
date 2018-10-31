@@ -31,9 +31,9 @@ func main() {
 	c := pb.NewRIBServiceClient(conn)
 	streamClient, err := c.AdjRIBInStream(context.Background(), &pb.AdjRIBInStreamRequest{
 		Router: &netapi.IP{
-			Higher:   rtr.Higher(),
-			Lower:    rtr.Lower(),
-			IsLegacy: true,
+			Higher:  rtr.Higher(),
+			Lower:   rtr.Lower(),
+			Version: netapi.IP_IPv4,
 		},
 	})
 

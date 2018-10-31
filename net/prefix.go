@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bio-routing/bio-rd/net/api"
+	api "github.com/bio-routing/bio-rd/net/api"
 )
 
 // Prefix represents an IPv4 prefix

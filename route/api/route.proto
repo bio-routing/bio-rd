@@ -10,9 +10,13 @@ message Route {
 }
 
 message Path {
-    uint32 type = 1;
-    BGPPath BGP_path = 2;
-    StaticPath static_path = 3;
+    enum Type {
+        Static = 0;
+        BGP = 1;
+    }
+    Type type = 1;
+    StaticPath static_path = 2;
+    BGPPath BGP_path = 3;
 }
 
 message StaticPath {

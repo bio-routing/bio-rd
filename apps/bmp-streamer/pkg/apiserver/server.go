@@ -5,6 +5,7 @@ import (
 
 	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpstreamer"
 	net "github.com/bio-routing/bio-rd/net"
+	netapi "github.com/bio-routing/bio-rd/net/api"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/route"
@@ -39,10 +40,12 @@ func (a *APIServer) AdjRIBInStream(req *pb.AdjRIBInStreamRequest, stream pb.RIBS
 	r6 := newRIBClient()
 
 	addr := net.IP{}
-	if req.Router.IsLegacy {
+	if req.Router.Version == netapi.IP_IPv4 {
 		addr = net.IPv4(uint32(req.Router.Lower))
-	} else {
+	} else if req.Router.Version == netapi.IP_IPv6 {
 		addr = net.IPv6(req.Router.Higher, req.Router.Lower)
+	} else {
+		return fmt.Errorf("Unknown protocol")
 	}
 
 	ret := make(chan error)

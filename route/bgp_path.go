@@ -47,10 +47,18 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 	}
 	ret.NextHop.Lower = b.NextHop.Lower()
 	ret.NextHop.Higher = b.NextHop.Higher()
-	ret.NextHop.IsLegacy = b.NextHop.IsLegacy()
+	ret.NextHop.Version = netapi.IP_IPv4
+	if !b.NextHop.IsLegacy() {
+		ret.NextHop.Version = netapi.IP_IPv6
+	}
+
 	ret.Source.Lower = b.Source.Lower()
 	ret.Source.Higher = b.Source.Higher()
-	ret.Source.IsLegacy = b.Source.IsLegacy()
+	ret.Source.Version = netapi.IP_IPv4
+	if !b.Source.IsLegacy() {
+		ret.Source.Version = netapi.IP_IPv6
+	}
+
 	ret.EBGP = b.EBGP
 	ret.BGPIdentifier = b.BGPIdentifier
 	ret.ClusterList = b.ClusterList

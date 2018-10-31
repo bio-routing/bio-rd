@@ -3,7 +3,7 @@ package net
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/net/api"
+	api "github.com/bio-routing/bio-rd/net/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,8 +24,8 @@ func TestPrefixToProto(t *testing.T) {
 			},
 			expected: &api.Prefix{
 				Address: &api.IP{
-					Lower:    200,
-					IsLegacy: true,
+					Lower:   200,
+					Version: api.IP_IPv4,
 				},
 				Pfxlen: 24,
 			},
@@ -42,9 +42,9 @@ func TestPrefixToProto(t *testing.T) {
 			},
 			expected: &api.Prefix{
 				Address: &api.IP{
-					Higher:   100,
-					Lower:    200,
-					IsLegacy: false,
+					Higher:  100,
+					Lower:   200,
+					Version: api.IP_IPv6,
 				},
 				Pfxlen: 64,
 			},
@@ -67,9 +67,9 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 			name: "IPv4",
 			proto: api.Prefix{
 				Address: &api.IP{
-					Higher:   0,
-					Lower:    2000,
-					IsLegacy: true,
+					Higher:  0,
+					Lower:   2000,
+					Version: api.IP_IPv4,
 				},
 				Pfxlen: 24,
 			},
@@ -86,9 +86,9 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 			name: "IPv6",
 			proto: api.Prefix{
 				Address: &api.IP{
-					Higher:   1000,
-					Lower:    2000,
-					IsLegacy: false,
+					Higher:  1000,
+					Lower:   2000,
+					Version: api.IP_IPv6,
 				},
 				Pfxlen: 64,
 			},

@@ -15,8 +15,14 @@ type Path struct {
 
 // ToProto converts Path to Proto Path
 func (p *Path) ToProto() *api.Path {
+	t := api.Path_Static
+	switch p.Type {
+	case BGPPathType:
+		t = api.Path_BGP
+	}
+
 	return &api.Path{
-		Type:       uint32(p.Type),
+		Type:       t,
 		BGPPath:    p.BGPPath.ToProto(),
 		StaticPath: p.StaticPath.ToProto(),
 	}

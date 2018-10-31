@@ -185,7 +185,7 @@ func TestBGPPathToProto(t *testing.T) {
 				PathIdentifier: 10,
 				NextHop: &netapi.IP{
 					Lower:    210,
-					IsLegacy: true,
+					Version: api.IP_IPv4,
 				},
 				LocalPref: 20,
 				ASPath: []*pb.ASPathSegment{
