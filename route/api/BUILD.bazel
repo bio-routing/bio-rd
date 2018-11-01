@@ -5,20 +5,35 @@ proto_library(
     name = "bio_route_proto",
     srcs = ["route.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//github.com/bio-routing/bio-rd/net/api:api_proto"],
+    deps = ["//net/api:bio_net_proto"],
 )
 
 go_proto_library(
     name = "bio_route_go_proto",
-    importpath = "github.com/bio-routing/bio-rd/route/api",
+    importpath = "route/api",
     proto = ":bio_route_proto",
     visibility = ["//visibility:public"],
-    deps = ["//github.com/bio-routing/bio-rd/net/api:go_default_library"],
+    deps = ["//net/api:go_default_library"],
 )
 
 go_library(
     name = "go_default_library",
-    embed = [":bio_route_go_proto"],
+    embed = [":api_go_proto"],
     importpath = "github.com/bio-routing/bio-rd/route/api",
     visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "api_proto",
+    srcs = ["route.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//net/api:api_proto"],
+)
+
+go_proto_library(
+    name = "api_go_proto",
+    importpath = "github.com/bio-routing/bio-rd/route/api",
+    proto = ":api_proto",
+    visibility = ["//visibility:public"],
+    deps = ["//net/api:go_default_library"],
 )

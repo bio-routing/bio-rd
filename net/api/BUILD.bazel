@@ -10,7 +10,7 @@ proto_library(
 go_proto_library(
     name = "bio_net_go_proto",
     importpath = "github.com/bio-routing/bio-rd/net/api",
-    proto = ":bio_net_proto",
+    proto = ":api_proto",
     visibility = ["//visibility:public"],
 )
 
@@ -18,5 +18,11 @@ go_library(
     name = "go_default_library",
     embed = [":bio_net_go_proto"],
     importpath = "github.com/bio-routing/bio-rd/net/api",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "api_proto",
+    srcs = ["net.proto"],
     visibility = ["//visibility:public"],
 )

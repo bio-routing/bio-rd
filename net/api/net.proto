@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package bio.net;
+option go_package = "github.com/bio-routing/bio-rd/net/api";
 
 message Prefix {
     IP address = 1;
