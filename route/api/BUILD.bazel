@@ -13,7 +13,10 @@ go_proto_library(
     importpath = "github.com/bio-routing/bio-rd/route/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
-    deps = ["//net/api:go_default_library"],
+    deps = [
+        "//net/api:go_default_library",
+        "//vendor/github.com/golang/protobuf/proto:go_default_library",
+    ],
 )
 
 go_library(

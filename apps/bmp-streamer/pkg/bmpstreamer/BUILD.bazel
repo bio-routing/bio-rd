@@ -21,6 +21,7 @@ go_proto_library(
         "//net/api:go_default_library",
         "//route/api:go_default_library",
         "//vendor/google.golang.org/grpc:go_default_library",
+        "//vendor/github.com/golang/protobuf/proto:go_default_library",
     ],
 )
 
