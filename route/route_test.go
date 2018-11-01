@@ -1,12 +1,157 @@
 package route
 
 import (
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vishvananda/netlink"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
+
+func TestNetlinkRouteDiff(t *testing.T) {
+	tests := []struct {
+		name     string
+		left     []netlink.Route
+		right    []netlink.Route
+		expected []netlink.Route
+	}{
+		{
+			name: "Equal",
+			left: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(10, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 1,
+				},
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(20, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 2,
+				},
+			},
+			right: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(10, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 1,
+				},
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(20, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 2,
+				},
+			},
+			expected: []netlink.Route{},
+		}, {
+			name: "Left empty",
+			left: []netlink.Route{},
+			right: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(10, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 1,
+				},
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(20, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 2,
+				},
+			},
+			expected: []netlink.Route{},
+		}, {
+			name: "Right empty",
+			left: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(10, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 1,
+				},
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(20, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 2,
+				},
+			},
+			right: []netlink.Route{},
+			expected: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(10, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 1,
+				},
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(20, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 2,
+				},
+			},
+		}, {
+			name: "Diff",
+			left: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(10, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 1,
+				},
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(20, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 2,
+				},
+			},
+			right: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(10, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 1,
+				},
+			},
+			expected: []netlink.Route{
+				{
+					Dst: &net.IPNet{
+						IP:   net.IPv4(20, 0, 0, 1),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
+					},
+					Table: 2,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := NetlinkRouteDiff(test.left, test.right)
+		assert.Equal(t, test.expected, res)
+	}
+
+}
 
 func TestNewRoute(t *testing.T) {
 	tests := []struct {
@@ -395,5 +540,123 @@ func TestECMPPaths(t *testing.T) {
 	}
 	for _, tc := range tests {
 		assert.Equal(t, tc.expected, tc.route.ECMPPaths())
+	}
+}
+
+func TestCompare(t *testing.T) {
+	tests := []struct {
+		a     *Route
+		b     *Route
+		equal bool
+	}{
+		{
+			a: &Route{
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 0, 1),
+						},
+					},
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+						},
+					},
+				},
+			},
+			b: &Route{
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 0, 1),
+						},
+					},
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+						},
+					},
+				},
+			},
+			equal: true,
+		}, {
+			a: &Route{
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 0, 1),
+						},
+					},
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+						},
+					},
+				},
+			},
+			b: &Route{
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+						},
+					},
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 2, 1),
+						},
+					},
+				},
+			},
+			equal: false,
+		},
+		{
+			a: &Route{
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 0, 1),
+						},
+					},
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+						},
+					},
+				},
+			},
+			b: &Route{
+				ecmpPaths: 2,
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						StaticPath: &StaticPath{
+							NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+						},
+					},
+				},
+			},
+			equal: false,
+		},
+	}
+
+	for _, tc := range tests {
+		res := tc.a.Equal(tc.b)
+		assert.Equal(t, tc.equal, res)
 	}
 }
