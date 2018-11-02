@@ -113,10 +113,12 @@ func mergeProfBlocks(as, bs []cover.ProfileBlock) []cover.ProfileBlock {
 func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 	var rv []*SourceFile
 	for _, prof := range profs {
+		//fmt.Printf("###### PROFILE ######\n")
 		path, err := findFile(prof.FileName)
 		if err != nil {
 			log.Fatalf("Can't find %v", err)
 		}
+		//fmt.Printf("path: %s\n", path)
 		fb, err := ioutil.ReadFile(path)
 		if err != nil {
 			log.Fatalf("Error reading %v: %v", path, err)
@@ -128,6 +130,9 @@ func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 		}
 
 		for _, block := range prof.Blocks {
+			/*fmt.Printf("StartLine: %d\n", block.StartLine)
+			fmt.Printf("block.EndLine: %d\n", block.EndLine)
+			fmt.Printf("len(sf.Coverage): %d\n", len(sf.Coverage))*/
 			for i := block.StartLine; i <= block.EndLine; i++ {
 				count, _ := sf.Coverage[i-1].(int)
 				sf.Coverage[i-1] = count + block.Count
@@ -147,6 +152,11 @@ func parseCover(fn string) ([]*SourceFile, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Error parsing coverage: %v", err)
 		}
+		fmt.Printf("len(profs): %d\n", len(profs))
+		for _, prof := range profs {
+			fmt.Printf("Filename: %s\n", prof.FileName)
+		}
+
 		pfss = append(pfss, profs)
 	}
 

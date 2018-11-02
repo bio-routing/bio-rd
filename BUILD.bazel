@@ -2,6 +2,8 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/bio-routing/bio-rd
 # gazelle:resolve go google.golang.org/grpc //vendor/google.golang.org/grpc:go_default_library
+# gazelle:resolve go golang.org/x/net/context //vendor/golang.org/x/net/context:go_default_library
+# gazelle:resolve go github.com/golang/protobuf //vendor/github.com/golang/protobuf:go_default_library
 gazelle(
     name = "gazelle",
     external = "vendored",
