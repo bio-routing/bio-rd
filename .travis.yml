@@ -13,17 +13,11 @@ addons:
       - unzip
       - python
 
-before_install:
-  - wget https://github.com/bazelbuild/bazel/releases/download/0.19.0/bazel-0.19.0-installer-linux-x86_64.sh
-  - sha256sum -c .travis.bazel-0.19.0-installer-linux-x86_64.sh.sha256
-  - bash bazel-0.19.0-installer-linux-x86_64.sh --user
-
 script:
 - mkdir -p $HOME/gopath/src/github.com/bio-routing/
 - ln -s $TRAVIS_BUILD_DIR $HOME/gopath/src/github.com/bio-routing/bio-rd || true
-- cp .bazelrc.travis .bazelrc
-- bazel test //...
-- bazel coverage //...
-- bazel build //vendor/github.com/q3k/goveralls
-- bazel-bin/vendor/github.com/q3k/goveralls/linux_amd64_stripped/goveralls -coverprofile=$(find bazel-testlogs/ -iname coverage.dat -or -iname baseline_coverage.dat | paste -sd ',') -merge=false
+- cd $HOME/gopath/src/github.com/bio-routing/bio-rd
+- go test -v -cover -race -coverprofile=coverage.out ./...
+- go install github.com/bio-routing/bio-rd/vendor/github.com/q3k/goveralls/
+- goveralls -coverprofile=coverage.out -merge=false
 
