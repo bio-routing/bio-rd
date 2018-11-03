@@ -13,6 +13,11 @@ addons:
       - unzip
       - python
 
+language: go
+
+go:
+  - 1.11.1
+
 script:
 - mkdir -p $HOME/gopath/src/github.com/bio-routing/
 - ln -s $TRAVIS_BUILD_DIR $HOME/gopath/src/github.com/bio-routing/bio-rd || true
