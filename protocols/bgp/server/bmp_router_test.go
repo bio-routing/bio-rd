@@ -64,7 +64,7 @@ func TestStartStopBMP(t *testing.T) {
 	r.stop <- struct{}{}
 
 	r.runMu.Lock()
-	assert.Equal(t, true, r.con.(*biotesting.MockConn).Closed)
+	assert.Equal(t, true, r.con.(*biotesting.MockConn).Closed())
 }
 
 func TestConfigureBySentOpen(t *testing.T) {
@@ -478,7 +478,7 @@ func TestProcessTerminationMsg(t *testing.T) {
 		{
 			name: "Test shutdown",
 			r: &router{
-				con:     &biotesting.MockConn{},
+				con:     biotesting.NewMockConn(),
 				address: net.IP{10, 20, 30, 40},
 				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
@@ -495,9 +495,7 @@ func TestProcessTerminationMsg(t *testing.T) {
 			},
 			expectedLog: "level=warning msg=\"Received termination message from 10.20.30.40: Message: \\\"Foo Bar\\\"\"",
 			expected: &router{
-				con: &biotesting.MockConn{
-					Closed: true,
-				},
+				con:       biotesting.NewMockConnClosed(),
 				address:   net.IP{10, 20, 30, 40},
 				neighbors: map[[16]byte]*neighbor{},
 			},
@@ -538,9 +536,7 @@ func TestProcessTerminationMsg(t *testing.T) {
 			},
 			expectedLog: "level=warning msg=\"Received termination message from 10.20.30.40: Session administratively downUnespcified reasonOut of resourcesRedundant connectionSession permanently administratively closed\"",
 			expected: &router{
-				con: &biotesting.MockConn{
-					Closed: true,
-				},
+				con:       biotesting.NewMockConnClosed(),
 				address:   net.IP{10, 20, 30, 40},
 				neighbors: map[[16]byte]*neighbor{},
 			},
@@ -1452,7 +1448,7 @@ func TestIntegrationIncompleteBMPMsg(t *testing.T) {
 
 	r.serve(con)
 
-	if !con.Closed {
+	if !con.Closed() {
 		t.Errorf("Connection not closed although failure should have happened")
 	}
 }
@@ -1615,6 +1611,7 @@ func TestBMPFullRunWithWithdraw(t *testing.T) {
 	})
 
 	time.Sleep(time.Millisecond * 50)
+
 	assert.NotEmpty(t, r.neighbors)
 
 	time.Sleep(time.Millisecond * 50)
