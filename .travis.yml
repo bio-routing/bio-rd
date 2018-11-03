@@ -19,5 +19,5 @@ script:
 - cd $HOME/gopath/src/github.com/bio-routing/bio-rd
 - go test -v -cover -race -coverprofile=coverage.out ./...
 - go install github.com/bio-routing/bio-rd/vendor/github.com/q3k/goveralls/
-- goveralls -coverprofile=coverage.out -merge=false
+- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -merge=false
 
