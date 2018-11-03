@@ -9,22 +9,22 @@ import (
 
 func TestWrite(t *testing.T) {
 	m := &MockConn{
-		Buf: bytes.NewBuffer(nil),
+		buf: bytes.NewBuffer(nil),
 	}
 
 	payload := []byte{1, 2, 3}
 	m.Write(payload)
 
-	assert.Equal(t, payload, m.Buf.Bytes())
+	assert.Equal(t, payload, m.buf.Bytes())
 }
 
 func TestRead(t *testing.T) {
 	m := &MockConn{
-		Buf: bytes.NewBuffer(nil),
+		buf: bytes.NewBuffer(nil),
 	}
 
 	payload := []byte{1, 2, 3}
-	m.Buf.Write(payload)
+	m.buf.Write(payload)
 
 	buffer := make([]byte, 4)
 	n, _ := m.Read(buffer)
