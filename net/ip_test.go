@@ -503,7 +503,7 @@ func TestBitAtPosition(t *testing.T) {
 	for _, test := range tests {
 		b := test.input.BitAtPosition(test.position)
 		if b != test.expected {
-			t.Errorf("%s: Unexpected failure: Bit %d of %d is %v. Expected %v",
+			t.Errorf("%s: Unexpected failure: Bit %d of %v is %v. Expected %v",
 				test.name, test.position, test.input, b, test.expected)
 		}
 	}

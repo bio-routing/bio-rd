@@ -132,7 +132,7 @@ func TestAddr(t *testing.T) {
 	for _, test := range tests {
 		res := test.pfx.Addr()
 		if res != test.expected {
-			t.Errorf("Unexpected result for test %s: Got %d Expected %d", test.name, res, test.expected)
+			t.Errorf("Unexpected result for test %s: Got %v Expected %v", test.name, res, test.expected)
 		}
 	}
 }
