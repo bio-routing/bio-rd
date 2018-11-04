@@ -2,23 +2,28 @@ package apiserver
 
 import (
 	"fmt"
+	"net"
 
 	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpstreamer"
-	net "github.com/bio-routing/bio-rd/net"
+	bionet "github.com/bio-routing/bio-rd/net"
 	netapi "github.com/bio-routing/bio-rd/net/api"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 )
 
+type bmpServer interface {
+	SubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8)
+	UnsubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8)
+}
+
 // APIServer implements the BMP server API
 type APIServer struct {
-	bmpServer *server.BMPServer
+	bmpServer bmpServer
 }
 
 // New creates an new API server
-func New(bmpServer *server.BMPServer) *APIServer {
+func New(bmpServer bmpServer) *APIServer {
 	return &APIServer{
 		bmpServer: bmpServer,
 	}
@@ -39,11 +44,11 @@ func (a *APIServer) AdjRIBInStream(req *pb.AdjRIBInStreamRequest, stream pb.RIBS
 	r4 := newRIBClient()
 	r6 := newRIBClient()
 
-	addr := net.IP{}
+	addr := bionet.IP{}
 	if req.Router.Version == netapi.IP_IPv4 {
-		addr = net.IPv4(uint32(req.Router.Lower))
+		addr = bionet.IPv4(uint32(req.Router.Lower))
 	} else if req.Router.Version == netapi.IP_IPv6 {
-		addr = net.IPv6(req.Router.Higher, req.Router.Lower)
+		addr = bionet.IPv6(req.Router.Higher, req.Router.Lower)
 	} else {
 		return fmt.Errorf("Unknown protocol")
 	}
@@ -97,7 +102,7 @@ func newRIBClient() *ribClient {
 	}
 }
 
-func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
+func (r *ribClient) AddPath(pfx bionet.Prefix, path *route.Path) error {
 	r.ch <- update{
 		advertisement: true,
 		route:         route.NewRoute(pfx, path),
@@ -106,7 +111,7 @@ func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
 	return nil
 }
 
-func (r *ribClient) RemovePath(pfx net.Prefix, path *route.Path) bool {
+func (r *ribClient) RemovePath(pfx bionet.Prefix, path *route.Path) bool {
 	r.ch <- update{
 		advertisement: false,
 		route:         route.NewRoute(pfx, path),
