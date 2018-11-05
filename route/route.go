@@ -97,6 +97,16 @@ func (r *Route) Copy() *Route {
 	return n
 }
 
+// PathSelection recalculates the best path + active paths
+func (r *Route) PathSelection() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	sort.Slice(r.paths, func(i, j int) bool {
+		return r.paths[i].Select(r.paths[j]) == -1
+	})
+	r.updateEqualPathCount()
+}
+
 // Prefix gets the prefix of route `r`
 func (r *Route) Prefix() net.Prefix {
 	return r.pfx
@@ -206,9 +216,11 @@ func removePath(paths []*Path, remove *Path) []*Path {
 func (r *Route) Equal(other *Route) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	pfxEqual := r.pfx.Equal(other.pfx)
 	ecmpPathsEqual := r.ecmpPaths == other.ecmpPaths
 	pathsEqual := comparePathSlice(r.paths, other.paths)
+
 	return pfxEqual && ecmpPathsEqual && pathsEqual
 }
 
@@ -217,14 +229,17 @@ func comparePathSlice(left, right []*Path) bool {
 	if left == nil && right == nil {
 		return true
 	}
+
 	if len(left) != len(right) {
 		return false
 	}
+
 	for _, leftPath := range left {
 		if !compareItemExists(leftPath, right) {
 			return false
 		}
 	}
+
 	return true
 }
 func compareItemExists(needle *Path, haystack []*Path) bool {
@@ -233,19 +248,8 @@ func compareItemExists(needle *Path, haystack []*Path) bool {
 			return true
 		}
 	}
+
 	return false
-}
-
-// PathSelection recalculates the best path + active paths
-func (r *Route) PathSelection() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	sort.Slice(r.paths, func(i, j int) bool {
-		return r.paths[i].Select(r.paths[j]) == -1
-	})
-
-	r.updateEqualPathCount()
 }
 
 func (r *Route) updateEqualPathCount() {
@@ -258,6 +262,30 @@ func (r *Route) updateEqualPathCount() {
 	}
 
 	r.ecmpPaths = count
+}
+
+func getBestProtocol(paths []*Path) uint8 {
+	best := uint8(0)
+	for _, p := range paths {
+		if best == 0 {
+			best = p.Type
+			continue
+		}
+		if p.Type < best {
+			best = p.Type
+		}
+	}
+	return best
+}
+
+// Print returns a printable representation of route `r`
+func (r *Route) Print() string {
+	ret := fmt.Sprintf("%s:\n", r.pfx.String())
+	ret += fmt.Sprintf("All Paths:\n")
+	for _, p := range r.paths {
+		ret += p.Print()
+	}
+	return ret
 }
 
 // NetlinkRouteDiff gets the list of elements contained by a but not b
@@ -275,14 +303,18 @@ func netlinkRoutesContains(needle netlink.Route, haystack []netlink.Route) bool 
 	for _, p := range haystack {
 		probeMaskSize, probeMaskBits := p.Dst.Mask.Size()
 		needleMaskSize, needleMaskBits := needle.Dst.Mask.Size()
+
 		if p.LinkIndex == needle.LinkIndex &&
 			p.ILinkIndex == needle.ILinkIndex &&
 			p.Scope == needle.Scope &&
+
 			p.Dst.IP.Equal(needle.Dst.IP) &&
 			probeMaskSize == needleMaskSize &&
 			probeMaskBits == needleMaskBits &&
+
 			p.Src.Equal(needle.Src) &&
 			p.Gw.Equal(needle.Gw) &&
+
 			p.Protocol == needle.Protocol &&
 			p.Priority == needle.Priority &&
 			p.Table == needle.Table &&
@@ -291,35 +323,9 @@ func netlinkRoutesContains(needle netlink.Route, haystack []netlink.Route) bool 
 			p.Flags == needle.Flags &&
 			p.MTU == needle.MTU &&
 			p.AdvMSS == needle.AdvMSS {
+
 			return true
 		}
 	}
 	return false
-}
-
-func getBestProtocol(paths []*Path) uint8 {
-	best := uint8(0)
-	for _, p := range paths {
-		if best == 0 {
-			best = p.Type
-			continue
-		}
-
-		if p.Type < best {
-			best = p.Type
-		}
-	}
-
-	return best
-}
-
-// Print returns a printable representation of route `r`
-func (r *Route) Print() string {
-	ret := fmt.Sprintf("%s:\n", r.pfx.String())
-	ret += fmt.Sprintf("All Paths:\n")
-	for _, p := range r.paths {
-		ret += p.Print()
-	}
-
-	return ret
 }
