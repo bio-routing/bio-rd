@@ -23,6 +23,28 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
+func TestUpdateNewClient(t *testing.T) {
+	r := &ribClient{}
+	l := locRIB.New()
+	r.UpdateNewClient(l)
+}
+
+func TestRegister(t *testing.T) {
+	r := &ribClient{}
+	l := locRIB.New()
+
+	r.Register(l)
+	r.RegisterWithOptions(l, routingtable.ClientOptions{})
+
+	r.Unregister(l)
+}
+
+func TestRouteCount(t *testing.T) {
+	r := &ribClient{}
+	res := r.RouteCount()
+	assert.Equal(t, 1, res)
+}
+
 func TestNew(t *testing.T) {
 	b := &server.BMPServer{}
 	s := New(b)
