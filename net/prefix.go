@@ -32,6 +32,19 @@ func (pfx Prefix) ToProto() *api.Prefix {
 	}
 }
 
+// GetIPNet returns the gonet.IP object for a Prefix object
+func (pfx Prefix) GetIPNet() *gonet.IPNet {
+	var dstNetwork gonet.IPNet
+	dstNetwork.IP = pfx.Addr().Bytes()
+	pfxLen := int(pfx.Pfxlen())
+	if pfx.Addr().IsIPv4() {
+		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 32)
+	} else {
+		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 128)
+	}
+	return &dstNetwork
+}
+
 // NewPfx creates a new Prefix
 func NewPfx(addr IP, pfxlen uint8) Prefix {
 	return Prefix{
