@@ -119,9 +119,44 @@ func TestBGPSelect(t *testing.T) {
 			expected: -1,
 		},
 	}
+
 	for _, test := range tests {
 		res := test.p.Select(test.q)
 		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestLargeCommunitiesString(t *testing.T) {
+	tests := []struct {
+		name     string
+		comms    []types.LargeCommunity
+		expected string
+	}{
+		{
+			name: "two attributes",
+			comms: []types.LargeCommunity{
+				{
+					GlobalAdministrator: 1,
+					DataPart1:           2,
+					DataPart2:           3,
+				},
+				{
+					GlobalAdministrator: 4,
+					DataPart1:           5,
+					DataPart2:           6,
+				},
+			},
+			expected: "(1,2,3) (4,5,6)",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			p := &BGPPath{
+				LargeCommunities: test.comms,
+			}
+			assert.Equal(te, test.expected, p.LargeCommunitiesString())
+		})
 	}
 }
 
@@ -191,43 +226,10 @@ func TestBGPECMP(t *testing.T) {
 			expected: false,
 		},
 	}
+
 	for _, test := range tests {
 		res := test.p.ECMP(test.q)
 		assert.Equal(t, test.expected, res, test.name)
-	}
-}
-
-func TestLargeCommunitiesString(t *testing.T) {
-	tests := []struct {
-		name     string
-		comms    []types.LargeCommunity
-		expected string
-	}{
-		{
-			name: "two attributes",
-			comms: []types.LargeCommunity{
-				{
-					GlobalAdministrator: 1,
-					DataPart1:           2,
-					DataPart2:           3,
-				},
-				{
-					GlobalAdministrator: 4,
-					DataPart1:           5,
-					DataPart2:           6,
-				},
-			},
-			expected: "(1,2,3) (4,5,6)",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(te *testing.T) {
-			p := &BGPPath{
-				LargeCommunities: test.comms,
-			}
-			assert.Equal(te, test.expected, p.LargeCommunitiesString())
-		})
 	}
 }
 

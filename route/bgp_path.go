@@ -314,10 +314,12 @@ func (b *BGPPath) String() string {
 	case 2:
 		origin = "IGP"
 	}
+
 	bgpType := "internal"
 	if b.EBGP {
 		bgpType = "external"
 	}
+
 	ret := fmt.Sprintf("Local Pref: %d, ", b.LocalPref)
 	ret += fmt.Sprintf("Origin: %s, ", origin)
 	ret += fmt.Sprintf("AS Path: %v, ", b.ASPath)
@@ -328,13 +330,16 @@ func (b *BGPPath) String() string {
 	ret += fmt.Sprintf("Source: %s, ", b.Source)
 	ret += fmt.Sprintf("Communities: %v, ", b.Communities)
 	ret += fmt.Sprintf("LargeCommunities: %v, ", b.LargeCommunities)
+
 	if b.OriginatorID != 0 {
 		oid := convert.Uint32Byte(b.OriginatorID)
 		ret += fmt.Sprintf("OriginatorID: %d.%d.%d.%d, ", oid[0], oid[1], oid[2], oid[3])
 	}
+
 	if b.ClusterList != nil {
 		ret += fmt.Sprintf("ClusterList %s", b.ClusterListString())
 	}
+
 	return ret
 }
 
