@@ -148,6 +148,7 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 		newPathsLimit := int(math.Min(float64(newMaxPaths), float64(len(newRoute.Paths()))))
 
 		withdraw := route.PathsDiff(oldRoute.Paths()[0:oldPathsLimit], newRoute.Paths()[0:newPathsLimit])
+
 		for _, p := range withdraw {
 			client.RemovePath(oldRoute.Prefix(), p)
 		}

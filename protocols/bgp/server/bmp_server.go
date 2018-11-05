@@ -93,7 +93,7 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 	defer b.gloablMu.Unlock()
 
 	r := newRouter(addr, port, rib4, rib6)
-	b.routers[r.address.String()] = r
+	b.routers[fmt.Sprintf("%s", r.address.String())] = r
 
 	go func(r *router) {
 		for {

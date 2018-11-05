@@ -1,5 +1,0 @@
-bmp_routers:
-  - addr: 10.11.2.7
-    port: 30119
-http_port: 8080
-grpc_port: 8081

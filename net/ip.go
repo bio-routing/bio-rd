@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	api "github.com/bio-routing/bio-rd/net/api"
+	"github.com/bio-routing/bio-rd/net/api"
 )
 
 // IP represents an IPv4 or IPv6 address
@@ -19,21 +19,16 @@ func IPFromProtoIP(addr api.IP) IP {
 	return IP{
 		higher:   addr.Higher,
 		lower:    addr.Lower,
-		isLegacy: addr.Version == api.IP_IPv4,
+		isLegacy: addr.IsLegacy,
 	}
 }
 
 // ToProto converts an IP to a proto IP
 func (ip IP) ToProto() *api.IP {
-	version := api.IP_IPv4
-	if !ip.isLegacy {
-		version = api.IP_IPv6
-	}
-
 	return &api.IP{
-		Lower:   ip.lower,
-		Higher:  ip.higher,
-		Version: version,
+		Lower:    ip.lower,
+		Higher:   ip.higher,
+		IsLegacy: ip.isLegacy,
 	}
 }
 

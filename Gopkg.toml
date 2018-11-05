@@ -28,6 +28,7 @@ required = ["github.com/golang/dep", "github.com/q3k/goveralls", "github.com/go-
     name = "github.com/golang/dep"
     unused-packages = false
 
+
 [[constraint]]
   name = "github.com/sirupsen/logrus"
   version = "1.0.5"
@@ -43,19 +44,3 @@ required = ["github.com/golang/dep", "github.com/q3k/goveralls", "github.com/go-
 [[constraint]]
   branch = "master"
   name = "github.com/FMNSSun/libhash"
-
-[[constraint]]
-  version = "v1.0.0"
-  name = "github.com/grpc-ecosystem/go-grpc-middleware"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/grpc-ecosystem/go-grpc-prometheus"
-
-[[constraint]]
-  version = "v1.9.2"
-  name = "google.golang.org/grpc"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/q3k/statusz"

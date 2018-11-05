@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "router.go",
+        "server.go",
+    ],
+    importpath = "github.com/bio-routing/bio-rd/protocols/bmp/server",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//protocols/bgp/packet:go_default_library",
+        "//protocols/bmp/packet:go_default_library",
+        "//routingtable/locRIB:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/github.com/taktv6/tflow2/convert:go_default_library",
+    ],
+)

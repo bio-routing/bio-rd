@@ -20,22 +20,10 @@
   version = "v1.12.0"
 
 [[projects]]
-  name = "github.com/StackExchange/wmi"
-  packages = ["."]
-  revision = "5d049714c4a64225c3c79a7cf7d02f7fb5b96338"
-  version = "1.0.0"
-
-[[projects]]
   name = "github.com/armon/go-radix"
   packages = ["."]
   revision = "1a2de0c21c94309923825da3df33a4381872c795"
   version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/beorn7/perks"
-  packages = ["quantile"]
-  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
   name = "github.com/boltdb/bolt"
@@ -48,15 +36,6 @@
   packages = ["spew"]
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
-
-[[projects]]
-  name = "github.com/go-ole/go-ole"
-  packages = [
-    ".",
-    "oleutil",
-  ]
-  revision = "a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506"
-  version = "v1.2.1"
 
 [[projects]]
   name = "github.com/go-yaml/yaml"
@@ -79,45 +58,10 @@
   version = "v0.5.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
-
-[[projects]]
-  branch = "master"
   name = "github.com/golang/protobuf"
-  packages = [
-    "jsonpb",
-    "proto",
-    "protoc-gen-go/descriptor",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/struct",
-    "ptypes/timestamp",
-  ]
-  revision = "5e0eda4b6dc0f7e3c4ed8b94d87f7f7186b20c9c"
-
-[[projects]]
-  name = "github.com/grpc-ecosystem/go-grpc-middleware"
-  packages = [
-    ".",
-    "logging",
-    "logging/logrus",
-    "logging/logrus/ctxlogrus",
-    "recovery",
-    "tags",
-    "tags/logrus",
-  ]
-  revision = "c250d6563d4d4c20252cd865923440e829844f4e"
-  version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/grpc-ecosystem/go-grpc-prometheus"
-  packages = ["."]
-  revision = "68e3a13e41175110a447e67246a59873d6aca902"
+  packages = ["proto"]
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/jmank88/nuts"
@@ -129,12 +73,6 @@
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
   revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
-  version = "v1.0.1"
-
-[[projects]]
-  name = "github.com/matttproud/golang_protobuf_extensions"
-  packages = ["pbutil"]
-  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
   version = "v1.0.1"
 
 [[projects]]
@@ -162,43 +100,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/prometheus/client_golang"
-  packages = [
-    "prometheus",
-    "prometheus/internal",
-    "prometheus/promhttp",
-  ]
-  revision = "1cafe34db7fdec6022e17e00e1c1ea501022f3e4"
-  version = "v0.9.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/prometheus/client_model"
-  packages = ["go"]
-  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/prometheus/common"
-  packages = [
-    "expfmt",
-    "internal/bitbucket.org/ww/goautoneg",
-    "model",
-  ]
-  revision = "7e9e6cabbd393fc208072eedef99188d0ce788b6"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/prometheus/procfs"
-  packages = [
-    ".",
-    "internal/util",
-    "nfs",
-    "xfs",
-  ]
-  revision = "185b4288413d2a0dd0806f78c90dde719829e5ae"
-
-[[projects]]
   name = "github.com/q3k/goveralls"
   packages = ["."]
   revision = "789b29cb81d4de953738cec0fbaefa8af2ff4ea2"
@@ -206,24 +107,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/q3k/statusz"
-  packages = ["."]
-  revision = "924f04ea71149b75f5b10f426cc4c39d6d90f6f2"
-
-[[projects]]
-  branch = "master"
   name = "github.com/sdboyer/constext"
   packages = ["."]
   revision = "836a144573533ea4da4e6929c235fd348aed1c80"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/shirou/gopsutil"
-  packages = [
-    "internal/common",
-    "load",
-  ]
-  revision = "3ec50d2876a36047b2ca39f955ba88fb7a455e92"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -267,15 +153,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "http/httpguts",
-    "http2",
-    "http2/hpack",
-    "idna",
-    "internal/timeseries",
-    "trace",
-  ]
+  packages = ["context"]
   revision = "146acd28ed5894421fb5aac80ca93bc1b1f46f87"
 
 [[projects]]
@@ -294,86 +172,14 @@
   revision = "4497e2df6f9e69048a54498c7affbbec3294ad47"
 
 [[projects]]
-  name = "golang.org/x/text"
-  packages = [
-    "collate",
-    "collate/build",
-    "internal/colltab",
-    "internal/gen",
-    "internal/tag",
-    "internal/triegen",
-    "internal/ucd",
-    "language",
-    "secure/bidirule",
-    "transform",
-    "unicode/bidi",
-    "unicode/cldr",
-    "unicode/norm",
-    "unicode/rangetable",
-  ]
-  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
-  version = "v0.3.0"
-
-[[projects]]
   branch = "master"
   name = "golang.org/x/tools"
   packages = ["cover"]
   revision = "f60d9635b16a5a57b06eaa119614ba4df421966a"
 
-[[projects]]
-  branch = "master"
-  name = "google.golang.org/genproto"
-  packages = ["googleapis/rpc/status"]
-  revision = "94acd270e44e65579b9ee3cdab25034d33fed608"
-
-[[projects]]
-  name = "google.golang.org/grpc"
-  packages = [
-    ".",
-    "balancer",
-    "balancer/base",
-    "balancer/roundrobin",
-    "codes",
-    "connectivity",
-    "credentials",
-    "encoding",
-    "encoding/proto",
-    "grpclog",
-    "internal",
-    "internal/backoff",
-    "internal/channelz",
-    "internal/envconfig",
-    "internal/grpcrand",
-    "internal/transport",
-    "keepalive",
-    "metadata",
-    "naming",
-    "peer",
-    "reflection",
-    "reflection/grpc_reflection_v1alpha",
-    "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
-    "stats",
-    "status",
-    "tap",
-  ]
-  revision = "2e463a05d100327ca47ac218281906921038fd95"
-  version = "v1.16.0"
-
-[[projects]]
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-<<<<<<< HEAD
   inputs-digest = "b06675ba943a08e455d38c9e661639629eca92a2747f433e91e8c772edb644c1"
-=======
-  inputs-digest = "c2f02a70aac78e87eb570ac27ce9a62f7a6e2df679e5ea2b950a3de429480c4c"
->>>>>>> app/bmpstreamer
   solver-name = "gps-cdcl"
   solver-version = 1

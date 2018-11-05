@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["gen_initial_corpus.go"],
+    importpath = "github.com/bio-routing/bio-rd/fuzzing/packet",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "packet",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

@@ -6,11 +6,7 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
-<<<<<<< HEAD
 	"github.com/vishvananda/netlink"
-=======
-	api "github.com/bio-routing/bio-rd/route/api"
->>>>>>> app/bmpstreamer
 )
 
 const (
@@ -70,20 +66,6 @@ func NewRouteAddPath(pfx net.Prefix, p []*Path) *Route {
 		r.paths = append(r.paths, path)
 	}
 	return r
-}
-
-// ToProto converts a route into proto route
-func (r *Route) ToProto() *api.Route {
-	ret := &api.Route{
-		Pfx:   r.pfx.ToProto(),
-		Paths: make([]*api.Path, len(r.paths)),
-	}
-
-	for i := 0; i < len(r.paths); i++ {
-		ret.Paths[i] = r.paths[i].ToProto()
-	}
-
-	return ret
 }
 
 // Copy returns a copy of route r

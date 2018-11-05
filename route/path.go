@@ -3,11 +3,7 @@ package route
 import (
 	"fmt"
 
-<<<<<<< HEAD
 	bnet "github.com/bio-routing/bio-rd/net"
-=======
-	api "github.com/bio-routing/bio-rd/route/api"
->>>>>>> app/bmpstreamer
 )
 
 // Path represents a network path
@@ -16,21 +12,6 @@ type Path struct {
 	StaticPath  *StaticPath
 	BGPPath     *BGPPath
 	NetlinkPath *NetlinkPath
-}
-
-// ToProto converts Path to Proto Path
-func (p *Path) ToProto() *api.Path {
-	t := api.Path_Static
-	switch p.Type {
-	case BGPPathType:
-		t = api.Path_BGP
-	}
-
-	return &api.Path{
-		Type:       t,
-		BGPPath:    p.BGPPath.ToProto(),
-		StaticPath: p.StaticPath.ToProto(),
-	}
 }
 
 // Select returns negative if p < q, 0 if paths are equal, positive if p > q

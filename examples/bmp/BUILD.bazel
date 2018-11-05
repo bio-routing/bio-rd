@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main_bmp.go"],
+    importpath = "github.com/bio-routing/bio-rd/examples/bmp",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//protocols/bgp/server:go_default_library",
+        "//routingtable/locRIB:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "bmp",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
