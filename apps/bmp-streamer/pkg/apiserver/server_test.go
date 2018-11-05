@@ -2,7 +2,6 @@ package apiserver
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -12,6 +11,7 @@ import (
 	pb "github.com/bio-routing/bio-rd/apps/bmp-streamer/pkg/bmpstreamer"
 	bionet "github.com/bio-routing/bio-rd/net"
 	apinet "github.com/bio-routing/bio-rd/net/api"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
@@ -154,21 +154,33 @@ func TestUpdateToRIBUpdate(t *testing.T) {
 }
 
 type mockBMPServer struct {
-	RIB *locRIB.LocRIB
+	RIB4 *locRIB.LocRIB
+	RIB6 *locRIB.LocRIB
 }
 
 func newmockBMPServer() *mockBMPServer {
 	return &mockBMPServer{
-		RIB: locRIB.New(),
+		RIB4: locRIB.New(),
+		RIB6: locRIB.New(),
 	}
 }
 
 func (m *mockBMPServer) SubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
-	m.RIB.Register(client)
+	switch afi {
+	case packet.IPv4AFI:
+		m.RIB4.Register(client)
+	case packet.IPv6AFI:
+		m.RIB6.Register(client)
+	}
 }
 
 func (m *mockBMPServer) UnsubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
-	m.RIB.Unregister(client)
+	switch afi {
+	case packet.IPv4AFI:
+		m.RIB4.Unregister(client)
+	case packet.IPv6AFI:
+		m.RIB6.Unregister(client)
+	}
 }
 
 func TestIntegration(t *testing.T) {
@@ -195,10 +207,11 @@ func TestIntegration(t *testing.T) {
 	}
 	defer conn.Close()
 
+	nextPhase := make(chan struct{})
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		bmpSrv.RIB.AddPath(bionet.NewPfx(bionet.IPv4FromOctets(169, 254, 0, 0), 24), &route.Path{
+		bmpSrv.RIB4.AddPath(bionet.NewPfx(bionet.IPv4FromOctets(169, 254, 0, 0), 24), &route.Path{
 			Type: route.BGPPathType,
 			BGPPath: &route.BGPPath{
 				LocalPref: 1337,
@@ -206,6 +219,35 @@ func TestIntegration(t *testing.T) {
 				Source:    bionet.IPv4FromOctets(10, 0, 0, 2),
 			},
 		})
+
+		bmpSrv.RIB6.AddPath(bionet.NewPfx(bionet.IPv6FromBlocks(0x2001, 0, 0, 0, 0, 0, 0, 0), 32), &route.Path{
+			Type: route.BGPPathType,
+			BGPPath: &route.BGPPath{
+				LocalPref: 4242,
+				NextHop:   bionet.IPv6FromBlocks(0x2001, 0, 0, 0, 0, 0, 0, 1),
+				Source:    bionet.IPv6FromBlocks(0x2001, 0, 0, 0, 0, 0, 0, 2),
+			},
+		})
+
+		<-nextPhase
+
+		bmpSrv.RIB4.RemovePath(bionet.NewPfx(bionet.IPv4FromOctets(169, 254, 0, 0), 24), &route.Path{
+			Type: route.BGPPathType,
+			BGPPath: &route.BGPPath{
+				LocalPref: 1337,
+				NextHop:   bionet.IPv4FromOctets(10, 0, 0, 1),
+				Source:    bionet.IPv4FromOctets(10, 0, 0, 2),
+			},
+		})
+
+		/*bmpSrv.RIB4.AddPath(bionet.NewPfx(bionet.IPv4FromOctets(169, 254, 0, 1), 24), &route.Path{
+			Type: route.BGPPathType,
+			BGPPath: &route.BGPPath{
+				LocalPref: 1337,
+				NextHop:   bionet.IPv4FromOctets(10, 0, 0, 1),
+				Source:    bionet.IPv4FromOctets(10, 0, 0, 2),
+			},
+		})*/
 		wg.Done()
 	}()
 
@@ -219,38 +261,117 @@ func TestIntegration(t *testing.T) {
 
 	wg.Add(1)
 	go func() {
-		fmt.Printf("Waiting for stream receive to return\n")
-		update, err := streamClient.Recv()
-		if err != nil {
-			t.Fatalf("Recv failed: %v", err)
-		}
-
-		expected := &pb.RIBUpdate{
-			Advertisement: true,
-			Peer: &apinet.IP{
-				Lower:   167772162,
-				Version: apinet.IP_IPv4,
-			},
-			Route: &apiroute.Route{
-				Pfx: &apinet.Prefix{
-					Address: &apinet.IP{
-						Lower:   2851995648,
+		tests := []struct {
+			name      string
+			expected  *pb.RIBUpdate
+			wantFail  bool
+			nextPhase bool
+		}{
+			{
+				name: "Read first IPv4 announcement",
+				expected: &pb.RIBUpdate{
+					Advertisement: true,
+					Peer: &apinet.IP{
+						Lower:   167772162,
 						Version: apinet.IP_IPv4,
 					},
-					Pfxlen: 24,
-				},
-				Paths: []*apiroute.Path{
-					{
-						Type: apiroute.Path_BGP,
-						BGPPath: &apiroute.BGPPath{
-							LocalPref: 1337,
-							NextHop: &apinet.IP{
+					Route: &apiroute.Route{
+						Pfx: &apinet.Prefix{
+							Address: &apinet.IP{
+								Lower:   2851995648,
 								Version: apinet.IP_IPv4,
-								Lower:   167772161,
 							},
-							Source: &apinet.IP{
+							Pfxlen: 24,
+						},
+						Paths: []*apiroute.Path{
+							{
+								Type: apiroute.Path_BGP,
+								BGPPath: &apiroute.BGPPath{
+									LocalPref: 1337,
+									NextHop: &apinet.IP{
+										Version: apinet.IP_IPv4,
+										Lower:   167772161,
+									},
+									Source: &apinet.IP{
+										Version: apinet.IP_IPv4,
+										Lower:   167772162,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				name: "Read first IPv6 announcement",
+				expected: &pb.RIBUpdate{
+					Advertisement: true,
+					Peer: &apinet.IP{
+						Higher:  2306124484190404608,
+						Lower:   2,
+						Version: apinet.IP_IPv6,
+					},
+					Route: &apiroute.Route{
+						Pfx: &apinet.Prefix{
+							Address: &apinet.IP{
+								Higher:  2306124484190404608,
+								Lower:   0,
+								Version: apinet.IP_IPv6,
+							},
+							Pfxlen: 32,
+						},
+						Paths: []*apiroute.Path{
+							{
+								Type: apiroute.Path_BGP,
+								BGPPath: &apiroute.BGPPath{
+									LocalPref: 4242,
+									NextHop: &apinet.IP{
+										Version: apinet.IP_IPv6,
+										Higher:  2306124484190404608,
+										Lower:   1,
+									},
+									Source: &apinet.IP{
+										Version: apinet.IP_IPv6,
+										Higher:  2306124484190404608,
+										Lower:   2,
+									},
+								},
+							},
+						},
+					},
+				},
+				nextPhase: true,
+			},
+			{
+				name: "Read first IPv4 withdrawal",
+				expected: &pb.RIBUpdate{
+					Advertisement: false,
+					Peer: &apinet.IP{
+						Lower:   167772162,
+						Version: apinet.IP_IPv4,
+					},
+					Route: &apiroute.Route{
+						Pfx: &apinet.Prefix{
+							Address: &apinet.IP{
+								Lower:   2851995648,
 								Version: apinet.IP_IPv4,
-								Lower:   167772162,
+							},
+							Pfxlen: 24,
+						},
+						Paths: []*apiroute.Path{
+							{
+								Type: apiroute.Path_BGP,
+								BGPPath: &apiroute.BGPPath{
+									LocalPref: 1337,
+									NextHop: &apinet.IP{
+										Version: apinet.IP_IPv4,
+										Lower:   167772161,
+									},
+									Source: &apinet.IP{
+										Version: apinet.IP_IPv4,
+										Lower:   167772162,
+									},
+								},
 							},
 						},
 					},
@@ -258,7 +379,19 @@ func TestIntegration(t *testing.T) {
 			},
 		}
 
-		assert.Equal(t, expected, update)
+		for _, test := range tests {
+			update, err := streamClient.Recv()
+			if err != nil {
+				t.Fatalf("Recv failed: %v", err)
+			}
+
+			assert.Equal(t, test.expected, update)
+
+			if test.nextPhase {
+				nextPhase <- struct{}{}
+			}
+		}
+
 		wg.Done()
 	}()
 
