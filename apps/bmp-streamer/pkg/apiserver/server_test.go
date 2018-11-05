@@ -42,7 +42,7 @@ func TestRegister(t *testing.T) {
 func TestRouteCount(t *testing.T) {
 	r := &ribClient{}
 	res := r.RouteCount()
-	assert.Equal(t, 1, res)
+	assert.Equal(t, int64(1), res)
 }
 
 func TestNew(t *testing.T) {
