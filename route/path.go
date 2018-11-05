@@ -8,9 +8,10 @@ import (
 
 // Path represents a network path
 type Path struct {
-	Type       uint8
-	StaticPath *StaticPath
-	BGPPath    *BGPPath
+	Type        uint8
+	StaticPath  *StaticPath
+	BGPPath     *BGPPath
+	NetlinkPath *NetlinkPath
 }
 
 // ToProto converts Path to Proto Path
@@ -53,6 +54,8 @@ func (p *Path) Select(q *Path) int8 {
 		return p.BGPPath.Select(q.BGPPath)
 	case StaticPathType:
 		return p.StaticPath.Select(q.StaticPath)
+	case NetlinkPathType:
+		return p.NetlinkPath.Select(q.NetlinkPath)
 	}
 
 	panic("Unknown path type")

@@ -11,6 +11,120 @@ import (
 	pb "github.com/bio-routing/bio-rd/route/api"
 )
 
+func TestBGPSelect(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *BGPPath
+		q        *BGPPath
+		expected int8
+	}{
+		{
+			name: "Lpref",
+			p: &BGPPath{
+				LocalPref: 200,
+			},
+			q: &BGPPath{
+				LocalPref: 100,
+			},
+			expected: 1,
+		},
+		{
+			name: "Lpref #2",
+			p: &BGPPath{
+				LocalPref: 100,
+			},
+			q: &BGPPath{
+				LocalPref: 200,
+			},
+			expected: -1,
+		},
+		{
+			name: "AS Path Len",
+			p: &BGPPath{
+				ASPathLen: 100,
+			},
+			q: &BGPPath{
+				ASPathLen: 200,
+			},
+			expected: 1,
+		},
+		{
+			name: "AS Path Len #2",
+			p: &BGPPath{
+				ASPathLen: 200,
+			},
+			q: &BGPPath{
+				ASPathLen: 100,
+			},
+			expected: -1,
+		},
+		{
+			name: "Origin",
+			p: &BGPPath{
+				Origin: 1,
+			},
+			q: &BGPPath{
+				Origin: 2,
+			},
+			expected: 1,
+		},
+		{
+			name: "Origin #2",
+			p: &BGPPath{
+				Origin: 2,
+			},
+			q: &BGPPath{
+				Origin: 1,
+			},
+			expected: -1,
+		},
+		{
+			name: "MED",
+			p: &BGPPath{
+				MED: 1,
+			},
+			q: &BGPPath{
+				MED: 2,
+			},
+			expected: 1,
+		},
+		{
+			name: "MED #2",
+			p: &BGPPath{
+				MED: 2,
+			},
+			q: &BGPPath{
+				MED: 1,
+			},
+			expected: -1,
+		},
+		{
+			name: "EBGP",
+			p: &BGPPath{
+				EBGP: true,
+			},
+			q: &BGPPath{
+				EBGP: false,
+			},
+			expected: 1,
+		},
+		{
+			name: "EBGP #2",
+			p: &BGPPath{
+				EBGP: false,
+			},
+			q: &BGPPath{
+				EBGP: true,
+			},
+			expected: -1,
+		},
+	}
+	for _, test := range tests {
+		res := test.p.Select(test.q)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
 func TestCommunitiesString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -32,6 +146,54 @@ func TestCommunitiesString(t *testing.T) {
 
 			assert.Equal(te, test.expected, p.CommunitiesString())
 		})
+	}
+}
+
+func TestBGPECMP(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        *BGPPath
+		q        *BGPPath
+		expected bool
+	}{
+		{
+			name:     "Equal",
+			p:        &BGPPath{},
+			q:        &BGPPath{},
+			expected: true,
+		},
+		{
+			name:     "Lpref",
+			p:        &BGPPath{LocalPref: 200},
+			q:        &BGPPath{},
+			expected: false,
+		},
+		{
+			name:     "MED",
+			p:        &BGPPath{MED: 200},
+			q:        &BGPPath{},
+			expected: false,
+		},
+		{
+			name: "ASPath Len",
+			p: &BGPPath{
+				ASPathLen: 2,
+			},
+			q: &BGPPath{
+				ASPathLen: 1,
+			},
+			expected: false,
+		},
+		{
+			name:     "Origin",
+			p:        &BGPPath{Origin: 1},
+			q:        &BGPPath{},
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		res := test.p.ECMP(test.q)
+		assert.Equal(t, test.expected, res, test.name)
 	}
 }
 

@@ -32,12 +32,12 @@ func (r *Route) staticPathSelection() {
 
 // Select returns negative if s < t, 0 if paths are equal, positive if s > t
 func (s *StaticPath) Select(t *StaticPath) int8 {
-	return 0
+	return s.NextHop.Compare(t.NextHop)
 }
 
 // Equal returns true if s and t are euqal
 func (s *StaticPath) Equal(t *StaticPath) bool {
-	return s.NextHop == t.NextHop
+	return s.NextHop.Compare(t.NextHop) == 0
 }
 
 // ECMP determines if path s and t are equal in terms of ECMP

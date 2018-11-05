@@ -123,7 +123,7 @@ func (ip IP) Equal(other IP) bool {
 }
 
 // Compare compares two IP addresses (returns 0 if equal, -1 if `ip` is smaller than `other`, 1 if `ip` is greater than `other`)
-func (ip IP) Compare(other IP) int {
+func (ip IP) Compare(other IP) int8 {
 	if ip.Equal(other) {
 		return 0
 	}
