@@ -32,6 +32,14 @@ func (pfx Prefix) ToProto() *api.Prefix {
 	}
 }
 
+// NewPfx creates a new Prefix
+func NewPfx(addr IP, pfxlen uint8) Prefix {
+	return Prefix{
+		addr:   addr,
+		pfxlen: pfxlen,
+	}
+}
+
 // GetIPNet returns the gonet.IP object for a Prefix object
 func (pfx Prefix) GetIPNet() *gonet.IPNet {
 	var dstNetwork gonet.IPNet
@@ -43,14 +51,6 @@ func (pfx Prefix) GetIPNet() *gonet.IPNet {
 		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 128)
 	}
 	return &dstNetwork
-}
-
-// NewPfx creates a new Prefix
-func NewPfx(addr IP, pfxlen uint8) Prefix {
-	return Prefix{
-		addr:   addr,
-		pfxlen: pfxlen,
-	}
 }
 
 // NewPfxFromIPNet creates a Prefix object from an gonet.IPNet object
