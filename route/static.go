@@ -1,10 +1,24 @@
 package route
 
-import bnet "github.com/bio-routing/bio-rd/net"
+import (
+	bnet "github.com/bio-routing/bio-rd/net"
+	api "github.com/bio-routing/bio-rd/route/api"
+)
 
 // StaticPath represents a static path of a route
 type StaticPath struct {
 	NextHop bnet.IP
+}
+
+// ToProto converts a static path to proto StaticPath
+func (s *StaticPath) ToProto() *api.StaticPath {
+	if s == nil {
+		return nil
+	}
+
+	return &api.StaticPath{
+		NextHop: s.NextHop.ToProto(),
+	}
 }
 
 func (r *Route) staticPathSelection() {
@@ -18,12 +32,12 @@ func (r *Route) staticPathSelection() {
 
 // Select returns negative if s < t, 0 if paths are equal, positive if s > t
 func (s *StaticPath) Select(t *StaticPath) int8 {
-	return s.NextHop.Compare(t.NextHop)
+	return 0
 }
 
 // Equal returns true if s and t are euqal
 func (s *StaticPath) Equal(t *StaticPath) bool {
-	return s.NextHop.Compare(t.NextHop) == 0
+	return s.NextHop == t.NextHop
 }
 
 // ECMP determines if path s and t are equal in terms of ECMP

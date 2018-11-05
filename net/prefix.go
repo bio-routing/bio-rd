@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bio-routing/bio-rd/net/api"
+	api "github.com/bio-routing/bio-rd/net/api"
 )
 
 // Prefix represents an IPv4 prefix
@@ -25,8 +25,8 @@ func NewPrefixFromProtoPrefix(pfx api.Prefix) Prefix {
 }
 
 // ToProto converts prefix to proto prefix
-func (pfx Prefix) ToProto() api.Prefix {
-	return api.Prefix{
+func (pfx Prefix) ToProto() *api.Prefix {
+	return &api.Prefix{
 		Address: pfx.addr.ToProto(),
 		Pfxlen:  uint32(pfx.pfxlen),
 	}
@@ -90,21 +90,6 @@ func (pfx Prefix) String() string {
 	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
 }
 
-// GetIPNet returns the gonet.IP object for a Prefix object
-func (pfx Prefix) GetIPNet() *gonet.IPNet {
-	var dstNetwork gonet.IPNet
-	dstNetwork.IP = pfx.Addr().Bytes()
-
-	pfxLen := int(pfx.Pfxlen())
-	if pfx.Addr().IsIPv4() {
-		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 32)
-	} else {
-		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 128)
-	}
-
-	return &dstNetwork
-}
-
 // Contains checks if x is a subnet of or equal to pfx
 func (pfx Prefix) Contains(x Prefix) bool {
 	if x.pfxlen <= pfx.pfxlen {
@@ -139,7 +124,7 @@ func (pfx Prefix) containsIPv6(x Prefix) bool {
 
 // Equal checks if pfx and x are equal
 func (pfx Prefix) Equal(x Prefix) bool {
-	return pfx.addr.Equal(x.addr) && pfx.pfxlen == x.pfxlen
+	return pfx == x
 }
 
 // GetSupernet gets the next common supernet of pfx and x

@@ -1,67 +1,17 @@
 package net
 
 import (
-	gonet "net"
 	"testing"
 
-	"github.com/bio-routing/bio-rd/net/api"
+	api "github.com/bio-routing/bio-rd/net/api"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestGetIPNet(t *testing.T) {
-	tests := []struct {
-		name     string
-		pfx      Prefix
-		expected *gonet.IPNet
-	}{
-		{
-			name: "Some prefix IPv4",
-			pfx:  NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
-			expected: &gonet.IPNet{
-				IP:   gonet.IP{127, 0, 0, 0},
-				Mask: gonet.IPMask{255, 0, 0, 0},
-			},
-		},
-		{
-			name: "Some prefix IPv6",
-			pfx:  NewPfx(IPv6FromBlocks(0xffff, 0xffff, 0xffff, 0xffff, 0x0, 0x0, 0x0, 0x0), 64),
-			expected: &gonet.IPNet{
-				IP:   gonet.IP{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-				Mask: gonet.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
-			},
-		},
-	}
-	for _, test := range tests {
-		res := test.pfx.GetIPNet()
-		assert.Equal(t, test.expected, res, test.name)
-	}
-}
-func TestNewPfxFromIPNet(t *testing.T) {
-	tests := []struct {
-		name     string
-		ipNet    *gonet.IPNet
-		expected Prefix
-	}{
-		{
-			name: "Some Prefix",
-			ipNet: &gonet.IPNet{
-				IP:   gonet.IP{127, 0, 0, 0},
-				Mask: gonet.IPMask{255, 0, 0, 0},
-			},
-			expected: NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
-		},
-	}
-	for _, test := range tests {
-		res := NewPfxFromIPNet(test.ipNet)
-		assert.Equal(t, test.expected, res, test.name)
-	}
-}
 
 func TestPrefixToProto(t *testing.T) {
 	tests := []struct {
 		name     string
 		pfx      Prefix
-		expected api.Prefix
+		expected *api.Prefix
 	}{
 		{
 			name: "IPv4",
@@ -72,10 +22,10 @@ func TestPrefixToProto(t *testing.T) {
 				},
 				pfxlen: 24,
 			},
-			expected: api.Prefix{
+			expected: &api.Prefix{
 				Address: &api.IP{
-					Lower:    200,
-					IsLegacy: true,
+					Lower:   200,
+					Version: api.IP_IPv4,
 				},
 				Pfxlen: 24,
 			},
@@ -90,11 +40,11 @@ func TestPrefixToProto(t *testing.T) {
 				},
 				pfxlen: 64,
 			},
-			expected: api.Prefix{
+			expected: &api.Prefix{
 				Address: &api.IP{
-					Higher:   100,
-					Lower:    200,
-					IsLegacy: false,
+					Higher:  100,
+					Lower:   200,
+					Version: api.IP_IPv6,
 				},
 				Pfxlen: 64,
 			},
@@ -117,9 +67,9 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 			name: "IPv4",
 			proto: api.Prefix{
 				Address: &api.IP{
-					Higher:   0,
-					Lower:    2000,
-					IsLegacy: true,
+					Higher:  0,
+					Lower:   2000,
+					Version: api.IP_IPv4,
 				},
 				Pfxlen: 24,
 			},
@@ -136,9 +86,9 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 			name: "IPv6",
 			proto: api.Prefix{
 				Address: &api.IP{
-					Higher:   1000,
-					Lower:    2000,
-					IsLegacy: false,
+					Higher:  1000,
+					Lower:   2000,
+					Version: api.IP_IPv6,
 				},
 				Pfxlen: 64,
 			},
@@ -182,7 +132,7 @@ func TestAddr(t *testing.T) {
 	for _, test := range tests {
 		res := test.pfx.Addr()
 		if res != test.expected {
-			t.Errorf("Unexpected result for test %s: Got %d Expected %d", test.name, res, test.expected)
+			t.Errorf("Unexpected result for test %s: Got %v Expected %v", test.name, res, test.expected)
 		}
 	}
 }
@@ -524,11 +474,6 @@ func TestStrToAddr(t *testing.T) {
 		wantFail bool
 		expected uint32
 	}{
-		{
-			name:     "Non numeric",
-			input:    "10.10.10.a",
-			wantFail: true,
-		},
 		{
 			name:     "Invalid address #1",
 			input:    "10.10.10",
