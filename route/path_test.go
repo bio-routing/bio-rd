@@ -46,6 +46,7 @@ func TestPathNextHop(t *testing.T) {
 			expected: bnet.IPv4(1000),
 		},
 	}
+
 	for _, test := range tests {
 		res := test.p.NextHop()
 		assert.Equal(t, test.expected, res, test.name)
@@ -61,6 +62,7 @@ func TestPathCopy(t *testing.T) {
 			name: "nil test",
 		},
 	}
+
 	for _, test := range tests {
 		res := test.p.Copy()
 		assert.Equal(t, test.expected, res, test.name)
@@ -81,6 +83,7 @@ func TestEqual(t *testing.T) {
 			expected: false,
 		},
 	}
+
 	for _, test := range tests {
 		res := test.p.Equal(test.q)
 		assert.Equalf(t, test.expected, res, test.name)
@@ -157,6 +160,7 @@ func TestSelect(t *testing.T) {
 			expected: 0,
 		},
 	}
+
 	for _, test := range tests {
 		res := test.p.Select(test.q)
 		assert.Equalf(t, test.expected, res, "Test %q", test.name)
@@ -289,6 +293,7 @@ func TestNewNlPath(t *testing.T) {
 			},
 		},
 	}
+
 	for _, test := range tests {
 		var converted *NetlinkPath
 		switch test.source.Type {
@@ -431,6 +436,7 @@ func TestNewNlPathFromNetlinkRoute(t *testing.T) {
 			expectError: false,
 		},
 	}
+
 	for _, test := range tests {
 		converted, err := NewNlPathFromRoute(test.source, true)
 		if test.expectError {
