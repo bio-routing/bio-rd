@@ -145,6 +145,7 @@ func TestNetlinkRouteDiff(t *testing.T) {
 			},
 		},
 	}
+
 	for _, test := range tests {
 		res := NetlinkRouteDiff(test.left, test.right)
 		assert.Equal(t, test.expected, res)

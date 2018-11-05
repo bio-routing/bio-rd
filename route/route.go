@@ -274,10 +274,12 @@ func getBestProtocol(paths []*Path) uint8 {
 			best = p.Type
 			continue
 		}
+
 		if p.Type < best {
 			best = p.Type
 		}
 	}
+
 	return best
 }
 
@@ -288,22 +290,26 @@ func (r *Route) Print() string {
 	for _, p := range r.paths {
 		ret += p.Print()
 	}
+
 	return ret
 }
 
 // NetlinkRouteDiff gets the list of elements contained by a but not b
 func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
 	ret := make([]netlink.Route, 0)
+
 	for _, pa := range a {
 		if !netlinkRoutesContains(pa, b) {
 			ret = append(ret, pa)
 		}
 	}
+
 	return ret
 }
 
 func netlinkRoutesContains(needle netlink.Route, haystack []netlink.Route) bool {
 	for _, p := range haystack {
+
 		probeMaskSize, probeMaskBits := p.Dst.Mask.Size()
 		needleMaskSize, needleMaskBits := needle.Dst.Mask.Size()
 
