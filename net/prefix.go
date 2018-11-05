@@ -40,6 +40,17 @@ func NewPfx(addr IP, pfxlen uint8) Prefix {
 	}
 }
 
+// NewPfxFromIPNet creates a Prefix object from an gonet.IPNet object
+func NewPfxFromIPNet(ipNet *gonet.IPNet) Prefix {
+	ones, _ := ipNet.Mask.Size()
+	ip, _ := IPFromBytes(ipNet.IP)
+
+	return Prefix{
+		addr:   ip,
+		pfxlen: uint8(ones),
+	}
+}
+
 // GetIPNet returns the gonet.IP object for a Prefix object
 func (pfx Prefix) GetIPNet() *gonet.IPNet {
 	var dstNetwork gonet.IPNet
@@ -51,17 +62,6 @@ func (pfx Prefix) GetIPNet() *gonet.IPNet {
 		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 128)
 	}
 	return &dstNetwork
-}
-
-// NewPfxFromIPNet creates a Prefix object from an gonet.IPNet object
-func NewPfxFromIPNet(ipNet *gonet.IPNet) Prefix {
-	ones, _ := ipNet.Mask.Size()
-	ip, _ := IPFromBytes(ipNet.IP)
-
-	return Prefix{
-		addr:   ip,
-		pfxlen: uint8(ones),
-	}
 }
 
 // StrToAddr converts an IP address string to it's uint32 representation
