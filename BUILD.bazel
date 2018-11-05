@@ -1,8 +1,0 @@
-load("@bazel_gazelle//:def.bzl", "gazelle")
-
-# gazelle:prefix github.com/bio-routing/bio-rd
-gazelle(
-    name = "gazelle",
-    external = "vendored",
-    prefix = "github.com/bio-routing/bio-rd",
-)
