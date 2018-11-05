@@ -97,19 +97,21 @@ func (r *Route) Copy() *Route {
 	return n
 }
 
+// Prefix gets the prefix of route `r`
+func (r *Route) Prefix() net.Prefix {
+	return r.pfx
+}
+
 // PathSelection recalculates the best path + active paths
 func (r *Route) PathSelection() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	sort.Slice(r.paths, func(i, j int) bool {
 		return r.paths[i].Select(r.paths[j]) == -1
 	})
-	r.updateEqualPathCount()
-}
 
-// Prefix gets the prefix of route `r`
-func (r *Route) Prefix() net.Prefix {
-	return r.pfx
+	r.updateEqualPathCount()
 }
 
 // Addr gets a routes address
@@ -242,6 +244,7 @@ func comparePathSlice(left, right []*Path) bool {
 
 	return true
 }
+
 func compareItemExists(needle *Path, haystack []*Path) bool {
 	for _, compare := range haystack {
 		if needle.Equal(compare) {
@@ -327,5 +330,6 @@ func netlinkRoutesContains(needle netlink.Route, haystack []netlink.Route) bool 
 			return true
 		}
 	}
+
 	return false
 }
