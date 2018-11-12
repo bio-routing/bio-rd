@@ -5,8 +5,148 @@ import (
 	"net"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net/api"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestLower(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected uint64
+	}{
+		{
+			name:     "Test",
+			ip:       IP{lower: 100},
+			expected: 100,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.ip.Lower()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestHigher(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected uint64
+	}{
+		{
+			name:     "Test",
+			ip:       IP{higher: 200},
+			expected: 200,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.ip.Higher()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestIPVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected bool
+	}{
+		{
+			name:     "Test",
+			ip:       IP{isLegacy: true},
+			expected: true,
+		},
+		{
+			name:     "Test",
+			ip:       IP{},
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.ip.IsLegacy()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+func TestIPToProto(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected *api.IP
+	}{
+		{
+			name: "IPv4",
+			ip: IP{
+				lower:    255,
+				isLegacy: true,
+			},
+			expected: &api.IP{
+				Lower:    255,
+				IsLegacy: true,
+			},
+		},
+		{
+			name: "IPv6",
+			ip: IP{
+				higher:   1000,
+				lower:    255,
+				isLegacy: false,
+			},
+			expected: &api.IP{
+				Higher:   1000,
+				Lower:    255,
+				IsLegacy: false,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := test.ip.ToProto()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestIPFromProtoIP(t *testing.T) {
+	tests := []struct {
+		name     string
+		proto    api.IP
+		expected IP
+	}{
+		{
+			name: "Test IPv4",
+			proto: api.IP{
+				Lower:    100,
+				Higher:   0,
+				IsLegacy: true,
+			},
+			expected: IP{
+				lower:    100,
+				higher:   0,
+				isLegacy: true,
+			},
+		},
+		{
+			name: "Test IPv6",
+			proto: api.IP{
+				Lower:    100,
+				Higher:   200,
+				IsLegacy: false,
+			},
+			expected: IP{
+				lower:    100,
+				higher:   200,
+				isLegacy: false,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := IPFromProtoIP(test.proto)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
 
 func TestCompare(t *testing.T) {
 	tests := []struct {
@@ -155,27 +295,27 @@ func TestIPv4FromOctets(t *testing.T) {
 			name:   "172.217.16.195",
 			octets: []uint8{172, 217, 16, 195},
 			expected: IP{
-				higher:    0,
-				lower:     2899906755,
-				ipVersion: 4,
+				higher:   0,
+				lower:    2899906755,
+				isLegacy: true,
 			},
 		},
 		{
 			name:   "0.0.0.0",
 			octets: []uint8{0, 0, 0, 0},
 			expected: IP{
-				higher:    0,
-				lower:     0,
-				ipVersion: 4,
+				higher:   0,
+				lower:    0,
+				isLegacy: true,
 			},
 		},
 		{
 			name:   "255.255.255.255",
 			octets: []uint8{255, 255, 255, 255},
 			expected: IP{
-				higher:    0,
-				lower:     math.MaxUint32,
-				ipVersion: 4,
+				higher:   0,
+				lower:    math.MaxUint32,
+				isLegacy: true,
 			},
 		},
 	}
@@ -206,9 +346,8 @@ func TestIPv6FromBlocks(t *testing.T) {
 				0xcafe,
 			},
 			expected: IP{
-				higher:    2306131596687708724,
-				lower:     6230974922281175806,
-				ipVersion: 6,
+				higher: 2306131596687708724,
+				lower:  6230974922281175806,
 			},
 		},
 	}
@@ -239,18 +378,17 @@ func TestIPFromBytes(t *testing.T) {
 			name:  "IPV4: 172.217.16.195",
 			bytes: []byte{172, 217, 16, 195},
 			expected: IP{
-				higher:    0,
-				lower:     2899906755,
-				ipVersion: 4,
+				higher:   0,
+				lower:    2899906755,
+				isLegacy: true,
 			},
 		},
 		{
 			name:  "IPV6: IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
 			bytes: []byte{0x20, 0x01, 0x06, 0x78, 0x01, 0xE0, 0x12, 0x34, 0x56, 0x78, 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE},
 			expected: IP{
-				higher:    2306131596687708724,
-				lower:     6230974922281175806,
-				ipVersion: 6,
+				higher: 2306131596687708724,
+				lower:  6230974922281175806,
 			},
 		},
 		{
@@ -365,7 +503,7 @@ func TestBitAtPosition(t *testing.T) {
 	for _, test := range tests {
 		b := test.input.BitAtPosition(test.position)
 		if b != test.expected {
-			t.Errorf("%s: Unexpected failure: Bit %d of %d is %v. Expected %v",
+			t.Errorf("%s: Unexpected failure: Bit %d of %v is %v. Expected %v",
 				test.name, test.position, test.input, b, test.expected)
 		}
 	}
