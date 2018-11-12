@@ -131,14 +131,17 @@ func (nw *NetlinkWriter) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 
 // Add pfx/path to kernel
 func (nw *NetlinkWriter) addKernel(pfx bnet.Prefix) error {
-	route := nw.createRoute(pfx, nw.pathTable[pfx])
+	route, err := nw.createRoute(pfx, nw.pathTable[pfx])
+	if err != nil {
+		return fmt.Errorf("Could not create Route: %v", err.Error())
+	}
 
 	log.WithFields(log.Fields{
 		"Prefix": pfx.String(),
 		"Table":  route.Table,
 	}).Debug("AddPath to netlink")
 
-	err := netlink.RouteAdd(route)
+	err = netlink.RouteAdd(route)
 	if err != nil {
 		log.Errorf("Error while adding route: %v", err)
 		return fmt.Errorf("Error while adding route: %v", err)
@@ -149,13 +152,16 @@ func (nw *NetlinkWriter) addKernel(pfx bnet.Prefix) error {
 
 // remove pfx/path from kernel
 func (nw *NetlinkWriter) removeKernel(pfx bnet.Prefix, paths []*route.Path) error {
-	route := nw.createRoute(pfx, nw.pathTable[pfx])
+	route, err := nw.createRoute(pfx, nw.pathTable[pfx])
+	if err != nil {
+		return fmt.Errorf("Could not create Route: %v", err.Error())
+	}
 
 	log.WithFields(log.Fields{
 		"Prefix": pfx.String(),
 	}).Debug("Remove from netlink")
 
-	err := netlink.RouteDel(route)
+	err = netlink.RouteDel(route)
 	if err != nil {
 		return fmt.Errorf("Error while removing route: %v", err)
 	}
@@ -164,7 +170,7 @@ func (nw *NetlinkWriter) removeKernel(pfx bnet.Prefix, paths []*route.Path) erro
 }
 
 // create a route from a prefix and a path
-func (nw *NetlinkWriter) createRoute(pfx bnet.Prefix, paths []*route.Path) *netlink.Route {
+func (nw *NetlinkWriter) createRoute(pfx bnet.Prefix, paths []*route.Path) (*netlink.Route, error) {
 	route := &netlink.Route{
 		Dst:      pfx.GetIPNet(),
 		Table:    int(nw.options.RoutingTable), // config dependent
@@ -180,7 +186,13 @@ func (nw *NetlinkWriter) createRoute(pfx bnet.Prefix, paths []*route.Path) *netl
 		multiPath = append(multiPath, nextHop)
 	}
 
-	route.MultiPath = multiPath
+	if len(multiPath) == 1 {
+		route.Gw = multiPath[0].Gw
+	} else if len(multiPath) > 1 {
+		route.MultiPath = multiPath
+	} else {
+		return nil, fmt.Errorf("No destination address specified. At least one NextHop has to be specified in path")
+	}
 
-	return route
+	return route, nil
 }
