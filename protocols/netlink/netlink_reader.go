@@ -16,8 +16,8 @@ import (
 
 // Constants for IP family
 const (
-	IPFamily4 = 4 // IPv4
-	IPFamily6 = 6 // IPv6
+	IPFamily4 int = 4 // IPv4
+	IPFamily6 int = 6 // IPv6
 )
 
 // NetlinkReader read routes from the Linux Kernel and propagates it to the locRIB
@@ -49,7 +49,7 @@ func (nr *NetlinkReader) Read() {
 
 	for {
 		// Family doesn't matter. I only filter by the rt_table here
-		routes, err := netlink.RouteListFiltered(int(IPFamily4), &netlink.Route{Table: int(nr.options.RoutingTable)}, netlink.RT_FILTER_TABLE)
+		routes, err := netlink.RouteListFiltered(IPFamily4, &netlink.Route{Table: int(nr.options.RoutingTable)}, netlink.RT_FILTER_TABLE)
 		if err != nil {
 			log.WithError(err).Panic("Failed to read routes from kernel")
 		}
