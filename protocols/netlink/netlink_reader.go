@@ -20,7 +20,7 @@ const (
 	IPFamily6 int = 6 // IPv6
 )
 
-// NetlinkReader read routes from the Linux Kernel and propagates it to the locRIB
+// NetlinkReader reads routes from the Linux Kernel and propagates them to the locRIB
 type NetlinkReader struct {
 	options *config.Netlink
 	routingtable.ClientManager
@@ -74,7 +74,7 @@ func (nr *NetlinkReader) propagateChanges(routes []netlink.Route) {
 
 // Add given paths to clients
 func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
-	// If there where no routes yet, just skip this funktion. There's nothing to delete
+	// If there were no routes yet, just skip this function. There's nothing to add
 	if len(routes) == 0 {
 		nr.mu.RUnlock()
 		return
@@ -129,7 +129,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 	nr.mu.RLock()
 
-	// If there where no routes yet, just skip this funktion. There's nothing to delete
+	// If there were no routes yet, just skip this function. There's nothing to delete
 	if len(nr.routes) == 0 {
 		nr.mu.RUnlock()
 		return
