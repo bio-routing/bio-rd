@@ -9,40 +9,30 @@ A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustnes
 
 ## Building
 
-We use [Bazel](https://bazel.io) to build bio-rd.
+### Build the examples
 
-### Build
+#### BGP
 
-    bazel build //:bio-rd
-    bazel-bin/linux_amd64_stripped/bio-rd -arguments go -here
+    cd examples/bgp/ && go build
 
-or
+#### BMP
 
-    bazel run //:bio-rd -- -arguments go -here
+    cd examples/bmp/ && go build
 
 ### Run Tests
 
-    bazel test //...
-
-### Update Bazel BUILD files
-
-To regenerate BUILD files (for both the project and vendored libraries), you will need to run the following:
-
-    bazel run //:gazelle -- update
-
-Be sure to commit the changes.
+    go test -v -cover ./...
 
 ### Update vendor/dependencies
 
-#### build `dep`
+#### Install `dep`
 
-    bazel build //vendor/github.com/golang/dep/cmd/dep
+    curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+Or on MacOS
+
+    brew install dep
 
 #### Update vendor/add dependencies
 
-    bazel-bin/vendor/github.com/golang/dep/cmd/dep/linux_amd64_stripped/dep ensure
-
-dep of dep breaks gazelle. Therefore execute the following commands after updating Gopkg.toml
-
-    rm -rf vendor/github.com/golang/dep/cmd/dep/testdata
-    rm -rf vendor/github.com/golang/dep/internal/fs/testdata/symlinks/dir-symlink
+    dep ensure
