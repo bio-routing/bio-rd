@@ -25,6 +25,14 @@ A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustnes
 
 ### Update vendor/dependencies
 
+#### Install `dep`
+
+    curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+Or on MacOS
+
+    brew install dep
+
 #### Update vendor/add dependencies
 
     dep ensure
