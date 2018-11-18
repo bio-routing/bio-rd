@@ -35,10 +35,10 @@ func (n *Netlink) Start() {
 	}
 
 	// 1. from locRib to Kernel
-	n.locRib.ClientManager.RegisterWithOptions(n.writer, options)
+	n.locRib.RegisterWithOptions(n.writer, options)
 
 	// 2. from Kernel to locRib
-	n.reader.ClientManager.RegisterWithOptions(n.locRib, options)
+	n.reader.clientManager.RegisterWithOptions(n.locRib, options)
 
 	// Listen for new routes from kernel
 	go n.reader.Read()

@@ -22,9 +22,9 @@ const (
 
 // NetlinkReader read routes from the Linux Kernel and propagates it to the locRIB
 type NetlinkReader struct {
-	options *config.Netlink
-	routingtable.ClientManager
-	filter *filter.Filter
+	clientManager *routingtable.ClientManager
+	options       *config.Netlink
+	filter        *filter.Filter
 
 	mu     sync.RWMutex
 	routes []netlink.Route
@@ -37,7 +37,7 @@ func NewNetlinkReader(options *config.Netlink) *NetlinkReader {
 		filter:  options.ImportFilter,
 	}
 
-	nr.ClientManager = routingtable.NewClientManager(nr)
+	nr.clientManager = routingtable.NewClientManager(nr)
 
 	return nr
 }
@@ -124,7 +124,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 			}
 		}
 
-		for _, client := range nr.ClientManager.Clients() {
+		for _, client := range nr.clientManager.Clients() {
 			log.WithFields(log.Fields{
 				"pfx":  pfx,
 				"path": path,
@@ -179,7 +179,7 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 			}
 		}
 
-		for _, client := range nr.ClientManager.Clients() {
+		for _, client := range nr.clientManager.Clients() {
 			log.WithFields(log.Fields{
 				"pfx":  pfx,
 				"path": path,
@@ -229,10 +229,6 @@ func (nr *NetlinkReader) UpdateNewClient(routingtable.RouteTableClient) error {
 
 // Register is currently not supported
 func (nr *NetlinkReader) Register(routingtable.RouteTableClient) {
-}
-
-// RegisterWithOptions is Not supported
-func (nr *NetlinkReader) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
 }
 
 // Unregister is Not supported
