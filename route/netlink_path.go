@@ -21,7 +21,6 @@ const (
 
 // NetlinkPath represents a path learned via Netlink of a route
 type NetlinkPath struct {
-	Dst      bnet.Prefix
 	Src      bnet.IP
 	NextHop  bnet.IP // GW
 	Priority int
@@ -42,29 +41,29 @@ func NewNlPathFromBgpPath(p *BGPPath) *NetlinkPath {
 }
 
 // NewNlPathFromRoute creates a new NetlinkPath object from a netlink.Route object
-func NewNlPathFromRoute(r *netlink.Route, kernel bool) (*NetlinkPath, error) {
+func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, error) {
 	var src bnet.IP
 	var dst bnet.Prefix
 
 	if r.Src == nil && r.Dst == nil {
-		return nil, fmt.Errorf("Cannot create NlPath, since source and destination are both nil")
+		return bnet.Prefix{}, nil, fmt.Errorf("Cannot create NlPath, since source and destination are both nil")
 	}
 
 	if r.Src == nil && r.Dst != nil {
 		dst = bnet.NewPfxFromIPNet(r.Dst)
 		if dst.Addr().IsIPv4() {
-			src = bnet.IPv4FromOctets(0, 0, 0, 0)
+			src = bnet.IPv4(0)
 		} else {
-			src = bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0)
+			src = bnet.IPv6(0, 0)
 		}
 	}
 
 	if r.Src != nil && r.Dst == nil {
 		src, _ = bnet.IPFromBytes(r.Src)
 		if src.IsIPv4() {
-			dst = bnet.NewPfx(bnet.IPv4FromOctets(0, 0, 0, 0), 0)
+			dst = bnet.NewPfx(bnet.IPv4(0), 0)
 		} else {
-			dst = bnet.NewPfx(bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0), 0)
+			dst = bnet.NewPfx(bnet.IPv6(0, 0), 0)
 		}
 	}
 
@@ -73,39 +72,58 @@ func NewNlPathFromRoute(r *netlink.Route, kernel bool) (*NetlinkPath, error) {
 		dst = bnet.NewPfxFromIPNet(r.Dst)
 	}
 
-	nextHop, _ := bnet.IPFromBytes(r.Gw)
+	paths := make([]*Path, 0)
 
-	return &NetlinkPath{
-		Dst:      dst,
-		Src:      src,
-		NextHop:  nextHop,
-		Priority: r.Priority,
-		Protocol: r.Protocol,
-		Type:     r.Type,
-		Table:    r.Table,
-		Kernel:   kernel,
-	}, nil
+	if len(r.MultiPath) > 0 {
+		for _, multiPath := range r.MultiPath {
+			nextHop, _ := bnet.IPFromBytes(multiPath.Gw)
+			paths = append(paths, &Path{
+				Type: NetlinkPathType,
+				NetlinkPath: &NetlinkPath{
+					Src:      src,
+					NextHop:  nextHop,
+					Priority: r.Priority,
+					Protocol: r.Protocol,
+					Type:     r.Type,
+					Table:    r.Table,
+					Kernel:   kernel,
+				},
+			})
+		}
+	} else {
+		nextHop, _ := bnet.IPFromBytes(r.Gw)
+		paths = append(paths, &Path{
+			Type: NetlinkPathType,
+			NetlinkPath: &NetlinkPath{
+				Src:      src,
+				NextHop:  nextHop,
+				Priority: r.Priority,
+				Protocol: r.Protocol,
+				Type:     r.Type,
+				Table:    r.Table,
+				Kernel:   kernel,
+			},
+		})
+	}
+
+	return dst, paths, nil
 }
 
 // Select compares s with t and returns negative if s < t, 0 if paths are equal, positive if s > t
 func (s *NetlinkPath) Select(t *NetlinkPath) int8 {
-	if !s.Dst.Equal(t.Dst) {
-		return 1
+	if s.NextHop.Compare(t.NextHop) < 0 {
+		return -1
 	}
 
 	if s.NextHop.Compare(t.NextHop) > 0 {
-		return -1
-	}
-
-	if s.NextHop.Compare(t.NextHop) < 0 {
 		return 1
 	}
 
-	if s.Src.Compare(t.Src) > 0 {
+	if s.Src.Compare(t.Src) < 0 {
 		return -1
 	}
 
-	if s.Src.Compare(t.Src) < 0 {
+	if s.Src.Compare(t.Src) > 0 {
 		return 1
 	}
 
@@ -138,7 +156,7 @@ func (s *NetlinkPath) Select(t *NetlinkPath) int8 {
 
 // ECMP determines if path s and t are equal in terms of ECMP
 func (s *NetlinkPath) ECMP(t *NetlinkPath) bool {
-	return false
+	return s.Src == t.Src && s.Priority == t.Priority && s.Protocol == t.Protocol && s.Type == t.Type && s.Table == t.Table
 }
 
 // Copy duplicates the current object
@@ -153,8 +171,7 @@ func (s *NetlinkPath) Copy() *NetlinkPath {
 
 // Print all known information about a route in logfile friendly format
 func (s *NetlinkPath) String() string {
-	ret := fmt.Sprintf("Destination: %s, ", s.Dst.String())
-	ret += fmt.Sprintf("Source: %s, ", s.Src.String())
+	ret := fmt.Sprintf("Source: %s, ", s.Src.String())
 	ret += fmt.Sprintf("NextHop: %s, ", s.NextHop.String())
 	ret += fmt.Sprintf("Priority: %d, ", s.Priority)
 	ret += fmt.Sprintf("Type: %d, ", s.Type)
@@ -165,8 +182,7 @@ func (s *NetlinkPath) String() string {
 
 // Print all known information about a route in human readable form
 func (s *NetlinkPath) Print() string {
-	ret := fmt.Sprintf("\t\tDestination: %s\n", s.Dst.String())
-	ret += fmt.Sprintf("\t\tSource: %s\n", s.Src.String())
+	ret := fmt.Sprintf("\t\tSource: %s\n", s.Src.String())
 	ret += fmt.Sprintf("\t\tNextHop: %s\n", s.NextHop.String())
 	ret += fmt.Sprintf("\t\tPriority: %d\n", s.Priority)
 	ret += fmt.Sprintf("\t\tType: %d\n", s.Type)
