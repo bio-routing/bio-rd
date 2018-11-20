@@ -76,7 +76,6 @@ func (nr *NetlinkReader) propagateChanges(routes []netlink.Route) {
 func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 	// If there were no routes yet, just skip this function. There's nothing to add
 	if len(routes) == 0 {
-		nr.mu.RUnlock()
 		return
 	}
 
