@@ -3,47 +3,62 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:17c0d23079a40c85a4e0dc5a36f01ec11c12e3ad39c2b34563ff56931ba1ae41"
   name = "github.com/FMNSSun/libhash"
   packages = ["fletcher"]
+  pruneopts = "UT"
   revision = "dabbc4426b6df75633890dd58ac2129fb85b8f34"
 
 [[projects]]
   branch = "2.x"
+  digest = "1:5fb9305900d6f7c94d6f663880185504bb0ac9b149d02f73966a31ed04000ebb"
   name = "github.com/Masterminds/semver"
   packages = ["."]
+  pruneopts = "UT"
   revision = "3c92f33da7a84de8314f3ff82e5f919b89fd1492"
 
 [[projects]]
+  digest = "1:e8e97d3c5df6c44e650dbf87090ad7cba352415574067214c2f0ff8964c43869"
   name = "github.com/Masterminds/vcs"
   packages = ["."]
+  pruneopts = "UT"
   revision = "6f1c6d150500e452704e9863f68c2559f58616bf"
   version = "v1.12.0"
 
 [[projects]]
+  digest = "1:c47f4964978e211c6e566596ec6246c329912ea92e9bb99c00798bb4564c5b09"
   name = "github.com/armon/go-radix"
   packages = ["."]
+  pruneopts = "UT"
   revision = "1a2de0c21c94309923825da3df33a4381872c795"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:0f98f59e9a2f4070d66f0c9c39561f68fcd1dc837b22a852d28d0003aebd1b1e"
   name = "github.com/boltdb/bolt"
   packages = ["."]
+  pruneopts = "UT"
   revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
   version = "v1.3.1"
 
 [[projects]]
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = "UT"
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "github.com/go-yaml/yaml"
   packages = ["."]
+  pruneopts = "UT"
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
 
 [[projects]]
+  digest = "1:e19a81c66ef4684ca4b76f38bcf3acff1a06812d04c2e2e7455c33df0a277c42"
   name = "github.com/golang/dep"
   packages = [
     ".",
@@ -54,132 +69,181 @@
     "gps/verify",
     "internal/fs",
   ]
+  pruneopts = "T"
   revision = "224a564abe296670b692fe08bb63a3e4c4ad7978"
   version = "v0.5.0"
 
 [[projects]]
+  digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
+  pruneopts = "UT"
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:dcb3e2ad17349c0cc89ffc16692d05195e6a67b4924fe81760fba9a307a7271d"
   name = "github.com/jmank88/nuts"
   packages = ["."]
+  pruneopts = "UT"
   revision = "8b28145dffc87104e66d074f62ea8080edfad7c8"
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
+  pruneopts = "UT"
   revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
   version = "v1.0.1"
 
 [[projects]]
   branch = "master"
+  digest = "1:6491080aa184f88c2bb8e2f6056e5e0e9a578b2d8666efbd6e97bc37a0c41e72"
   name = "github.com/nightlyone/lockfile"
   packages = ["."]
+  pruneopts = "UT"
   revision = "0ad87eef1443f64d3d8c50da647e2b1552851124"
 
 [[projects]]
+  digest = "1:95741de3af260a92cc5c7f3f3061e85273f5a81b5db20d4bd68da74bd521675e"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
+  pruneopts = "UT"
   revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:3c8d1ba5c4bcad7dfe661936c21e1edc2113afd1889a39320c13419b1fcaa15a"
   name = "github.com/q3k/goveralls"
   packages = ["."]
+  pruneopts = "UT"
   revision = "789b29cb81d4de953738cec0fbaefa8af2ff4ea2"
   version = "v0.1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:3b2f0fcb35e10e0f7845f2182e4dd22f5a6fe3db5d1044ca815d646992a2444f"
   name = "github.com/sdboyer/constext"
   packages = ["."]
+  pruneopts = "UT"
   revision = "836a144573533ea4da4e6929c235fd348aed1c80"
 
 [[projects]]
+  digest = "1:dc2d85c13ac22c22a1f3170a41a8e1b897fa05134aaf533f16df44f66a25b4a1"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
+  pruneopts = "UT"
   revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
+  pruneopts = "UT"
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
 
 [[projects]]
   branch = "master"
+  digest = "1:c915574f378668d6c35c631410d9c3c23219d1e04b2fc53a26c976b5cc745b00"
   name = "github.com/taktv6/tflow2"
   packages = ["convert"]
+  pruneopts = "UT"
   revision = "c05b18bd57ea723faad165126ec38ae661bc1df6"
 
 [[projects]]
+  digest = "1:2d9d06cb9d46dacfdbb45f8575b39fc0126d083841a29d4fbf8d97708f43107e"
   name = "github.com/vishvananda/netlink"
   packages = [
     ".",
     "nl",
   ]
+  pruneopts = "UT"
   revision = "a2ad57a690f3caf3015351d2d6e1c0b95c349752"
   version = "v1.0.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:e4e30678fb2560b5c62f6308c5023d6c294fc7713216fa379411cc74465e866f"
   name = "github.com/vishvananda/netns"
   packages = ["."]
+  pruneopts = "UT"
   revision = "13995c7128ccc8e51e9a6bd2b551020a27180abd"
 
 [[projects]]
   branch = "master"
+  digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
+  pruneopts = "UT"
   revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
 
 [[projects]]
   branch = "master"
+  digest = "1:76ee51c3f468493aff39dbacc401e8831fbb765104cbf613b89bef01cf4bad70"
   name = "golang.org/x/net"
   packages = ["context"]
+  pruneopts = "UT"
   revision = "146acd28ed5894421fb5aac80ca93bc1b1f46f87"
 
 [[projects]]
   branch = "master"
+  digest = "1:39ebcc2b11457b703ae9ee2e8cca0f68df21969c6102cb3b705f76cca0ea0239"
   name = "golang.org/x/sync"
   packages = ["errgroup"]
+  pruneopts = "UT"
   revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
 
 [[projects]]
   branch = "master"
+  digest = "1:850d28ab022512e2cd3cf511a77f363c29e22689b4031f2050871f5de47ae4a0"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
+  pruneopts = "UT"
   revision = "4497e2df6f9e69048a54498c7affbbec3294ad47"
 
 [[projects]]
   branch = "master"
+  digest = "1:1823635465fafd46fb48e79ed2a8fd05464543d625d008d9142a144f785b7a88"
   name = "golang.org/x/tools"
   packages = ["cover"]
+  pruneopts = "UT"
   revision = "f60d9635b16a5a57b06eaa119614ba4df421966a"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b06675ba943a08e455d38c9e661639629eca92a2747f433e91e8c772edb644c1"
+  input-imports = [
+    "github.com/FMNSSun/libhash/fletcher",
+    "github.com/go-yaml/yaml",
+    "github.com/golang/dep",
+    "github.com/golang/protobuf/proto",
+    "github.com/q3k/goveralls",
+    "github.com/sirupsen/logrus",
+    "github.com/stretchr/testify/assert",
+    "github.com/taktv6/tflow2/convert",
+    "github.com/vishvananda/netlink",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
