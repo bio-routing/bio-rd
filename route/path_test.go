@@ -360,16 +360,17 @@ func TestNewNlPath(t *testing.T) {
 	}
 }
 
-func TestNewNlPathFromNetlinkRoute(t *testing.T) {
+func TestNewPathsFromNetlinkRoute(t *testing.T) {
 	tests := []struct {
-		name        string
-		source      *netlink.Route
-		expected    *NetlinkPath
-		expectError bool
+		name          string
+		source        netlink.Route
+		expectedPfx   bnet.Prefix
+		expectedPaths []*Path
+		expectError   bool
 	}{
 		{
 			name: "Simple",
-			source: &netlink.Route{
+			source: netlink.Route{
 				Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
 				Src:      bnet.IPv4(456).Bytes(),
 				Gw:       bnet.IPv4(789).Bytes(),
@@ -378,33 +379,81 @@ func TestNewNlPathFromNetlinkRoute(t *testing.T) {
 				Table:    254,
 				Type:     1,
 			},
-			expected: &NetlinkPath{
-				Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-				Src:      bnet.IPv4(456),
-				NextHop:  bnet.IPv4(789),
-				Protocol: ProtoKernel,
-				Priority: 1,
-				Table:    254,
-				Type:     1,
-				Kernel:   true,
+			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+			expectedPaths: []*Path{
+				{
+					Type: NetlinkPathType,
+					NetlinkPath: &NetlinkPath{
+						Src:      bnet.IPv4(456),
+						NextHop:  bnet.IPv4(789),
+						Protocol: ProtoKernel,
+						Priority: 1,
+						Table:    254,
+						Type:     1,
+						Kernel:   true,
+					},
+				},
 			},
 			expectError: false,
 		},
 		{
-			name: "No source, no destination",
-			source: &netlink.Route{
-				Gw:       bnet.IPv4(789).Bytes(),
+			name: "Multiple nexthop",
+			source: netlink.Route{
+				Dst: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
+				Src: bnet.IPv4(456).Bytes(),
+				MultiPath: []*netlink.NexthopInfo{
+					{
+						LinkIndex: 1,
+						Hops:      1,
+						Gw:        bnet.IPv4(123).Bytes(),
+						Flags:     0,
+						NewDst:    nil,
+						Encap:     nil,
+					}, {
+						LinkIndex: 2,
+						Hops:      1,
+						Gw:        bnet.IPv4(345).Bytes(),
+						Flags:     0,
+						NewDst:    nil,
+						Encap:     nil,
+					},
+				},
 				Protocol: ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
 			},
-			expected:    &NetlinkPath{},
-			expectError: true,
+			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+			expectedPaths: []*Path{
+				{
+					Type: NetlinkPathType,
+					NetlinkPath: &NetlinkPath{
+						Src:      bnet.IPv4(456),
+						NextHop:  bnet.IPv4(123),
+						Protocol: ProtoKernel,
+						Priority: 1,
+						Table:    254,
+						Type:     1,
+						Kernel:   true,
+					},
+				}, {
+					Type: NetlinkPathType,
+					NetlinkPath: &NetlinkPath{
+						Src:      bnet.IPv4(456),
+						NextHop:  bnet.IPv4(345),
+						Protocol: ProtoKernel,
+						Priority: 1,
+						Table:    254,
+						Type:     1,
+						Kernel:   true,
+					},
+				},
+			},
+			expectError: false,
 		},
 		{
 			name: "No source but destination",
-			source: &netlink.Route{
+			source: netlink.Route{
 				Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
 				Gw:       bnet.IPv4(789).Bytes(),
 				Protocol: ProtoKernel,
@@ -412,21 +461,26 @@ func TestNewNlPathFromNetlinkRoute(t *testing.T) {
 				Table:    254,
 				Type:     1,
 			},
-			expected: &NetlinkPath{
-				Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-				Src:      bnet.IPv4FromOctets(0, 0, 0, 0),
-				NextHop:  bnet.IPv4(789),
-				Protocol: ProtoKernel,
-				Priority: 1,
-				Table:    254,
-				Type:     1,
-				Kernel:   true,
+			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+			expectedPaths: []*Path{
+				{
+					Type: NetlinkPathType,
+					NetlinkPath: &NetlinkPath{
+						Src:      bnet.IPv4(0),
+						NextHop:  bnet.IPv4(789),
+						Protocol: ProtoKernel,
+						Priority: 1,
+						Table:    254,
+						Type:     1,
+						Kernel:   true,
+					},
+				},
 			},
 			expectError: false,
 		},
 		{
 			name: "Source but no destination",
-			source: &netlink.Route{
+			source: netlink.Route{
 				Src:      bnet.IPv4(456).Bytes(),
 				Gw:       bnet.IPv4(789).Bytes(),
 				Protocol: ProtoKernel,
@@ -434,71 +488,382 @@ func TestNewNlPathFromNetlinkRoute(t *testing.T) {
 				Table:    254,
 				Type:     1,
 			},
-			expected: &NetlinkPath{
-				Dst:      bnet.NewPfx(bnet.IPv4FromOctets(0, 0, 0, 0), 0),
-				Src:      bnet.IPv4(456),
-				NextHop:  bnet.IPv4(789),
-				Protocol: ProtoKernel,
-				Priority: 1,
-				Table:    254,
-				Type:     1,
-				Kernel:   true,
+			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(0, 0, 0, 0), 0),
+			expectedPaths: []*Path{
+				{
+					Type: NetlinkPathType,
+					NetlinkPath: &NetlinkPath{
+						Src:      bnet.IPv4(456),
+						NextHop:  bnet.IPv4(789),
+						Protocol: ProtoKernel,
+						Priority: 1,
+						Table:    254,
+						Type:     1,
+						Kernel:   true,
+					},
+				},
 			},
 			expectError: false,
 		},
 		{
-			name: "No source but destination IPv6",
-			source: &netlink.Route{
-				Dst:      bnet.NewPfx(bnet.IPv6(2001, 0), 48).GetIPNet(),
-				Gw:       bnet.IPv6(2001, 2).Bytes(),
+			name: "No source but no destination",
+			source: netlink.Route{
+				Gw:       bnet.IPv4(789).Bytes(),
 				Protocol: ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
 			},
-			expected: &NetlinkPath{
-				Dst:      bnet.NewPfx(bnet.IPv6(2001, 0), 48),
-				Src:      bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0),
-				NextHop:  bnet.IPv6(2001, 2),
+			expectedPfx:   bnet.Prefix{},
+			expectedPaths: []*Path{},
+			expectError:   true,
+		},
+		{
+			name: "No source but destination IPv6",
+			source: netlink.Route{
+				Dst:      bnet.NewPfx(bnet.IPv6(2001, 0), 48).GetIPNet(),
+				Gw:       bnet.IPv6(2001, 123).Bytes(),
 				Protocol: ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
-				Kernel:   true,
+			},
+			expectedPfx: bnet.NewPfx(bnet.IPv6(2001, 0), 48),
+			expectedPaths: []*Path{
+				{
+					Type: NetlinkPathType,
+					NetlinkPath: &NetlinkPath{
+						Src:      bnet.IPv6(0, 0),
+						NextHop:  bnet.IPv6(2001, 123),
+						Protocol: ProtoKernel,
+						Priority: 1,
+						Table:    254,
+						Type:     1,
+						Kernel:   true,
+					},
+				},
 			},
 			expectError: false,
 		},
 		{
 			name: "Source but no destination IPv6",
-			source: &netlink.Route{
-				Src:      bnet.IPv6(2001, 0).Bytes(),
-				Gw:       bnet.IPv6(2001, 2).Bytes(),
+			source: netlink.Route{
+				Src:      bnet.IPv6(2001, 456).Bytes(),
+				Gw:       bnet.IPv6(2001, 789).Bytes(),
 				Protocol: ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
 			},
-			expected: &NetlinkPath{
-				Dst:      bnet.NewPfx(bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0), 0),
-				Src:      bnet.IPv6(2001, 0),
-				NextHop:  bnet.IPv6(2001, 2),
-				Protocol: ProtoKernel,
-				Priority: 1,
-				Table:    254,
-				Type:     1,
-				Kernel:   true,
+			expectedPfx: bnet.NewPfx(bnet.IPv6(0, 0), 0),
+			expectedPaths: []*Path{
+				{
+					Type: NetlinkPathType,
+					NetlinkPath: &NetlinkPath{
+						Src:      bnet.IPv6(2001, 456),
+						NextHop:  bnet.IPv6(2001, 789),
+						Protocol: ProtoKernel,
+						Priority: 1,
+						Table:    254,
+						Type:     1,
+						Kernel:   true,
+					},
+				},
 			},
 			expectError: false,
+		},
+		{
+			name: "no source no destination",
+			source: netlink.Route{
+				Gw:       bnet.IPv4(123).Bytes(),
+				Protocol: ProtoKernel,
+				Priority: 1,
+				Table:    254,
+				Type:     1,
+			},
+			expectedPfx:   bnet.NewPfx(bnet.IPv4(0), 0),
+			expectedPaths: []*Path{{}},
+			expectError:   true,
 		},
 	}
 
 	for _, test := range tests {
-		converted, err := NewNlPathFromRoute(test.source, true)
+		pfx, paths, err := NewPathsFromNlRoute(test.source, true)
 		if test.expectError {
 			assert.Error(t, err)
 		} else {
 			assert.NoError(t, err)
-			assert.Equalf(t, test.expected, converted, test.name)
+			assert.Equalf(t, test.expectedPaths, paths, test.name)
+			assert.Equalf(t, test.expectedPfx, pfx, test.name)
 		}
 	}
+}
+
+func TestECMP(t *testing.T) {
+	tests := []struct {
+		name  string
+		left  *Path
+		right *Path
+		ecmp  bool
+	}{
+		{
+			name: "BGP Path ecmp",
+			left: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					LocalPref: 100,
+					ASPathLen: 10,
+					MED:       1,
+					Origin:    123,
+				},
+			},
+			right: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					LocalPref: 100,
+					ASPathLen: 10,
+					MED:       1,
+					Origin:    123,
+				},
+			},
+			ecmp: true,
+		}, {
+			name: "BGP Path not ecmp",
+			left: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					LocalPref: 100,
+					ASPathLen: 10,
+					MED:       1,
+					Origin:    123,
+				},
+			},
+			right: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					LocalPref: 100,
+					ASPathLen: 5,
+					MED:       1,
+					Origin:    123,
+				},
+			},
+			ecmp: false,
+		}, {
+			name: "Netlink Path ecmp",
+			left: &Path{
+				Type: NetlinkPathType,
+				NetlinkPath: &NetlinkPath{
+					Src:      bnet.IPv4(123),
+					Priority: 1,
+					Protocol: 1,
+					Type:     1,
+					Table:    1,
+				},
+			},
+			right: &Path{
+				Type: NetlinkPathType,
+				NetlinkPath: &NetlinkPath{
+					Src:      bnet.IPv4(123),
+					Priority: 1,
+					Protocol: 1,
+					Type:     1,
+					Table:    1,
+				},
+			},
+			ecmp: true,
+		}, {
+			name: "Netlink Path not ecmp",
+			left: &Path{
+				Type: NetlinkPathType,
+				NetlinkPath: &NetlinkPath{
+					Src:      bnet.IPv4(123),
+					Priority: 1,
+					Protocol: 1,
+					Type:     1,
+					Table:    1,
+				},
+			},
+			right: &Path{
+				Type: NetlinkPathType,
+				NetlinkPath: &NetlinkPath{
+					Src:      bnet.IPv4(123),
+					Priority: 2,
+					Protocol: 1,
+					Type:     1,
+					Table:    1,
+				},
+			},
+			ecmp: false,
+		}, {
+			name: "static Path ecmp",
+			left: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: bnet.IPv4(123),
+				},
+			},
+			right: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: bnet.IPv4(123),
+				},
+			},
+			ecmp: true,
+		}, {
+			name: "static Path not ecmp",
+			left: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: bnet.IPv4(123),
+				},
+			},
+			right: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: bnet.IPv4(345),
+				},
+			},
+			// ECMP is always true for staticPath
+			ecmp: true,
+		},
+	}
+
+	for _, test := range tests {
+		ecmp := test.left.ECMP(test.right)
+		assert.Equal(t, test.ecmp, ecmp, test.name)
+	}
+}
+
+func TestNetlinkPathSelect(t *testing.T) {
+	tests := []struct {
+		name     string
+		left     *NetlinkPath
+		right    *NetlinkPath
+		expected int8
+	}{
+		{
+			name: "equal",
+			left: &NetlinkPath{
+				NextHop:  bnet.IPv4(123),
+				Src:      bnet.IPv4(234),
+				Priority: 1,
+				Protocol: 1,
+				Table:    1,
+			},
+			right: &NetlinkPath{
+				NextHop:  bnet.IPv4(123),
+				Src:      bnet.IPv4(234),
+				Priority: 1,
+				Protocol: 1,
+				Table:    1,
+			},
+			expected: 0,
+		},
+		{
+			name: "nextHop smaller",
+			left: &NetlinkPath{
+				NextHop: bnet.IPv4(1),
+			},
+			right: &NetlinkPath{
+				NextHop: bnet.IPv4(2),
+			},
+			expected: -1,
+		},
+		{
+			name: "nextHop bigger",
+			left: &NetlinkPath{
+				NextHop: bnet.IPv4(2),
+			},
+			right: &NetlinkPath{
+				NextHop: bnet.IPv4(1),
+			},
+			expected: 1,
+		},
+		{
+			name: "src smaller",
+			left: &NetlinkPath{
+				Src: bnet.IPv4(1),
+			},
+			right: &NetlinkPath{
+				Src: bnet.IPv4(2),
+			},
+			expected: -1,
+		},
+		{
+			name: "src bigger",
+			left: &NetlinkPath{
+				Src: bnet.IPv4(2),
+			},
+			right: &NetlinkPath{
+				Src: bnet.IPv4(1),
+			},
+			expected: 1,
+		},
+		{
+			name: "priority smaller",
+			left: &NetlinkPath{
+				Priority: 1,
+			},
+			right: &NetlinkPath{
+				Priority: 2,
+			},
+			expected: -1,
+		},
+		{
+			name: "priority bigger",
+			left: &NetlinkPath{
+				Priority: 2,
+			},
+			right: &NetlinkPath{
+				Priority: 1,
+			},
+			expected: 1,
+		},
+		{
+			name: "protocol smaller",
+			left: &NetlinkPath{
+				Protocol: 1,
+			},
+			right: &NetlinkPath{
+				Protocol: 2,
+			},
+			expected: -1,
+		},
+		{
+			name: "protocol bigger",
+			left: &NetlinkPath{
+				Protocol: 2,
+			},
+			right: &NetlinkPath{
+				Protocol: 1,
+			},
+			expected: 1,
+		},
+		{
+			name: "table smaller",
+			left: &NetlinkPath{
+				Table: 1,
+			},
+			right: &NetlinkPath{
+				Table: 2,
+			},
+			expected: -1,
+		},
+		{
+			name: "table bigger",
+			left: &NetlinkPath{
+				Table: 2,
+			},
+			right: &NetlinkPath{
+				Table: 1,
+			},
+			expected: 1,
+		},
+	}
+
+	for _, test := range tests {
+		result := test.left.Select(test.right)
+		assert.Equal(t, test.expected, result, test.name)
+	}
+
 }

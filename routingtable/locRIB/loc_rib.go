@@ -175,6 +175,23 @@ func (a *LocRIB) ContainsPfxPath(pfx net.Prefix, p *route.Path) bool {
 	return false
 }
 
+func (a *LocRIB) String() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	ret := ""
+	routes := a.rt.Dump()
+	for idx, r := range routes {
+		if idx < len(routes)-1 {
+			ret += fmt.Sprintf("%s, ", r.Prefix().String())
+		} else {
+			ret += fmt.Sprintf("%s", r.Prefix().String())
+		}
+	}
+
+	return ret
+}
+
 func (a *LocRIB) Print() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
