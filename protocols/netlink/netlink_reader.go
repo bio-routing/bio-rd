@@ -84,7 +84,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 	advertise := route.NetlinkRouteDiff(routes, nr.routes)
 	nr.mu.RUnlock()
 
-	for _, client := range nr.ClientManager.Clients() {
+	for _, client := range nr.clientManager.Clients() {
 		for _, r := range advertise {
 			if isBioRoute(r) {
 				log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
@@ -138,7 +138,7 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 	withdraw := route.NetlinkRouteDiff(nr.routes, routes)
 	nr.mu.RUnlock()
 
-	for _, client := range nr.ClientManager.Clients() {
+	for _, client := range nr.clientManager.Clients() {
 		for _, r := range withdraw {
 			if isBioRoute(r) {
 				log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
