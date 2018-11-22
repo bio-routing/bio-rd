@@ -3,17 +3,16 @@ package adjRIBIn
 import (
 	"sync"
 
-	"github.com/bio-routing/bio-rd/routingtable/filter"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	log "github.com/sirupsen/logrus"
 )
 
 // AdjRIBIn represents an Adjacency RIB In as described in RFC4271
 type AdjRIBIn struct {
-	routingtable.ClientManager
+	clientManager    *routingtable.ClientManager
 	rt               *routingtable.RoutingTable
 	mu               sync.RWMutex
 	exportFilter     *filter.Filter
@@ -33,7 +32,7 @@ func New(exportFilter *filter.Filter, contributingASNs *routingtable.Contributin
 		clusterID:        clusterID,
 		addPathRX:        addPathRX,
 	}
-	a.ClientManager = routingtable.NewClientManager(a)
+	a.clientManager = routingtable.NewClientManager(a)
 	return a
 }
 
@@ -114,7 +113,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 		return nil
 	}
 
-	for _, client := range a.ClientManager.Clients() {
+	for _, client := range a.clientManager.Clients() {
 		client.AddPath(pfx, p)
 	}
 	return nil
@@ -170,7 +169,7 @@ func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
 		if reject {
 			continue
 		}
-		for _, client := range a.ClientManager.Clients() {
+		for _, client := range a.clientManager.Clients() {
 			client.RemovePath(pfx, path)
 		}
 	}
@@ -178,4 +177,22 @@ func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
 
 func (a *AdjRIBIn) RT() *routingtable.RoutingTable {
 	return a.rt
+}
+
+// Register registers a client for updates
+func (a *AdjRIBIn) Register(client routingtable.RouteTableClient) {
+	a.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
+}
+
+// Unregister unregisters a client
+func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
+	if !a.clientManager.Unregister(client) {
+		return
+	}
+
+	for _, r := range a.rt.Dump() {
+		for _, p := range r.Paths() {
+			client.RemovePath(r.Prefix(), p)
+		}
+	}
 }

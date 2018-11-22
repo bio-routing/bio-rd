@@ -13,7 +13,7 @@ import (
 
 // LocRIB represents a routing information base
 type LocRIB struct {
-	routingtable.ClientManager
+	clientManager    *routingtable.ClientManager
 	rt               *routingtable.RoutingTable
 	mu               sync.RWMutex
 	contributingASNs *routingtable.ContributingASNs
@@ -25,7 +25,7 @@ func New() *LocRIB {
 		rt:               routingtable.NewRoutingTable(),
 		contributingASNs: routingtable.NewContributingASNs(),
 	}
-	a.ClientManager = routingtable.NewClientManager(a)
+	a.clientManager = routingtable.NewClientManager(a)
 	return a
 }
 
@@ -122,8 +122,8 @@ func (a *LocRIB) propagateChanges(oldRoute *route.Route, newRoute *route.Route) 
 }
 
 func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route) {
-	for _, client := range a.ClientManager.Clients() {
-		opts := a.ClientManager.GetOptions(client)
+	for _, client := range a.clientManager.Clients() {
+		opts := a.clientManager.GetOptions(client)
 		oldMaxPaths := opts.GetMaxPaths(oldRoute.ECMPPathCount())
 		newMaxPaths := opts.GetMaxPaths(newRoute.ECMPPathCount())
 
@@ -139,8 +139,8 @@ func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route)
 }
 
 func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.Route) {
-	for _, client := range a.ClientManager.Clients() {
-		opts := a.ClientManager.GetOptions(client)
+	for _, client := range a.clientManager.Clients() {
+		opts := a.clientManager.GetOptions(client)
 		oldMaxPaths := opts.GetMaxPaths(oldRoute.ECMPPathCount())
 		newMaxPaths := opts.GetMaxPaths(newRoute.ECMPPathCount())
 
@@ -203,4 +203,19 @@ func (a *LocRIB) Print() string {
 	}
 
 	return ret
+}
+
+// Register registers a client for updates
+func (a *LocRIB) Register(client routingtable.RouteTableClient) {
+	a.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
+}
+
+// RegisterWithOptions registers a client with options for updates
+func (a *LocRIB) RegisterWithOptions(client routingtable.RouteTableClient, opt routingtable.ClientOptions) {
+	a.clientManager.RegisterWithOptions(client, opt)
+}
+
+// Unregister unregisters a client
+func (a *LocRIB) Unregister(client routingtable.RouteTableClient) {
+	a.clientManager.Unregister(client)
 }

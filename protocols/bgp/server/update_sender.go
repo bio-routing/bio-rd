@@ -16,7 +16,7 @@ import (
 
 // UpdateSender converts table changes into BGP update messages
 type UpdateSender struct {
-	routingtable.ClientManager
+	clientManager *routingtable.ClientManager
 	fsm           *FSM
 	addressFamily *fsmAddressFamily
 	options       *packet.EncodeOptions
@@ -35,7 +35,7 @@ type pathPfxs struct {
 func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
 	f := fsm.addressFamily(afi, safi)
 
-	return &UpdateSender{
+	u := &UpdateSender{
 		fsm:           fsm,
 		addressFamily: f,
 		iBGP:          fsm.peer.localASN == fsm.peer.peerASN,
@@ -47,6 +47,9 @@ func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
 			UseAddPath:  !f.addPathTX.BestOnly,
 		},
 	}
+	u.clientManager = routingtable.NewClientManager(u)
+
+	return u
 }
 
 // Start starts the update sender
@@ -334,4 +337,19 @@ func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) err
 func (u *UpdateSender) RouteCount() int64 {
 	log.Warningf("BGP Update Sender: RouteCount not implemented")
 	return 0
+}
+
+// Register registers a client for updates
+func (a *UpdateSender) Register(client routingtable.RouteTableClient) {
+	a.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
+}
+
+// RegisterWithOptions registers a client with options for updates
+func (a *UpdateSender) RegisterWithOptions(client routingtable.RouteTableClient, opt routingtable.ClientOptions) {
+	a.clientManager.RegisterWithOptions(client, opt)
+}
+
+// Unregister unregisters a client
+func (a *UpdateSender) Unregister(client routingtable.RouteTableClient) {
+	a.clientManager.Unregister(client)
 }

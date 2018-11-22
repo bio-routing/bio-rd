@@ -32,8 +32,8 @@ type ClientManager struct {
 }
 
 // NewClientManager creates and initializes a new client manager
-func NewClientManager(master RouteTableClient) ClientManager {
-	return ClientManager{
+func NewClientManager(master RouteTableClient) *ClientManager {
+	return &ClientManager{
 		clients: make(map[RouteTableClient]ClientOptions, 0),
 		master:  master,
 	}
@@ -47,11 +47,6 @@ func (c *ClientManager) GetOptions(client RouteTableClient) ClientOptions {
 	return c.clients[client]
 }
 
-// Register registers a client for updates
-func (c *ClientManager) Register(client RouteTableClient) {
-	c.RegisterWithOptions(client, ClientOptions{BestOnly: true})
-}
-
 // RegisterWithOptions registers a client with options for updates
 func (c *ClientManager) RegisterWithOptions(client RouteTableClient, opt ClientOptions) {
 	c.mu.Lock()
@@ -62,13 +57,14 @@ func (c *ClientManager) RegisterWithOptions(client RouteTableClient, opt ClientO
 }
 
 // Unregister unregisters a client
-func (c *ClientManager) Unregister(client RouteTableClient) {
+func (c *ClientManager) Unregister(client RouteTableClient) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if _, ok := c.clients[client]; !ok {
-		return
+		return false
 	}
 	delete(c.clients, client)
+	return true
 }
 
 // Clients returns a list of registered clients

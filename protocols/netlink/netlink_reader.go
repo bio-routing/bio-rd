@@ -22,9 +22,9 @@ const (
 
 // NetlinkReader reads routes from the Linux Kernel and propagates them to the locRIB
 type NetlinkReader struct {
-	options *config.Netlink
-	routingtable.ClientManager
-	filter *filter.Filter
+	clientManager *routingtable.ClientManager
+	options       *config.Netlink
+	filter        *filter.Filter
 
 	mu     sync.RWMutex
 	routes []netlink.Route
@@ -37,7 +37,7 @@ func NewNetlinkReader(options *config.Netlink) *NetlinkReader {
 		filter:  options.ImportFilter,
 	}
 
-	nr.ClientManager = routingtable.NewClientManager(nr)
+	nr.clientManager = routingtable.NewClientManager(nr)
 
 	return nr
 }
@@ -84,7 +84,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 	advertise := route.NetlinkRouteDiff(routes, nr.routes)
 	nr.mu.RUnlock()
 
-	for _, client := range nr.ClientManager.Clients() {
+	for _, client := range nr.clientManager.Clients() {
 		for _, r := range advertise {
 			if isBioRoute(r) {
 				log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
@@ -138,7 +138,7 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 	withdraw := route.NetlinkRouteDiff(nr.routes, routes)
 	nr.mu.RUnlock()
 
-	for _, client := range nr.ClientManager.Clients() {
+	for _, client := range nr.clientManager.Clients() {
 		for _, r := range withdraw {
 			if isBioRoute(r) {
 				log.WithFields(routeLogFields(r)).Debug("Skipping bio route")
@@ -223,10 +223,6 @@ func (nr *NetlinkReader) UpdateNewClient(routingtable.RouteTableClient) error {
 
 // Register is currently not supported
 func (nr *NetlinkReader) Register(routingtable.RouteTableClient) {
-}
-
-// RegisterWithOptions is Not supported
-func (nr *NetlinkReader) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
 }
 
 // Unregister is Not supported

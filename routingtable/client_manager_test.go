@@ -3,10 +3,9 @@ package routingtable
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/stretchr/testify/assert"
 )
 
 type MockClient struct {
@@ -23,10 +22,6 @@ func (m MockClient) UpdateNewClient(RouteTableClient) error {
 	return nil
 }
 func (m MockClient) Register(RouteTableClient) {
-	return
-}
-
-func (m MockClient) RegisterWithOptions(RouteTableClient, ClientOptions) {
 	return
 }
 
@@ -73,7 +68,7 @@ func TestClients(t *testing.T) {
 	for _, test := range tests {
 		cm := NewClientManager(MockClient{})
 		for _, client := range test.clients {
-			cm.Register(client)
+			cm.RegisterWithOptions(client, ClientOptions{})
 		}
 		ret := cm.Clients()
 

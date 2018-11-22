@@ -3,12 +3,11 @@ package adjRIBIn
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddPath(t *testing.T) {
@@ -146,14 +145,17 @@ func TestAddPath(t *testing.T) {
 	for _, test := range tests {
 		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), routerID, clusterID, test.addPath)
 		mc := routingtable.NewRTMockClient()
-		adjRIBIn.ClientManager.Register(mc)
+		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
 		}
 
 		if test.removePath != nil {
-			removePathParams := mc.GetRemovePathParams()
+			r := mc.Removed()
+			assert.Equalf(t, 1, len(r), "Test %q failed: Call to RemovePath did not propagate prefix", test.name)
+
+			removePathParams := r[0]
 			if removePathParams.Pfx != test.removePfx {
 				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, removePathParams.Pfx.String(), test.removePfx.String())
 			}
@@ -293,23 +295,64 @@ func TestRemovePath(t *testing.T) {
 		}
 
 		mc := routingtable.NewRTMockClient()
-		adjRIBIn.ClientManager.Register(mc)
+		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{})
 		adjRIBIn.RemovePath(test.removePfx, test.removePath)
 
 		if test.wantPropagation {
-			removePathParams := mc.GetRemovePathParams()
+			r := mc.Removed()
+			assert.Equalf(t, 1, len(r), "Test %q failed: Call to RemovePath did not propagate prefix", test.name)
+
+			removePathParams := r[0]
 			if removePathParams.Pfx != test.removePfx {
 				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, removePathParams.Pfx.String(), test.removePfx.String())
 			}
 			assert.Equal(t, test.removePath, removePathParams.Path)
 		} else {
-			removePathParams := mc.GetRemovePathParams()
-			uninitialized := net.Prefix{}
-			if removePathParams.Pfx != uninitialized {
-				t.Errorf("Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
-			}
+			r := mc.Removed()
+			assert.Equalf(t, 0, len(r), "Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
 		}
 
 		assert.Equal(t, test.expected, adjRIBIn.rt.Dump())
 	}
+}
+
+func TestUnregister(t *testing.T) {
+	adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 0, 0, false)
+	mc := routingtable.NewRTMockClient()
+	adjRIBIn.Register(mc)
+
+	pfxs := []net.Prefix{
+		net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 16),
+		net.NewPfx(net.IPv4FromOctets(10, 0, 1, 0), 24),
+	}
+
+	paths := []*route.Path{
+		&route.Path{
+			BGPPath: &route.BGPPath{
+				NextHop: net.IPv4FromOctets(192, 168, 0, 0),
+			},
+		},
+		&route.Path{
+			BGPPath: &route.BGPPath{
+				NextHop: net.IPv4FromOctets(192, 168, 2, 1),
+			},
+		},
+		&route.Path{
+			BGPPath: &route.BGPPath{
+				NextHop: net.IPv4FromOctets(192, 168, 3, 1),
+			},
+		},
+	}
+
+	adjRIBIn.RT().AddPath(pfxs[0], paths[0])
+	adjRIBIn.RT().AddPath(pfxs[0], paths[1])
+	adjRIBIn.RT().AddPath(pfxs[1], paths[2])
+
+	adjRIBIn.Unregister(mc)
+
+	r := mc.Removed()
+	assert.Equalf(t, 3, len(r), "Should have removed 3 paths, but only removed %d", len(r))
+	assert.Equal(t, &routingtable.RemovePathParams{pfxs[0], paths[0]}, r[0], "Withdraw 1")
+	assert.Equal(t, &routingtable.RemovePathParams{pfxs[0], paths[1]}, r[1], "Withdraw 2")
+	assert.Equal(t, &routingtable.RemovePathParams{pfxs[1], paths[2]}, r[2], "Withdraw 3")
 }
