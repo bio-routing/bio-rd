@@ -4,6 +4,8 @@ import (
 	"net"
 	"reflect"
 	"testing"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func TestGetLoopbackIP(t *testing.T) {
@@ -93,12 +95,28 @@ func TestAddrIsGreater(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "10.72.12.0.0 higher than 10.0.0.0",
+			name: "172.12.0.0 higher than 10.0.0.0",
 			args: args{
 				a: net.IPv4(172, 12, 0, 0),
 				b: net.IPv4(10, 0, 0, 0),
 			},
 			want: true,
+		},
+		{
+			name: "::7d2:0:0:0:1c8 higher than ::7d1:0:0:0:1c8",
+			args: args{
+				a: bnet.IPv6(2002, 456).Bytes(),
+				b: bnet.IPv6(2001, 456).Bytes(),
+			},
+			want: true,
+		},
+		{
+			name: "::7d1:0:0:0:1c8 higher than ::7d2:0:0:0:1c8",
+			args: args{
+				a: bnet.IPv6(2001, 456).Bytes(),
+				b: bnet.IPv6(2002, 456).Bytes(),
+			},
+			want: false,
 		},
 	}
 	for _, tt := range tests {
