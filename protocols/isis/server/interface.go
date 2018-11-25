@@ -132,7 +132,7 @@ func (ifa *netIf) startReceiver() {
 				ifa.processIngressPacket(rawPkt, src)
 			}
 		}
-	}(n)
+	}(ifa)
 }
 
 func (ifa *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
@@ -174,7 +174,7 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 		if _, ok := ifa.l2.neighbors[hello.SystemID]; !ok {
 			neighbor := &neighbor{
 				systemID:       hello.SystemID,
-				ifa:            n,
+				ifa:            ifa,
 				holdingTime:    hello.HoldingTimer,
 				localCircuitID: hello.LocalCircuitID,
 			}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,12 +18,12 @@ const (
 
 //ISISServer represents an ISIS speaker
 type ISISServer struct {
-	config       config.ISISConfig
+	config         config.ISISConfig
 	sequenceNumber uint32
-	interfaces   map[string]*netIf
-	interfacesMu sync.RWMutex
-	lsdb         *lsdb
-	stop         chan struct{}
+	interfaces     map[string]*netIf
+	interfacesMu   sync.RWMutex
+	lsdb           *lsdb
+	stop           chan struct{}
 }
 
 type isisNeighbor struct {
@@ -33,10 +34,10 @@ type isisNeighbor struct {
 // NewISISServer creates and initializes a new ISIS speaker
 func NewISISServer(cfg config.ISISConfig) *ISISServer {
 	server := &ISISServer{
-		config:     cfg,
+		config:         cfg,
 		sequenceNumber: 1,
-		interfaces: make(map[string]*netIf),
-		stop:       make(chan struct{}),
+		interfaces:     make(map[string]*netIf),
+		stop:           make(chan struct{}),
 	}
 
 	server.lsdb = newLSDB(server)
@@ -46,7 +47,7 @@ func NewISISServer(cfg config.ISISConfig) *ISISServer {
 // Start starts an ISIS speaker
 func (isis *ISISServer) Start() error {
 	go func() {
-		t := time.NewTicket(time.Second)
+		t := time.NewTicker(time.Second)
 		for {
 			select {
 			case <-isis.stop:
@@ -68,7 +69,7 @@ func (isis *ISISServer) Start() error {
 }
 
 // AddInterface adds a network interface to the ISIS server
-func (isis *ISISServer) AddInterface() error {
+func (isis *ISISServer) AddInterface(ifa config.ISISInterfaceConfig) error {
 	isis.interfacesMu.Lock()
 	defer isis.interfacesMu.Unlock()
 
@@ -78,7 +79,7 @@ func (isis *ISISServer) AddInterface() error {
 
 	interf, err := newNetIf(isis, ifa)
 	if err != nil {
-		return fmt.Errorf("Unable to enable ISIS on %s: %v", ifs.Name, err)
+		return fmt.Errorf("Unable to enable ISIS on %s: %v", ifa.Name, err)
 	}
 
 	isis.interfaces[ifa.Name] = interf
@@ -133,12 +134,12 @@ func (isis *ISISServer) lsp() *packet.LSPDU {
 	lspdu := &packet.LSPDU{
 		RemainingLifetime: 1200,
 		LSPID: packet.LSPID{
-			SystemID: isis.systemID(),
+			SystemID:     isis.systemID(),
 			PseudonodeID: 0,
-			SequenceNumber: isis.sequenceNumber,
-			TypeBlock: 3,
-			TLVs: make(packet.TLV, 0),
-		}
+			/*SequenceNumber: isis.sequenceNumber,
+			TypeBlock:      3,
+			TLVs:           make(packet.TLV, 0),*/
+		},
 	}
 
 	// TODO: TLVs

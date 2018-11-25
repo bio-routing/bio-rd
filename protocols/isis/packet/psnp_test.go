@@ -12,14 +12,14 @@ func TestNewPSNPs(t *testing.T) {
 	tests := []struct {
 		name         string
 		sourceID     types.SystemID
-		lspEntries   []LSPEntry
+		lspEntries   []*LSPEntry
 		maxPDULength int
 		expected     []PSNP
 	}{
 		{
 			name:     "All in one packet",
 			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1000,
 					RemainingLifetime: 2000,
@@ -35,7 +35,7 @@ func TestNewPSNPs(t *testing.T) {
 				{
 					PDULength: 24,
 					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-					LSPEntries: []LSPEntry{
+					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1000,
 							RemainingLifetime: 2000,
@@ -52,7 +52,7 @@ func TestNewPSNPs(t *testing.T) {
 		{
 			name:     "2 packets",
 			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
 					RemainingLifetime: 2001,
@@ -77,7 +77,7 @@ func TestNewPSNPs(t *testing.T) {
 				{
 					PDULength: 24,
 					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-					LSPEntries: []LSPEntry{
+					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1001,
 							RemainingLifetime: 2001,
@@ -92,7 +92,7 @@ func TestNewPSNPs(t *testing.T) {
 				{
 					PDULength: 24,
 					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-					LSPEntries: []LSPEntry{
+					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1000,
 							RemainingLifetime: 2000,
@@ -109,7 +109,7 @@ func TestNewPSNPs(t *testing.T) {
 		{
 			name:     "2 packets with odd length",
 			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
 					RemainingLifetime: 2001,
@@ -134,7 +134,7 @@ func TestNewPSNPs(t *testing.T) {
 				{
 					PDULength: 24,
 					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-					LSPEntries: []LSPEntry{
+					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1001,
 							RemainingLifetime: 2001,
@@ -149,7 +149,7 @@ func TestNewPSNPs(t *testing.T) {
 				{
 					PDULength: 24,
 					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-					LSPEntries: []LSPEntry{
+					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1000,
 							RemainingLifetime: 2000,
@@ -166,7 +166,7 @@ func TestNewPSNPs(t *testing.T) {
 		{
 			name:     "2 LSPEntries, 1 packet",
 			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
 					RemainingLifetime: 2001,
@@ -191,7 +191,7 @@ func TestNewPSNPs(t *testing.T) {
 				{
 					PDULength: 40,
 					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-					LSPEntries: []LSPEntry{
+					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1001,
 							RemainingLifetime: 2001,
@@ -233,7 +233,7 @@ func TestPSNPSerialize(t *testing.T) {
 			psnp: PSNP{
 				PDULength: 100,
 				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-				LSPEntries: []LSPEntry{
+				LSPEntries: []*LSPEntry{
 					{
 						SequenceNumber:    123,
 						RemainingLifetime: 255,
@@ -302,7 +302,7 @@ func TestDecodePSNP(t *testing.T) {
 			expected: &PSNP{
 				PDULength: 24,
 				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-				LSPEntries: []LSPEntry{
+				LSPEntries: []*LSPEntry{
 					{
 						SequenceNumber:    20,
 						RemainingLifetime: 256,
@@ -335,7 +335,7 @@ func TestDecodePSNP(t *testing.T) {
 			expected: &PSNP{
 				PDULength: 40,
 				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
-				LSPEntries: []LSPEntry{
+				LSPEntries: []*LSPEntry{
 					{
 						SequenceNumber:    20,
 						RemainingLifetime: 256,
