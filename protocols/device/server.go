@@ -46,9 +46,11 @@ func (ds *Server) Subscribe(client Client, devName string) {
 
 	for _, d := range ds.devices {
 		if d.Name != devName {
+			fmt.Printf("Skipped> %s", d.Name)
 			continue
 		}
 
+		panic("found")
 		d.clientsMu.Lock()
 		defer d.clientsMu.Unlock()
 

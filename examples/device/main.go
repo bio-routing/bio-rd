@@ -19,4 +19,6 @@ func main() {
 
 	c := &Client{}
 	s.Subscribe(c, "virbr0")
+
+	select {}
 }

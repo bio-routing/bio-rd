@@ -19,7 +19,7 @@ func (ds *Server) monitorDevices() error {
 		select {
 		case <-ds.done:
 			chDone <- struct{}{}
-			return
+			return nil
 		case lu := <-chLU:
 			ds.processLinkUpdate(&lu)
 		}
@@ -35,7 +35,7 @@ func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
 	defer ds.devicesMu.RUnlock()
 
 	for _, d := range ds.devices {
-		if d.Name != lu.Name {
+		if d.Name != lu.Attrs().Name {
 			continue
 		}
 
@@ -48,7 +48,7 @@ func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
 				Name:         attrs.Name,
 				HardwareAddr: attrs.HardwareAddr,
 				Flags:        attrs.Flags,
-				OperState:    attrs.OperState,
+				OperState:    uint8(attrs.OperState),
 			})
 		}
 	}
