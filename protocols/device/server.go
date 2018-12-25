@@ -7,9 +7,9 @@ import (
 
 // Server represents a device server
 type Server struct {
-	devices   []*device
-	devicesMu sync.RWMutex
-	done      chan struct{}
+	clientsByDevice   map[string][]Client
+	clientsByDeviceMu sync.RWMutex
+	done              chan struct{}
 }
 
 // Client represents a client of the device server
@@ -20,7 +20,7 @@ type Client interface {
 // New creates a new device server
 func New() *Server {
 	return &Server{
-		devices: make([]*device, 0),
+		clientsByDevice: make(map[string][]Client),
 	}
 }
 
@@ -41,28 +41,12 @@ func (ds *Server) Stop() {
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
 func (ds *Server) Subscribe(client Client, devName string) {
-	ds.devicesMu.RLock()
-	defer ds.devicesMu.RUnlock()
+	ds.clientsByDeviceMu.RLock()
+	defer ds.clientsByDeviceMu.RUnlock()
 
-	for _, d := range ds.devices {
-		if d.Name != devName {
-			fmt.Printf("Skipped> %s", d.Name)
-			continue
-		}
-
-		panic("found")
-		d.clientsMu.Lock()
-		defer d.clientsMu.Unlock()
-
-		for _, c := range d.clients {
-			if c == client {
-				return
-			}
-		}
-
-		d.clients = append(d.clients, client)
-		return
+	if _, ok := ds.clientsByDevice[devName]; !ok {
+		ds.clientsByDevice[devName] = make([]Client, 0)
 	}
 
-	ds.devices = append(ds.devices, newDevice(devName, 0, IfUnknown))
+	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)
 }

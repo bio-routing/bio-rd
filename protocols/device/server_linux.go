@@ -31,25 +31,23 @@ func (ds *Server) monitorDevices() error {
 func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
 	attrs := lu.Attrs()
 
-	ds.devicesMu.RLock()
-	defer ds.devicesMu.RUnlock()
+	ds.clientsByDeviceMu.RLock()
+	defer ds.clientsByDeviceMu.RUnlock()
 
-	for _, d := range ds.devices {
-		if d.Name != lu.Attrs().Name {
-			continue
-		}
+	if _, ok := ds.clientsByDevice[attrs.Name]; !ok {
+		return
+	}
 
-		d.clientsMu.RLock()
-		defer d.clientsMu.RUnlock()
-		for _, c := range d.clients {
-			c.LinkUpdate(LinkUpdate{
-				Index:        uint64(attrs.Index),
-				MTU:          uint16(attrs.MTU),
-				Name:         attrs.Name,
-				HardwareAddr: attrs.HardwareAddr,
-				Flags:        attrs.Flags,
-				OperState:    uint8(attrs.OperState),
-			})
-		}
+	lu := LinkUpdate{
+		Index:        uint64(attrs.Index),
+		MTU:          uint16(attrs.MTU),
+		Name:         attrs.Name,
+		HardwareAddr: attrs.HardwareAddr,
+		Flags:        attrs.Flags,
+		OperState:    uint8(attrs.OperState),
+	}
+
+	for _, c := range ds.clientsByDevice[attrs.Name] {
+		c.LinkUpdate(lu)
 	}
 }
