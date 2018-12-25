@@ -14,7 +14,7 @@ type Server struct {
 
 // Client represents a client of the device server
 type Client interface {
-	LinkUpdate(LinkUpdate)
+	LinkUpdate(*LinkUpdate)
 }
 
 // New creates a new device server
@@ -41,6 +41,11 @@ func (ds *Server) Stop() {
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
 func (ds *Server) Subscribe(client Client, devName string) {
+	lu := ds.getLinkState(devName)
+	if lu != nil {
+		client.LinkUpdate(lu)
+	}
+
 	ds.clientsByDeviceMu.RLock()
 	defer ds.clientsByDeviceMu.RUnlock()
 

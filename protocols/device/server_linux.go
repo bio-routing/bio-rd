@@ -28,6 +28,17 @@ func (ds *Server) monitorDevices() error {
 	return nil
 }
 
+func netlinkLinkUpdateToBIOLinkUpdate(attrs *netlink.LinkAttrs) *LinkUpdate {
+	return &LinkUpdate{
+		Index:        uint64(attrs.Index),
+		MTU:          uint16(attrs.MTU),
+		Name:         attrs.Name,
+		HardwareAddr: attrs.HardwareAddr,
+		Flags:        attrs.Flags,
+		OperState:    uint8(attrs.OperState),
+	}
+}
+
 func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
 	attrs := lu.Attrs()
 
@@ -38,16 +49,18 @@ func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
 		return
 	}
 
-	u := LinkUpdate{
-		Index:        uint64(attrs.Index),
-		MTU:          uint16(attrs.MTU),
-		Name:         attrs.Name,
-		HardwareAddr: attrs.HardwareAddr,
-		Flags:        attrs.Flags,
-		OperState:    uint8(attrs.OperState),
-	}
-
+	u := netlinkLinkUpdateToBIOLinkUpdate(attrs)
 	for _, c := range ds.clientsByDevice[attrs.Name] {
 		c.LinkUpdate(u)
 	}
+}
+
+func (ds *Server) getLinkState(devName string) *LinkUpdate {
+	h := netlink.NewHandle()
+	l, err := h.LinkByName(devName)
+	if err != nil {
+		return nil
+	}
+
+	return netlinkLinkUpdateToBIOLinkUpdate(l.Attrs())
 }

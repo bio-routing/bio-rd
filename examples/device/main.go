@@ -9,7 +9,7 @@ import (
 type Client struct {
 }
 
-func (c *Client) LinkUpdate(lu device.LinkUpdate) {
+func (c *Client) LinkUpdate(lu *device.LinkUpdate) {
 	fmt.Printf("Link Update! %s\n", lu.Name)
 }
 
