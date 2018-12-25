@@ -38,7 +38,7 @@ func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
 		return
 	}
 
-	lu := LinkUpdate{
+	u := LinkUpdate{
 		Index:        uint64(attrs.Index),
 		MTU:          uint16(attrs.MTU),
 		Name:         attrs.Name,
@@ -48,6 +48,6 @@ func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
 	}
 
 	for _, c := range ds.clientsByDevice[attrs.Name] {
-		c.LinkUpdate(lu)
+		c.LinkUpdate(u)
 	}
 }
