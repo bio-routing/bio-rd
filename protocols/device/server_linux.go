@@ -111,7 +111,7 @@ func linkUpdateToDevice(attrs *netlink.LinkAttrs) *Device {
 	}
 }
 
-func (o *osHandler) processAddrUpdate(au *netlink.AddrUpdate) {
+func (o *osAdapter) processAddrUpdate(au *netlink.AddrUpdate) {
 	o.srv.devicesMu.RLock()
 	defer o.srv.devicesMu.RUnlock()
 
@@ -129,7 +129,7 @@ func (o *osHandler) processAddrUpdate(au *netlink.AddrUpdate) {
 	d.delAddr(bnet.NewPfxFromIPNet(au.LinkAddress))
 }
 
-func (o *osHandler) processLinkUpdate(lu *netlink.LinkUpdate) {
+func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
 	attrs := lu.Attrs()
 
 	o.srv.devicesMu.Lock()
@@ -152,7 +152,7 @@ func (o *osHandler) processLinkUpdate(lu *netlink.LinkUpdate) {
 	o.srv.devices[d.Index] = d
 }
 
-func (o *osHandler) notify(index uint64) {
+func (o *osAdapter) notify(index uint64) {
 	o.srv.clientsByDeviceMu.RLock()
 	defer o.srv.clientsByDeviceMu.RUnlock()
 
@@ -166,7 +166,7 @@ func (o *osHandler) notify(index uint64) {
 
 }
 
-func (o *osHandler) getLinkState(devName string) *LinkUpdate {
+func (o *osAdapter) getLinkState(devName string) *LinkUpdate {
 	l, err := o.handle.LinkByName(devName)
 	if err != nil {
 		return nil
