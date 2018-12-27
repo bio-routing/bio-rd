@@ -3,7 +3,7 @@ syntax = "proto3";
 package bio.bgp;
 
 import "net/api/net.proto";
-option go_package = "protocols/bgp/server/api";
+option go_package = "protocols/bgp/api";
 
 message Session {
     bio.net.IP local_address = 1;

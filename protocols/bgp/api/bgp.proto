@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package bio.bgp;
+
+import "protocols/bgp/api/session.proto";
+option go_package = "protocols/bgp/api";
+
+message ListSessionsRequest {
+    string name_filter = 1;
+}
+
+message ListSessionsResponse {
+    repeated Session sessions = 1;
+}
+
+service BgpService {
+    rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+}
