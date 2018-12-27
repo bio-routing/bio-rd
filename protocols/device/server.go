@@ -74,3 +74,18 @@ func (ds *Server) addDevice(d *Device) {
 
 	ds.devices[d.Index] = d
 }
+
+func (ds *Server) getLinkState(name string) *Device {
+	ds.devicesMu.RLock()
+	defer ds.devicesMu.RUnlock()
+
+	for _, d := range ds.devices {
+		if d.Name != name {
+			continue
+		}
+
+		return d.copy()
+	}
+
+	return nil
+}

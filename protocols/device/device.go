@@ -52,3 +52,24 @@ func (d *Device) delAddr(del bnet.Prefix) {
 		d.Addrs = append(d.Addrs[:i], d.Addrs[i+1:]...)
 	}
 }
+
+func (d *Device) copy() *Device {
+	d.l.RLock()
+	defer d.l.RUnlock()
+
+	n := &Device{
+		Name:      d.Name,
+		Index:     d.Index,
+		MTU:       d.MTU,
+		Flags:     d.Flags,
+		OperState: d.OperState,
+		Addrs:     make([]bnet.Prefix, len(d.Addrs)),
+	}
+
+	copy(n.HardwareAddr, d.HardwareAddr)
+	for i, a := range d.Addrs {
+		n.Addrs[i] = a
+	}
+
+	return n
+}
