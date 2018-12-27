@@ -53,9 +53,9 @@ func (ds *Server) Stop() {
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
 func (ds *Server) Subscribe(client Client, devName string) {
-	/*lu := ds.getLinkState(devName)
-	if lu != nil {
-		client.DeviceUpdate(lu)
+	d := ds.getLinkState(devName)
+	if d != nil {
+		client.DeviceUpdate(d)
 	}
 
 	ds.clientsByDeviceMu.RLock()
@@ -65,7 +65,7 @@ func (ds *Server) Subscribe(client Client, devName string) {
 		ds.clientsByDevice[devName] = make([]Client, 0)
 	}
 
-	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)*/
+	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)
 }
 
 func (ds *Server) addDevice(d *Device) {

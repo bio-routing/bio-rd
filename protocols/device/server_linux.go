@@ -122,11 +122,11 @@ func (o *osAdapter) processAddrUpdate(au *netlink.AddrUpdate) {
 
 	d := o.srv.devices[uint64(au.LinkIndex)]
 	if au.NewAddr {
-		d.addAddr(bnet.NewPfxFromIPNet(au.LinkAddress))
+		d.addAddr(bnet.NewPfxFromIPNet(&au.LinkAddress))
 		return
 	}
 
-	d.delAddr(bnet.NewPfxFromIPNet(au.LinkAddress))
+	d.delAddr(bnet.NewPfxFromIPNet(&au.LinkAddress))
 }
 
 func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
@@ -135,13 +135,13 @@ func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
 	o.srv.devicesMu.Lock()
 	defer o.srv.devicesMu.Unlock()
 
-	if _, ok := o.srv.devices[attrs.Index]; !ok {
-		o.srv.devices[attrs.Index] = newDevice()
-		o.srv.devices[attrs.Index].updateLink(lu)
-		o.notify(attrs.Index)
+	if _, ok := o.srv.devices[uint64(attrs.Index)]; !ok {
+		o.srv.devices[uint64(attrs.Index)] = newDevice()
+		o.srv.devices[uint64(attrs.Index)].updateLink(lu)
+		o.notify(uint64(attrs.Index))
 
 		if attrs.OperState == netlink.OperNotPresent {
-			delete(o.srv.devices, attrs.Index)
+			delete(o.srv.devices, uint64(attrs.Index))
 			return
 		}
 
