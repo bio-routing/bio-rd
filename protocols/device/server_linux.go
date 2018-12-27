@@ -137,7 +137,7 @@ func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
 
 	if _, ok := o.srv.devices[uint64(attrs.Index)]; !ok {
 		o.srv.devices[uint64(attrs.Index)] = newDevice()
-		o.srv.devices[uint64(attrs.Index)].updateLink(lu)
+		o.srv.devices[uint64(attrs.Index)].updateLink(attrs)
 		o.notify(uint64(attrs.Index))
 
 		if attrs.OperState == netlink.OperNotPresent {
