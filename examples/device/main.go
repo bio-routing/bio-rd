@@ -13,6 +13,7 @@ type Client struct {
 
 func (c *Client) DeviceUpdate(d *device.Device) {
 	fmt.Printf("Device Update! %s\n", d.Name)
+	fmt.Printf("New State: %v\n", d.OperState)
 }
 
 func main() {

@@ -24,6 +24,7 @@ func newOSAdapter(srv *Server) (*osAdapter, error) {
 		return nil, fmt.Errorf("Failed to create netlink handle: %v", err)
 	}
 
+	o.handle = h
 	return o, nil
 }
 
@@ -44,6 +45,7 @@ func (o *osAdapter) start() error {
 	if err != nil {
 		return fmt.Errorf("Init failed: %v", err)
 	}
+
 	go o.monitorLinks(chLU)
 	go o.monitorAddrs(chAU)
 
@@ -150,6 +152,7 @@ func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
 
 	d := linkUpdateToDevice(attrs)
 	o.srv.devices[d.Index] = d
+	o.notify(uint64(d.Index))
 }
 
 func (o *osAdapter) notify(index uint64) {
@@ -164,13 +167,4 @@ func (o *osAdapter) notify(index uint64) {
 		d.notify(o.srv.clientsByDevice[d.Name])
 	}
 
-}
-
-func (o *osAdapter) getLinkState(devName string) *LinkUpdate {
-	l, err := o.handle.LinkByName(devName)
-	if err != nil {
-		return nil
-	}
-
-	return netlinkLinkUpdateToBIOLinkUpdate(l.Attrs())
 }
