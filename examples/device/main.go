@@ -2,20 +2,26 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/bio-routing/bio-rd/protocols/device"
+	log "github.com/sirupsen/logrus"
 )
 
 type Client struct {
 }
 
-func (c *Client) LinkUpdate(lu *device.LinkUpdate) {
-	fmt.Printf("Link Update! %s\n", lu.Name)
+func (c *Client) DeviceUpdate(d *device.Device) {
+	fmt.Printf("Device Update! %s\n", d.Name)
 }
 
 func main() {
 	s := device.New()
-	s.Start()
+	err := s.Start()
+	if err != nil {
+		log.Errorf("%v", err)
+		os.Exit(1)
+	}
 
 	c := &Client{}
 	s.Subscribe(c, "virbr0")

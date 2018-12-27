@@ -32,13 +32,13 @@ func New() *Server {
 }
 
 // Start starts the device server
-func (ds *Server) Start() {
-	go func() {
-		err := ds.monitorLinks()
-		if err != nil {
-			panic(fmt.Errorf("Unable to monitor interfaces: %v", err))
-		}
-	}()
+func (ds *Server) Start() error {
+	err := ds.osAdapter.start()
+	if err != nil {
+		return fmt.Errorf("Unable to start osAdapter: %v", err)
+	}
+
+	return nil
 }
 
 // Stop stops the device server

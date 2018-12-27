@@ -37,6 +37,8 @@ func (o *osAdapter) start() error {
 	o.init()
 	go o.monitorLinks(chLU)
 	go o.monitorAddrs(chAU)
+
+	return nil
 }
 
 func (o *osAdapter) init() {
