@@ -3,33 +3,92 @@ package device
 import (
 	"fmt"
 
+	bnet "github.com/bio-routing/bio-rd/net"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
-func (ds *Server) monitorDevices() error {
-	chLU := make(chan netlink.LinkUpdate)
-	chDone := make(chan struct{})
+type osAdapter struct {
+	srv    *Server
+	handle *netlink.Handle
+	done   chan struct{}
+	//links  map[uint64]*netlink.Link
+}
 
-	err := netlink.LinkSubscribe(chLU, chDone)
+func newOSAdapter(srv *Server) *osAdapter {
+	return &osAdapter{
+		srv:    srv,
+		handle: netlink.NewHandle(),
+	}
+}
+
+func (o *osAdapter) start() error {
+	chLU := make(chan netlink.LinkUpdate)
+	err := netlink.LinkSubscribe(chLU, o.done)
 	if err != nil {
-		return fmt.Errorf("Unable to subscribe to link changes: %v", err)
+		return fmt.Errorf("Unable to subscribe for link updates: %v", err)
 	}
 
+	chAU := make(chan netlink.AddrUpdate)
+	err = netlink.AddrSubscribe(chAU, o.done)
+	if err != nil {
+		return fmt.Errorf("Unable to subscribe for address updates: %v", err)
+	}
+
+	o.srv.devicesMu.Lock()
+	defer o.srv.devicesMu.Unlock()
+
+	go o.monitorLinks(chLU)
+	go o.monitorAddrs(chAU)
+
+	o.init()
+}
+
+func (o *osAdapter) init() {
+	for _, l := range o.handle.LinkList() {
+		d := linkUpdateToDevice(l.Attrs())
+
+		for _, f := range []int{4, 6} {
+			addrs, err := o.handle.AddrList(l, f)
+			if err != nil {
+				return fmt.Errorf("Unable to get addresses for interface %s: %v", d.Name, err)
+			}
+
+			for _, addr := range addrs {
+				d.Addrs = append(d.Addrs, bnet.NewPfxFromIPNet(addr.IPNet))
+			}
+		}
+
+		o.srv.devices[d.Index] = d
+	}
+}
+
+func (o *osAdapter) monitorAddrs(chAu chan netlink.AddrUpdate) {
 	for {
 		select {
-		case <-ds.done:
-			chDone <- struct{}{}
-			return nil
+		case <-o.Done:
+			return
+		case au := <-chAU:
+			o.processAddrUpdate(&au)
+		}
+	}
+}
+
+func (o *osAdapter) monitorLinks(chLU chan netlink.LinkUpdate) {
+	for {
+		select {
+		case <-o.done:
+			return
 		case lu := <-chLU:
-			ds.processLinkUpdate(&lu)
+			o.processLinkUpdate(&lu)
 		}
 	}
 
-	return nil
+	return
 }
 
-func netlinkLinkUpdateToBIOLinkUpdate(attrs *netlink.LinkAttrs) *LinkUpdate {
-	return &LinkUpdate{
+func linkUpdateToDevice(attrs *netlink.LinkAttrs) *Device {
+	return &Device{
 		Index:        uint64(attrs.Index),
 		MTU:          uint16(attrs.MTU),
 		Name:         attrs.Name,
@@ -39,25 +98,63 @@ func netlinkLinkUpdateToBIOLinkUpdate(attrs *netlink.LinkAttrs) *LinkUpdate {
 	}
 }
 
-func (ds *Server) processLinkUpdate(lu *netlink.LinkUpdate) {
-	attrs := lu.Attrs()
+func (o *osHandler) processAddrUpdate(au *netlink.AddrUpdate) {
+	o.srv.devicesMu.RLock()
+	defer o.srv.devicesMu.RUnlock()
 
-	ds.clientsByDeviceMu.RLock()
-	defer ds.clientsByDeviceMu.RUnlock()
-
-	if _, ok := ds.clientsByDevice[attrs.Name]; !ok {
+	if _, ok := o.srv.devices[uint64(au.LinkIndex)]; !ok {
+		log.Warningf("Received address update for non existent device index %d", au.LinkIndex)
 		return
 	}
 
-	u := netlinkLinkUpdateToBIOLinkUpdate(attrs)
-	for _, c := range ds.clientsByDevice[attrs.Name] {
-		c.LinkUpdate(u)
+	d := o.srv.devices[uint64(au.LinkIndex)]
+	if au.NewAddr {
+		d.addAddr(bnet.NewPfxFromIPNet(au.LinkAddress))
+		return
 	}
+
+	d.delAddr(bnet.NewPfxFromIPNet(au.LinkAddress))
 }
 
-func (ds *Server) getLinkState(devName string) *LinkUpdate {
-	h := netlink.NewHandle()
-	l, err := h.LinkByName(devName)
+func (o *osHandler) processLinkUpdate(lu *netlink.LinkUpdate) {
+	attrs := lu.Attrs()
+
+	o.srv.devicesMu.Lock()
+	defer o.srv.devicesMu.Unlock()
+
+	if _, ok := o.srv.devices[attrs.Index]; !ok {
+		o.srv.devices[attrs.Index] = newDevice()
+		o.srv.devices[attrs.Index].updateLink(lu)
+		o.notify(attrs.Index)
+
+		if attrs.OperState == netlink.OperNotPresent {
+			delete(o.srv.devices, attrs.Index)
+			return
+		}
+
+		return
+	}
+
+	d := linkUpdateToDevice(attrs)
+	o.srv.devices[d.Index] = d
+}
+
+func (o *osHandler) notify(index uint64) {
+	o.srv.clientsByDeviceMu.RLock()
+	defer o.srv.clientsByDeviceMu.RUnlock()
+
+	for i, d := range o.srv.devices {
+		if i != index {
+			continue
+		}
+
+		d.notify(o.srv.clientsByDevice[d.Name])
+	}
+
+}
+
+func (o *osHandler) getLinkState(devName string) *LinkUpdate {
+	l, err := o.handle.LinkByName(devName)
 	if err != nil {
 		return nil
 	}

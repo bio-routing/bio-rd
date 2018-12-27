@@ -7,6 +7,8 @@ import (
 
 // Server represents a device server
 type Server struct {
+	devices           map[uint64]*Device
+	devicesMu         sync.RWMutex
 	clientsByDevice   map[string][]Client
 	clientsByDeviceMu sync.RWMutex
 	done              chan struct{}
@@ -14,12 +16,13 @@ type Server struct {
 
 // Client represents a client of the device server
 type Client interface {
-	LinkUpdate(*LinkUpdate)
+	DeviceUpdate(*Device)
 }
 
 // New creates a new device server
 func New() *Server {
 	return &Server{
+		devices:         make(map[uint64]*Device),
 		clientsByDevice: make(map[string][]Client),
 	}
 }
@@ -27,7 +30,7 @@ func New() *Server {
 // Start starts the device server
 func (ds *Server) Start() {
 	go func() {
-		err := ds.monitorDevices()
+		err := ds.monitorLinks()
 		if err != nil {
 			panic(fmt.Errorf("Unable to monitor interfaces: %v", err))
 		}
@@ -41,9 +44,9 @@ func (ds *Server) Stop() {
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
 func (ds *Server) Subscribe(client Client, devName string) {
-	lu := ds.getLinkState(devName)
+	/*lu := ds.getLinkState(devName)
 	if lu != nil {
-		client.LinkUpdate(lu)
+		client.DeviceUpdate(lu)
 	}
 
 	ds.clientsByDeviceMu.RLock()
@@ -53,5 +56,5 @@ func (ds *Server) Subscribe(client Client, devName string) {
 		ds.clientsByDevice[devName] = make([]Client, 0)
 	}
 
-	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)
+	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)*/
 }
