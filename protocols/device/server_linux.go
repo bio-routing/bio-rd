@@ -40,15 +40,23 @@ func (o *osAdapter) start() error {
 		return fmt.Errorf("Unable to subscribe for address updates: %v", err)
 	}
 
-	o.init()
+	err = o.init()
+	if err != nil {
+		return fmt.Errorf("Init failed: %v", err)
+	}
 	go o.monitorLinks(chLU)
 	go o.monitorAddrs(chAU)
 
 	return nil
 }
 
-func (o *osAdapter) init() {
-	for _, l := range o.handle.LinkList() {
+func (o *osAdapter) init() error {
+	links, err := o.handle.LinkList()
+	if err != nil {
+		return fmt.Errorf("Unable to get links: %v", err)
+	}
+
+	for _, l := range links {
 		d := linkUpdateToDevice(l.Attrs())
 
 		for _, f := range []int{4, 6} {
@@ -64,6 +72,8 @@ func (o *osAdapter) init() {
 
 		o.srv.addDevice(d)
 	}
+
+	return nil
 }
 
 func (o *osAdapter) monitorAddrs(chAu chan netlink.AddrUpdate) {
