@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/protocols/netlink"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func strAddr(s string) uint32 {
@@ -39,7 +38,7 @@ func main() {
 		},
 	}
 
-	rib := locRIB.New()
+	rib, _ := locRIB.New("netlink-example")
 	b := server.NewBgpServer()
 	startBGPServer(b, rib, cfg)
 

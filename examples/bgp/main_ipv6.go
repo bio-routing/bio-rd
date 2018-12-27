@@ -7,17 +7,21 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/sirupsen/logrus"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 )
 
-func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
-	err := b.Start(&config.Global{
+func startServer(b server.BGPServer) *locRIB.LocRIB {
+	rib, err := locRIB.New("inet6.0")
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	err = b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
 			net.IP{0x20, 0x01, 0x6, 0x78, 0x1, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0xca, 0xfe},
@@ -68,4 +72,6 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 			},
 		},
 	})
+
+	return rib
 }
