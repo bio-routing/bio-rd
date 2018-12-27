@@ -7,16 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/routingtable"
-
-	"github.com/stretchr/testify/assert"
-
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	btest "github.com/bio-routing/bio-rd/testing"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSender(t *testing.T) {
@@ -881,7 +879,7 @@ func TestSender(t *testing.T) {
 			addr: bnet.IPv4FromOctets(169, 254, 100, 100),
 		})
 
-		rib := locRIB.New()
+		rib := locRIB.NewTestLocRIB()
 		if test.afi == packet.IPv6AFI {
 			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
 				rib:          rib,

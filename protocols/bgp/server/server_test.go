@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +27,7 @@ func TestBgpServerPeerSnapshot(t *testing.T) {
 		t.Fatalf("empty server should have 0 peers, has %d", len(info))
 	}
 
-	rib := locRIB.New()
+	rib := locRIB.NewTestLocRIB()
 	pc := config.Peer{
 		AdminEnabled:      true,
 		PeerAS:            65300,

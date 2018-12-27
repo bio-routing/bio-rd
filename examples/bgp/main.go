@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
-	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/sirupsen/logrus"
 )
 
 func strAddr(s string) uint32 {
@@ -20,9 +17,8 @@ func strAddr(s string) uint32 {
 func main() {
 	logrus.Printf("This is a BGP speaker\n")
 
-	rib := locRIB.New()
 	b := server.NewBgpServer()
-	startServer(b, rib)
+	rib := startServer(b)
 
 	go func() {
 		for {
