@@ -14,11 +14,17 @@ type osAdapter struct {
 	done   chan struct{}
 }
 
-func newOSAdapter(srv *Server) *osAdapter {
-	return &osAdapter{
-		srv:    srv,
-		handle: netlink.NewHandle(),
+func newOSAdapter(srv *Server) (*osAdapter, error) {
+	o := &osAdapter{
+		srv: srv,
 	}
+
+	h, err := netlink.NewHandle()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create netlink handle: %v", err)
+	}
+
+	return o, nil
 }
 
 func (o *osAdapter) start() error {

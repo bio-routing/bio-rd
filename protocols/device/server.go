@@ -21,14 +21,19 @@ type Client interface {
 }
 
 // New creates a new device server
-func New() *Server {
+func New() (*Server, error) {
 	srv := &Server{
 		devices:         make(map[uint64]*Device),
 		clientsByDevice: make(map[string][]Client),
 	}
 
-	srv.osAdapter = newOSAdapter(srv)
-	return srv
+	o, err := newOSAdapter(srv)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create OS adapter: %v", err)
+	}
+
+	srv.osAdapter = o
+	return srv, nil
 }
 
 // Start starts the device server

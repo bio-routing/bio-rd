@@ -5,8 +5,8 @@ import "fmt"
 type osAdapter struct {
 }
 
-func newOSAdapter(srv *Server) *osAdapter {
-	return nil
+func newOSAdapter(srv *Server) (*osAdapter, error) {
+	return nil, nil
 }
 
 func (o *osAdapter) start() error {

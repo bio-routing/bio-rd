@@ -16,8 +16,13 @@ func (c *Client) DeviceUpdate(d *device.Device) {
 }
 
 func main() {
-	s := device.New()
-	err := s.Start()
+	s, err := device.New()
+	if err != nil {
+		log.Errorf("%v", err)
+		os.Exit(1)
+	}
+
+	err = s.Start()
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)
