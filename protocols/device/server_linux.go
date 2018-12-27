@@ -12,7 +12,6 @@ type osAdapter struct {
 	srv    *Server
 	handle *netlink.Handle
 	done   chan struct{}
-	//links  map[uint64]*netlink.Link
 }
 
 func newOSAdapter(srv *Server) *osAdapter {
@@ -35,13 +34,9 @@ func (o *osAdapter) start() error {
 		return fmt.Errorf("Unable to subscribe for address updates: %v", err)
 	}
 
-	o.srv.devicesMu.Lock()
-	defer o.srv.devicesMu.Unlock()
-
+	o.init()
 	go o.monitorLinks(chLU)
 	go o.monitorAddrs(chAU)
-
-	o.init()
 }
 
 func (o *osAdapter) init() {
@@ -59,7 +54,7 @@ func (o *osAdapter) init() {
 			}
 		}
 
-		o.srv.devices[d.Index] = d
+		o.srv.addDevice(d)
 	}
 }
 

@@ -11,6 +11,7 @@ type Server struct {
 	devicesMu         sync.RWMutex
 	clientsByDevice   map[string][]Client
 	clientsByDeviceMu sync.RWMutex
+	osAdapter         *osAdapter
 	done              chan struct{}
 }
 
@@ -21,10 +22,13 @@ type Client interface {
 
 // New creates a new device server
 func New() *Server {
-	return &Server{
+	srv := &Server{
 		devices:         make(map[uint64]*Device),
 		clientsByDevice: make(map[string][]Client),
 	}
+
+	srv.osAdapter = newOSAdapter(srv)
+	return srv
 }
 
 // Start starts the device server
@@ -57,4 +61,11 @@ func (ds *Server) Subscribe(client Client, devName string) {
 	}
 
 	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)*/
+}
+
+func (ds *Server) addDevice(d *Device) {
+	ds.devicesMu.Lock()
+	defer ds.devicesMu.Unlock()
+
+	ds.devices[d.Index] = d
 }
