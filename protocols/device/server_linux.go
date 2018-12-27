@@ -76,10 +76,10 @@ func (o *osAdapter) init() error {
 	return nil
 }
 
-func (o *osAdapter) monitorAddrs(chAu chan netlink.AddrUpdate) {
+func (o *osAdapter) monitorAddrs(chAU chan netlink.AddrUpdate) {
 	for {
 		select {
-		case <-o.Done:
+		case <-o.done:
 			return
 		case au := <-chAU:
 			o.processAddrUpdate(&au)
