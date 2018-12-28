@@ -47,11 +47,6 @@ func (ip IP) Higher() uint64 {
 	return ip.higher
 }
 
-// IsLegacy returns true for IPv6, else false
-func (ip IP) IsLegacy() bool {
-	return ip.isLegacy
-}
-
 // IPv4 returns a new `IP` representing an IPv4 address
 func IPv4(val uint32) IP {
 	return IP{

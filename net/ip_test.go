@@ -55,19 +55,18 @@ func TestIPVersion(t *testing.T) {
 	}{
 		{
 			name:     "Test",
-			ip:       IP{isLegacy: true},
+			ip:       IPv4(0),
 			expected: true,
 		},
 		{
 			name:     "Test",
-			ip:       IP{},
+			ip:       IPv6(0, 0),
 			expected: false,
 		},
 	}
 
 	for _, test := range tests {
-		res := test.ip.IsLegacy()
-		assert.Equal(t, test.expected, res, test.name)
+		assert.Equal(t, test.expected, test.ip.isLegacy, test.name)
 	}
 }
 func TestIPToProto(t *testing.T) {
