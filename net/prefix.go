@@ -69,7 +69,7 @@ func StrToAddr(x string) (uint32, error) {
 			return 0, fmt.Errorf("%d is too big for a uint8", y)
 		}
 
-		ret += uint32(math.Pow(256, float64(3-i))) * uint32(y)
+		ret += uint32(y) << uint((3-i)*8)
 	}
 
 	return ret, nil
