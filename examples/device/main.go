@@ -8,9 +8,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Client is a device protocol client
 type Client struct {
 }
 
+// DeviceUpdate is a callback to get updated device information
 func (c *Client) DeviceUpdate(d *device.Device) {
 	fmt.Printf("Device Update! %s\n", d.Name)
 	fmt.Printf("New State: %v\n", d.OperState)
