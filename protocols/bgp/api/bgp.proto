@@ -7,6 +7,10 @@ import "github.com/bio-routing/bio-rd/protocols/bgp/api/session.proto";
 option go_package = "github.com/bio-routing/bio-rd/protocols/bgp/api";
 
 message ListSessionsRequest {
+    SessionFilter filter = 1;
+}
+
+message SessionFilter {
     bio.net.IP neighbor_ip = 1;
     string vrf_name = 2;
 }
