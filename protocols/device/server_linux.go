@@ -148,19 +148,15 @@ func (o *osAdapterLinux) processLinkUpdate(lu *netlink.LinkUpdate) {
 	defer o.srv.devicesMu.Unlock()
 
 	if _, ok := o.srv.devices[uint64(attrs.Index)]; !ok {
-		o.srv.devices[uint64(attrs.Index)] = newDevice()
-		o.srv.devices[uint64(attrs.Index)].updateLink(attrs)
-		o.srv.notify(uint64(attrs.Index))
-
-		if attrs.OperState == netlink.OperNotPresent {
-			o.srv.delDevice(uint64(attrs.Index))
-			return
-		}
-
-		return
+		d := newDevice()
+		d.Index = uint64(attrs.Index)
+		o.srv.addDevice(d)
 	}
 
-	d := linkUpdateToDevice(attrs)
-	o.srv.devices[d.Index] = d
+	d.updateLink(attrs)
 	o.srv.notify(uint64(attrs.Index))
+	if attrs.OperState == netlink.OperNotPresent {
+		o.srv.delDevice(uint64(attrs.Index))
+		return
+	}
 }
