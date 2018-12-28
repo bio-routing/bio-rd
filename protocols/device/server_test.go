@@ -117,19 +117,3 @@ func TestNotify(t *testing.T) {
 	s.notify(101)
 	assert.Equal(t, uint(2), mc.deviceUpdateCalled)
 }
-
-func TestNew(t *testing.T) {
-	expected := &Server{
-		devices:         map[uint64]*Device{},
-		clientsByDevice: map[string][]Client{},
-	}
-
-	n, err := New()
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-		return
-	}
-
-	n.osAdapter = nil
-	assert.Equal(t, expected, n)
-}
