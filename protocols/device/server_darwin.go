@@ -2,10 +2,6 @@ package device
 
 import "fmt"
 
-func (ds *Server) loadAdapter() error {
-	return fmt.Errorf("Not implemented")
-}
-
 type osAdapterDarwin struct {
 }
 

@@ -22,7 +22,6 @@ type Client interface {
 
 type osAdapter interface {
 	start() error
-	loadAdapter() error
 }
 
 // New creates a new device server
