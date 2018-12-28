@@ -26,7 +26,7 @@ func IPFromProtoIP(addr api.IP) IP {
 // ToProto converts an IP to a proto IP
 func (ip IP) ToProto() *api.IP {
 	ver := api.IP_IPv6
-	if ip.IsLegacy() {
+	if ip.isLegacy {
 		ver = api.IP_IPv4
 	}
 
