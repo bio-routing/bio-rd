@@ -55,19 +55,18 @@ func TestIPVersion(t *testing.T) {
 	}{
 		{
 			name:     "Test",
-			ip:       IP{isLegacy: true},
+			ip:       IPv4(0),
 			expected: true,
 		},
 		{
 			name:     "Test",
-			ip:       IP{},
+			ip:       IPv6(0, 0),
 			expected: false,
 		},
 	}
 
 	for _, test := range tests {
-		res := test.ip.IsLegacy()
-		assert.Equal(t, test.expected, res, test.name)
+		assert.Equal(t, test.expected, test.ip.isLegacy, test.name)
 	}
 }
 func TestIPToProto(t *testing.T) {
@@ -83,8 +82,8 @@ func TestIPToProto(t *testing.T) {
 				isLegacy: true,
 			},
 			expected: &api.IP{
-				Lower:    255,
-				IsLegacy: true,
+				Lower:   255,
+				Version: api.IP_IPv4,
 			},
 		},
 		{
@@ -95,9 +94,9 @@ func TestIPToProto(t *testing.T) {
 				isLegacy: false,
 			},
 			expected: &api.IP{
-				Higher:   1000,
-				Lower:    255,
-				IsLegacy: false,
+				Higher:  1000,
+				Lower:   255,
+				Version: api.IP_IPv6,
 			},
 		},
 	}
@@ -117,9 +116,9 @@ func TestIPFromProtoIP(t *testing.T) {
 		{
 			name: "Test IPv4",
 			proto: api.IP{
-				Lower:    100,
-				Higher:   0,
-				IsLegacy: true,
+				Lower:   100,
+				Higher:  0,
+				Version: api.IP_IPv4,
 			},
 			expected: IP{
 				lower:    100,
@@ -130,9 +129,9 @@ func TestIPFromProtoIP(t *testing.T) {
 		{
 			name: "Test IPv6",
 			proto: api.IP{
-				Lower:    100,
-				Higher:   200,
-				IsLegacy: false,
+				Lower:   100,
+				Higher:  200,
+				Version: api.IP_IPv6,
 			},
 			expected: IP{
 				lower:    100,

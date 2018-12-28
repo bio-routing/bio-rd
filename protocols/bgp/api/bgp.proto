@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package bio.bgp;
+
+import "github.com/bio-routing/bio-rd/net/api/net.proto";
+import "github.com/bio-routing/bio-rd/protocols/bgp/api/session.proto";
+option go_package = "github.com/bio-routing/bio-rd/protocols/bgp/api";
+
+message ListSessionsRequest {
+    SessionFilter filter = 1;
+}
+
+message SessionFilter {
+    bio.net.IP neighbor_ip = 1;
+    string vrf_name = 2;
+}
+
+message ListSessionsResponse {
+    repeated Session sessions = 1;
+}
+
+service BgpService {
+    rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+}
