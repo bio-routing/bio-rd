@@ -116,7 +116,7 @@ func (ifa *netIf) compareSupportedProtocols(protocols []uint8) bool {
 	return true
 }
 
-func (ifa *netIf) startReceiver() {
+func (ifa *netIf) receiver() {
 	go func(ifa *netIf) {
 		for {
 			select {

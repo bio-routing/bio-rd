@@ -83,8 +83,8 @@ func (isis *ISISServer) AddInterface(ifa config.ISISInterfaceConfig) error {
 	}
 
 	isis.interfaces[ifa.Name] = interf
-	isis.interfaces[ifa.Name].startReceiver()
-	isis.interfaces[ifa.Name].helloSender()
+	go isis.interfaces[ifa.Name].receiver()
+	go isis.interfaces[ifa.Name].helloSender()
 
 	return nil
 }
