@@ -417,7 +417,7 @@ func TestContains(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.a.Contains(test.b)
-		assert.Equal(t, res, test.expected, "Unexpected result %v for test %s: %s contains %s\n", res, test.name, test.a, test.b)
+		assert.Equal(t, res, test.expected, "Unexpected result %v for test %s: %s contains %s", res, test.name, test.a, test.b)
 	}
 }
 
