@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/stretchr/testify/assert"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 // TestFSM255UpdatesIPv4 emulates receiving 255 BGP updates and withdraws. Checks route counts.
@@ -19,7 +18,7 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 		addr:     bnet.IPv4FromOctets(169, 254, 100, 100),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 		ipv4: &peerAddressFamily{
-			rib:          locRIB.New(),
+			rib:          locRIB.NewTestLocRIB(),
 			importFilter: filter.NewAcceptAllFilter(),
 			exportFilter: filter.NewAcceptAllFilter(),
 		},
@@ -133,7 +132,7 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 		addr:     bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0xffff, 0, 0, 0, 1),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 		ipv6: &peerAddressFamily{
-			rib:          locRIB.New(),
+			rib:          locRIB.NewTestLocRIB(),
 			importFilter: filter.NewAcceptAllFilter(),
 			exportFilter: filter.NewAcceptAllFilter(),
 		},
