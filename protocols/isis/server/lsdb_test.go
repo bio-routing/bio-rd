@@ -73,11 +73,4 @@ func TestScanSRMSSN(t *testing.T) {
 			},
 		},
 	}, db)
-
-	/*for _, test := range tests {
-		lsps, psnpEntries :=
-
-		assert.Equal(t, test.expectedLSPs, lsps, "Test %q (LSPs)", test.name)
-		assert.Equal(t, test.expectedPSNPEntries, psnpEntries, "Test %q (PSNP Entries)", test.name)
-	}*/
 }

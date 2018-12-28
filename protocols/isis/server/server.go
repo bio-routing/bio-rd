@@ -32,9 +32,9 @@ type isisNeighbor struct {
 }
 
 // NewISISServer creates and initializes a new ISIS speaker
-func NewISISServer(cfg config.ISISConfig) *ISISServer {
+func NewISISServer(cfg *config.ISISConfig) *ISISServer {
 	server := &ISISServer{
-		config:         cfg,
+		config:         *cfg,
 		sequenceNumber: 1,
 		interfaces:     make(map[string]*netIf),
 		stop:           make(chan struct{}),
@@ -145,4 +145,20 @@ func (isis *ISISServer) lsp() *packet.LSPDU {
 	// TODO: TLVs
 
 	return lspdu
+}
+
+func (isis *ISISServer) DumpLSDB() {
+	isis.lsdb.lspsMu.RLock()
+	defer isis.lsdb.lspsMu.RUnlock()
+
+	fmt.Printf("LSDB Dump:\n")
+
+	for id, e := range isis.lsdb.lsps {
+		fmt.Printf("ID: %s.%d\n", id.SystemID.String(), id.PseudonodeID)
+		fmt.Printf("Checksum: 0x%x\n", e.lspdu.Checksum)
+		fmt.Printf("Length: %d\n", e.lspdu.Length)
+		fmt.Printf("Remaining Lifetime: %d\n", e.lspdu.RemainingLifetime)
+		fmt.Printf("Sequence Number: %d\n", e.lspdu.SequenceNumber)
+		fmt.Printf("Type Block: %d\n", e.lspdu.TypeBlock)
+	}
 }
