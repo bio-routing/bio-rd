@@ -26,10 +26,10 @@ message Session {
 }
 
 message SessionStats {
-    uint64 packages_in = 6;
-    uint64 packages_out = 7;
-    uint64 flaps = 8;
-    uint64 routes_received = 9;
-    uint64 routes_imported = 10;
-    uint64 routes_exported = 11;
+    uint64 messages_in = 1;
+    uint64 messages_out = 2;
+    uint64 flaps = 3;
+    uint64 routes_received = 4;
+    uint64 routes_imported = 5;
+    uint64 routes_exported = 6;
 }
