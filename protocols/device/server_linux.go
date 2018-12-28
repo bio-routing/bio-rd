@@ -8,14 +8,24 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-type osAdapter struct {
+func (ds *Server) loadAdapter() error {
+	a, err := newOSAdapterLinux(ds)
+	if err != nil {
+		return fmt.Errorf("Unable to create linux adapter: %v", err)
+	}
+
+	ds.osAdapter = a
+	return nil
+}
+
+type osAdapterLinux struct {
 	srv    *Server
 	handle *netlink.Handle
 	done   chan struct{}
 }
 
-func newOSAdapter(srv *Server) (*osAdapter, error) {
-	o := &osAdapter{
+func newOSAdapterLinux(srv *Server) (*osAdapterLinux, error) {
+	o := &osAdapterLinux{
 		srv: srv,
 	}
 
@@ -28,7 +38,7 @@ func newOSAdapter(srv *Server) (*osAdapter, error) {
 	return o, nil
 }
 
-func (o *osAdapter) start() error {
+func (o *osAdapterLinux) start() error {
 	chLU := make(chan netlink.LinkUpdate)
 	err := netlink.LinkSubscribe(chLU, o.done)
 	if err != nil {
@@ -52,7 +62,7 @@ func (o *osAdapter) start() error {
 	return nil
 }
 
-func (o *osAdapter) init() error {
+func (o *osAdapterLinux) init() error {
 	links, err := o.handle.LinkList()
 	if err != nil {
 		return fmt.Errorf("Unable to get links: %v", err)
@@ -78,7 +88,7 @@ func (o *osAdapter) init() error {
 	return nil
 }
 
-func (o *osAdapter) monitorAddrs(chAU chan netlink.AddrUpdate) {
+func (o *osAdapterLinux) monitorAddrs(chAU chan netlink.AddrUpdate) {
 	for {
 		select {
 		case <-o.done:
@@ -89,7 +99,7 @@ func (o *osAdapter) monitorAddrs(chAU chan netlink.AddrUpdate) {
 	}
 }
 
-func (o *osAdapter) monitorLinks(chLU chan netlink.LinkUpdate) {
+func (o *osAdapterLinux) monitorLinks(chLU chan netlink.LinkUpdate) {
 	for {
 		select {
 		case <-o.done:
@@ -113,7 +123,7 @@ func linkUpdateToDevice(attrs *netlink.LinkAttrs) *Device {
 	}
 }
 
-func (o *osAdapter) processAddrUpdate(au *netlink.AddrUpdate) {
+func (o *osAdapterLinux) processAddrUpdate(au *netlink.AddrUpdate) {
 	o.srv.devicesMu.RLock()
 	defer o.srv.devicesMu.RUnlock()
 
@@ -131,7 +141,7 @@ func (o *osAdapter) processAddrUpdate(au *netlink.AddrUpdate) {
 	d.delAddr(bnet.NewPfxFromIPNet(&au.LinkAddress))
 }
 
-func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
+func (o *osAdapterLinux) processLinkUpdate(lu *netlink.LinkUpdate) {
 	attrs := lu.Attrs()
 
 	o.srv.devicesMu.Lock()
@@ -140,10 +150,10 @@ func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
 	if _, ok := o.srv.devices[uint64(attrs.Index)]; !ok {
 		o.srv.devices[uint64(attrs.Index)] = newDevice()
 		o.srv.devices[uint64(attrs.Index)].updateLink(attrs)
-		o.notify(uint64(attrs.Index))
+		o.srv.notify(uint64(attrs.Index))
 
 		if attrs.OperState == netlink.OperNotPresent {
-			delete(o.srv.devices, uint64(attrs.Index))
+			o.srv.delDevice(uint64(attrs.Index))
 			return
 		}
 
@@ -152,19 +162,5 @@ func (o *osAdapter) processLinkUpdate(lu *netlink.LinkUpdate) {
 
 	d := linkUpdateToDevice(attrs)
 	o.srv.devices[d.Index] = d
-	o.notify(uint64(d.Index))
-}
-
-func (o *osAdapter) notify(index uint64) {
-	o.srv.clientsByDeviceMu.RLock()
-	defer o.srv.clientsByDeviceMu.RUnlock()
-
-	for i, d := range o.srv.devices {
-		if i != index {
-			continue
-		}
-
-		d.notify(o.srv.clientsByDevice[d.Name])
-	}
-
+	o.srv.notify(uint64(attrs.Index))
 }

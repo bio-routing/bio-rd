@@ -7,15 +7,7 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
-type LinkUpdate struct {
-	Index        uint64
-	MTU          uint16
-	Name         string
-	HardwareAddr net.HardwareAddr
-	Flags        net.Flags
-	OperState    uint8
-}
-
+// Device represents a network device
 type Device struct {
 	Name         string
 	Index        uint64

@@ -11,7 +11,7 @@ type Server struct {
 	devicesMu         sync.RWMutex
 	clientsByDevice   map[string][]Client
 	clientsByDeviceMu sync.RWMutex
-	osAdapter         *osAdapter
+	osAdapter         osAdapter
 	done              chan struct{}
 }
 
@@ -20,20 +20,29 @@ type Client interface {
 	DeviceUpdate(*Device)
 }
 
+type osAdapter interface {
+	start() error
+	loadAdapter() error
+}
+
 // New creates a new device server
 func New() (*Server, error) {
-	srv := &Server{
-		devices:         make(map[uint64]*Device),
-		clientsByDevice: make(map[string][]Client),
-	}
-
-	o, err := newOSAdapter(srv)
+	srv := newWithAdapter(nil)
+	err := srv.loadAdapter()
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create OS adapter: %v", err)
 	}
 
-	srv.osAdapter = o
 	return srv, nil
+}
+
+func newWithAdapter(a osAdapter) *Server {
+	return &Server{
+		devices:         make(map[uint64]*Device),
+		clientsByDevice: make(map[string][]Client),
+		osAdapter:       a,
+		done:            make(chan struct{}),
+	}
 }
 
 // Start starts the device server
@@ -48,7 +57,7 @@ func (ds *Server) Start() error {
 
 // Stop stops the device server
 func (ds *Server) Stop() {
-	ds.done <- struct{}{}
+	close(ds.done)
 }
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
@@ -75,6 +84,10 @@ func (ds *Server) addDevice(d *Device) {
 	ds.devices[d.Index] = d
 }
 
+func (ds *Server) delDevice(index uint64) {
+	delete(ds.devices, index)
+}
+
 func (ds *Server) getLinkState(name string) *Device {
 	ds.devicesMu.RLock()
 	defer ds.devicesMu.RUnlock()
@@ -88,4 +101,19 @@ func (ds *Server) getLinkState(name string) *Device {
 	}
 
 	return nil
+}
+
+func (ds *Server) notify(index uint64) {
+	ds.clientsByDeviceMu.RLock()
+	defer ds.clientsByDeviceMu.RUnlock()
+
+	for i, d := range ds.devices {
+		if i != index {
+			continue
+		}
+
+		for _, c := range ds.clientsByDevice[d.Name] {
+			c.DeviceUpdate(d.copy())
+		}
+	}
 }

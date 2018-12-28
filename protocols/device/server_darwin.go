@@ -2,21 +2,17 @@ package device
 
 import "fmt"
 
-type osAdapter struct {
+func (ds *Server) loadAdapter() error {
+	return fmt.Errorf("Not implemented")
 }
 
-func newOSAdapter(srv *Server) (*osAdapter, error) {
+type osAdapterDarwin struct {
+}
+
+func newOSAdapterDarwin(srv *Server) (*osAdapterDarwin, error) {
 	return nil, nil
 }
 
-func (o *osAdapter) start() error {
-	return fmt.Errorf("Not implemented")
-}
-
-func (ds *Server) monitorAddrs() error {
-	return fmt.Errorf("Not implemented")
-}
-
-func (ds *Server) monitorLinks() error {
+func (o *osAdapterDarwin) start() error {
 	return fmt.Errorf("Not implemented")
 }
