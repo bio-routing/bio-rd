@@ -153,7 +153,7 @@ func (o *osAdapterLinux) processLinkUpdate(lu *netlink.LinkUpdate) {
 		o.srv.addDevice(d)
 	}
 
-	d.updateLink(attrs)
+	o.srv.devices[uint64(attrs.Index)].updateLink(attrs)
 	o.srv.notify(uint64(attrs.Index))
 	if attrs.OperState == netlink.OperNotPresent {
 		o.srv.delDevice(uint64(attrs.Index))
