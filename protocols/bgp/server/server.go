@@ -26,24 +26,10 @@ type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
-	GetPeerInfoAll() map[string]PeerInfo
 }
 
 func NewBgpServer() BGPServer {
 	return &bgpServer{}
-}
-
-func (b *bgpServer) GetPeerInfoAll() map[string]PeerInfo {
-	res := make(map[string]PeerInfo)
-	b.peers.Range(func(key, value interface{}) bool {
-		name := key.(string)
-		peer := value.(*peer)
-
-		res[name] = peer.snapshot()
-
-		return true
-	})
-	return res
 }
 
 func (b *bgpServer) RouterID() uint32 {

@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package bio.bgp;
 
-import "protocols/bgp/api/session.proto";
-option go_package = "protocols/bgp/api";
+import "github.com/bio-routing/bio-rd/protocols/bgp/api/session.proto";
+option go_package = "github.com/bio-routing/bio-rd/protocols/bgp/api";
 
 message ListSessionsRequest {
     string name_filter = 1;
