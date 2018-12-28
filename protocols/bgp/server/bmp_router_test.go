@@ -35,8 +35,8 @@ func TestBMPRouterServe(t *testing.T) {
 	for _, test := range tests {
 		addr := net.IP{10, 20, 30, 40}
 		port := uint16(123)
-		rib4 := locRIB.NewTestLocRIB()
-		rib6 := locRIB.NewTestLocRIB()
+		rib4 := locRIB.New()
+		rib6 := locRIB.New()
 		conA, conB := net.Pipe()
 
 		r := newRouter(addr, port, rib4, rib6)
@@ -53,8 +53,8 @@ func TestBMPRouterServe(t *testing.T) {
 func TestStartStopBMP(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(123)
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	con := biotesting.NewMockConn()
 
@@ -260,8 +260,8 @@ func TestProcessPeerUpNotification(t *testing.T) {
 		{
 			name: "Regular BGP by RFC4271",
 			router: &router{
-				rib4:      locRIB.MustNew("93be1b04-4f15-4875-8b7e-13723b710810"),
-				rib6:      locRIB.MustNew("8ae78aa9-b3fb-4ec4-ab6d-5b20767fa4e1"),
+				rib4:      locRIB.New(),
+				rib6:      locRIB.New(),
 				neighbors: make(map[[16]byte]*neighbor),
 			},
 			pkt: &bmppkt.PeerUpNotification{
@@ -300,8 +300,8 @@ func TestProcessPeerUpNotification(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &router{
-				rib4: locRIB.LocRIBByName("93be1b04-4f15-4875-8b7e-13723b710810"),
-				rib6: locRIB.LocRIBByName("8ae78aa9-b3fb-4ec4-ab6d-5b20767fa4e1"),
+				rib4: locRIB.New(),
+				rib6: locRIB.New(),
 				neighbors: map[[16]byte]*neighbor{
 					[16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 255, 1}: {
 						localAS:     200,
@@ -631,16 +631,16 @@ func TestRegisterClients(t *testing.T) {
 	n := &neighbor{
 		fsm: &FSM{
 			ipv4Unicast: &fsmAddressFamily{
-				adjRIBIn: locRIB.NewTestLocRIB(),
+				adjRIBIn: locRIB.New(),
 			},
 			ipv6Unicast: &fsmAddressFamily{
-				adjRIBIn: locRIB.NewTestLocRIB(),
+				adjRIBIn: locRIB.New(),
 			},
 		},
 	}
 
-	client4 := locRIB.NewTestLocRIB()
-	client6 := locRIB.NewTestLocRIB()
+	client4 := locRIB.New()
+	client6 := locRIB.New()
 	ac4 := afiClient{
 		afi:    packet.IPv4AFI,
 		client: client4,
@@ -677,8 +677,8 @@ func TestIntegrationPeerUpRouteMonitor(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	conA, conB := net.Pipe()
@@ -810,8 +810,8 @@ func TestIntegrationPeerUpRouteMonitorIPv6IPv4(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	conA, conB := net.Pipe()
@@ -1020,8 +1020,8 @@ func TestIntegrationPeerUpRouteMonitorIPv4IPv6(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	conA, conB := net.Pipe()
@@ -1231,8 +1231,8 @@ func TestIntegrationPeerUpRouteMonitorIPv6(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	conA, conB := net.Pipe()
@@ -1383,8 +1383,8 @@ func TestIntegrationIncompleteBMPMsg(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	con := biotesting.NewMockConn()
@@ -1461,8 +1461,8 @@ func TestBMPFullRunWithWithdraw(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	con := biotesting.NewMockConn()
@@ -1630,8 +1630,8 @@ func TestBMPFullRunWithPeerDownNotification(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	con := biotesting.NewMockConn()
@@ -1790,8 +1790,8 @@ func TestBMPFullRunWithTerminationMessage(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	con := biotesting.NewMockConn()
@@ -1942,8 +1942,8 @@ func TestIntegrationPeerUpRouteMonitorIPv6WithClientAtEnd(t *testing.T) {
 	addr := net.IP{10, 20, 30, 40}
 	port := uint16(12346)
 
-	rib4 := locRIB.NewTestLocRIB()
-	rib6 := locRIB.NewTestLocRIB()
+	rib4 := locRIB.New()
+	rib6 := locRIB.New()
 
 	r := newRouter(addr, port, rib4, rib6)
 	conA, conB := net.Pipe()
@@ -2087,7 +2087,7 @@ func TestIntegrationPeerUpRouteMonitorIPv6WithClientAtEnd(t *testing.T) {
 		t.Errorf("Unexpected IPv4 route count. Expected: 0 Got: %d", count)
 	}
 
-	client6 := locRIB.NewTestLocRIB()
+	client6 := locRIB.New()
 	r.subscribeRIBs(client6, packet.IPv6AFI)
 
 	count = client6.RouteCount()
@@ -2702,13 +2702,13 @@ func TestIntegrationPeerUpRouteMonitorIPv6WithClientBeforeBMPPeer(t *testing.T) 
 		addr := net.IP{10, 20, 30, 40}
 		port := uint16(12346)
 
-		rib4 := locRIB.NewTestLocRIB()
-		rib6 := locRIB.NewTestLocRIB()
+		rib4 := locRIB.New()
+		rib6 := locRIB.New()
 
 		r := newRouter(addr, port, rib4, rib6)
 		conA, conB := net.Pipe()
 
-		client := locRIB.NewTestLocRIB()
+		client := locRIB.New()
 		r.subscribeRIBs(client, test.afi)
 		if test.doubleSubscribe {
 			r.subscribeRIBs(client, test.afi)
