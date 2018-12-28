@@ -15,7 +15,7 @@ func main() {
 		NETs: []config.NET{
 			{
 				AFI:      49,
-				AreaID:   types.AreaID{},
+				AreaID:   types.AreaID{0, 1, 0, 10},
 				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
 				SEL:      0x00,
 			},
