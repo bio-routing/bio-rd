@@ -1,9 +1,9 @@
 package server
 
 import (
+	"encoding/binary"
 	"fmt"
 	"syscall"
-	"encoding/binary"
 
 	"github.com/bio-routing/bio-rd/biosyscall"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
@@ -43,18 +43,18 @@ func (n *netIf) recvPacket() (pkt []byte, src types.SystemID, err error) {
 	}
 
 	ll := from.(*syscall.SockaddrLinklayer)
-	copy(src[:], ll.Addr[:5])
+	copy(src[:], ll.Addr[:6])
 
-	return buf[:nBytes-1], src, nil
+	return buf[:nBytes], src, nil
 }
 
 func (n *netIf) sendPacket(pkt []byte, dst [6]byte) error {
 	ll := syscall.SockaddrLinklayer{
 		//Protocol: htons(uint16(len(pkt) + 3)),
-		Ifindex:  n.ifa.Index,
-		Halen:    6, // MAC address length
+		Ifindex: n.ifa.Index,
+		Halen:   6, // MAC address length
 	}
-	
+
 	for i := uint8(0); i < ll.Halen; i++ {
 		ll.Addr[i] = dst[i]
 	}
@@ -79,5 +79,5 @@ func htons(input uint16) uint16 {
 	data := make([]byte, 2)
 	binary.BigEndian.PutUint16(data, input)
 
-	return uint16(data[1]) * 256 + uint16(data[0])
+	return uint16(data[1])*256 + uint16(data[0])
 }

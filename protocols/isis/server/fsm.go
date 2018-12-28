@@ -69,7 +69,7 @@ func (fsm *FSM) run() {
 
 func (fsm *FSM) receive(pkt *packet.ISISPacket) {
 	fsm.pktCh <- pkt
-	log.Warningf("Received PDU type %d on %s", pkt.Header.PDUType, fsm.neighbor.ifa.name)
+	log.Debugf("Received PDU type %d on %s", pkt.Header.PDUType, fsm.neighbor.ifa.name)
 }
 
 func stateName(s state) string {
