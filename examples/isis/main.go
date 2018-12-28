@@ -6,11 +6,35 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/server"
-	"github.com/prometheus/common/log"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	cfg := &config.ISISConfig{}
+	cfg := &config.ISISConfig{
+		NETs: []config.NET{
+			{
+				AFI:      49,
+				AreaID:   types.AreaID{},
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SEL:      0x00,
+			},
+		},
+		Interfaces: []config.ISISInterfaceConfig{
+			{
+				Name:    "eth0",
+				Passive: false,
+				P2P:     true,
+				ISISLevel2Config: &config.ISISLevelConfig{
+					HelloInterval: 1,
+					HoldTime:      3,
+					Metric:        10,
+					Priority:      0,
+				},
+			},
+		},
+		MinLSPTransmissionInterval: 100,
+	}
 
 	s := server.NewISISServer(cfg)
 	err := s.Start()
