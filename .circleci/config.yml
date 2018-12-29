@@ -15,7 +15,7 @@ jobs:
       - run: dep ensure -v
 
       - run: go get github.com/mattn/goveralls
-      - run: go test -v -cover -coverprofile=coverage.out ./...
-      - run: goveralls -coverprofile=coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
+      - run: go test -v -cover -coverprofile=coverage.txt ./...
+      - run: bash <(curl -s https://codecov.io/bash)
       - run: .circleci/build-examples
       - run: .circleci/check-gofmt
