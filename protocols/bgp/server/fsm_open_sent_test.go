@@ -115,7 +115,7 @@ func TestProcessMultiProtocolCapability(t *testing.T) {
 				ipv4: &peerAddressFamily{},
 			},
 			caps: []packet.MultiProtocolCapability{
-				packet.MultiProtocolCapability{
+				{
 					AFI:  packet.IPv4AFI,
 					SAFI: packet.UnicastSAFI,
 				},
@@ -124,11 +124,11 @@ func TestProcessMultiProtocolCapability(t *testing.T) {
 		{
 			name: "IPv4 only with multi protocol configuration",
 			peer: &peer{
-				ipv4: &peerAddressFamily{},
+				ipv4:                        &peerAddressFamily{},
 				ipv4MultiProtocolAdvertised: true,
 			},
 			caps: []packet.MultiProtocolCapability{
-				packet.MultiProtocolCapability{
+				{
 					AFI:  packet.IPv4AFI,
 					SAFI: packet.UnicastSAFI,
 				},
@@ -141,7 +141,7 @@ func TestProcessMultiProtocolCapability(t *testing.T) {
 				ipv6: &peerAddressFamily{},
 			},
 			caps: []packet.MultiProtocolCapability{
-				packet.MultiProtocolCapability{
+				{
 					AFI:  packet.IPv6AFI,
 					SAFI: packet.UnicastSAFI,
 				},
@@ -155,11 +155,11 @@ func TestProcessMultiProtocolCapability(t *testing.T) {
 				ipv6: &peerAddressFamily{},
 			},
 			caps: []packet.MultiProtocolCapability{
-				packet.MultiProtocolCapability{
+				{
 					AFI:  packet.IPv6AFI,
 					SAFI: packet.UnicastSAFI,
 				},
-				packet.MultiProtocolCapability{
+				{
 					AFI:  packet.IPv4AFI,
 					SAFI: packet.UnicastSAFI,
 				},
@@ -169,16 +169,16 @@ func TestProcessMultiProtocolCapability(t *testing.T) {
 		{
 			name: "IPv4 and IPv6 configured as multi protocol",
 			peer: &peer{
-				ipv4: &peerAddressFamily{},
-				ipv6: &peerAddressFamily{},
+				ipv4:                        &peerAddressFamily{},
+				ipv6:                        &peerAddressFamily{},
 				ipv4MultiProtocolAdvertised: true,
 			},
 			caps: []packet.MultiProtocolCapability{
-				packet.MultiProtocolCapability{
+				{
 					AFI:  packet.IPv6AFI,
 					SAFI: packet.UnicastSAFI,
 				},
-				packet.MultiProtocolCapability{
+				{
 					AFI:  packet.IPv4AFI,
 					SAFI: packet.UnicastSAFI,
 				},

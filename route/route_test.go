@@ -170,7 +170,7 @@ func TestNewRoute(t *testing.T) {
 			expected: &Route{
 				pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 				paths: []*Path{
-					&Path{
+					{
 						Type:    BGPPathType,
 						BGPPath: &BGPPath{},
 					},

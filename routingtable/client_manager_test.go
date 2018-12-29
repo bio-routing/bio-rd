@@ -47,10 +47,10 @@ func TestClients(t *testing.T) {
 		{
 			name: "No clients",
 			clients: []MockClient{
-				MockClient{
+				{
 					foo: 1,
 				},
-				MockClient{
+				{
 					foo: 2,
 				},
 			},

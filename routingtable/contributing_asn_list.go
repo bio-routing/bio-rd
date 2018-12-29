@@ -65,7 +65,7 @@ func (c *ContributingASNs) Remove(asn uint32) {
 
 		if cASN.count == 0 {
 			copy(asnList[i:], asnList[i+1:])
-			asnList = asnList[:len(asnList)]
+			asnList = asnList[:]
 			c.contributingASNs = asnList[:len(asnList)-1]
 		}
 

@@ -260,7 +260,7 @@ func TestOpenMessage(t *testing.T) {
 				BGPIdentifier: 1,
 				HoldTime:      30,
 				OptParams: []packet.OptParam{
-					packet.OptParam{
+					{
 						Type: packet.CapabilitiesParamType,
 						Value: packet.Capabilities{
 							packet.Capability{
@@ -285,7 +285,7 @@ func TestOpenMessage(t *testing.T) {
 				BGPIdentifier: 1,
 				HoldTime:      30,
 				OptParams: []packet.OptParam{
-					packet.OptParam{
+					{
 						Type: packet.CapabilitiesParamType,
 						Value: packet.Capabilities{
 							packet.Capability{
@@ -309,7 +309,7 @@ func TestOpenMessage(t *testing.T) {
 				holdTime: test.holdTime,
 				routerID: test.routerID,
 				optOpenParams: []packet.OptParam{
-					packet.OptParam{
+					{
 						Type: packet.CapabilitiesParamType,
 						Value: packet.Capabilities{
 							packet.Capability{

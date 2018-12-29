@@ -27,28 +27,28 @@ func TestSubscribeRIBs(t *testing.T) {
 			srv: &BMPServer{
 				routers: make(map[string]*router),
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.50": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.50": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
 			expected: &BMPServer{
 				routers: make(map[string]*router),
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.50": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.50": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
-					"10.20.30.40": map[afiClient]struct{}{
-						afiClient{
+					"10.20.30.40": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
@@ -57,7 +57,7 @@ func TestSubscribeRIBs(t *testing.T) {
 			name: "Test with routers no clients",
 			srv: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.40": &router{
+					"10.20.30.40": {
 						ribClients: make(map[afiClient]struct{}),
 					},
 				},
@@ -65,21 +65,21 @@ func TestSubscribeRIBs(t *testing.T) {
 			},
 			expected: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.40": &router{
+					"10.20.30.40": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
 				},
 				ribClients: map[string]map[afiClient]struct{}{
-					"10.20.30.40": map[afiClient]struct{}{
-						afiClient{
+					"10.20.30.40": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
@@ -104,61 +104,60 @@ func TestUnsubscribeRIBs(t *testing.T) {
 			name: "Unsubscribe existing from router",
 			srv: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.40": &router{
+					"10.20.30.40": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
-					"20.30.40.50": &router{
+					"20.30.40.50": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
 				},
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.50": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.50": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
-					"10.20.30.40": map[afiClient]struct{}{
-						afiClient{
+					"10.20.30.40": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
 			expected: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.40": &router{
+					"10.20.30.40": {
 						ribClients: map[afiClient]struct{}{},
 					},
-					"20.30.40.50": &router{
+					"20.30.40.50": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
 				},
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.50": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.50": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
-					"10.20.30.40": map[afiClient]struct{}{
-					},
+					"10.20.30.40": {},
 				},
 			},
 		},
@@ -166,69 +165,69 @@ func TestUnsubscribeRIBs(t *testing.T) {
 			name: "Unsubscribe existing from non-router",
 			srv: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.60": &router{
+					"10.20.30.60": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
-					"20.30.40.50": &router{
+					"20.30.40.50": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
 				},
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.50": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.50": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
-					"10.20.30.60": map[afiClient]struct{}{
-						afiClient{
+					"10.20.30.60": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
 			expected: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.60": &router{
+					"10.20.30.60": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
-					"20.30.40.50": &router{
+					"20.30.40.50": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
 				},
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.50": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.50": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
-					"10.20.30.60": map[afiClient]struct{}{
-						afiClient{
+					"10.20.30.60": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
@@ -237,49 +236,49 @@ func TestUnsubscribeRIBs(t *testing.T) {
 			name: "Unsubscribe existing from non-existing client",
 			srv: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.40": &router{
+					"10.20.30.40": {
 						ribClients: map[afiClient]struct{}{},
 					},
-					"20.30.40.50": &router{
+					"20.30.40.50": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
 				},
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.40": map[afiClient]struct{}{},
-					"10.20.30.60": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.40": {},
+					"10.20.30.60": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
 			expected: &BMPServer{
 				routers: map[string]*router{
-					"10.20.30.40": &router{
+					"10.20.30.40": {
 						ribClients: map[afiClient]struct{}{},
 					},
-					"20.30.40.50": &router{
+					"20.30.40.50": {
 						ribClients: map[afiClient]struct{}{
-							afiClient{
+							{
 								afi:    packet.IPv4AFI,
 								client: nil,
-							}: struct{}{},
+							}: {},
 						},
 					},
 				},
 				ribClients: map[string]map[afiClient]struct{}{
-					"20.30.40.40": map[afiClient]struct{}{},
-					"10.20.30.60": map[afiClient]struct{}{
-						afiClient{
+					"20.30.40.40": {},
+					"10.20.30.60": {
+						{
 							afi:    packet.IPv4AFI,
 							client: nil,
-						}: struct{}{},
+						}: {},
 					},
 				},
 			},
