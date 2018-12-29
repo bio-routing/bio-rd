@@ -325,7 +325,7 @@ func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(ifa.supportedProtocols)
 	areaAddressesTLV := packet.NewAreaAddressesTLV(ifa.getAreas())
 
-	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232236033) //FIXME: Insert address automatically
+	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232235523) //FIXME: Insert address automatically
 
 	fmt.Printf("Leaving p2pHelloTLVs()\n")
 	return []packet.TLV{
