@@ -26,8 +26,8 @@ func main() {
 				Passive: false,
 				P2P:     true,
 				ISISLevel2Config: &config.ISISLevelConfig{
-					HelloInterval: 1,
-					HoldTime:      3,
+					HelloInterval: 9,
+					HoldTime:      27,
 					Metric:        10,
 					Priority:      0,
 				},
