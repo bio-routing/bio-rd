@@ -214,8 +214,9 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 				ifa:                    ifa,
 				holdingTime:            hello.HoldingTimer,
 				localCircuitID:         hello.LocalCircuitID,
-				extendedLocalCircuitID: p2pAdjTLV.NeighborExtendedLocalCircuitID,
+				extendedLocalCircuitID: p2pAdjTLV.ExtendedLocalCircuitID,
 			}
+			fmt.Printf("DEBUG: extendedLocalCircuitID: %v\n", p2pAdjTLV.ExtendedLocalCircuitID)
 			ifa.l2.neighborsMu.RUnlock()
 			ifa.l2.neighborsMu.Lock()
 			ifa.l2.neighbors[hello.SystemID] = neighbor
