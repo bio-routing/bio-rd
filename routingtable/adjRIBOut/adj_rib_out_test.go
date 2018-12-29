@@ -1126,7 +1126,7 @@ func TestAddPathIBGP(t *testing.T) {
 			},
 			expected: []*route.Route{
 				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), []*route.Path{
-					&route.Path{
+					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							NextHop: net.IPv4FromOctets(1, 2, 3, 4),
@@ -1149,7 +1149,7 @@ func TestAddPathIBGP(t *testing.T) {
 							LocalPref:         0,
 							Source:            net.IP{}},
 					},
-					&route.Path{
+					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							NextHop: net.IPv4FromOctets(2, 3, 4, 5),
@@ -1251,7 +1251,7 @@ func TestAddPathIBGP(t *testing.T) {
 			},
 			expected: []*route.Route{
 				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), []*route.Path{
-					&route.Path{
+					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							NextHop: net.IPv4FromOctets(1, 2, 3, 4),
@@ -1274,7 +1274,7 @@ func TestAddPathIBGP(t *testing.T) {
 							LocalPref:         0,
 							Source:            net.IP{}},
 					},
-					&route.Path{
+					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							NextHop: net.IPv4FromOctets(3, 4, 5, 6),
@@ -1325,7 +1325,7 @@ func TestAddPathIBGP(t *testing.T) {
 			},
 			expected: []*route.Route{
 				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), []*route.Path{
-					&route.Path{
+					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							NextHop: net.IPv4FromOctets(1, 2, 3, 4),
@@ -1348,7 +1348,7 @@ func TestAddPathIBGP(t *testing.T) {
 							LocalPref:         0,
 							Source:            net.IP{}},
 					},
-					&route.Path{
+					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							NextHop: net.IPv4FromOctets(3, 4, 5, 6),
@@ -1371,7 +1371,7 @@ func TestAddPathIBGP(t *testing.T) {
 							LocalPref:         0,
 							Source:            net.IP{}},
 					},
-					&route.Path{
+					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							NextHop: net.IPv4FromOctets(4, 5, 6, 7),

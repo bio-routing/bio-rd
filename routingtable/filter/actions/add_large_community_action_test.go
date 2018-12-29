@@ -19,7 +19,7 @@ func TestAddingLargeCommunities(t *testing.T) {
 		{
 			name: "add one to empty",
 			communities: []types.LargeCommunity{
-				types.LargeCommunity{
+				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
 					DataPart2:           3,
@@ -30,14 +30,14 @@ func TestAddingLargeCommunities(t *testing.T) {
 		{
 			name: "add one to existing",
 			current: []types.LargeCommunity{
-				types.LargeCommunity{
+				{
 					GlobalAdministrator: 5,
 					DataPart1:           6,
 					DataPart2:           7,
 				},
 			},
 			communities: []types.LargeCommunity{
-				types.LargeCommunity{
+				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
 					DataPart2:           3,
@@ -48,19 +48,19 @@ func TestAddingLargeCommunities(t *testing.T) {
 		{
 			name: "add two to existing",
 			current: []types.LargeCommunity{
-				types.LargeCommunity{
+				{
 					GlobalAdministrator: 5,
 					DataPart1:           6,
 					DataPart2:           7,
 				},
 			},
 			communities: []types.LargeCommunity{
-				types.LargeCommunity{
+				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
 					DataPart2:           3,
 				},
-				types.LargeCommunity{
+				{
 					GlobalAdministrator: 7,
 					DataPart1:           8,
 					DataPart2:           9,

@@ -110,7 +110,7 @@ func TestMatches(t *testing.T) {
 				Communities: []uint32{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
 			},
 			communityFilters: []*CommunityFilter{
-				&CommunityFilter{196612}, // (3,4)
+				{196612}, // (3,4)
 			},
 			expected: true,
 		},
@@ -121,7 +121,7 @@ func TestMatches(t *testing.T) {
 				Communities: []uint32{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
 			},
 			communityFilters: []*CommunityFilter{
-				&CommunityFilter{196608}, // (3,0)
+				{196608}, // (3,0)
 			},
 			expected: false,
 		},
@@ -129,7 +129,7 @@ func TestMatches(t *testing.T) {
 			name:   "community filter, bgp path is nil",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			communityFilters: []*CommunityFilter{
-				&CommunityFilter{196608}, // (3,0)
+				{196608}, // (3,0)
 			},
 			expected: false,
 		},
@@ -138,12 +138,12 @@ func TestMatches(t *testing.T) {
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			bgpPath: &route.BGPPath{
 				LargeCommunities: []types.LargeCommunity{
-					types.LargeCommunity{
+					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           3,
 					},
-					types.LargeCommunity{
+					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
 						DataPart2:           0,

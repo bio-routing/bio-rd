@@ -23,7 +23,7 @@ func TestComputeHash(t *testing.T) {
 		},
 		EBGP: false,
 		LargeCommunities: []types.LargeCommunity{
-			types.LargeCommunity{
+			{
 				DataPart1:           1,
 				DataPart2:           2,
 				GlobalAdministrator: 3,
