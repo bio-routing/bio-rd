@@ -181,12 +181,14 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 			ifa.l2.neighborsMu.RUnlock()
 			ifa.l2.neighborsMu.Lock()
 			ifa.l2.neighbors[hello.SystemID] = neighbor
+			fmt.Printf("DEBUG: Added Neighbor %v to interface %v\n", hello.SystemID.String(), ifa.name)
 			ifa.l2.neighborsMu.Unlock()
 
 			ifa.l2.neighborsMu.RLock()
 
 			fsm := newFSM(ifa.l2.neighbors[hello.SystemID])
 			ifa.l2.neighbors[hello.SystemID].fsm = fsm
+			fmt.Printf("DEBUG: Starting a new FSM\n")
 			go fsm.run()
 
 			return
