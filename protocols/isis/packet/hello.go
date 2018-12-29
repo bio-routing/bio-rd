@@ -2,10 +2,10 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/pkg/errors"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -63,12 +63,12 @@ func DecodeP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	TLVs, err := readTLVs(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
+		return nil, errors.Wrap(err, "Unable to read TLVs")
 	}
 
 	pdu.TLVs = TLVs
@@ -91,12 +91,12 @@ func DecodeL2Hello(buf *bytes.Buffer) (*L2Hello, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	TLVs, err := readTLVs(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
+		return nil, errors.Wrap(err, "Unable to read TLVs")
 	}
 
 	pdu.TLVs = TLVs

@@ -6,6 +6,7 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/pkg/errors"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -65,7 +66,7 @@ func deserializeMultiProtocolReachNLRI(b []byte, addPath bool) (MultiProtocolRea
 
 	n.NextHop, err = bnet.IPFromBytes(variable[:nextHopLength])
 	if err != nil {
-		return MultiProtocolReachNLRI{}, fmt.Errorf("Failed to decode next hop IP: %v", err)
+		return MultiProtocolReachNLRI{}, errors.Wrap(err, "Failed to decode next hop IP")
 	}
 	budget -= int(nextHopLength)
 
