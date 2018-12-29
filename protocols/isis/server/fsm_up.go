@@ -15,9 +15,13 @@ type upState struct {
 }
 
 func newUpState(fsm *FSM) *upState {
-	return &upState{
+	u := &upState{
 		fsm: fsm,
 	}
+
+	fsm.neighbor.ifa.isisServer.lsdb.setSRMAny(fsm.neighbor.ifa)
+	go u.sender()
+	return u
 }
 
 func (s upState) run() (state, string) {

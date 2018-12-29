@@ -24,6 +24,10 @@ func (s *downState) run() (state, string) {
 			continue
 		}
 
+		if !s.fsm.neighbor.ifa.p2p {
+			return newDownState(s.fsm), "Received P2PHello on non-P2P interface"
+		}
+
 		h := pkt.Body.(*packet.P2PHello)
 		p2pAdjTLV := h.GetP2PAdjTLV()
 		if p2pAdjTLV != nil {

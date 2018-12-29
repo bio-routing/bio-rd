@@ -36,6 +36,32 @@ const (
 	L2CircuitType   = 2
 )
 
+// GetProtocolsSupportedTLV gets the protocols supported TLV
+func (h *P2PHello) GetProtocolsSupportedTLV() *ProtocolsSupportedTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != ProtocolsSupportedTLVType {
+			continue
+		}
+
+		return tlv.(*ProtocolsSupportedTLV)
+	}
+
+	return nil
+}
+
+// GetAreaAddressesTLV gets the area addresses TLV
+func (h *P2PHello) GetAreaAddressesTLV() *AreaAddressesTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != AreaAddressesTLVType {
+			continue
+		}
+
+		return tlv.(*AreaAddressesTLV)
+	}
+
+	return nil
+}
+
 // GetP2PAdjTLV gets the P2P Adjacency TLV from the P2P Hello
 func (h *P2PHello) GetP2PAdjTLV() *P2PAdjacencyStateTLV {
 	for _, tlv := range h.TLVs {
@@ -43,8 +69,7 @@ func (h *P2PHello) GetP2PAdjTLV() *P2PAdjacencyStateTLV {
 			continue
 		}
 
-		p2pAdjTLV := tlv.(*P2PAdjacencyStateTLV)
-		return p2pAdjTLV
+		return tlv.(*P2PAdjacencyStateTLV)
 	}
 
 	return nil
