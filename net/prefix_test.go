@@ -181,9 +181,7 @@ func TestAddr(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.pfx.Addr()
-		if res != test.expected {
-			t.Errorf("Unexpected result for test %s: Got %v Expected %v", test.name, res, test.expected)
-		}
+		assert.Equal(t, res, test.expected, "Unexpected result for test %s", test.name)
 	}
 }
 
@@ -202,9 +200,7 @@ func TestPfxlen(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.pfx.Pfxlen()
-		if res != test.expected {
-			t.Errorf("Unexpected result for test %s: Got %d Expected %d", test.name, res, test.expected)
-		}
+		assert.Equal(t, res, test.expected, "Unexpected result for test %s", test.name)
 	}
 }
 
@@ -421,9 +417,7 @@ func TestContains(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.a.Contains(test.b)
-		if res != test.expected {
-			t.Errorf("Unexpected result %v for test %s: %s contains %s\n", res, test.name, test.a.String(), test.b.String())
-		}
+		assert.Equal(t, res, test.expected, "Unexpected result %v for test %s: %s contains %s", res, test.name, test.a, test.b)
 	}
 }
 
@@ -456,9 +450,7 @@ func TestMin(t *testing.T) {
 
 	for _, test := range tests {
 		res := min(test.a, test.b)
-		if res != test.expected {
-			t.Errorf("Unexpected result for test %s: Got %d Expected %d", test.name, res, test.expected)
-		}
+		assert.Equal(t, res, test.expected, "Unexpected result for test %s", test.name)
 	}
 }
 
@@ -485,9 +477,7 @@ func TestEqual(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.a.Equal(test.b)
-		if res != test.expected {
-			t.Errorf("Unexpected result for %q: Got %v Expected %v", test.name, res, test.expected)
-		}
+		assert.Equal(t, res, test.expected, "Unexpected result for %q", test.name)
 	}
 }
 
@@ -511,9 +501,7 @@ func TestString(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.pfx.String()
-		if res != test.expected {
-			t.Errorf("Unexpected result for %q: Got %q Expected %q", test.name, res, test.expected)
-		}
+		assert.Equal(t, res, test.expected, "Unexpected result for %q")
 	}
 }
 
@@ -580,7 +568,5 @@ func TestEqualOperator(t *testing.T) {
 	p1 := NewPfx(IPv4(100), 4)
 	p2 := NewPfx(IPv4(100), 4)
 
-	if p1 != p2 {
-		assert.Fail(t, "p1 != p2 (even if attributes are equal)")
-	}
+	assert.Equal(t, p1, p2, "p1 != p2 (even if attributes are equal)")
 }
