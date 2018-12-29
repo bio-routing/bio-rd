@@ -272,6 +272,7 @@ func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 
 	switch l2AdjacencyState {
 	case packet.INITIALIZING_STATE:
+		fmt.Printf("DEBUG: Adding neighbor %v to AdjStateTLV\n", neighborSystemID.String())
 		p2pAdjStateTLV.TLVLength = 15
 		p2pAdjStateTLV.NeighborSystemID = neighborSystemID
 		p2pAdjStateTLV.NeighborExtendedLocalCircuitID = neighborExtendedLocalCircuitID
