@@ -15,6 +15,8 @@ type upState struct {
 }
 
 func newUpState(fsm *FSM) *upState {
+	fsm.holdTimer = time.NewTimer(time.Second * time.Duration(fsm.neighbor.holdingTime))
+
 	u := &upState{
 		fsm: fsm,
 	}
