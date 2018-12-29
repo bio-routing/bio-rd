@@ -83,12 +83,12 @@ func (ifa *netIf) DeviceUp() error {
 		return fmt.Errorf("Failed to open packet socket: %v", err)
 	}
 
-	err = nif.mcastJoin(AllP2PISS)
+	err = ifa.mcastJoin(AllP2PISS)
 	if err != nil {
 		return fmt.Errorf("Failed to join multicast group: %v", err)
 	}
 
-	ifa.done = make(chan struct{})
+	ifa.stop = make(chan struct{})
 	go ifa.receiver()
 	go ifa.helloSender()
 
@@ -97,7 +97,7 @@ func (ifa *netIf) DeviceUp() error {
 }
 
 func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
-	nif := netIf{
+	nif := &netIf{
 		name:               c.Name,
 		isisServer:         srv,
 		passive:            c.Passive,
@@ -125,6 +125,7 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 	}
 
 	srv.ds.Subscribe(nif, c.Name)
+	return nif, nil
 
 	/*ifa, err := net.InterfaceByName(c.Name)
 	if err != nil {

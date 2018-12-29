@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	log "github.com/sirupsen/logrus"
@@ -36,8 +37,14 @@ func main() {
 		MinLSPTransmissionInterval: 100,
 	}
 
-	s := server.NewISISServer(cfg)
-	err := s.Start()
+	ds, err := device.New()
+	if err != nil {
+		log.Errorf("Unable to get device server: %v", err)
+		os.Exit(1)
+	}
+
+	s := server.NewISISServer(cfg, ds)
+	err = s.Start()
 	if err != nil {
 		log.Errorf("Unable to start ISIS server: %v", err)
 		os.Exit(1)
