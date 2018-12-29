@@ -65,6 +65,7 @@ func (ds *Server) Subscribe(client Client, devName string) {
 
 	d := ds.getLinkState(devName)
 	if d != nil {
+		fmt.Printf("DEBUG: Calling DeviceUpdate() on a client\n")
 		client.DeviceUpdate(d)
 	}
 
