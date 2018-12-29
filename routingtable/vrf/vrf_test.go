@@ -6,8 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewWithDuplicate(t *testing.T) {
+	_, err := New("master")
+	assert.Nil(t, err, "no error on first invocation")
+
+	_, err = New("master")
+	assert.NotNil(t, err, "ambigious VRF name")
+}
+
 func TestIPv4UnicastRIBWith(t *testing.T) {
-	v := New("master")
+	v := newUntrackedVRF("master")
 	rib, err := v.CreateIPv4UnicastLocRIB("inet.0")
 
 	assert.Equal(t, rib, v.IPv4UnicastRIB())
@@ -15,7 +23,7 @@ func TestIPv4UnicastRIBWith(t *testing.T) {
 }
 
 func TestIPv6UnicastRIB(t *testing.T) {
-	v := New("master")
+	v := newUntrackedVRF("master")
 	rib, err := v.CreateIPv6UnicastLocRIB("inet6.0")
 
 	assert.Equal(t, rib, v.IPv6UnicastRIB())
@@ -23,7 +31,7 @@ func TestIPv6UnicastRIB(t *testing.T) {
 }
 
 func TestCreateLocRIBTwice(t *testing.T) {
-	v := New("master")
+	v := newUntrackedVRF("master")
 	_, err := v.CreateIPv6UnicastLocRIB("inet6.0")
 	assert.Nil(t, err, "error must be nil on first invokation")
 
@@ -32,7 +40,7 @@ func TestCreateLocRIBTwice(t *testing.T) {
 }
 
 func TestRIBByName(t *testing.T) {
-	v := New("master")
+	v := newUntrackedVRF("master")
 	rib, _ := v.CreateIPv6UnicastLocRIB("inet6.0")
 	assert.NotNil(t, rib, "rib must not be nil after creation")
 

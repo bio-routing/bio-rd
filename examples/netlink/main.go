@@ -30,7 +30,11 @@ func main() {
 
 	log.Info("bio-routing started...\n")
 
-	v := vrf.New("master")
+	v, err := vrf.New("master")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	b := server.NewBgpServer()
 	rib := startBGPServer(b, v)
 

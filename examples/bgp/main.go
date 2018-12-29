@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -19,7 +20,11 @@ func main() {
 	logrus.Printf("This is a BGP speaker\n")
 
 	b := server.NewBgpServer()
-	v := vrf.New("master")
+	v, err := vrf.New("master")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	rib := startServer(b, v)
 
 	go func() {

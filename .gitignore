@@ -23,6 +23,7 @@ bio-rd
 examples/bgp
 examples/bmp
 examples/netlink/netlink
+examples/device/device
 
 # bazel directories
 /bazel-*

@@ -27,7 +27,18 @@ type VRF struct {
 }
 
 // New creates a new VRF
-func New(name string) *VRF {
+func New(name string) (*VRF, error) {
+	v := newUntrackedVRF(name)
+
+	err := globalRegistry.registerVRF(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+func newUntrackedVRF(name string) *VRF {
 	return &VRF{
 		name:     name,
 		ribs:     make(map[addressFamily]*locRIB.LocRIB),
@@ -70,6 +81,10 @@ func (v *VRF) IPv4UnicastRIB() *locRIB.LocRIB {
 // IPv6UnicastRIB returns the local RIB for the IPv6 unicast address family
 func (v *VRF) IPv6UnicastRIB() *locRIB.LocRIB {
 	return v.ribForAddressFamily(addressFamily{afi: afiIPv6, safi: safiUnicast})
+}
+
+func (v *VRF) Name() string {
+	return v.name
 }
 
 func (v *VRF) ribForAddressFamily(family addressFamily) *locRIB.LocRIB {
