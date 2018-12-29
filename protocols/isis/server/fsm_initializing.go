@@ -51,6 +51,8 @@ func (s initializingState) run() (state, string) {
 		if p2pAdjTLV.NeighborSystemID == s.fsm.isisServer.config.NETs[0].SystemID {
 			return newUpState(s.fsm), "Received P2P Hello with Adjacency TLV including us"
 		}
+
+		panic("foo")
 	}
 }
 
