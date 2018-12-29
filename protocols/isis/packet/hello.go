@@ -36,14 +36,15 @@ const (
 	L2CircuitType   = 2
 )
 
+// GetP2PAdjTLV gets the P2P Adjacency TLV from the P2P Hello
 func (h *P2PHello) GetP2PAdjTLV() *P2PAdjacencyStateTLV {
 	for _, tlv := range h.TLVs {
 		if tlv.Type() != P2PAdjacencyStateTLVType {
 			continue
 		}
 
-		p2pAdjTLV := tlv.(P2PAdjacencyStateTLV)
-		return &p2pAdjTLV
+		p2pAdjTLV := tlv.(*P2PAdjacencyStateTLV)
+		return p2pAdjTLV
 	}
 
 	return nil
