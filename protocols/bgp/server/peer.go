@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -142,6 +143,10 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 			addPathReceive: c.IPv4.AddPathRecv,
 			addPathSend:    c.IPv4.AddPathSend,
 		}
+
+		if p.ipv4.rib == nil {
+			return nil, fmt.Errorf("No RIB for IPv4 unicast configured")
+		}
 	}
 
 	// If we are a route reflector and no ClusterID was set, use our RouterID
@@ -169,6 +174,10 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 			addPathSend:    c.IPv6.AddPathSend,
 		}
 		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
+
+		if p.ipv6.rib == nil {
+			return nil, fmt.Errorf("No RIB for IPv6 unicast configured")
+		}
 	}
 
 	p.optOpenParams = append(p.optOpenParams, packet.OptParam{
