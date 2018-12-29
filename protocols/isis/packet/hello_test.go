@@ -8,6 +8,40 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetP2PAdjTLV(t *testing.T) {
+	tests := []struct {
+		name     string
+		hello    *P2PHello
+		expected *P2PAdjacencyStateTLV
+	}{
+		{
+			name: "Test #1",
+			hello: &P2PHello{
+				TLVs: []TLV{
+					P2PAdjacencyStateTLV{
+						TLVType: P2PAdjacencyStateTLVType,
+					},
+				},
+			},
+			expected: &P2PAdjacencyStateTLV{
+				TLVType: P2PAdjacencyStateTLVType,
+			},
+		},
+		{
+			name: "Test #1",
+			hello: &P2PHello{
+				TLVs: []TLV{},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		ret := test.hello.GetP2PAdjTLV()
+		assert.Equalf(t, test.expected, ret, "Test %q", test.name)
+	}
+}
+
 func TestP2PHelloSerialize(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -36,6 +36,19 @@ const (
 	L2CircuitType   = 2
 )
 
+func (h *P2PHello) GetP2PAdjTLV() *P2PAdjacencyStateTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != P2PAdjacencyStateTLVType {
+			continue
+		}
+
+		p2pAdjTLV := tlv.(P2PAdjacencyStateTLV)
+		return &p2pAdjTLV
+	}
+
+	return nil
+}
+
 // Serialize serializes a P2P Hello
 func (h *P2PHello) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.CircuitType)

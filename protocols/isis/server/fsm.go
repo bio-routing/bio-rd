@@ -16,22 +16,24 @@ type state interface {
 
 // FSM is the per neighbor finite state machine
 type FSM struct {
-	neighbor  *neighbor
-	state     state
-	stateMu   sync.Mutex
-	pktCh     chan *packet.ISISPacket
-	holdTimer *time.Timer
-	stopCh    chan struct{}
+	isisServer *ISISServer
+	neighbor   *neighbor
+	state      state
+	stateMu    sync.Mutex
+	pktCh      chan *packet.ISISPacket
+	holdTimer  *time.Timer
+	stopCh     chan struct{}
 }
 
-func newFSM(n *neighbor) *FSM {
+func newFSM(srv *ISISServer, n *neighbor) *FSM {
 	fsm := &FSM{
-		neighbor: n,
-		pktCh:    make(chan *packet.ISISPacket),
-		stopCh:   make(chan struct{}),
+		isisServer: srv,
+		neighbor:   n,
+		pktCh:      make(chan *packet.ISISPacket),
+		stopCh:     make(chan struct{}),
 	}
 
-	fsm.state = newInitializingState(fsm)
+	fsm.state = newDownState(fsm)
 	return fsm
 }
 

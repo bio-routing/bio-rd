@@ -11,11 +11,11 @@ import (
 
 const (
 	// P2PAdjacencyStateTLVType is the type value of an P2P adjacency state TLV
-	P2PAdjacencyStateTLVType = 240
-	// withoutNeighbor is the length of this TLV without a neighbor
-	withoutNeighbor = 5
-	//withNeighbor is the length of this TLV including a neighbor
-	withNeighbor = 15
+	P2PAdjacencyStateTLVType = uint8(240)
+	// P2PAdjacencyStateTLVLenWithoutNeighbor is the length of this TLV without a neighbor
+	P2PAdjacencyStateTLVLenWithoutNeighbor = 5
+	//P2PAdjacencyStateTLVLenWithNeighbor is the length of this TLV including a neighbor
+	P2PAdjacencyStateTLVLenWithNeighbor = 15
 )
 
 // P2PAdjacencyStateTLV represents an P2P adjacency state TLV
@@ -36,12 +36,12 @@ func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8)
 
 	fields := make([]interface{}, 0)
 	switch pdu.TLVLength {
-	case withoutNeighbor:
+	case P2PAdjacencyStateTLVLenWithoutNeighbor:
 		fields = []interface{}{
 			&pdu.AdjacencyState,
 			&pdu.ExtendedLocalCircuitID,
 		}
-	case withNeighbor:
+	case P2PAdjacencyStateTLVLenWithNeighbor:
 		fields = []interface{}{
 			&pdu.AdjacencyState,
 			&pdu.ExtendedLocalCircuitID,

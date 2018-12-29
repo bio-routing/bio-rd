@@ -187,7 +187,7 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 
 			ifa.l2.neighborsMu.RLock()
 
-			fsm := newFSM(ifa.l2.neighbors[hello.SystemID])
+			fsm := newFSM(ifa.isisServer, ifa.l2.neighbors[hello.SystemID])
 			ifa.l2.neighbors[hello.SystemID].fsm = fsm
 			fmt.Printf("DEBUG: Starting a new FSM\n")
 			go fsm.run()
