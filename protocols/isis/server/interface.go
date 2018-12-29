@@ -52,6 +52,7 @@ type level struct {
 }
 
 func (ifa *netIf) DeviceUpdate(d *device.Device) {
+	fmt.Printf("ISIS: DeviceUpdate() called\n")
 	ifa.deviceMu.Lock()
 	defer ifa.deviceMu.Unlock()
 
