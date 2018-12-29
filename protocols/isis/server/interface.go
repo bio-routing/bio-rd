@@ -357,6 +357,7 @@ func (ifa *netIf) p2pL2AdjacencyState() (state uint8, neighbor types.SystemID, n
 	}
 
 	for systemID, neighbor := range ifa.l2.neighbors {
+		fmt.Printf("DEBUG: neighbor.extendedLocalCircuitID: %v\n", neighbor.extendedLocalCircuitID)
 		return neighbor.fsm.state.getState(), systemID, neighbor.extendedLocalCircuitID
 	}
 
