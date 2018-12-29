@@ -24,7 +24,7 @@ func (s *downState) run() (state, string) {
 			continue
 		}
 
-		h := pkt.Body.(packet.P2PHello)
+		h := pkt.Body.(*packet.P2PHello)
 		p2pAdjTLV := h.GetP2PAdjTLV()
 		if p2pAdjTLV != nil {
 			if p2pAdjTLV.Length() == packet.P2PAdjacencyStateTLVLenWithoutNeighbor {
