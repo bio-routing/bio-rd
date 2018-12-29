@@ -17,6 +17,4 @@ jobs:
       - run: go get github.com/mattn/goveralls
       - run: go test -v -cover -coverprofile=coverage.out ./...
       - run: goveralls -coverprofile=coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
-      - run: go install github.com/bio-routing/bio-rd/examples/bgp
-      - run: go install github.com/bio-routing/bio-rd/examples/bmp
-      - run: go install github.com/bio-routing/bio-rd/examples/netlink
+      - run: .circleci/build-examples
