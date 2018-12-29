@@ -204,11 +204,17 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 	case 2:
 		ifa.l2.neighborsMu.RLock()
 		if _, ok := ifa.l2.neighbors[hello.SystemID]; !ok {
+			p2pAdjTLV := hello.GetP2PAdjTLV()
+			if p2pAdjTLV == nil {
+				return
+			}
+
 			neighbor := &neighbor{
-				systemID:       hello.SystemID,
-				ifa:            ifa,
-				holdingTime:    hello.HoldingTimer,
-				localCircuitID: hello.LocalCircuitID,
+				systemID:               hello.SystemID,
+				ifa:                    ifa,
+				holdingTime:            hello.HoldingTimer,
+				localCircuitID:         hello.LocalCircuitID,
+				extendedLocalCircuitID: p2pAdjTLV.NeighborExtendedLocalCircuitID,
 			}
 			ifa.l2.neighborsMu.RUnlock()
 			ifa.l2.neighborsMu.Lock()
@@ -260,7 +266,8 @@ func (ifa *netIf) sendP2PHello() error {
 		SystemID:     ifa.isisServer.systemID(),
 		HoldingTimer: ifa.l2.HoldTime,
 		PDULength:    packet.P2PHelloMinSize,
-		TLVs:         ifa.p2pHelloTLVs(),
+		//LocalCircuitID:
+		TLVs: ifa.p2pHelloTLVs(),
 	}
 
 	for _, TLV := range p.TLVs {
@@ -296,10 +303,17 @@ func (ifa *netIf) sendP2PHello() error {
 	return nil
 }
 
+func (ifa *netIf) getDeviceIndex() uint32 {
+	ifa.deviceMu.RLock()
+	defer ifa.deviceMu.RUnlock()
+
+	return uint32(ifa.device.Index)
+}
+
 func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 
 	l2AdjacencyState, neighborSystemID, neighborExtendedLocalCircuitID := ifa.p2pL2AdjacencyState()
-	p2pAdjStateTLV := packet.NewP2PAdjacencyStateTLV(l2AdjacencyState, 1234)
+	p2pAdjStateTLV := packet.NewP2PAdjacencyStateTLV(l2AdjacencyState, ifa.getDeviceIndex())
 
 	switch l2AdjacencyState {
 	case packet.INITIALIZING_STATE:

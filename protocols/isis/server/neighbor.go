@@ -13,9 +13,10 @@ type neighbor struct {
 	fsm                    *FSM
 }
 
-func newNeighbor(sysID types.SystemID, ifa *netIf) *neighbor {
+func newNeighbor(sysID types.SystemID, ifa *netIf, extendedLocalCircuitID uint32) *neighbor {
 	return &neighbor{
-		systemID: sysID,
-		ifa:      ifa,
+		systemID:               sysID,
+		ifa:                    ifa,
+		extendedLocalCircuitID: extendedLocalCircuitID,
 	}
 }

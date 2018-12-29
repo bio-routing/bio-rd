@@ -61,11 +61,8 @@ func (ds *Server) Stop() {
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
 func (ds *Server) Subscribe(client Client, devName string) {
-	fmt.Printf("Protocol Device: Some one just subscribed for %q\n", devName)
-
 	d := ds.getLinkState(devName)
 	if d != nil {
-		fmt.Printf("DEBUG: Calling DeviceUpdate() on a client\n")
 		client.DeviceUpdate(d)
 	}
 
