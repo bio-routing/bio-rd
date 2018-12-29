@@ -6,6 +6,7 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +19,8 @@ func main() {
 	logrus.Printf("This is a BGP speaker\n")
 
 	b := server.NewBgpServer()
-	rib := startServer(b)
+	v := vrf.New("master")
+	rib := startServer(b, v)
 
 	go func() {
 		for {

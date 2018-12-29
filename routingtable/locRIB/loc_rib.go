@@ -8,7 +8,6 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,18 +20,8 @@ type LocRIB struct {
 	contributingASNs *routingtable.ContributingASNs
 }
 
-// MustNew creates a new routing information base or panics
-func MustNew(name string) *LocRIB {
-	rib, err := New(name)
-	if err != nil {
-		panic(err)
-	}
-
-	return rib
-}
-
 // New creates a new routing information base
-func New(name string) (*LocRIB, error) {
+func New(name string) *LocRIB {
 	a := &LocRIB{
 		name:             name,
 		rt:               routingtable.NewRoutingTable(),
@@ -40,20 +29,7 @@ func New(name string) (*LocRIB, error) {
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 
-	err := defaultRegistry.register(a)
-	if err != nil {
-		return nil, err
-	}
-
-	return a, nil
-}
-
-// NewTestLocRIB returns an unique RIB and should only be used in tests
-func NewTestLocRIB() *LocRIB {
-	id := uuid.New()
-	rib, _ := New(id.String())
-
-	return rib
+	return a
 }
 
 // GetContributingASNs returns a pointer to the list of contributing ASNs

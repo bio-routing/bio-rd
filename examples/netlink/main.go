@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net"
 	"os"
 	"time"
 
@@ -9,7 +8,7 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/protocols/netlink"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,16 +30,9 @@ func main() {
 
 	log.Info("bio-routing started...\n")
 
-	cfg := &config.Global{
-		Listen: true,
-		LocalAddressList: []net.IP{
-			net.IPv4(169, 254, 0, 2),
-		},
-	}
-
-	rib, _ := locRIB.New("netlink-example")
+	v := vrf.New("master")
 	b := server.NewBgpServer()
-	startBGPServer(b, rib, cfg)
+	rib := startBGPServer(b, v)
 
 	// Netlink communication
 	n := protocolnetlink.NewNetlink(&config.Netlink{

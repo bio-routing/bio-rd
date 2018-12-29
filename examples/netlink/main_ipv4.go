@@ -1,21 +1,26 @@
 package main
 
 import (
+	"net"
 	"time"
 
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-
 	"github.com/bio-routing/bio-rd/config"
-	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/routingtable/filter"
-	log "github.com/sirupsen/logrus"
-
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	log "github.com/sirupsen/logrus"
 )
 
-func startBGPServer(b server.BGPServer, rib *locRIB.LocRIB, cfg *config.Global) {
-	err := b.Start(cfg)
+func startBGPServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
+	err := b.Start(&config.Global{
+		Listen: true,
+		LocalAddressList: []net.IP{
+			net.IPv4(169, 254, 0, 2),
+		},
+	})
 	if err != nil {
 		log.Fatalf("Unable to start BGP server: %v", err)
 	}
@@ -37,7 +42,6 @@ func startBGPServer(b server.BGPServer, rib *locRIB.LocRIB, cfg *config.Global) 
 		//},
 		//RouteServerClient: true,
 		IPv4: &config.AddressFamilyConfig{
-			RIB:          rib,
 			ImportFilter: filter.NewAcceptAllFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
 			AddPathSend: routingtable.ClientOptions{
@@ -45,5 +49,8 @@ func startBGPServer(b server.BGPServer, rib *locRIB.LocRIB, cfg *config.Global) 
 			},
 			AddPathRecv: true,
 		},
+		VRF: v,
 	})
+
+	return v.IPv4UnicastRIB()
 }

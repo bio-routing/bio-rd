@@ -879,7 +879,7 @@ func TestSender(t *testing.T) {
 			addr: bnet.IPv4FromOctets(169, 254, 100, 100),
 		})
 
-		rib := locRIB.NewTestLocRIB()
+		rib := locRIB.New("inet6.0")
 		if test.afi == packet.IPv6AFI {
 			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
 				rib:          rib,

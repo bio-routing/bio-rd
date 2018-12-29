@@ -12,11 +12,13 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/sirupsen/logrus"
 )
 
 func startServer(b server.BGPServer) *locRIB.LocRIB {
-	rib, err := locRIB.New("inet6.0")
+	vrf := vrf.NewVRF("master")
+	rib, err := vrf.CreateIPv6UnicastLocRIB("inet6.0")
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -43,7 +45,6 @@ func startServer(b server.BGPServer) *locRIB.LocRIB {
 		Passive:           true,
 		RouterID:          b.RouterID(),
 		IPv6: &config.AddressFamilyConfig{
-			RIB:          rib,
 			ImportFilter: filter.NewAcceptAllFilter(),
 			ExportFilter: filter.NewDrainFilter(),
 			AddPathSend: routingtable.ClientOptions{
