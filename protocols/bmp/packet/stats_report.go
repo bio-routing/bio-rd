@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decoder"
+	"github.com/pkg/errors"
 )
 
 // StatsReport represents a stats report message
@@ -27,7 +27,7 @@ func decodeStatsReport(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode per peer header: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode per peer header")
 	}
 
 	sr.PerPeerHeader = pph
@@ -45,7 +45,7 @@ func decodeStatsReport(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	for i := uint32(0); i < sr.StatsCount; i++ {
 		infoTLV, err := decodeInformationTLV(buf)
 		if err != nil {
-			return sr, fmt.Errorf("Unable to decode information TLV: %v", err)
+			return sr, errors.Wrap(err, "Unable to decode information TLV")
 		}
 
 		sr.Stats[i] = infoTLV

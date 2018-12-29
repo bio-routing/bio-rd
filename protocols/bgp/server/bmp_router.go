@@ -13,6 +13,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/taktv6/tflow2/convert"
 )
@@ -280,7 +281,7 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	sentOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.SentOpenMsg[packet.HeaderLen:]))
 	if err != nil {
-		return fmt.Errorf("Unable to decode sent open message sent from %v to %v: %v", r.address.String(), msg.PerPeerHeader.PeerAddress, err)
+		return errors.Wrapf(err, "Unable to decode sent open message sent from %v to %v", r.address.String(), msg.PerPeerHeader.PeerAddress)
 	}
 
 	if len(msg.ReceivedOpenMsg) < packet.MinOpenLen {
@@ -289,7 +290,7 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	recvOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.ReceivedOpenMsg[packet.HeaderLen:]))
 	if err != nil {
-		return fmt.Errorf("Unable to decode received open message sent from %v to %v: %v", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
+		return errors.Wrapf(err, "Unable to decode received open message sent from %v to %v", msg.PerPeerHeader.PeerAddress, r.address.String())
 	}
 
 	addrLen := net.IPv4len

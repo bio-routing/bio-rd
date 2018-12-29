@@ -10,6 +10,7 @@ import (
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/taktv6/tflow2/convert"
 )
@@ -132,7 +133,7 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, defaultBufferLen)
 	_, err = io.ReadFull(c, buffer[0:bmppkt.MinLen])
 	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
+		return nil, errors.Wrap(err, "Read failed")
 	}
 
 	l := convert.Uint32b(buffer[1:5])
@@ -145,7 +146,7 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 	toRead := l
 	_, err = io.ReadFull(c, buffer[bmppkt.MinLen:toRead])
 	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
+		return nil, errors.Wrap(err, "Read failed")
 	}
 
 	return buffer[0:toRead], nil
