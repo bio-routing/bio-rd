@@ -52,10 +52,10 @@ type level struct {
 }
 
 func (ifa *netIf) DeviceUpdate(d *device.Device) {
-	ifa.statusMu.Lock()
-	defer ifa.statusMu.Unlock()
+	ifa.deviceMu.Lock()
+	defer ifa.deviceMu.Unlock()
 
-	ifa.status = d
+	ifa.device = d
 	if d.OperState == device.IfOperUp {
 		err := ifa.DeviceUp()
 		if err != nil {
@@ -72,13 +72,13 @@ func (ifa *netIf) DeviceUpdate(d *device.Device) {
 }
 
 func (ifa *netIf) DeviceDown() error {
-	close(ifa.done)
+	close(ifa.stop)
 	log.Infof("ISIS: Interface %q is now down", ifa.name)
 	return ifa.closePacketSocket()
 }
 
 func (ifa *netIf) DeviceUp() error {
-	err = ifa.openPacketSocket()
+	err := ifa.openPacketSocket()
 	if err != nil {
 		return fmt.Errorf("Failed to open packet socket: %v", err)
 	}
