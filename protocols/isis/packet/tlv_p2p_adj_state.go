@@ -62,7 +62,7 @@ func readP2PAdjacencyStateTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8)
 func NewP2PAdjacencyStateTLV(adjacencyState uint8, extendedLocalCircuitID uint32) *P2PAdjacencyStateTLV {
 	return &P2PAdjacencyStateTLV{
 		TLVType:                P2PAdjacencyStateTLVType,
-		TLVLength:              withoutNeighbor,
+		TLVLength:              P2PAdjacencyStateTLVLenWithoutNeighbor,
 		AdjacencyState:         adjacencyState,
 		ExtendedLocalCircuitID: extendedLocalCircuitID,
 	}
@@ -90,7 +90,7 @@ func (p P2PAdjacencyStateTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(p.AdjacencyState)
 	buf.Write(convert.Uint32Byte(p.ExtendedLocalCircuitID))
 
-	if p.TLVLength == withNeighbor {
+	if p.TLVLength == P2PAdjacencyStateTLVLenWithNeighbor {
 		buf.Write(p.NeighborSystemID[:])
 		buf.Write(convert.Uint32Byte(p.NeighborExtendedLocalCircuitID))
 	}
