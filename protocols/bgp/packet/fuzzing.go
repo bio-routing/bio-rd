@@ -4,10 +4,6 @@ package packet
 
 import (
 	"bytes"
-
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 )
 
 const (
@@ -38,7 +34,7 @@ func getAllDecodingOptions() []DecodeOptions {
 	var ret []DecodeOptions
 	for _, octet := range parameters {
 		ret = append(ret, DecodeOptions{
-			Use32BitASN: octet
+			Use32BitASN: octet,
 		})
 	}
 
