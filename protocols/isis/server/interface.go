@@ -51,6 +51,7 @@ type level struct {
 
 func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 	nif := netIf{
+		name:               c.Name,
 		isisServer:         srv,
 		passive:            c.Passive,
 		p2p:                c.P2P,
