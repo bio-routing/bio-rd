@@ -27,14 +27,14 @@ func (s *downState) run() (state, string) {
 		h := pkt.Body.(packet.P2PHello)
 		p2pAdjTLV := h.GetP2PAdjTLV()
 		if p2pAdjTLV != nil {
-			p2pAdjTLV.Length == packet.P2PAdjacencyStateTLVLenWithoutNeighbor {
+			if p2pAdjTLV.Length() == packet.P2PAdjacencyStateTLVLenWithoutNeighbor {
 				return newInitializingState(s.fsm), "Received P2P Hello with Adjacency TLV"
 			}
 
 			if p2pAdjTLV.NeighborSystemID == s.fsm.isisServer.config.NETs[0].SystemID {
 				return newUpState(s.fsm), "Received P2P Hello with Adjacency TLV including us"
 			}
-			
+
 			return newDownState(s.fsm), "Received P2P Hello with Adjacency TLV including someone else"
 		}
 
