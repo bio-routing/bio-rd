@@ -1801,7 +1801,7 @@ func TestSerializeUnknownAttribute(t *testing.T) {
 		expectedLen uint16
 	}{
 		{
-			name: "Arbritary attribute",
+			name: "Arbitrary attribute",
 			input: &PathAttribute{
 				TypeCode:   200,
 				Value:      []byte{1, 2, 3, 4},

@@ -229,7 +229,7 @@ func (nr *NetlinkReader) Register(routingtable.RouteTableClient) {
 func (nr *NetlinkReader) Unregister(routingtable.RouteTableClient) {
 }
 
-// RouteCount retuns the number of routes stored in the internal routing table
+// RouteCount returns the number of routes stored in the internal routing table
 func (nr *NetlinkReader) RouteCount() int64 {
 	nr.mu.RLock()
 	defer nr.mu.RUnlock()
