@@ -9,6 +9,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/taktv6/tflow2/convert"
 )
@@ -70,7 +71,7 @@ func recvMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, defaultBufferLen)
 	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
 	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
+		return nil, errors.Wrap(err, "Read failed")
 	}
 
 	l := convert.Uint32b(buffer[1:3])
@@ -83,7 +84,7 @@ func recvMsg(c net.Conn) (msg []byte, err error) {
 	toRead := l
 	_, err = io.ReadFull(c, buffer[packet.MinLen:toRead])
 	if err != nil {
-		return nil, fmt.Errorf("Read failed: %v", err)
+		return nil, errors.Wrap(err, "Read failed")
 	}
 
 	return buffer, nil

@@ -2,12 +2,12 @@ package server
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -89,7 +89,12 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			opt := &packet.EncodeOptions{}
 			err := serializeAndSendUpdate(test.buf, test.testUpdate, opt)
-			assert.Equal(t, test.err, err)
+
+			if test.err == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Equal(t, test.err.Error(), err.Error())
+			}
 
 			assert.Equal(t, test.expected, test.buf.Bytes())
 		})
