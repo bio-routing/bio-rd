@@ -1,12 +1,12 @@
 package server
 
 import (
-	"fmt"
 	"net"
 	"strings"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -38,7 +38,7 @@ func (b *bgpServer) RouterID() uint32 {
 
 func (b *bgpServer) Start(c *config.Global) error {
 	if err := c.SetDefaultGlobalConfigValues(); err != nil {
-		return fmt.Errorf("Failed to load defaults: %v", err)
+		return errors.Wrap(err, "Failed to load defaults")
 	}
 
 	log.Infof("ROUTER ID: %d\n", c.RouterID)
@@ -50,7 +50,7 @@ func (b *bgpServer) Start(c *config.Global) error {
 		for _, addr := range c.LocalAddressList {
 			l, err := NewTCPListener(addr, c.Port, acceptCh)
 			if err != nil {
-				return fmt.Errorf("Failed to start TCPListener for %s: %v", addr.String(), err)
+				return errors.Wrapf(err, "Failed to start TCPListener for %s", addr.String())
 			}
 			b.listeners = append(b.listeners, l)
 		}

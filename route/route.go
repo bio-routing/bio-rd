@@ -12,7 +12,7 @@ import (
 const (
 	_ = iota // 0
 
-	// StaticPathType indicats a path is a static path
+	// StaticPathType indicators a path is a static path
 	StaticPathType
 
 	// BGPPathType indicates a path is a BGP path

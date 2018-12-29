@@ -2,7 +2,8 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -33,7 +34,7 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 
 	hdr, err := DecodeHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode header: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode header")
 	}
 	pkt.Header = hdr
 
@@ -41,7 +42,7 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 	case P2P_HELLO:
 		p2pHello, err := DecodeP2PHello(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode P2P hello: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode P2P hello")
 		}
 		pkt.Body = p2pHello
 	}

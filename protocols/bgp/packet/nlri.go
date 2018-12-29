@@ -7,6 +7,7 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/pkg/errors"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -32,7 +33,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*N
 	for p < length {
 		nlri, consumed, err = decodeNLRI(buf, afi, addPath)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode NLRI: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode NLRI")
 		}
 		p += uint16(consumed)
 
@@ -59,7 +60,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 			&nlri.PathIdentifier,
 		})
 		if err != nil {
-			return nil, consumed, fmt.Errorf("Unable to decode path identifier: %v", err)
+			return nil, consumed, errors.Wrap(err, "Unable to decode path identifier")
 		}
 
 		consumed += pathIdentifierLen

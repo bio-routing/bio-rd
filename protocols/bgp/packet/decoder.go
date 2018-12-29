@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/pkg/errors"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -13,12 +14,12 @@ import (
 func Decode(buf *bytes.Buffer, opt *DecodeOptions) (*BGPMessage, error) {
 	hdr, err := decodeHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to decode header: %v", err)
+		return nil, errors.Wrap(err, "Failed to decode header")
 	}
 
 	body, err := decodeMsgBody(buf, hdr.Type, hdr.Length-MinLen, opt)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to decode message: %v", err)
+		return nil, errors.Wrap(err, "Failed to decode message")
 	}
 
 	return &BGPMessage{
@@ -132,7 +133,7 @@ func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
 func DecodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
 	msg, err := _decodeOpenMsg(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode OPEN message: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode OPEN message")
 	}
 	return msg.(*BGPOpen), err
 }
@@ -160,7 +161,7 @@ func _decodeOpenMsg(buf *bytes.Buffer) (interface{}, error) {
 
 	msg.OptParams, err = decodeOptParams(buf, msg.OptParmLen)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode optional parameters: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode optional parameters")
 	}
 
 	return msg, nil
@@ -187,7 +188,7 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 		case CapabilitiesParamType:
 			caps, err := decodeCapabilities(buf, o.Length)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to decode capabilities: %v", err)
+				return nil, errors.Wrap(err, "Unable to decode capabilities")
 			}
 
 			o.Value = caps
@@ -210,7 +211,7 @@ func decodeCapabilities(buf *bytes.Buffer, length uint8) (Capabilities, error) {
 	for read < length {
 		cap, err := decodeCapability(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode capability: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode capability")
 		}
 
 		ret = append(ret, cap)
@@ -242,20 +243,20 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 	case AddPathCapabilityCode:
 		addPathCap, err := decodeAddPathCapability(buf)
 		if err != nil {
-			return cap, fmt.Errorf("Unable to decode add path capability: %v", err)
+			return cap, errors.Wrap(err, "Unable to decode add path capability")
 		}
 		cap.Value = addPathCap
 	case ASN4CapabilityCode:
 		asn4Cap, err := decodeASN4Capability(buf)
 		if err != nil {
-			return cap, fmt.Errorf("Unable to decode 4 octet ASN capability: %v", err)
+			return cap, errors.Wrap(err, "Unable to decode 4 octet ASN capability")
 		}
 		cap.Value = asn4Cap
 	default:
 		for i := uint8(0); i < cap.Length; i++ {
 			_, err := buf.ReadByte()
 			if err != nil {
-				return cap, fmt.Errorf("Read failed: %v", err)
+				return cap, errors.Wrap(err, "Read failed")
 			}
 		}
 	}

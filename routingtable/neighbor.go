@@ -2,9 +2,9 @@ package routingtable
 
 import bnet "github.com/bio-routing/bio-rd/net"
 
-// Neighbor represents the attributes identifying a neighbor relationsship
+// Neighbor represents the attributes identifying a neighbor relationship
 type Neighbor struct {
-	// Addres is the IPv4 address of the neighbor as integer representation
+	// Address is the IPv4 address of the neighbor as integer representation
 	Address bnet.IP
 
 	// Local address is the local address of the BGP TCP connection

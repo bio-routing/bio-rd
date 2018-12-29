@@ -2,7 +2,8 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 // TerminationMessage represents a termination message
@@ -28,7 +29,7 @@ func decodeTerminationMessage(buf *bytes.Buffer, ch *CommonHeader) (*Termination
 	for read < toRead {
 		tlv, err := decodeInformationTLV(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode TLV: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode TLV")
 		}
 
 		tm.TLVs = append(tm.TLVs, tlv)
