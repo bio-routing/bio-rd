@@ -20,7 +20,7 @@ func (n *netIf) openPacketSocket() error {
 		return fmt.Errorf("Unable to set BPF filter")
 	}
 
-	if biosyscall.BindToInterface(n.socket, n.device.Index) != 0 {
+	if biosyscall.BindToInterface(n.socket, int(n.device.Index)) != 0 {
 		return fmt.Errorf("Unable to bind to interface")
 	}
 
@@ -32,7 +32,7 @@ func (n *netIf) closePacketSocket() error {
 }
 
 func (n *netIf) mcastJoin(addr [6]byte) error {
-	if biosyscall.JoinISISMcast(n.socket, n.device.Index) != 0 {
+	if biosyscall.JoinISISMcast(n.socket, int(n.device.Index)) != 0 {
 		return fmt.Errorf("setsockopt failed")
 	}
 
@@ -55,7 +55,7 @@ func (n *netIf) recvPacket() (pkt []byte, src types.SystemID, err error) {
 func (n *netIf) sendPacket(pkt []byte, dst [6]byte) error {
 	ll := syscall.SockaddrLinklayer{
 		//Protocol: htons(uint16(len(pkt) + 3)),
-		Ifindex: n.device.Index,
+		Ifindex: int(n.device.Index),
 		Halen:   6, // MAC address length
 	}
 
