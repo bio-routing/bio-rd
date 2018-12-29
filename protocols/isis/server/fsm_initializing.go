@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	log "github.com/sirupsen/logrus"
 )
@@ -48,6 +50,8 @@ func (s initializingState) run() (state, string) {
 			return newDownState(s.fsm), "Received P2PHello without P2P Adjacency TLV"
 		}
 
+		fmt.Printf("p2pAdjTLV.NeighborSystemID: %s\n", p2pAdjTLV.NeighborSystemID.String())
+		fmt.Printf("Local:                      %s\n", s.fsm.isisServer.config.NETs[0].SystemID)
 		if p2pAdjTLV.NeighborSystemID == s.fsm.isisServer.config.NETs[0].SystemID {
 			return newUpState(s.fsm), "Received P2P Hello with Adjacency TLV including us"
 		}
