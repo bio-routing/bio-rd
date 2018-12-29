@@ -27,6 +27,10 @@ func (n *netIf) openPacketSocket() error {
 	return nil
 }
 
+func (n *netIf) closePacketSocket() error {
+	return syscall.Close(n.socket)
+}
+
 func (n *netIf) mcastJoin(addr [6]byte) error {
 	if biosyscall.JoinISISMcast(n.socket, n.ifa.Index) != 0 {
 		return fmt.Errorf("setsockopt failed")

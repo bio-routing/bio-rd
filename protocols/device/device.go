@@ -7,6 +7,16 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
+const (
+	IfOperUnknown        = 0
+	IfOperNotPresent     = 1
+	IfOperDown           = 2
+	IfOperLowerLayerDown = 3
+	IfOperTesting        = 4
+	IfOperDormant        = 5
+	IfOperUp             = 6
+)
+
 // Device represents a network device
 type Device struct {
 	Name         string

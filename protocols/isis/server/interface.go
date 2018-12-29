@@ -3,9 +3,10 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"net"
 	"sync"
 	"time"
+
+	"github.com/bio-routing/bio-rd/protocols/device"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
@@ -30,7 +31,6 @@ const (
 type netIf struct {
 	isisServer         *ISISServer
 	name               string
-	ifa                *net.Interface
 	passive            bool
 	p2p                bool
 	l1                 *level
@@ -38,6 +38,8 @@ type netIf struct {
 	socket             int
 	supportedProtocols []uint8
 	stop               chan struct{}
+	device             *device.Device
+	deviceMu           sync.RWMutex
 }
 
 type level struct {
@@ -47,6 +49,51 @@ type level struct {
 	Priority      uint8
 	neighbors     map[types.SystemID]*neighbor
 	neighborsMu   sync.RWMutex
+}
+
+func (ifa *netIf) DeviceUpdate(d *device.Device) {
+	ifa.statusMu.Lock()
+	defer ifa.statusMu.Unlock()
+
+	ifa.status = d
+	if d.OperState == device.IfOperUp {
+		err := ifa.DeviceUp()
+		if err != nil {
+			log.Errorf("Unable to enable ISIS on %q: %v", ifa.name, err)
+		}
+		return
+	}
+
+	err := ifa.DeviceDown()
+	if err != nil {
+		log.Errorf("Unable to disable ISIS on %q: %v", ifa.name, err)
+		return
+	}
+}
+
+func (ifa *netIf) DeviceDown() error {
+	close(ifa.done)
+	log.Infof("ISIS: Interface %q is now down", ifa.name)
+	return ifa.closePacketSocket()
+}
+
+func (ifa *netIf) DeviceUp() error {
+	err = ifa.openPacketSocket()
+	if err != nil {
+		return fmt.Errorf("Failed to open packet socket: %v", err)
+	}
+
+	err = nif.mcastJoin(AllP2PISS)
+	if err != nil {
+		return fmt.Errorf("Failed to join multicast group: %v", err)
+	}
+
+	ifa.done = make(chan struct{})
+	go ifa.receiver()
+	go ifa.helloSender()
+
+	log.Infof("ISIS: Interface %q is now up", ifa.name)
+	return nil
 }
 
 func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
@@ -77,7 +124,9 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 		nif.l2.neighbors = make(map[types.SystemID]*neighbor)
 	}
 
-	ifa, err := net.InterfaceByName(c.Name)
+	srv.ds.Subscribe(nif, c.Name)
+
+	/*ifa, err := net.InterfaceByName(c.Name)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get interface %q: %v", c.Name, err)
 	}
@@ -93,7 +142,7 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 		return nil, fmt.Errorf("Failed to join multicast group: %v", err)
 	}
 
-	return &nif, nil
+	return &nif, nil*/
 }
 
 func (ifa *netIf) compareSupportedProtocols(protocols []uint8) bool {
@@ -118,22 +167,20 @@ func (ifa *netIf) compareSupportedProtocols(protocols []uint8) bool {
 }
 
 func (ifa *netIf) receiver() {
-	go func(ifa *netIf) {
-		for {
-			select {
-			case <-ifa.stop:
+	for {
+		select {
+		case <-ifa.stop:
+			return
+		default:
+			rawPkt, src, err := ifa.recvPacket()
+			if err != nil {
+				log.Errorf("recvPacket() failed: %v", err)
 				return
-			default:
-				rawPkt, src, err := ifa.recvPacket()
-				if err != nil {
-					log.Errorf("recvPacket() failed: %v", err)
-					return
-				}
-
-				ifa.processIngressPacket(rawPkt, src)
 			}
+
+			ifa.processIngressPacket(rawPkt, src)
 		}
-	}(ifa)
+	}
 }
 
 func (ifa *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {

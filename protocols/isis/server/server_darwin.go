@@ -10,6 +10,10 @@ func (n *netIf) openPacketSocket() error {
 	return fmt.Errorf("Unsupported platform")
 }
 
+func (n *netIf) closePacketSocket() error {
+	return fmt.Errorf("Unsupported platform")
+}
+
 func (n *netIf) mcastJoin(addr [6]byte) error {
 	return fmt.Errorf("Unsupported platform")
 }

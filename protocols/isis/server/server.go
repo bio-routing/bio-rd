@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	log "github.com/sirupsen/logrus"
@@ -24,6 +25,7 @@ type ISISServer struct {
 	interfacesMu   sync.RWMutex
 	lsdb           *lsdb
 	stop           chan struct{}
+	ds             *device.Server
 }
 
 type isisNeighbor struct {
@@ -32,12 +34,13 @@ type isisNeighbor struct {
 }
 
 // NewISISServer creates and initializes a new ISIS speaker
-func NewISISServer(cfg *config.ISISConfig) *ISISServer {
+func NewISISServer(cfg *config.ISISConfig, ds *device.Server) *ISISServer {
 	server := &ISISServer{
 		config:         *cfg,
 		sequenceNumber: 1,
 		interfaces:     make(map[string]*netIf),
 		stop:           make(chan struct{}),
+		ds:             ds,
 	}
 
 	server.lsdb = newLSDB(server)
@@ -83,8 +86,8 @@ func (isis *ISISServer) AddInterface(ifa config.ISISInterfaceConfig) error {
 	}
 
 	isis.interfaces[ifa.Name] = interf
-	go isis.interfaces[ifa.Name].receiver()
-	go isis.interfaces[ifa.Name].helloSender()
+	//go isis.interfaces[ifa.Name].receiver()
+	//go isis.interfaces[ifa.Name].helloSender()
 
 	return nil
 }
