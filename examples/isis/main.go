@@ -43,6 +43,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = ds.Start()
+	if err != nil {
+		log.Errorf("Unable to start device server: %v", err)
+		os.Exit(1)
+	}
+
 	s := server.NewISISServer(cfg, ds)
 	err = s.Start()
 	if err != nil {

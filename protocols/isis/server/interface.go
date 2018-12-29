@@ -127,24 +127,6 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 
 	srv.ds.Subscribe(nif, c.Name)
 	return nif, nil
-
-	/*ifa, err := net.InterfaceByName(c.Name)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to get interface %q: %v", c.Name, err)
-	}
-	nif.ifa = ifa
-
-	err = nif.openPacketSocket()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to open packet socket: %v", err)
-	}
-
-	err = nif.mcastJoin(AllP2PISS)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to join multicast group: %v", err)
-	}
-
-	return &nif, nil*/
 }
 
 func (ifa *netIf) compareSupportedProtocols(protocols []uint8) bool {
