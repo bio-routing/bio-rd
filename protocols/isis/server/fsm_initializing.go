@@ -50,6 +50,11 @@ func (s initializingState) run() (state, string) {
 			return newDownState(s.fsm), "Received P2PHello without P2P Adjacency TLV"
 		}
 
+		if p2pAdjTLV.Length() == packet.P2PAdjacencyStateTLVLenWithoutNeighbor {
+			fmt.Printf("DEBUG: P2P Adjacency TLV has no neighbor\n")
+			continue
+		}
+
 		fmt.Printf("p2pAdjTLV.NeighborSystemID: %s\n", p2pAdjTLV.NeighborSystemID.String())
 		fmt.Printf("Local:                      %s\n", s.fsm.isisServer.config.NETs[0].SystemID)
 		if p2pAdjTLV.NeighborSystemID == s.fsm.isisServer.config.NETs[0].SystemID {
