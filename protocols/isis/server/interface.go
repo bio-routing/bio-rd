@@ -202,7 +202,9 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 		// TODO: Implement P2P L1 support
 		return
 	case 2:
-		ifa.l2.neighborsMu.RLock()
+		ifa.l2.neighborsMu.Lock()
+		defer ifa.l2.neighborsMu.Unlock()
+
 		if _, ok := ifa.l2.neighbors[hello.SystemID]; !ok {
 			p2pAdjTLV := hello.GetP2PAdjTLV()
 			if p2pAdjTLV == nil {
@@ -217,13 +219,9 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 				extendedLocalCircuitID: p2pAdjTLV.ExtendedLocalCircuitID,
 			}
 			fmt.Printf("DEBUG: extendedLocalCircuitID: %v\n", p2pAdjTLV.ExtendedLocalCircuitID)
-			ifa.l2.neighborsMu.RUnlock()
-			ifa.l2.neighborsMu.Lock()
+
 			ifa.l2.neighbors[hello.SystemID] = neighbor
 			fmt.Printf("DEBUG: Added Neighbor %v to interface %v\n", hello.SystemID.String(), ifa.name)
-			ifa.l2.neighborsMu.Unlock()
-
-			ifa.l2.neighborsMu.RLock()
 
 			fsm := newFSM(ifa.isisServer, ifa.l2.neighbors[hello.SystemID])
 			ifa.l2.neighbors[hello.SystemID].fsm = fsm
@@ -234,7 +232,6 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 		}
 
 		neighbor := ifa.l2.neighbors[hello.SystemID]
-		ifa.l2.neighborsMu.RUnlock()
 
 		neighbor.fsm.receive(pkt)
 	case 3:
