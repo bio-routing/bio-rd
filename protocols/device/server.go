@@ -1,8 +1,9 @@
 package device
 
 import (
-	"fmt"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 // Server represents a device server
@@ -29,7 +30,7 @@ func New() (*Server, error) {
 	srv := newWithAdapter(nil)
 	err := srv.loadAdapter()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create OS adapter: %v", err)
+		return nil, errors.Wrap(err, "Unable to create OS adapter")
 	}
 
 	return srv, nil
@@ -48,7 +49,7 @@ func newWithAdapter(a osAdapter) *Server {
 func (ds *Server) Start() error {
 	err := ds.osAdapter.start()
 	if err != nil {
-		return fmt.Errorf("Unable to start osAdapter: %v", err)
+		return errors.Wrap(err, "Unable to start osAdapter")
 	}
 
 	return nil

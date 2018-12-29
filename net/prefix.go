@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/bio-routing/bio-rd/net/api"
+	"github.com/pkg/errors"
 )
 
 // Prefix represents an IPv4 prefix
@@ -62,7 +63,7 @@ func StrToAddr(x string) (uint32, error) {
 	for i := 0; i < 4; i++ {
 		y, err := strconv.Atoi(parts[i])
 		if err != nil {
-			return 0, fmt.Errorf("Unable to convert %q to int: %v", parts[i], err)
+			return 0, errors.Wrapf(err, "Unable to convert %q to int", parts[i])
 		}
 
 		if y > 255 {

@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -38,7 +40,7 @@ func Decode(msg []byte) (Msg, error) {
 
 	ch, err := decodeCommonHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode common header: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode common header")
 	}
 
 	if ch.Version != BMPVersion {
@@ -49,49 +51,49 @@ func Decode(msg []byte) (Msg, error) {
 	case RouteMonitoringType:
 		rm, err := decodeRouteMonitoringMsg(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode route monitoring message: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode route monitoring message")
 		}
 
 		return rm, err
 	case StatisticsReportType:
 		sr, err := decodeStatsReport(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode stats report: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode stats report")
 		}
 
 		return sr, nil
 	case PeerDownNotificationType:
 		pd, err := decodePeerDownNotification(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode peer down notification: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode peer down notification")
 		}
 
 		return pd, nil
 	case PeerUpNotificationType:
 		pu, err := decodePeerUpNotification(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode peer up notification: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode peer up notification")
 		}
 
 		return pu, nil
 	case InitiationMessageType:
 		im, err := decodeInitiationMessage(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode initiation message: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode initiation message")
 		}
 
 		return im, nil
 	case TerminationMessageType:
 		tm, err := decodeTerminationMessage(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode termination message: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode termination message")
 		}
 
 		return tm, nil
 	case RouteMirroringMessageType:
 		rm, err := decodeRouteMirroringMsg(buf, ch)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode route mirroring message: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode route mirroring message")
 		}
 
 		return rm, nil

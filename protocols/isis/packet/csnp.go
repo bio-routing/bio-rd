@@ -2,13 +2,13 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 	"math"
 	"sort"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
 	umath "github.com/bio-routing/bio-rd/util/math"
+	"github.com/pkg/errors"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -133,7 +133,7 @@ func DecodeCSNP(buf *bytes.Buffer) (*CSNP, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	nEntries := (csnp.PDULength - CSNPMinLen) / LSPEntryLen
@@ -141,7 +141,7 @@ func DecodeCSNP(buf *bytes.Buffer) (*CSNP, error) {
 	for i := uint16(0); i < nEntries; i++ {
 		lspEntry, err := decodeLSPEntry(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to get LSPEntries: %v", err)
+			return nil, errors.Wrap(err, "Unable to get LSPEntries")
 		}
 		csnp.LSPEntries[i] = *lspEntry
 	}
