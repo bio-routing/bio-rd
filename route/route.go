@@ -293,34 +293,36 @@ func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
 }
 
 func netlinkRoutesContains(needle netlink.Route, haystack []netlink.Route) bool {
-	for _, p := range haystack {
-
-		probeMaskSize, probeMaskBits := p.Dst.Mask.Size()
-		needleMaskSize, needleMaskBits := needle.Dst.Mask.Size()
-
-		if p.LinkIndex == needle.LinkIndex &&
-			p.ILinkIndex == needle.ILinkIndex &&
-			p.Scope == needle.Scope &&
-
-			p.Dst.IP.Equal(needle.Dst.IP) &&
-			probeMaskSize == needleMaskSize &&
-			probeMaskBits == needleMaskBits &&
-
-			p.Src.Equal(needle.Src) &&
-			p.Gw.Equal(needle.Gw) &&
-
-			p.Protocol == needle.Protocol &&
-			p.Priority == needle.Priority &&
-			p.Table == needle.Table &&
-			p.Type == needle.Type &&
-			p.Tos == needle.Tos &&
-			p.Flags == needle.Flags &&
-			p.MTU == needle.MTU &&
-			p.AdvMSS == needle.AdvMSS {
-
+	for i := range haystack {
+		if netlinkRouteEquals(&needle, &haystack[i]) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func netlinkRouteEquals(a, b *netlink.Route) bool {
+	aMaskSize, aMaskBits := a.Dst.Mask.Size()
+	bMaskSize, bMaskBits := b.Dst.Mask.Size()
+
+	return a.LinkIndex == b.LinkIndex &&
+		a.ILinkIndex == b.ILinkIndex &&
+		a.Scope == b.Scope &&
+
+		a.Dst.IP.Equal(b.Dst.IP) &&
+		aMaskSize == bMaskSize &&
+		aMaskBits == bMaskBits &&
+
+		a.Src.Equal(b.Src) &&
+		a.Gw.Equal(b.Gw) &&
+
+		a.Protocol == b.Protocol &&
+		a.Priority == b.Priority &&
+		a.Table == b.Table &&
+		a.Type == b.Type &&
+		a.Tos == b.Tos &&
+		a.Flags == b.Flags &&
+		a.MTU == b.MTU &&
+		a.AdvMSS == b.AdvMSS
 }
