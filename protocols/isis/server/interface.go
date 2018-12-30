@@ -113,7 +113,7 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 		nif.l1.HoldTime = c.ISISLevel1Config.HoldTime
 		nif.l1.Metric = c.ISISLevel1Config.Metric
 		nif.l1.Priority = c.ISISLevel1Config.Priority
-		nif.l1.neighbors = make(map[types.SystemID]*neighbor)
+		nif.l1.neighbors = make(map[types.MACAddress]*neighbor)
 	}
 
 	if c.ISISLevel2Config != nil {
@@ -122,7 +122,7 @@ func newNetIf(srv *ISISServer, c config.ISISInterfaceConfig) (*netIf, error) {
 		nif.l2.HoldTime = c.ISISLevel2Config.HoldTime
 		nif.l2.Metric = c.ISISLevel2Config.Metric
 		nif.l2.Priority = c.ISISLevel2Config.Priority
-		nif.l2.neighbors = make(map[types.SystemID]*neighbor)
+		nif.l2.neighbors = make(map[types.MACAddress]*neighbor)
 	}
 
 	srv.ds.Subscribe(nif, c.Name)
@@ -212,7 +212,7 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket, src types.MACAd
 		ifa.l2.neighborsMu.Lock()
 		defer ifa.l2.neighborsMu.Unlock()
 
-		if _, ok := ifa.l2.neighbors[hello.SystemID]; !ok {
+		if _, ok := ifa.l2.neighbors[src]; !ok {
 			p2pAdjTLV := hello.GetP2PAdjTLV()
 			if p2pAdjTLV == nil {
 				return
@@ -230,15 +230,15 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket, src types.MACAd
 			ifa.l2.neighbors[src] = neighbor
 			fmt.Printf("DEBUG: Added Neighbor %v to interface %v\n", hello.SystemID.String(), ifa.name)
 
-			fsm := newFSM(ifa.isisServer, ifa.l2.neighbors[hello.SystemID])
-			ifa.l2.neighbors[hello.SystemID].fsm = fsm
+			fsm := newFSM(ifa.isisServer, ifa.l2.neighbors[src])
+			ifa.l2.neighbors[src].fsm = fsm
 			fmt.Printf("DEBUG: Starting a new FSM\n")
 			go fsm.run()
 
 			return
 		}
 
-		neighbor := ifa.l2.neighbors[hello.SystemID]
+		neighbor := ifa.l2.neighbors[src]
 
 		neighbor.fsm.receive(pkt)
 	case 3:
