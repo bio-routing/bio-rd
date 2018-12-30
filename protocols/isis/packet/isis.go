@@ -47,10 +47,24 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 	case L2_LS_PDU_TYPE:
 		lspdu, err := DecodeLSPDU(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode LSPDU hello: %v", err)
+			return nil, fmt.Errorf("Unable to decode LSPDU: %v", err)
 		}
 		pkt.Body = lspdu
+	case L2_CSNP_TYPE:
+		csnp, err := DecodeCSNP(buf)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode CSNP: %v", err)
+		}
+		pkt.Body = csnp
+	case L2_PSNP_TYPE:
+		psnp, err := DecodeCSNP(buf)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode PSNP: %v", err)
+		}
+		pkt.Body = psnp
 	}
+
+
 
 	return pkt, nil
 }

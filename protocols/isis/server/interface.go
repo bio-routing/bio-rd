@@ -191,6 +191,20 @@ func (ifa *netIf) processIngressPacket(rawPkt []byte, src types.MACAddress) {
 		if n, ok := ifa.l2.neighbors[src]; ok {
 			n.fsm.pktCh <- pkt
 		}
+	case packet.L2_CSNP_TYPE:
+		ifa.l2.neighborsMu.RLock()
+		defer ifa.l2.neighborsMu.RUnlock()
+
+		if n, ok := ifa.l2.neighbors[src]; ok {
+			n.fsm.pktCh <- pkt
+		}
+	case packet.L2_PSNP_TYPE:
+		ifa.l2.neighborsMu.RLock()
+		defer ifa.l2.neighborsMu.RUnlock()
+
+		if n, ok := ifa.l2.neighbors[src]; ok {
+			n.fsm.pktCh <- pkt
+		}
 	default:
 
 		log.Errorf("Unknown packet received from %v: %v", src, rawPkt)
