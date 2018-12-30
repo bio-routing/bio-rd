@@ -158,7 +158,7 @@ func (lsdb *lsdb) processLSPDU(ifa *netIf, lspdu *packet.LSPDU) {
 	}
 
 	// New LSP
-	lsdb.lsps[lspdu.LSPID].lspdu = lspdu
+	lsdb.lsps[lspdu.LSPID] = newLSDBEntry(lspdu)
 	lsdb.setSRMAnyIf(lspdu.LSPID)
 	lsdb.lsps[lspdu.LSPID].clearSRM(ifa)
 	lsdb.lsps[lspdu.LSPID].setSSN(ifa)
