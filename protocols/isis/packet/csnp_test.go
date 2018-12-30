@@ -11,14 +11,17 @@ import (
 func TestNewCSNPs(t *testing.T) {
 	tests := []struct {
 		name         string
-		sourceID     types.SystemID
+		sourceID     types.SourceID
 		lspEntries   []LSPEntry
 		maxPDULength int
 		expected     []CSNP
 	}{
 		{
 			name:     "All in one packet",
-			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+			sourceID: types.SourceID{                 
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				CircuitID: 0,
+			},
 			lspEntries: []LSPEntry{
 				{
 					SequenceNumber:    1000,
@@ -34,7 +37,10 @@ func TestNewCSNPs(t *testing.T) {
 			expected: []CSNP{
 				{
 					PDULength:  40,
-					SourceID:   types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:   types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
+					},
 					StartLSPID: LSPID{},
 					EndLSPID: LSPID{
 						SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
@@ -56,7 +62,10 @@ func TestNewCSNPs(t *testing.T) {
 		},
 		{
 			name:     "2 packets",
-			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+			sourceID: types.SourceID{                 
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				CircuitID: 0,
+			},
 			lspEntries: []LSPEntry{
 				{
 					SequenceNumber:    1001,
@@ -81,7 +90,10 @@ func TestNewCSNPs(t *testing.T) {
 			expected: []CSNP{
 				{
 					PDULength:  40,
-					SourceID:   types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:   types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
+					},	
 					StartLSPID: LSPID{},
 					EndLSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
@@ -101,7 +113,10 @@ func TestNewCSNPs(t *testing.T) {
 				},
 				{
 					PDULength: 40,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:  types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
+					},
 					StartLSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 200,
@@ -126,7 +141,10 @@ func TestNewCSNPs(t *testing.T) {
 		},
 		{
 			name:     "2 packets with odd pdu length",
-			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+			sourceID: types.SourceID{                 
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				CircuitID: 0,
+			},
 			lspEntries: []LSPEntry{
 				{
 					SequenceNumber:    1001,
@@ -151,7 +169,10 @@ func TestNewCSNPs(t *testing.T) {
 			expected: []CSNP{
 				{
 					PDULength:  40,
-					SourceID:   types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:   types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
+					},
 					StartLSPID: LSPID{},
 					EndLSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
@@ -171,7 +192,10 @@ func TestNewCSNPs(t *testing.T) {
 				},
 				{
 					PDULength: 40,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:  types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
+					},
 					StartLSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 200,
@@ -211,7 +235,10 @@ func TestCSNPSerialize(t *testing.T) {
 		{
 			name: "Test #1",
 			csnp: CSNP{
-				SourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SourceID: types.SourceID{
+					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					CircuitID: 0,
+				},	
 				StartLSPID: LSPID{
 					SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
 					PseudonodeID: 256,
@@ -234,7 +261,7 @@ func TestCSNPSerialize(t *testing.T) {
 			},
 			expected: []byte{
 				0, 40,
-				10, 20, 30, 40, 50, 60,
+				10, 20, 30, 40, 50, 60, 0,
 				11, 22, 33, 44, 55, 66, 1, 0,
 				11, 22, 33, 44, 55, 67, 0, 255,
 				0, 0, 0, 123,
@@ -262,8 +289,8 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "Incomplete CSNP",
 			input: []byte{
-				0, 24, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 25, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 				11, 22, 33, 44, 55, 66, 0, 100,
 				11, 22, 33, 77, 88, 0, 0,
 			},
@@ -272,8 +299,8 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "Incomplete CSNP LSPEntry",
 			input: []byte{
-				0, 40, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 41, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 				0, 0, 0, 20, // Sequence Number
 				11, 22, 33, 44, 55, 66, 0, 100,
 				11, 22, 33, 77, 88, 0, 0, 200,
@@ -284,8 +311,8 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "CSNP with one LSPEntry",
 			input: []byte{
-				0, 40, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 41, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 				11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
 				11, 22, 33, 77, 88, 0, 0, 200, // EndLSPID
 				0, 0, 0, 20, // Sequence Number
@@ -296,8 +323,11 @@ func TestDecodeCSNP(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &CSNP{
-				PDULength: 40,
-				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+				PDULength: 41,
+				SourceID:  types.SourceID{
+					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					CircuitID: 0,
+				},
 				StartLSPID: LSPID{
 					SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
 					PseudonodeID: 100,
@@ -322,8 +352,8 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "PSNP with two LSPEntries",
 			input: []byte{
-				0, 58, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 59, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 				11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
 				11, 22, 33, 77, 88, 0, 0, 200, // EndLSPID
 				0, 0, 0, 20, // Sequence Number
@@ -339,8 +369,11 @@ func TestDecodeCSNP(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &CSNP{
-				PDULength: 58,
-				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+				PDULength: 59,
+				SourceID:  types.SourceID{
+					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					CircuitID: 0,
+				},
 				StartLSPID: LSPID{
 					SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
 					PseudonodeID: 100,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 
 	log "github.com/sirupsen/logrus"
@@ -96,7 +97,8 @@ func (s *upState) sender() {
 				}
 			}
 
-			psnps := packet.NewPSNPs(s.fsm.neighbor.ifa.isisServer.systemID(), psnpEntries, 1492)
+			sysID := types.NewSourceID(s.fsm.neighbor.ifa.isisServer.systemID(), 0)
+			psnps := packet.NewPSNPs(sysID, psnpEntries, 1492)
 			for _, psnp := range psnps {
 				psnpBuf := bytes.NewBuffer(nil)
 				psnp.Serialize(psnpBuf)

@@ -244,7 +244,7 @@ func (lsdb *lsdb) getCSNP() *packet.CSNP {
 
 	p := &packet.CSNP{
 		PDULength:  packet.CSNPMinLen,
-		SourceID:   lsdb.server.systemID(),
+		SourceID:   types.NewSourceID(lsdb.server.systemID(), 0),
 		StartLSPID: packet.LSPID{},
 		EndLSPID: packet.LSPID{
 			SystemID:     types.SystemID{255, 255, 255, 255, 255, 255},

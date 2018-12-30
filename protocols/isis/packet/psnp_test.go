@@ -11,14 +11,17 @@ import (
 func TestNewPSNPs(t *testing.T) {
 	tests := []struct {
 		name         string
-		sourceID     types.SystemID
+		sourceID     types.SourceID
 		lspEntries   []*LSPEntry
 		maxPDULength int
 		expected     []PSNP
 	}{
 		{
 			name:     "All in one packet",
-			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+			sourceID: types.SourceID{
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				CircuitID: 0,
+			},
 			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1000,
@@ -34,7 +37,10 @@ func TestNewPSNPs(t *testing.T) {
 			expected: []PSNP{
 				{
 					PDULength: 24,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:  types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
+					},
 					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1000,
@@ -51,7 +57,10 @@ func TestNewPSNPs(t *testing.T) {
 		},
 		{
 			name:     "2 packets",
-			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+			sourceID: types.SourceID{
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				CircuitID: 0,
+			},
 			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
@@ -76,7 +85,10 @@ func TestNewPSNPs(t *testing.T) {
 			expected: []PSNP{
 				{
 					PDULength: 24,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:  types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,	
+					},
 					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1001,
@@ -91,7 +103,10 @@ func TestNewPSNPs(t *testing.T) {
 				},
 				{
 					PDULength: 24,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:  types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,	
+					},
 					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1000,
@@ -108,7 +123,10 @@ func TestNewPSNPs(t *testing.T) {
 		},
 		{
 			name:     "2 packets with odd length",
-			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+			sourceID: types.SourceID{
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				CircuitID: 0,
+			},
 			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
@@ -133,7 +151,10 @@ func TestNewPSNPs(t *testing.T) {
 			expected: []PSNP{
 				{
 					PDULength: 24,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID: types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
+					},
 					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1001,
@@ -148,7 +169,10 @@ func TestNewPSNPs(t *testing.T) {
 				},
 				{
 					PDULength: 24,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:  types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,	
+					},
 					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1000,
@@ -165,7 +189,10 @@ func TestNewPSNPs(t *testing.T) {
 		},
 		{
 			name:     "2 LSPEntries, 1 packet",
-			sourceID: types.SystemID{10, 20, 30, 40, 50, 60},
+			sourceID: types.SourceID{
+				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				CircuitID: 0,
+			},
 			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
@@ -190,7 +217,10 @@ func TestNewPSNPs(t *testing.T) {
 			expected: []PSNP{
 				{
 					PDULength: 40,
-					SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID:  types.SourceID{
+						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,	
+					},
 					LSPEntries: []*LSPEntry{
 						{
 							SequenceNumber:    1001,
@@ -232,7 +262,10 @@ func TestPSNPSerialize(t *testing.T) {
 			name: "Test #1",
 			psnp: PSNP{
 				PDULength: 100,
-				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+				SourceID:  types.SourceID{
+					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					CircuitID: 0,
+				},
 				LSPEntries: []*LSPEntry{
 					{
 						SequenceNumber:    123,
@@ -247,7 +280,7 @@ func TestPSNPSerialize(t *testing.T) {
 			},
 			expected: []byte{
 				0, 100,
-				10, 20, 30, 40, 50, 60,
+				10, 20, 30, 40, 50, 60, 0,
 				0, 0, 0, 123,
 				0, 255,
 				0, 111,
@@ -273,16 +306,16 @@ func TestDecodePSNP(t *testing.T) {
 		{
 			name: "Incomplete PSNP",
 			input: []byte{
-				0, 24, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 25, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 			},
 			wantFail: true,
 		},
 		{
 			name: "Incomplete PSNP LSPEntry",
 			input: []byte{
-				0, 24, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 25, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 				0, 0, 0, 20, // Sequence Number
 			},
 			wantFail: true,
@@ -290,8 +323,8 @@ func TestDecodePSNP(t *testing.T) {
 		{
 			name: "PSNP with one LSPEntry",
 			input: []byte{
-				0, 24, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 25, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 				0, 0, 0, 20, // Sequence Number
 				1, 0, // Remaining Lifetime
 				2, 0, // Checksum
@@ -300,8 +333,11 @@ func TestDecodePSNP(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &PSNP{
-				PDULength: 24,
-				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+				PDULength: 25,
+				SourceID:  types.SourceID{
+					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					CircuitID: 0,
+				},
 				LSPEntries: []*LSPEntry{
 					{
 						SequenceNumber:    20,
@@ -318,8 +354,8 @@ func TestDecodePSNP(t *testing.T) {
 		{
 			name: "PSNP with two LSPEntries",
 			input: []byte{
-				0, 40, // Length
-				10, 20, 30, 40, 50, 60, // Source ID
+				0, 41, // Length
+				10, 20, 30, 40, 50, 60, 0, // Source ID
 				0, 0, 0, 20, // Sequence Number
 				1, 0, // Remaining Lifetime
 				2, 0, // Checksum
@@ -333,8 +369,11 @@ func TestDecodePSNP(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &PSNP{
-				PDULength: 40,
-				SourceID:  types.SystemID{10, 20, 30, 40, 50, 60},
+				PDULength: 41,
+				SourceID:  types.SourceID{
+					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					CircuitID: 0,
+				},
 				LSPEntries: []*LSPEntry{
 					{
 						SequenceNumber:    20,
