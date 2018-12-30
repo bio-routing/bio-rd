@@ -362,9 +362,9 @@ func (ifa *netIf) p2pL2AdjacencyState() (state uint8, neighbor types.SystemID, n
 		return packet.DOWN_STATE, types.SystemID{}, 0
 	}
 
-	for systemID, neighbor := range ifa.l2.neighbors {
+	for _, neighbor := range ifa.l2.neighbors {
 		fmt.Printf("DEBUG: neighbor.extendedLocalCircuitID: %v\n", neighbor.extendedLocalCircuitID)
-		return neighbor.fsm.state.getState(), systemID, neighbor.extendedLocalCircuitID
+		return neighbor.fsm.state.getState(), neighbor.systemID, neighbor.extendedLocalCircuitID
 	}
 
 	panic("This is impossible: Length of map is != 0 while map is empty")
