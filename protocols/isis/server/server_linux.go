@@ -39,11 +39,11 @@ func (n *netIf) mcastJoin(addr [6]byte) error {
 	return nil
 }
 
-func (n *netIf) recvPacket() (pkt []byte, src types.SystemID, err error) {
+func (n *netIf) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 	buf := make([]byte, 1500)
 	nBytes, from, err := syscall.Recvfrom(n.socket, buf, 0)
 	if err != nil {
-		return nil, types.SystemID{}, fmt.Errorf("recvfrom failed: %v", err)
+		return nil, types.MACAddress{}, fmt.Errorf("recvfrom failed: %v", err)
 	}
 
 	ll := from.(*syscall.SockaddrLinklayer)

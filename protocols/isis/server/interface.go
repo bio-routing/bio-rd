@@ -47,7 +47,7 @@ type level struct {
 	HoldTime      uint16
 	Metric        uint32
 	Priority      uint8
-	neighbors     map[types.SystemID]*neighbor
+	neighbors     map[types.MACAddress]*neighbor
 	neighborsMu   sync.RWMutex
 }
 
@@ -167,7 +167,7 @@ func (ifa *netIf) receiver() {
 	}
 }
 
-func (ifa *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
+func (ifa *netIf) processIngressPacket(rawPkt []byte, src types.MACAddress) {
 	pkt, err := packet.Decode(bytes.NewBuffer(rawPkt))
 	if err != nil {
 		log.Errorf("Unable to decode packet from %v: %v: %v", src, rawPkt, err)
@@ -177,20 +177,27 @@ func (ifa *netIf) processIngressPacket(rawPkt []byte, src types.SystemID) {
 	switch pkt.Header.PDUType {
 	case packet.P2P_HELLO:
 		log.Infof("Received P2P hello: %v", rawPkt)
-		ifa.processIngressP2PHello(pkt)
+		ifa.processIngressP2PHello(pkt, src)
 	case packet.L1_LAN_HELLO_TYPE:
 		// TODO: Implement LAN support for L1
 		log.Errorf("L1 LAN support is not implemented yet")
 	case packet.L2_LAN_HELLO_TYPE:
 		// TODO: Implement LAN support for L2
 		log.Errorf("L2 LAN support is not implemented yet")
+	case packet.L2_LS_PDU_TYPE:
+		ifa.l2.neighborsMu.RLock()
+		defer ifa.l2.neighborsMu.RUnlock()
+
+		if n, ok := ifa.l2.neighbors[src]; ok {
+			n.fsm.pktCh <- pkt
+		}
 	default:
 
 		log.Errorf("Unknown packet received from %v: %v", src, rawPkt)
 	}
 }
 
-func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
+func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket, src types.MACAddress) {
 	hello := pkt.Body.(*packet.P2PHello)
 
 	for _, tlv := range hello.TLVs {
@@ -220,7 +227,7 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket) {
 			}
 			fmt.Printf("DEBUG: extendedLocalCircuitID: %v\n", p2pAdjTLV.ExtendedLocalCircuitID)
 
-			ifa.l2.neighbors[hello.SystemID] = neighbor
+			ifa.l2.neighbors[src] = neighbor
 			fmt.Printf("DEBUG: Added Neighbor %v to interface %v\n", hello.SystemID.String(), ifa.name)
 
 			fsm := newFSM(ifa.isisServer, ifa.l2.neighbors[hello.SystemID])

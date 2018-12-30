@@ -5,6 +5,9 @@ import "fmt"
 // SystemID is an ISIS System ID
 type SystemID [6]byte
 
+// MACAddress is an Ethernet MAC address
+type MACAddress [6]byte
+
 // AreaID is an ISIS Area ID
 type AreaID []byte
 

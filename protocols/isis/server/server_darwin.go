@@ -22,6 +22,6 @@ func (n *netIf) sendPacket(pkt []byte, dst [6]byte) error {
 	return fmt.Errorf("Unsupported platform")
 }
 
-func (n *netIf) recvPacket() (pkt []byte, src types.SystemID, err error) {
-	return nil, types.SystemID{}, fmt.Errorf("Unsupported platform")
+func (n *netIf) recvPacket() (pkt []byte, src types.MACAddress, err error) {
+	return nil, types.MACAddress{}, fmt.Errorf("Unsupported platform")
 }
