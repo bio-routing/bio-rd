@@ -148,11 +148,13 @@ func (lsdb *lsdb) processLSPDU(ifa *netIf, lspdu *packet.LSPDU) {
 			// Received older LSP
 			lsdb.lsps[lspdu.LSPID].setSRM(ifa)
 			lsdb.lsps[lspdu.LSPID].clearSSN(ifa)
+			return
 		}
 
 		// Same LSP
 		lsdb.lsps[lspdu.LSPID].clearSRM(ifa)
 		lsdb.lsps[lspdu.LSPID].setSSN(ifa)
+		return
 	}
 
 	// New LSP
