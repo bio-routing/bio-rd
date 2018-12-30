@@ -64,10 +64,7 @@ func newPSNP(sourceID types.SourceID, lspEntries []*LSPEntry) *PSNP {
 func (c *PSNP) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(c.PDULength))
 	buf.Write(c.SourceID.Serialize())
-
-	for _, lspEntry := range c.LSPEntries {
-		lspEntry.Serialize(buf)
-	}
+	NewLSPEntriesTLV(c.LSPEntries).Serialize(buf)
 }
 
 // DecodePSNP decodes a Partion Sequence Number PDU
