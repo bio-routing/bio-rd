@@ -44,6 +44,12 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 			return nil, fmt.Errorf("Unable to decode P2P hello: %v", err)
 		}
 		pkt.Body = p2pHello
+	case L2_LS_PDU_TYPE:
+		lspdu, err := DecodeLSPDU(buf)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode LSPDU hello: %v", err)
+		}
+		pkt.Body = lspdu
 	}
 
 	return pkt, nil
