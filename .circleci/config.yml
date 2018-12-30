@@ -18,3 +18,4 @@ jobs:
       - run: go test -v -cover -coverprofile=coverage.txt ./...
       - run: bash <(curl -s https://codecov.io/bash)
       - run: .circleci/build-examples
+      - run: .circleci/check-gofmt

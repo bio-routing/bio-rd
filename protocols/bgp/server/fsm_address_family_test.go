@@ -51,7 +51,7 @@ func TestProcessAttributes(t *testing.T) {
 	f.processAttributes(asPath, p)
 
 	expectedCodes := []uint8{200, 100}
-	expectedValues := [][]byte{[]byte{5, 6}, []byte{1, 2, 3, 4}}
+	expectedValues := [][]byte{{5, 6}, {1, 2, 3, 4}}
 
 	i := 0
 	for _, attr := range p.BGPPath.UnknownAttributes {
