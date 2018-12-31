@@ -17,9 +17,9 @@ func TestNewPSNPs(t *testing.T) {
 		expected     []PSNP
 	}{
 		{
-			name:     "All in one packet",
+			name: "All in one packet",
 			sourceID: types.SourceID{
-				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 				CircuitID: 0,
 			},
 			lspEntries: []*LSPEntry{
@@ -37,8 +37,8 @@ func TestNewPSNPs(t *testing.T) {
 			expected: []PSNP{
 				{
 					PDULength: 24,
-					SourceID:  types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
 					},
 					LSPEntries: []*LSPEntry{
@@ -56,9 +56,9 @@ func TestNewPSNPs(t *testing.T) {
 			},
 		},
 		{
-			name:     "2 packets",
+			name: "2 packets",
 			sourceID: types.SourceID{
-				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 				CircuitID: 0,
 			},
 			lspEntries: []*LSPEntry{
@@ -85,9 +85,9 @@ func TestNewPSNPs(t *testing.T) {
 			expected: []PSNP{
 				{
 					PDULength: 24,
-					SourceID:  types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
-						CircuitID: 0,	
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
 					},
 					LSPEntries: []*LSPEntry{
 						{
@@ -103,9 +103,9 @@ func TestNewPSNPs(t *testing.T) {
 				},
 				{
 					PDULength: 24,
-					SourceID:  types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
-						CircuitID: 0,	
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
 					},
 					LSPEntries: []*LSPEntry{
 						{
@@ -122,9 +122,9 @@ func TestNewPSNPs(t *testing.T) {
 			},
 		},
 		{
-			name:     "2 packets with odd length",
+			name: "2 packets with odd length",
 			sourceID: types.SourceID{
-				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 				CircuitID: 0,
 			},
 			lspEntries: []*LSPEntry{
@@ -152,7 +152,7 @@ func TestNewPSNPs(t *testing.T) {
 				{
 					PDULength: 24,
 					SourceID: types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
 					},
 					LSPEntries: []*LSPEntry{
@@ -169,9 +169,9 @@ func TestNewPSNPs(t *testing.T) {
 				},
 				{
 					PDULength: 24,
-					SourceID:  types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
-						CircuitID: 0,	
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
 					},
 					LSPEntries: []*LSPEntry{
 						{
@@ -188,9 +188,9 @@ func TestNewPSNPs(t *testing.T) {
 			},
 		},
 		{
-			name:     "2 LSPEntries, 1 packet",
+			name: "2 LSPEntries, 1 packet",
 			sourceID: types.SourceID{
-				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 				CircuitID: 0,
 			},
 			lspEntries: []*LSPEntry{
@@ -217,9 +217,9 @@ func TestNewPSNPs(t *testing.T) {
 			expected: []PSNP{
 				{
 					PDULength: 40,
-					SourceID:  types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
-						CircuitID: 0,	
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
+						CircuitID: 0,
 					},
 					LSPEntries: []*LSPEntry{
 						{
@@ -259,32 +259,65 @@ func TestPSNPSerialize(t *testing.T) {
 		expected []byte
 	}{
 		{
-			name: "Test #1",
+			name: "Test #2",
 			psnp: PSNP{
-				PDULength: 100,
-				SourceID:  types.SourceID{
-					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				PDULength: 0x23,
+				SourceID: types.SourceID{
+					SystemID:  types.SystemID{0, 0, 0, 0, 0, 3},
 					CircuitID: 0,
 				},
 				LSPEntries: []*LSPEntry{
 					{
-						SequenceNumber:    123,
-						RemainingLifetime: 255,
-						LSPChecksum:       111,
+						SequenceNumber:    0x15,
+						RemainingLifetime: 1196,
+						LSPChecksum:       0xe4ef,
 						LSPID: LSPID{
-							SystemID:     types.SystemID{10, 20, 30, 40, 50, 61},
-							PseudonodeID: 11,
+							SystemID:     types.SystemID{0, 0, 0, 0, 0, 2},
+							PseudonodeID: 0,
 						},
 					},
 				},
 			},
 			expected: []byte{
-				0, 100,
-				10, 20, 30, 40, 50, 60, 0,
-				0, 0, 0, 123,
-				0, 255,
-				0, 111,
-				10, 20, 30, 40, 50, 61, 0, 11,
+				0x00, 0x23, // Length
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, // SystemID
+				0x09,       // TLV Type
+				0x10,       // TLV Length
+				0x04, 0xac, // Remaining Lifetime
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, //LSPID
+				0x00, 0x00, 0x00, 0x15, // Sequence Number
+				0xe4, 0xef, // // Checksum
+			},
+		},
+		{
+			name: "Test #1",
+			psnp: PSNP{
+				PDULength: 100,
+				SourceID: types.SourceID{
+					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
+					CircuitID: 0,
+				},
+				LSPEntries: []*LSPEntry{
+					{
+						RemainingLifetime: 255,
+						LSPID: LSPID{
+							SystemID:     types.SystemID{10, 20, 30, 40, 50, 61},
+							PseudonodeID: 11,
+						},
+						SequenceNumber: 123,
+						LSPChecksum:    111,
+					},
+				},
+			},
+			expected: []byte{
+				0, 100, // Length
+				10, 20, 30, 40, 50, 60, 0, // SystemID
+				9,      // TLV Type
+				16,     // TLV Length
+				0, 255, // Remaining Lifetime
+				10, 20, 30, 40, 50, 61, 0, 11, // LSPID
+				0, 0, 0, 123, // Sequence Number
+				0, 111, // Checksum
 			},
 		},
 	}
@@ -334,8 +367,8 @@ func TestDecodePSNP(t *testing.T) {
 			wantFail: false,
 			expected: &PSNP{
 				PDULength: 25,
-				SourceID:  types.SourceID{
-					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SourceID: types.SourceID{
+					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
 				},
 				LSPEntries: []*LSPEntry{
@@ -370,8 +403,8 @@ func TestDecodePSNP(t *testing.T) {
 			wantFail: false,
 			expected: &PSNP{
 				PDULength: 41,
-				SourceID:  types.SourceID{
-					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				SourceID: types.SourceID{
+					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
 				},
 				LSPEntries: []*LSPEntry{

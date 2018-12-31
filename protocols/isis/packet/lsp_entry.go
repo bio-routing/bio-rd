@@ -23,10 +23,10 @@ type LSPEntry struct {
 
 // Serialize serializes an LSPEntry
 func (l *LSPEntry) Serialize(buf *bytes.Buffer) {
-	buf.Write(convert.Uint32Byte(l.SequenceNumber))
 	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
-	buf.Write(convert.Uint16Byte(l.LSPChecksum))
 	l.LSPID.Serialize(buf)
+	buf.Write(convert.Uint32Byte(l.SequenceNumber))
+	buf.Write(convert.Uint16Byte(l.LSPChecksum))
 }
 
 func decodeLSPEntry(buf *bytes.Buffer) (*LSPEntry, error) {

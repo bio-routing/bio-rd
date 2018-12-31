@@ -9,18 +9,18 @@ import (
 func TestNewLSPEntriesTLV(t *testing.T) {
 	tests := []struct {
 		name       string
-		lspEntries []LSPEntry
+		lspEntries []*LSPEntry
 		expected   *LSPEntriesTLV
 	}{
 		{
 			name: "Test #1",
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{},
 			},
 			expected: &LSPEntriesTLV{
 				TLVType:   9,
 				TLVLength: 16,
-				LSPEntries: []LSPEntry{
+				LSPEntries: []*LSPEntry{
 					{},
 				},
 			},
