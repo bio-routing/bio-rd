@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -106,7 +106,7 @@ func (s *upState) sender() {
 				hdrBuf := bytes.NewBuffer(nil)
 				hdr := &packet.ISISHeader{
 					ProtoDiscriminator:  0x83,
-					LengthIndicator:     20,
+					LengthIndicator:     packet.PSNPMinLen,
 					ProtocolIDExtension: 1,
 					IDLength:            0,
 					PDUType:             packet.L2_PSNP_TYPE,
