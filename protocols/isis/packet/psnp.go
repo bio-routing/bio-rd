@@ -13,7 +13,7 @@ import (
 
 const (
 	// PSNPMinLen is the minimal length of PSNP PDU
-	PSNPMinLen = 8
+	PSNPMinLen = 17
 )
 
 // PSNP represents a Partial Sequence Number PDU
@@ -26,7 +26,7 @@ type PSNP struct {
 // NewPSNPs creates the necessary number of PSNP PDUs to carry all LSPEntries
 func NewPSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []PSNP {
 	left := len(lspEntries)
-	lspsPerPSNP := (maxPDULen - PSNPMinLen) / LSPEntryLen
+	lspsPerPSNP := (maxPDULen - PSNPMinLen - 2) / LSPEntryLen
 	numPSNPs := int(math.Ceil(float64(left) / float64(lspsPerPSNP)))
 	res := make([]PSNP, numPSNPs)
 
@@ -52,7 +52,7 @@ func newPSNP(sourceID types.SourceID, lspEntries []*LSPEntry) *PSNP {
 	}
 
 	psnp := PSNP{
-		PDULength:  PSNPMinLen + uint16(len(lspEntries))*LSPEntryLen,
+		PDULength:  PSNPMinLen + 2 + uint16(len(lspEntries))*LSPEntryLen,
 		SourceID:   sourceID,
 		LSPEntries: lspEntries,
 	}
