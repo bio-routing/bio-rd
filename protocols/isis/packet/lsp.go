@@ -21,6 +21,10 @@ type LSPID struct {
 	PseudonodeID uint16
 }
 
+func (l *LSPID) String() string {
+	return fmt.Sprintf("%02d%02d%02d.%02d%02d%02d-%02d", l.SystemID[0], l.SystemID[1], l.SystemID[2], l.SystemID[3], l.SystemID[4], l.SystemID[5], l.PseudonodeID)
+}
+
 // Serialize serializes an LSPID
 func (l *LSPID) Serialize(buf *bytes.Buffer) {
 	buf.Write(l.SystemID[:])

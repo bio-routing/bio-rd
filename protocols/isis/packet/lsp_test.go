@@ -293,3 +293,25 @@ func TestDecodeLSPDU(t *testing.T) {
 		assert.Equalf(t, test.expected, lspdu, "Test %q", test.name)
 	}
 }
+
+func TestString(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *LSPID
+		expected string
+	}{
+		{
+			name: "Test #1",
+			input: &LSPID{
+				SystemID:     types.SystemID{1, 2, 3, 4, 5, 6},
+				PseudonodeID: 5,
+			},
+			expected: "010203.040506-05",
+		},
+	}
+
+	for _, test := range tests {
+		res := test.input.String()
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}

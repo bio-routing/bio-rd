@@ -31,9 +31,9 @@ type P2PHello struct {
 }
 
 const (
-	P2PHelloMinSize = 20
-	ISISHeaderSize  = 8
-	L2CircuitType   = 2
+	P2PHelloMinLen = 20
+	ISISHeaderSize = 8
+	L2CircuitType  = 2
 )
 
 // GetProtocolsSupportedTLV gets the protocols supported TLV

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
@@ -292,6 +293,7 @@ func (lsdb *lsdb) setSRMAnyIf(lspid packet.LSPID) {
 }
 
 func (e *lsdbEntry) setSRM(ifa *netIf) {
+	fmt.Printf("####### SETTING SRM flag for %v on %v\n", e.lspdu.LSPID.String(), ifa.name)
 	e.srmFlags[ifa] = struct{}{}
 }
 

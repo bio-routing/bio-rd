@@ -281,12 +281,12 @@ func (ifa *netIf) p2pHelloSender() {
 
 func (ifa *netIf) sendP2PHello() error {
 	p := packet.P2PHello{
-		CircuitType:  packet.L2CircuitType,
-		SystemID:     ifa.isisServer.systemID(),
-		HoldingTimer: ifa.l2.HoldTime,
-		PDULength:    packet.P2PHelloMinSize,
-		//LocalCircuitID:
-		TLVs: ifa.p2pHelloTLVs(),
+		CircuitType:    packet.L2CircuitType,
+		SystemID:       ifa.isisServer.systemID(),
+		HoldingTimer:   ifa.l2.HoldTime,
+		PDULength:      packet.P2PHelloMinLen,
+		LocalCircuitID: uint8(ifa.getDeviceIndex()),
+		TLVs:           ifa.p2pHelloTLVs(),
 	}
 
 	for _, TLV := range p.TLVs {
@@ -299,7 +299,7 @@ func (ifa *netIf) sendP2PHello() error {
 
 	hdr := packet.ISISHeader{
 		ProtoDiscriminator:  0x83,
-		LengthIndicator:     20,
+		LengthIndicator:     packet.P2PHelloMinLen,
 		ProtocolIDExtension: 1,
 		IDLength:            0,
 		PDUType:             packet.P2P_HELLO,
@@ -309,10 +309,7 @@ func (ifa *netIf) sendP2PHello() error {
 
 	hdrBuf := bytes.NewBuffer(nil)
 	hdr.Serialize(hdrBuf)
-
 	hdrBuf.Write(helloBuf.Bytes())
-
-	fmt.Printf("Sending Hello: %v\n", hdrBuf.Bytes())
 
 	err := ifa.sendPacket(hdrBuf.Bytes(), AllISS)
 	if err != nil {
@@ -330,15 +327,12 @@ func (ifa *netIf) getDeviceIndex() uint32 {
 }
 
 func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
-	fmt.Printf("Entering p2pHelloTLVs()\n")
-
 	l2AdjacencyState, neighborSystemID, neighborExtendedLocalCircuitID := ifa.p2pL2AdjacencyState()
 	p2pAdjStateTLV := packet.NewP2PAdjacencyStateTLV(l2AdjacencyState, ifa.getDeviceIndex())
 
 	switch l2AdjacencyState {
 	case packet.INITIALIZING_STATE:
-		fmt.Printf("DEBUG: Adding neighbor %v to AdjStateTLV\n", neighborSystemID.String())
-		p2pAdjStateTLV.TLVLength = 15
+		p2pAdjStateTLV.TLVLength = packet.P2PAdjacencyStateTLVLenWithNeighbor
 		p2pAdjStateTLV.NeighborSystemID = neighborSystemID
 		p2pAdjStateTLV.NeighborExtendedLocalCircuitID = neighborExtendedLocalCircuitID
 	}
@@ -348,7 +342,6 @@ func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 
 	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232235523) //FIXME: Insert address automatically
 
-	fmt.Printf("Leaving p2pHelloTLVs()\n")
 	return []packet.TLV{
 		p2pAdjStateTLV,
 		protocolsSupportedTLV,
@@ -377,7 +370,6 @@ func (ifa *netIf) p2pL2AdjacencyState() (state uint8, neighbor types.SystemID, n
 	}
 
 	for _, neighbor := range ifa.l2.neighbors {
-		fmt.Printf("DEBUG: neighbor.extendedLocalCircuitID: %v\n", neighbor.extendedLocalCircuitID)
 		return neighbor.fsm.state.getState(), neighbor.systemID, neighbor.extendedLocalCircuitID
 	}
 
