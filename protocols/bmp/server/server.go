@@ -11,7 +11,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/taktv6/tflow2/convert"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 const (

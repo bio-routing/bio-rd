@@ -2,11 +2,11 @@ module github.com/bio-routing/bio-rd
 
 require (
 	github.com/FMNSSun/libhash v0.0.0-20180614155432-dabbc4426b6d
+	github.com/bio-routing/tflow2 v0.0.0-20181230153523-2e308a4a3c3a
 	github.com/golang/protobuf v1.2.1-0.20181128192352-1d3f30b51784
 	github.com/pkg/errors v0.8.0
 	github.com/sirupsen/logrus v1.2.0
 	github.com/stretchr/testify v1.2.2
-	github.com/taktv6/tflow2 v0.0.0-20181230153523-2e308a4a3c3a
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9 // indirect

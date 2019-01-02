@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/taktv6/tflow2/convert"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 type BGPUpdate struct {
