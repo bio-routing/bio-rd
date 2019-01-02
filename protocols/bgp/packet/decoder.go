@@ -7,7 +7,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/pkg/errors"
-	"github.com/taktv6/tflow2/convert"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 // Decode decodes a BGP message
