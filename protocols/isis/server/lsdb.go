@@ -121,7 +121,7 @@ func (lsdb *lsdb) scanSRMSSN(ifa *netIf) ([]*packet.LSPDU, []*packet.LSPEntry) {
 	return lspdus, psnpEntries
 }
 
-func lspEntryToLSPDU(lspEntry packet.LSPEntry) *packet.LSPDU {
+func lspEntryToLSPDU(lspEntry *packet.LSPEntry) *packet.LSPDU {
 	return &packet.LSPDU{
 		SequenceNumber:    lspEntry.SequenceNumber,
 		RemainingLifetime: lspEntry.RemainingLifetime,
