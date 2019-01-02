@@ -77,10 +77,12 @@ func (l *LSPDU) updateLength() {
 func (l *LSPDU) SetChecksum() {
 	buf := bytes.NewBuffer(nil)
 	l.SerializeChecksumRelevant(buf)
+	fmt.Printf("Input: %v\n", buf.Bytes())
 
 	h := fletcher.New16()
 	h.Write(buf.Bytes())
 	csum := h.Sum([]byte{})
+	fmt.Printf("csum: %x %x\n", csum[0], csum[1])
 
 	l.Checksum = uint16(csum[0])*256 + uint16(csum[1])
 }
@@ -89,7 +91,8 @@ func (l *LSPDU) SetChecksum() {
 func (l *LSPDU) SerializeChecksumRelevant(buf *bytes.Buffer) {
 	l.LSPID.Serialize(buf)
 	buf.Write(convert.Uint32Byte(l.SequenceNumber))
-	buf.Write(convert.Uint16Byte(l.Checksum))
+	//buf.Write(convert.Uint16Byte(l.Checksum))
+	buf.Write(convert.Uint16Byte(0))
 	buf.WriteByte(l.TypeBlock)
 
 	for _, TLV := range l.TLVs {

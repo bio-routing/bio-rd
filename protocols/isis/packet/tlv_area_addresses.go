@@ -51,12 +51,12 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 	a := &AreaAddressesTLV{
 		TLVType:   AreaAddressesTLVType,
-		TLVLength: 0,
+		TLVLength: 1,
 		AreaIDs:   make([]types.AreaID, len(areas)),
 	}
 
 	for i, area := range areas {
-		a.TLVLength += uint8(len(area)) + 1
+		a.TLVLength += uint8(len(area))
 		a.AreaIDs[i] = area
 	}
 

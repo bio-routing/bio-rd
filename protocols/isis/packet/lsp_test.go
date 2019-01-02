@@ -142,70 +142,6 @@ func TestSerializeLSPDU(t *testing.T) {
 	}
 }
 
-func TestSetChecksum(t *testing.T) {
-	tests := []struct {
-		name     string
-		lspdu    *LSPDU
-		expected []byte
-	}{
-		{
-			name: "Test without TLVs",
-			lspdu: &LSPDU{
-				Length:            512,
-				RemainingLifetime: 255,
-				LSPID: LSPID{
-					SystemID:     types.SystemID{1, 2, 3, 4, 5, 6},
-					PseudonodeID: 0,
-				},
-				SequenceNumber: 200,
-				TypeBlock:      55,
-				TLVs:           make([]TLV, 0),
-			},
-			expected: []byte{
-				2, 0,
-				0, 255,
-				1, 2, 3, 4, 5, 6, 0, 0,
-				0, 0, 0, 200,
-				0x76, 0x17,
-				55,
-			},
-		},
-		{
-			name: "Test with TLV",
-			lspdu: &LSPDU{
-				Length:            512,
-				RemainingLifetime: 255,
-				LSPID: LSPID{
-					SystemID:     types.SystemID{1, 2, 3, 4, 5, 6},
-					PseudonodeID: 0,
-				},
-				SequenceNumber: 200,
-				TypeBlock:      55,
-				TLVs: []TLV{
-					NewPaddingTLV(2),
-				},
-			},
-			expected: []byte{
-				2, 0,
-				0, 255,
-				1, 2, 3, 4, 5, 6, 0, 0,
-				0, 0, 0, 200,
-				0xf8, 0x21,
-				55,
-				8, 2,
-				0, 0,
-			},
-		},
-	}
-
-	for _, test := range tests {
-		buf := bytes.NewBuffer(nil)
-		test.lspdu.SetChecksum()
-		test.lspdu.Serialize(buf)
-		assert.Equalf(t, test.expected, buf.Bytes(), "Unexpected result in test %q", test.name)
-	}
-}
-
 func TestDecodeLSPDU(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -313,5 +249,51 @@ func TestString(t *testing.T) {
 	for _, test := range tests {
 		res := test.input.String()
 		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestSetChecksum(t *testing.T) {
+	tests := []struct {
+		name     string
+		lspdu    *LSPDU
+		expected uint16
+	}{
+		{
+			name: "Test #1",
+			lspdu: &LSPDU{
+				Length:            27,
+				RemainingLifetime: 3591,
+				LSPID: LSPID{
+					SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
+					PseudonodeID: 0,
+				},
+				SequenceNumber: 1,
+				TypeBlock:      3,
+				TLVs: []TLV{
+					AreaAddressesTLV{
+						TLVType:   AreaAddressesTLVType,
+						TLVLength: 6,
+						AreaIDs: []types.AreaID{
+							{
+								0, 4, 0, 1, 0, 16,
+							},
+						},
+					},
+					ProtocolsSupportedTLV{
+						TLVType:   ProtocolsSupportedTLVType,
+						TLVLength: 2,
+						NetworkLayerProtocolIDs: []uint8{
+							0xcc, 0x8e,
+						},
+					},
+				},
+			},
+			expected: 0x0b1e,
+		},
+	}
+
+	for _, test := range tests {
+		test.lspdu.SetChecksum()
+		assert.Equal(t, test.expected, test.lspdu.Checksum, test.name)
 	}
 }
