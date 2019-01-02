@@ -272,10 +272,10 @@ func TestSetChecksum(t *testing.T) {
 				TLVs: []TLV{
 					AreaAddressesTLV{
 						TLVType:   AreaAddressesTLVType,
-						TLVLength: 7,
+						TLVLength: 6,
 						AreaIDs: []types.AreaID{
 							{
-								0, 4, 0, 1, 0, 16,
+								0x49, 0, 1, 0, 16,
 							},
 						},
 					},

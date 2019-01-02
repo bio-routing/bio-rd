@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/FMNSSun/libhash/fletcher"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/bio-routing/bio-rd/util/math"
 	"github.com/taktv6/tflow2/convert"
 )
 
 const (
 	LSPIDLen    = 8
 	LSPDUMinLen = 19
+	MODX        = 5802
 )
 
 // LSPID represents a Link State Packet ID
@@ -73,18 +74,84 @@ func (l *LSPDU) updateLength() {
 	}
 }
 
+func csum(input []byte) uint16 {
+	x := 0
+	y := 0
+	c0 := 0
+	c1 := 0
+	checksum := uint16(0)
+	partialLen := 0
+	i := 0
+	left := len(input)
+
+	for left != 0 {
+		partialLen = math.Min(left, MODX)
+
+		for i = 0; i < partialLen; i++ {
+			c0 = c0 + int(input[i])
+			c1 += c0
+		}
+
+		c0 = c0 % 255
+		c1 = c1 % 255
+
+		left -= partialLen
+	}
+	fmt.Printf("c0: %d\n", c0)
+	fmt.Printf("c1: %d\n", c1)
+
+	fmt.Printf("len(input)-12-1 = %d\n", len(input)-12-1)
+	x = ((len(input)-12-1)*c0 - c1) % 255
+
+	if x < 0 {
+		x += 255
+	}
+
+	y = 510 - c0 - x
+	if y > 255 {
+		y -= 255
+	}
+
+	fmt.Printf("x: %x\n", x)
+	fmt.Printf("y: %x\n", y)
+	return uint16(x)*256 + uint16(y)
+}
+
+func csum2(input []byte) (uint8, uint8) {
+	c0 := uint16(0)
+	c1 := uint16(0)
+	ck0 := uint8(0)
+	ck1 := uint8(0)
+
+	for i := range input {
+		fmt.Printf("i: %d\n", i)
+		c0 = (c0 + uint16(input[i])) % 255
+		c1 = (c1 + c0) % 255
+		fmt.Printf("c0: %d\n", c0)
+		fmt.Printf("c1: %d\n", c1)
+	}
+
+	ck0 = uint8((255 - (c0+c1)%255))
+	ck1 = uint8(c1 % 255)
+
+	if ck0 == 0 {
+		ck0 = 255
+	}
+
+	if ck1 == 0 {
+		ck1 = 255
+	}
+
+	fmt.Printf("CSUM: %x %x\n", ck0, ck1)
+	return uint8(ck0), uint8(ck1)
+}
+
 // SetChecksum sets the checksum of an LSPDU
 func (l *LSPDU) SetChecksum() {
 	buf := bytes.NewBuffer(nil)
 	l.SerializeChecksumRelevant(buf)
 	fmt.Printf("Input: %v\n", buf.Bytes())
-
-	h := fletcher.New16()
-	h.Write(buf.Bytes())
-	csum := h.Sum([]byte{})
-	fmt.Printf("csum: %x %x\n", csum[0], csum[1])
-
-	l.Checksum = uint16(csum[0])*256 + uint16(csum[1])
+	l.Checksum = csum(buf.Bytes())
 }
 
 // SerializeChecksumRelevant serializes all fields after the Remaining Lifetime field.

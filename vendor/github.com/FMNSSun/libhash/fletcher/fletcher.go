@@ -1,7 +1,10 @@
 package fletcher
 
-import "encoding/binary"
-import "hash"
+import (
+	"encoding/binary"
+	"fmt"
+	"hash"
+)
 
 type Fletcher16 struct {
 	s0 uint16
@@ -32,10 +35,15 @@ func (s *Fletcher16) Sum(in []byte) []byte {
 }
 
 func (s *Fletcher16) Write(in []byte) (int, error) {
+	fmt.Printf("s0: %d\n", s.s0)
+	fmt.Printf("s1: %d\n", s.s1)
 	for _, v := range in {
 		s.s0 = (s.s0 + uint16(v)) % 255
 		s.s1 = (s.s0 + s.s1) % 255
 	}
+
+	fmt.Printf("new s0: %x\n", s.s0)
+	fmt.Printf("new s1: %x\n", s.s1)
 
 	return len(in), nil
 }
