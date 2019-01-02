@@ -6,8 +6,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 type Global struct {

@@ -6,8 +6,8 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/pkg/errors"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 // Decode decodes a BGP message

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSerializeKeepaliveMsg(t *testing.T) {
