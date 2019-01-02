@@ -51,7 +51,7 @@ func newLSDB(server *ISISServer) *lsdb {
 
 	areas := make([]types.AreaID, len(lsdb.server.config.NETs))
 	for _, NET := range lsdb.server.config.NETs {
-		areas = append(areas, NET.AreaID)
+		areas = append(areas, append([]byte{NET.AFI}, NET.AreaID...))
 	}
 	areaAddressesTLV := packet.NewAreaAddressesTLV(areas)
 	localLSPDU.TLVs = append(localLSPDU.TLVs, areaAddressesTLV)
