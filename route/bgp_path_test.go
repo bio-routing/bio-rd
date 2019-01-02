@@ -321,18 +321,24 @@ func TestBGPPathString(t *testing.T) {
 		expectedString string
 	}{
 		{
-			input:          BGPPath{},
-			expectedString: "Local Pref: 0, Origin: Incomplete, AS Path: , BGP type: internal, NEXT HOP: 0:0:0:0:0:0:0:0, MED: 0, Path ID: 0, Source: 0:0:0:0:0:0:0:0, Communities: [], LargeCommunities: [], ",
+			input: BGPPath{
+				EBGP:         true,
+				OriginatorID: 23,
+				ClusterList:  []uint32{10, 20},
+			},
+			expectedString: "Local Pref: 0, Origin: Incomplete, AS Path: , BGP type: external, NEXT HOP: 0:0:0:0:0:0:0:0, MED: 0, Path ID: 0, Source: 0:0:0:0:0:0:0:0, Communities: [], LargeCommunities: [], OriginatorID: 0.0.0.23, ClusterList 0.0.0.10 0.0.0.20",
 			expectedPrint: `		Local Pref: 0
 		Origin: Incomplete
 		AS Path: 
-		BGP type: internal
+		BGP type: external
 		NEXT HOP: 0:0:0:0:0:0:0:0
 		MED: 0
 		Path ID: 0
 		Source: 0:0:0:0:0:0:0:0
 		Communities: []
 		LargeCommunities: []
+		OriginatorID: 0.0.0.23
+		ClusterList 0.0.0.10 0.0.0.20
 `,
 		},
 	}
