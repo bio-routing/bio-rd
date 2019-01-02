@@ -79,7 +79,6 @@ func csum(input []byte) uint16 {
 	y := 0
 	c0 := 0
 	c1 := 0
-	checksum := uint16(0)
 	partialLen := 0
 	i := 0
 	left := len(input)
