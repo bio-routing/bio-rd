@@ -64,6 +64,8 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 			tlv, err = readP2PAdjacencyStateTLV(buf, tlvType, tlvLength)
 		case ISNeighborsTLVType:
 			tlv, err = readISNeighborsTLV(buf, tlvType, tlvLength)
+		case LSPEntriesTLVType:
+			tlv, err = readLSPEntriesTLV(buf, tlvType, tlvLength)
 		default:
 			tlv, err = readUnknownTLV(buf, tlvType, tlvLength)
 		}

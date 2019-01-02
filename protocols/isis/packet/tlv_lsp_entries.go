@@ -1,6 +1,10 @@
 package packet
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/pkg/errors"
+)
 
 const (
 	// LSPEntriesTLVType is the type value of an LSP Entries TLV
@@ -12,6 +16,21 @@ type LSPEntriesTLV struct {
 	TLVType    uint8
 	TLVLength  uint8
 	LSPEntries []*LSPEntry
+}
+
+// Type returns the type of the TLV
+func (l *LSPEntriesTLV) Type() uint8 {
+	return l.TLVType
+}
+
+// Length returns the length of the TLV
+func (l *LSPEntriesTLV) Length() uint8 {
+	return l.TLVLength
+}
+
+// Value returns self
+func (l *LSPEntriesTLV) Value() interface{} {
+	return l
 }
 
 // NewLSPEntriesTLV creates a nbew LSP Entries TLV
@@ -30,4 +49,22 @@ func (l *LSPEntriesTLV) Serialize(buf *bytes.Buffer) {
 	for i := range l.LSPEntries {
 		l.LSPEntries[i].Serialize(buf)
 	}
+}
+
+func readLSPEntriesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*LSPEntriesTLV, error) {
+	pdu := &LSPEntriesTLV{
+		TLVType:    tlvType,
+		TLVLength:  tlvLength,
+		LSPEntries: make([]*LSPEntry, 0, tlvLength/LSPEntryLen),
+	}
+
+	for i := uint8(0); i < pdu.TLVLength; i += LSPEntryLen {
+		e, err := decodeLSPEntry(buf)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to decode LSP Entry")
+		}
+		pdu.LSPEntries = append(pdu.LSPEntries, e)
+	}
+
+	return pdu, nil
 }

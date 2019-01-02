@@ -33,11 +33,11 @@ func decodeLSPEntry(buf *bytes.Buffer) (*LSPEntry, error) {
 	lspEntry := &LSPEntry{}
 
 	fields := []interface{}{
-		&lspEntry.SequenceNumber,
 		&lspEntry.RemainingLifetime,
-		&lspEntry.LSPChecksum,
 		&lspEntry.LSPID.SystemID,
 		&lspEntry.LSPID.PseudonodeID,
+		&lspEntry.SequenceNumber,
+		&lspEntry.LSPChecksum,
 	}
 
 	err := decode.Decode(buf, fields)

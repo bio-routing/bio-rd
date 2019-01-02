@@ -12,17 +12,17 @@ func TestNewCSNPs(t *testing.T) {
 	tests := []struct {
 		name         string
 		sourceID     types.SourceID
-		lspEntries   []LSPEntry
+		lspEntries   []*LSPEntry
 		maxPDULength int
 		expected     []CSNP
 	}{
 		{
-			name:     "All in one packet",
-			sourceID: types.SourceID{                 
-				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+			name: "All in one packet",
+			sourceID: types.SourceID{
+				SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 				CircuitID: 0,
 			},
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1000,
 					RemainingLifetime: 2000,
@@ -36,9 +36,9 @@ func TestNewCSNPs(t *testing.T) {
 			maxPDULength: 1492,
 			expected: []CSNP{
 				{
-					PDULength:  40,
-					SourceID:   types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					PDULength: 40,
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
 					},
 					StartLSPID: LSPID{},
@@ -46,14 +46,20 @@ func TestNewCSNPs(t *testing.T) {
 						SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 						PseudonodeID: 0xffff,
 					},
-					LSPEntries: []LSPEntry{
-						{
-							SequenceNumber:    1000,
-							RemainingLifetime: 2000,
-							LSPChecksum:       111,
-							LSPID: LSPID{
-								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
-								PseudonodeID: 123,
+					TLVs: []TLV{
+						&LSPEntriesTLV{
+							TLVType:   LSPEntriesTLVType,
+							TLVLength: 16,
+							LSPEntries: []*LSPEntry{
+								{
+									SequenceNumber:    1000,
+									RemainingLifetime: 2000,
+									LSPChecksum:       111,
+									LSPID: LSPID{
+										SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
+										PseudonodeID: 123,
+									},
+								},
 							},
 						},
 					},
@@ -61,12 +67,12 @@ func TestNewCSNPs(t *testing.T) {
 			},
 		},
 		{
-			name:     "2 packets",
-			sourceID: types.SourceID{                 
-				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+			name: "2 packets",
+			sourceID: types.SourceID{
+				SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 				CircuitID: 0,
 			},
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
 					RemainingLifetime: 2001,
@@ -89,32 +95,38 @@ func TestNewCSNPs(t *testing.T) {
 			maxPDULength: 40,
 			expected: []CSNP{
 				{
-					PDULength:  40,
-					SourceID:   types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					PDULength: 40,
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
-					},	
+					},
 					StartLSPID: LSPID{},
 					EndLSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 100,
 					},
-					LSPEntries: []LSPEntry{
-						{
-							SequenceNumber:    1000,
-							RemainingLifetime: 2000,
-							LSPChecksum:       111,
-							LSPID: LSPID{
-								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
-								PseudonodeID: 100,
+					TLVs: []TLV{
+						&LSPEntriesTLV{
+							TLVType:   LSPEntriesTLVType,
+							TLVLength: 16,
+							LSPEntries: []*LSPEntry{
+								{
+									SequenceNumber:    1000,
+									RemainingLifetime: 2000,
+									LSPChecksum:       111,
+									LSPID: LSPID{
+										SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
+										PseudonodeID: 100,
+									},
+								},
 							},
 						},
 					},
 				},
 				{
 					PDULength: 40,
-					SourceID:  types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
 					},
 					StartLSPID: LSPID{
@@ -125,14 +137,21 @@ func TestNewCSNPs(t *testing.T) {
 						SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 						PseudonodeID: 0xffff,
 					},
-					LSPEntries: []LSPEntry{
-						{
-							SequenceNumber:    1001,
-							RemainingLifetime: 2001,
-							LSPChecksum:       112,
-							LSPID: LSPID{
-								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
-								PseudonodeID: 200,
+					TLVs: []TLV{
+						&LSPEntriesTLV{
+
+							TLVType:   LSPEntriesTLVType,
+							TLVLength: 16,
+							LSPEntries: []*LSPEntry{
+								{
+									SequenceNumber:    1001,
+									RemainingLifetime: 2001,
+									LSPChecksum:       112,
+									LSPID: LSPID{
+										SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
+										PseudonodeID: 200,
+									},
+								},
 							},
 						},
 					},
@@ -140,12 +159,12 @@ func TestNewCSNPs(t *testing.T) {
 			},
 		},
 		{
-			name:     "2 packets with odd pdu length",
-			sourceID: types.SourceID{                 
-				SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+			name: "2 packets with odd pdu length",
+			sourceID: types.SourceID{
+				SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 				CircuitID: 0,
 			},
-			lspEntries: []LSPEntry{
+			lspEntries: []*LSPEntry{
 				{
 					SequenceNumber:    1001,
 					RemainingLifetime: 2001,
@@ -168,9 +187,9 @@ func TestNewCSNPs(t *testing.T) {
 			maxPDULength: 41,
 			expected: []CSNP{
 				{
-					PDULength:  40,
-					SourceID:   types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					PDULength: 40,
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
 					},
 					StartLSPID: LSPID{},
@@ -178,22 +197,28 @@ func TestNewCSNPs(t *testing.T) {
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 100,
 					},
-					LSPEntries: []LSPEntry{
-						{
-							SequenceNumber:    1000,
-							RemainingLifetime: 2000,
-							LSPChecksum:       111,
-							LSPID: LSPID{
-								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
-								PseudonodeID: 100,
+					TLVs: []TLV{
+						&LSPEntriesTLV{
+							TLVType:   LSPEntriesTLVType,
+							TLVLength: 16,
+							LSPEntries: []*LSPEntry{
+								{
+									SequenceNumber:    1000,
+									RemainingLifetime: 2000,
+									LSPChecksum:       111,
+									LSPID: LSPID{
+										SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
+										PseudonodeID: 100,
+									},
+								},
 							},
 						},
 					},
 				},
 				{
 					PDULength: 40,
-					SourceID:  types.SourceID{
-						SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					SourceID: types.SourceID{
+						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
 					},
 					StartLSPID: LSPID{
@@ -204,14 +229,20 @@ func TestNewCSNPs(t *testing.T) {
 						SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 						PseudonodeID: 0xffff,
 					},
-					LSPEntries: []LSPEntry{
-						{
-							SequenceNumber:    1001,
-							RemainingLifetime: 2001,
-							LSPChecksum:       112,
-							LSPID: LSPID{
-								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
-								PseudonodeID: 200,
+					TLVs: []TLV{
+						&LSPEntriesTLV{
+							TLVType:   LSPEntriesTLVType,
+							TLVLength: 16,
+							LSPEntries: []*LSPEntry{
+								{
+									SequenceNumber:    1001,
+									RemainingLifetime: 2001,
+									LSPChecksum:       112,
+									LSPID: LSPID{
+										SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
+										PseudonodeID: 200,
+									},
+								},
 							},
 						},
 					},
@@ -235,10 +266,11 @@ func TestCSNPSerialize(t *testing.T) {
 		{
 			name: "Test #1",
 			csnp: CSNP{
+				PDULength: 43,
 				SourceID: types.SourceID{
-					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
-				},	
+				},
 				StartLSPID: LSPID{
 					SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
 					PseudonodeID: 256,
@@ -247,27 +279,35 @@ func TestCSNPSerialize(t *testing.T) {
 					SystemID:     types.SystemID{11, 22, 33, 44, 55, 67},
 					PseudonodeID: 255,
 				},
-				LSPEntries: []LSPEntry{
-					{
-						SequenceNumber:    123,
-						RemainingLifetime: 255,
-						LSPChecksum:       111,
-						LSPID: LSPID{
-							SystemID:     types.SystemID{10, 20, 30, 40, 50, 61},
-							PseudonodeID: 11,
+				TLVs: []TLV{
+					&LSPEntriesTLV{
+						TLVType:   LSPEntriesTLVType,
+						TLVLength: 16,
+						LSPEntries: []*LSPEntry{
+							{
+								SequenceNumber:    123,
+								RemainingLifetime: 255,
+								LSPChecksum:       111,
+								LSPID: LSPID{
+									SystemID:     types.SystemID{10, 20, 30, 40, 50, 61},
+									PseudonodeID: 11,
+								},
+							},
 						},
 					},
 				},
 			},
 			expected: []byte{
-				0, 40,
+				0, 43,
 				10, 20, 30, 40, 50, 60, 0,
 				11, 22, 33, 44, 55, 66, 1, 0,
 				11, 22, 33, 44, 55, 67, 0, 255,
-				0, 0, 0, 123,
+				9,
+				16,
 				0, 255,
-				0, 111,
 				10, 20, 30, 40, 50, 61, 0, 11,
+				0, 0, 0, 123,
+				0, 111,
 			},
 		},
 	}
@@ -311,21 +351,23 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "CSNP with one LSPEntry",
 			input: []byte{
-				0, 41, // Length
+				0, 43, // Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
 				11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
 				11, 22, 33, 77, 88, 0, 0, 200, // EndLSPID
-				0, 0, 0, 20, // Sequence Number
+				9,    // TLV Type
+				16,   // TLV Length
 				1, 0, // Remaining Lifetime
-				2, 0, // Checksum
 				11, 22, 33, 44, 55, 66, // SystemID
 				0, 20, // Pseudonode ID
+				0, 0, 0, 20, // Sequence Number
+				2, 0, // Checksum
 			},
 			wantFail: false,
 			expected: &CSNP{
-				PDULength: 41,
-				SourceID:  types.SourceID{
-					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				PDULength: 43,
+				SourceID: types.SourceID{
+					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
 				},
 				StartLSPID: LSPID{
@@ -336,14 +378,20 @@ func TestDecodeCSNP(t *testing.T) {
 					SystemID:     types.SystemID{11, 22, 33, 77, 88, 0},
 					PseudonodeID: 200,
 				},
-				LSPEntries: []LSPEntry{
-					{
-						SequenceNumber:    20,
-						RemainingLifetime: 256,
-						LSPChecksum:       512,
-						LSPID: LSPID{
-							SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-							PseudonodeID: 20,
+				TLVs: []TLV{
+					&LSPEntriesTLV{
+						TLVType:   LSPEntriesTLVType,
+						TLVLength: 16,
+						LSPEntries: []*LSPEntry{
+							{
+								SequenceNumber:    20,
+								RemainingLifetime: 256,
+								LSPChecksum:       512,
+								LSPID: LSPID{
+									SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
+									PseudonodeID: 20,
+								},
+							},
 						},
 					},
 				},
@@ -352,26 +400,28 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "PSNP with two LSPEntries",
 			input: []byte{
-				0, 59, // Length
+				0, 62, // Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
 				11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
 				11, 22, 33, 77, 88, 0, 0, 200, // EndLSPID
-				0, 0, 0, 20, // Sequence Number
+				9,    // TLV Type
+				32,   // TLV Length
 				1, 0, // Remaining Lifetime
-				2, 0, // Checksum
 				11, 22, 33, 44, 55, 66, // SystemID
 				0, 20, // Pseudonode ID
-				0, 0, 0, 21, // Sequence Number
-				2, 0, // Remaining Lifetime
+				0, 0, 0, 20, // Sequence Number
 				2, 0, // Checksum
+				2, 0, // Remaining Lifetime
 				11, 22, 33, 44, 55, 67, // SystemID
 				0, 21, // Pseudonode ID
+				0, 0, 0, 21, // Sequence Number
+				2, 0, // Checksum
 			},
 			wantFail: false,
 			expected: &CSNP{
-				PDULength: 59,
-				SourceID:  types.SourceID{
-					SystemID: types.SystemID{10, 20, 30, 40, 50, 60},
+				PDULength: 62,
+				SourceID: types.SourceID{
+					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
 				},
 				StartLSPID: LSPID{
@@ -382,23 +432,29 @@ func TestDecodeCSNP(t *testing.T) {
 					SystemID:     types.SystemID{11, 22, 33, 77, 88, 0},
 					PseudonodeID: 200,
 				},
-				LSPEntries: []LSPEntry{
-					{
-						SequenceNumber:    20,
-						RemainingLifetime: 256,
-						LSPChecksum:       512,
-						LSPID: LSPID{
-							SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-							PseudonodeID: 20,
-						},
-					},
-					{
-						SequenceNumber:    21,
-						RemainingLifetime: 512,
-						LSPChecksum:       512,
-						LSPID: LSPID{
-							SystemID:     types.SystemID{11, 22, 33, 44, 55, 67},
-							PseudonodeID: 21,
+				TLVs: []TLV{
+					&LSPEntriesTLV{
+						TLVType:   LSPEntriesTLVType,
+						TLVLength: 32,
+						LSPEntries: []*LSPEntry{
+							{
+								SequenceNumber:    20,
+								RemainingLifetime: 256,
+								LSPChecksum:       512,
+								LSPID: LSPID{
+									SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
+									PseudonodeID: 20,
+								},
+							},
+							{
+								SequenceNumber:    21,
+								RemainingLifetime: 512,
+								LSPChecksum:       512,
+								LSPID: LSPID{
+									SystemID:     types.SystemID{11, 22, 33, 44, 55, 67},
+									PseudonodeID: 21,
+								},
+							},
 						},
 					},
 				},
