@@ -58,6 +58,7 @@ func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 	for i, area := range areas {
 		a.TLVLength += uint8(len(areas[i]))
 		a.AreaIDs[i] = area
+		fmt.Printf("AREA: %v\n", area)
 	}
 
 	return a

@@ -91,8 +91,7 @@ func (l *LSPDU) SetChecksum() {
 func (l *LSPDU) SerializeChecksumRelevant(buf *bytes.Buffer) {
 	l.LSPID.Serialize(buf)
 	buf.Write(convert.Uint32Byte(l.SequenceNumber))
-	//buf.Write(convert.Uint16Byte(l.Checksum))
-	buf.Write(convert.Uint16Byte(0))
+	buf.Write(convert.Uint16Byte(l.Checksum))
 	buf.WriteByte(l.TypeBlock)
 
 	for _, TLV := range l.TLVs {
