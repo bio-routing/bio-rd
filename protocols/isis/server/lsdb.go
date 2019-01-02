@@ -43,7 +43,7 @@ func newLSDB(server *ISISServer) *lsdb {
 		Length:            packet.LSPDUMinLen,
 		RemainingLifetime: 3600,
 		LSPID:             localLSPID,
-		SequenceNumber:    0,
+		SequenceNumber:    1,
 		Checksum:          0,
 		TypeBlock:         0x03,
 		TLVs:              make([]packet.TLV, 0),
