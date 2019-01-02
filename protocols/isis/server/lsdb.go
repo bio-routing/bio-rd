@@ -179,7 +179,7 @@ func (lsdb *lsdb) processCSNP(ifa *netIf, csnp *packet.CSNP) {
 
 	seenLSPIDs := make(map[packet.LSPID]struct{})
 
-	for _, lspEntry := range csnp.LSPEntries {
+	for _, lspEntry := range csnp.GetLSPEntries() {
 		seenLSPIDs[lspEntry.LSPID] = struct{}{}
 
 		if _, ok := lsdb.lsps[lspEntry.LSPID]; ok {
@@ -250,22 +250,24 @@ func (lsdb *lsdb) getCSNP() *packet.CSNP {
 			SystemID:     types.SystemID{255, 255, 255, 255, 255, 255},
 			PseudonodeID: 65535,
 		},
-		LSPEntries: make([]packet.LSPEntry, len(lsdb.lsps)),
+		TLVs: make([]packet.TLV, 0, 1),
 	}
 
+	lspEntries := make([]*packet.LSPEntry, 0)
 	i := 0
 	for _, lspEntry := range lsdb.lsps {
-		lspEntry := packet.LSPEntry{
+		lspEntry := &packet.LSPEntry{
 			SequenceNumber:    lspEntry.lspdu.SequenceNumber,
 			RemainingLifetime: lspEntry.lspdu.RemainingLifetime,
 			LSPChecksum:       lspEntry.lspdu.Checksum,
 			LSPID:             lspEntry.lspdu.LSPID,
 		}
 
-		p.LSPEntries[i] = lspEntry
+		lspEntries = append(lspEntries, lspEntry)
 		i++
 	}
 
+	p.TLVs = append(p.TLVs, packet.NewLSPEntriesTLV(lspEntries))
 	lsdb.lspsMu.RUnlock()
 	return p
 }

@@ -8,6 +8,47 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetLSPEntries(t *testing.T) {
+	tests := []struct {
+		name     string
+		csnp     *CSNP
+		expected []*LSPEntry
+	}{
+		{
+			name: "Test #1",
+			csnp: &CSNP{
+				TLVs: []TLV{
+					&LSPEntriesTLV{
+						TLVType: LSPEntriesTLVType,
+						LSPEntries: []*LSPEntry{
+							{
+								SequenceNumber: 123,
+							},
+						},
+					},
+				},
+			},
+			expected: []*LSPEntry{
+				{
+					SequenceNumber: 123,
+				},
+			},
+		},
+		{
+			name: "TLV not found",
+			csnp: &CSNP{
+				TLVs: []TLV{},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.csnp.GetLSPEntries()
+		assert.Equalf(t, test.expected, res, "Test %q", test.name)
+	}
+}
+
 func TestNewCSNPs(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -36,7 +77,7 @@ func TestNewCSNPs(t *testing.T) {
 			maxPDULength: 1492,
 			expected: []CSNP{
 				{
-					PDULength: 40,
+					PDULength: 49,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -92,10 +133,10 @@ func TestNewCSNPs(t *testing.T) {
 					},
 				},
 			},
-			maxPDULength: 40,
+			maxPDULength: 49,
 			expected: []CSNP{
 				{
-					PDULength: 40,
+					PDULength: 49,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -124,7 +165,7 @@ func TestNewCSNPs(t *testing.T) {
 					},
 				},
 				{
-					PDULength: 40,
+					PDULength: 49,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -184,10 +225,10 @@ func TestNewCSNPs(t *testing.T) {
 					},
 				},
 			},
-			maxPDULength: 41,
+			maxPDULength: 55,
 			expected: []CSNP{
 				{
-					PDULength: 40,
+					PDULength: 49,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -216,7 +257,7 @@ func TestNewCSNPs(t *testing.T) {
 					},
 				},
 				{
-					PDULength: 40,
+					PDULength: 49,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,

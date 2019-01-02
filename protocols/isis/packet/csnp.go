@@ -50,6 +50,7 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 	left := len(lspEntries)
 	lspsPerCSNP := (maxPDULen - CSNPMinLen) / LSPEntryLen
 	numCSNPs := int(math.Ceil(float64(left) / float64(lspsPerCSNP)))
+	fmt.Printf("numCSNPs: %d\n", numCSNPs)
 	res := make([]CSNP, numCSNPs)
 
 	sort.Slice(lspEntries, func(a, b int) bool {
@@ -109,6 +110,19 @@ func newCSNP(sourceID types.SourceID, startLSPID LSPID, endLSPID LSPID, tlvs []T
 	}
 
 	return &csnp
+}
+
+// GetLSPEntries returns LSP Entries from the LSP Entries TLV
+func (c *CSNP) GetLSPEntries() []*LSPEntry {
+	for _, tlv := range c.TLVs {
+		if tlv.Type() != LSPEntriesTLVType {
+			continue
+		}
+
+		return tlv.Value().(*LSPEntriesTLV).LSPEntries
+	}
+
+	return nil
 }
 
 // Serialize serializes CSNPs
