@@ -4,8 +4,8 @@ import (
 	"bytes"
 
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/pkg/errors"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 // ChecksumTLVType is the type value of a checksum TLV

@@ -9,8 +9,8 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/pkg/errors"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathAttribute, error) {

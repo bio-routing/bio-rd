@@ -8,8 +8,8 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/stretchr/testify/assert"
 )
 
 type test struct {
