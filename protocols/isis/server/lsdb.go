@@ -59,6 +59,7 @@ func newLSDB(server *ISISServer) *lsdb {
 	protoSupportedTLV := packet.NewProtocolsSupportedTLV([]uint8{0xcc, 0x8e})
 	localLSPDU.TLVs = append(localLSPDU.TLVs, protoSupportedTLV)
 
+	localLSPDU.SetChecksum()
 	lsdb.lsps[localLSPID] = newLSDBEntry(localLSPDU)
 	return lsdb
 }

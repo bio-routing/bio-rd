@@ -65,22 +65,28 @@ type LSPDU struct {
 	TLVs              []TLV
 }
 
+// UpdateLength updates the length of the LSPDU
+func (l *LSPDU) updateLength() {
+	l.Length = LSPDUMinLen
+	for i := range l.TLVs {
+		l.Length += uint16(l.TLVs[i].Length())
+	}
+}
+
 // SetChecksum sets the checksum of an LSPDU
 func (l *LSPDU) SetChecksum() {
 	buf := bytes.NewBuffer(nil)
-	l.Serialize(buf)
+	l.SerializeChecksumRelevant(buf)
 
-	x := fletcher.New16()
-	x.Write(buf.Bytes())
-	csum := x.Sum([]byte{})
+	h := fletcher.New16()
+	h.Write(buf.Bytes())
+	csum := h.Sum([]byte{})
 
 	l.Checksum = uint16(csum[0])*256 + uint16(csum[1])
 }
 
-// Serialize serializes a linke state PDU
-func (l *LSPDU) Serialize(buf *bytes.Buffer) {
-	buf.Write(convert.Uint16Byte(l.Length))
-	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
+// SerializeChecksumRelevant serializes all fields after the Remaining Lifetime field.
+func (l *LSPDU) SerializeChecksumRelevant(buf *bytes.Buffer) {
 	l.LSPID.Serialize(buf)
 	buf.Write(convert.Uint32Byte(l.SequenceNumber))
 	buf.Write(convert.Uint16Byte(l.Checksum))
@@ -89,6 +95,14 @@ func (l *LSPDU) Serialize(buf *bytes.Buffer) {
 	for _, TLV := range l.TLVs {
 		TLV.Serialize(buf)
 	}
+}
+
+// Serialize serializes a linke state PDU
+func (l *LSPDU) Serialize(buf *bytes.Buffer) {
+	l.updateLength()
+	buf.Write(convert.Uint16Byte(l.Length))
+	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
+	l.SerializeChecksumRelevant(buf)
 }
 
 // DecodeLSPDU decodes an LSPDU

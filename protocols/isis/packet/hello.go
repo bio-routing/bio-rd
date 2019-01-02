@@ -32,7 +32,7 @@ type P2PHello struct {
 
 const (
 	P2PHelloMinLen = 20
-	ISISHeaderSize = 8
+	ISISHeaderLen  = 8
 	L2CircuitType  = 2
 )
 

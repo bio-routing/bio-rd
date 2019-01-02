@@ -79,7 +79,7 @@ func (s *upState) sender() {
 				hdrBuf := bytes.NewBuffer(nil)
 				hdr := &packet.ISISHeader{
 					ProtoDiscriminator:  0x83,
-					LengthIndicator:     20,
+					LengthIndicator:     packet.ISISHeaderLen + packet.LSPDUMinLen,
 					ProtocolIDExtension: 1,
 					IDLength:            0,
 					PDUType:             packet.L2_LS_PDU_TYPE,
