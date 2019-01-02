@@ -130,7 +130,7 @@ func TestAreaAddressesTLVSerialize(t *testing.T) {
 		{
 			name: "Full",
 			input: &AreaAddressesTLV{
-				TLVType:   8,
+				TLVType:   1,
 				TLVLength: 4,
 				AreaIDs: []types.AreaID{
 					{
@@ -138,7 +138,7 @@ func TestAreaAddressesTLVSerialize(t *testing.T) {
 					},
 				},
 			},
-			expected: []byte{8, 4, 3, 1, 2, 3},
+			expected: []byte{1, 4, 3, 1, 2, 3},
 		},
 	}
 
