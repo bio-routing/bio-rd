@@ -49,11 +49,7 @@ func newLSDB(server *ISISServer) *lsdb {
 		TLVs:              make([]packet.TLV, 0),
 	}
 
-	areas := make([]types.AreaID, len(lsdb.server.config.NETs))
-	for _, NET := range lsdb.server.config.NETs {
-		areas = append(areas, append([]byte{NET.AFI}, NET.AreaID...))
-	}
-	areaAddressesTLV := packet.NewAreaAddressesTLV(areas)
+	areaAddressesTLV := packet.NewAreaAddressesTLV(server.getAreas())
 	localLSPDU.TLVs = append(localLSPDU.TLVs, areaAddressesTLV)
 
 	protoSupportedTLV := packet.NewProtocolsSupportedTLV([]uint8{0xcc, 0x8e})

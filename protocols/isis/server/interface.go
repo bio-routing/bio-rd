@@ -338,7 +338,7 @@ func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 	}
 
 	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(ifa.supportedProtocols)
-	areaAddressesTLV := packet.NewAreaAddressesTLV(ifa.getAreas())
+	areaAddressesTLV := packet.NewAreaAddressesTLV(ifa.isisServer.getAreas())
 
 	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232235523) //FIXME: Insert address automatically
 
@@ -350,12 +350,10 @@ func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 	}
 }
 
-func (ifa *netIf) getAreas() []types.AreaID {
-	areas := make([]types.AreaID, len(ifa.isisServer.config.NETs))
-	for i, NET := range ifa.isisServer.config.NETs {
-		a := []byte{NET.AFI}
-		a = append(a, NET.AreaID...)
-		areas[i] = a
+func (s *ISISServer) getAreas() []types.AreaID {
+	areas := make([]types.AreaID, len(s.config.NETs))
+	for i, NET := range s.config.NETs {
+		areas[i] = append([]byte{NET.AFI}, NET.AreaID...)
 	}
 
 	return areas
