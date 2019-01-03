@@ -1084,7 +1084,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			},
 		},
 		{
-			name:          "IPv6 MP_UNREACH_NLRI without multi protocol beeing negotiated",
+			name:          "IPv6 MP_UNREACH_NLRI without multi protocol being negotiated",
 			afi:           packet.IPv6AFI,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{BestOnly: true},

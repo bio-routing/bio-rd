@@ -303,7 +303,7 @@ func TestProcessPeerUpNotification(t *testing.T) {
 				rib4: locRIB.New("inet.0"),
 				rib6: locRIB.New("inet6.0"),
 				neighbors: map[[16]byte]*neighbor{
-					[16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 255, 1}: {
+					{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 255, 1}: {
 						localAS:     200,
 						peerAS:      100,
 						peerAddress: [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 255, 1},
@@ -482,7 +482,7 @@ func TestProcessTerminationMsg(t *testing.T) {
 				address: net.IP{10, 20, 30, 40},
 				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
-					[16]byte{1, 2, 3}: &neighbor{},
+					{1, 2, 3}: {},
 				},
 			},
 			msg: &bmppkt.TerminationMessage{
@@ -509,7 +509,7 @@ func TestProcessTerminationMsg(t *testing.T) {
 				address: net.IP{10, 20, 30, 40},
 				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
-					[16]byte{1, 2, 3}: &neighbor{},
+					{1, 2, 3}: {},
 				},
 			},
 			msg: &bmppkt.TerminationMessage{
@@ -575,7 +575,7 @@ func TestProcessPeerDownNotification(t *testing.T) {
 				address: net.IP{10, 20, 30, 40},
 				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
-					[16]byte{1, 2, 3}: &neighbor{},
+					{1, 2, 3}: {},
 				},
 			},
 			msg: &bmppkt.PeerDownNotification{
@@ -595,7 +595,7 @@ func TestProcessPeerDownNotification(t *testing.T) {
 				address: net.IP{10, 20, 30, 40},
 				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
-					[16]byte{1, 2, 3}: &neighbor{},
+					{1, 2, 3}: {},
 				},
 			},
 			msg: &bmppkt.PeerDownNotification{
@@ -607,7 +607,7 @@ func TestProcessPeerDownNotification(t *testing.T) {
 			expected: &router{
 				address: net.IP{10, 20, 30, 40},
 				neighbors: map[[16]byte]*neighbor{
-					[16]byte{1, 2, 3}: &neighbor{},
+					{1, 2, 3}: {},
 				},
 			},
 		},
@@ -650,10 +650,10 @@ func TestRegisterClients(t *testing.T) {
 		client: client6,
 	}
 	clients4 := map[afiClient]struct{}{
-		ac4: struct{}{},
+		ac4: {},
 	}
 	clients6 := map[afiClient]struct{}{
-		ac6: struct{}{},
+		ac6: {},
 	}
 
 	n.registerClients(clients4)

@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/taktv6/tflow2/convert"
 )
 
@@ -29,7 +30,7 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 	if g.RouterID == 0 {
 		rtrid, err := generateRouterID()
 		if err != nil {
-			return fmt.Errorf("Unable to determine router ID: %v", err)
+			return errors.Wrap(err, "Unable to determine router ID")
 		}
 		g.RouterID = rtrid
 	}
@@ -64,7 +65,7 @@ func _getHighestIP(ifs []net.Interface) (net.IP, error) {
 	for _, iface := range ifs {
 		addrs, err := iface.Addrs()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to get interface addrs for %s: %v", iface.Name, err)
+			return nil, errors.Wrapf(err, "Unable to get interface addrs for %s", iface.Name)
 		}
 
 		for _, addr := range addrs {
@@ -92,7 +93,7 @@ func _getHighestIP(ifs []net.Interface) (net.IP, error) {
 func getLoopbackIP() (net.IP, error) {
 	iface, err := net.InterfaceByName("lo")
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get interface lo: %v", err)
+		return nil, errors.Wrap(err, "Unable to get interface lo")
 	}
 
 	return _getLoopbackIP(iface)
@@ -101,7 +102,7 @@ func getLoopbackIP() (net.IP, error) {
 func _getLoopbackIP(iface *net.Interface) (net.IP, error) {
 	addrs, err := iface.Addrs()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get interface addresses: %v", err)
+		return nil, errors.Wrap(err, "Unable to get interface addresses")
 	}
 
 	candidates := make([]net.IP, 0)

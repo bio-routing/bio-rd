@@ -1,9 +1,8 @@
 package device
 
 import (
-	"fmt"
-
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
@@ -11,7 +10,7 @@ import (
 func (ds *Server) loadAdapter() error {
 	a, err := newOSAdapterLinux(ds)
 	if err != nil {
-		return fmt.Errorf("Unable to create linux adapter: %v", err)
+		return errors.Wrap(err, "Unable to create linux adapter")
 	}
 
 	ds.osAdapter = a
@@ -31,7 +30,7 @@ func newOSAdapterLinux(srv *Server) (*osAdapterLinux, error) {
 
 	h, err := netlink.NewHandle()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create netlink handle: %v", err)
+		return nil, errors.Wrap(err, "Failed to create netlink handle")
 	}
 
 	o.handle = h
@@ -42,18 +41,18 @@ func (o *osAdapterLinux) start() error {
 	chLU := make(chan netlink.LinkUpdate)
 	err := netlink.LinkSubscribe(chLU, o.done)
 	if err != nil {
-		return fmt.Errorf("Unable to subscribe for link updates: %v", err)
+		return errors.Wrap(err, "Unable to subscribe for link updates")
 	}
 
 	chAU := make(chan netlink.AddrUpdate)
 	err = netlink.AddrSubscribe(chAU, o.done)
 	if err != nil {
-		return fmt.Errorf("Unable to subscribe for address updates: %v", err)
+		return errors.Wrap(err, "Unable to subscribe for address updates")
 	}
 
 	err = o.init()
 	if err != nil {
-		return fmt.Errorf("Init failed: %v", err)
+		return errors.Wrap(err, "Init failed")
 	}
 
 	go o.monitorLinks(chLU)
@@ -65,7 +64,7 @@ func (o *osAdapterLinux) start() error {
 func (o *osAdapterLinux) init() error {
 	links, err := o.handle.LinkList()
 	if err != nil {
-		return fmt.Errorf("Unable to get links: %v", err)
+		return errors.Wrap(err, "Unable to get links")
 	}
 
 	for _, l := range links {
@@ -74,7 +73,7 @@ func (o *osAdapterLinux) init() error {
 		for _, f := range []int{4, 6} {
 			addrs, err := o.handle.AddrList(l, f)
 			if err != nil {
-				return fmt.Errorf("Unable to get addresses for interface %s: %v", d.Name, err)
+				return errors.Wrapf(err, "Unable to get addresses for interface %s", d.Name)
 			}
 
 			for _, addr := range addrs {

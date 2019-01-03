@@ -20,7 +20,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
 	err := b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
-			net.IP{0x20, 0x01, 0x6, 0x78, 0x1, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0xca, 0xfe},
+			{0x20, 0x01, 0x6, 0x78, 0x1, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0xca, 0xfe},
 		},
 	})
 	if err != nil {

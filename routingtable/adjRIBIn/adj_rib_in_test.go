@@ -327,17 +327,17 @@ func TestUnregister(t *testing.T) {
 	}
 
 	paths := []*route.Path{
-		&route.Path{
+		{
 			BGPPath: &route.BGPPath{
 				NextHop: net.IPv4FromOctets(192, 168, 0, 0),
 			},
 		},
-		&route.Path{
+		{
 			BGPPath: &route.BGPPath{
 				NextHop: net.IPv4FromOctets(192, 168, 2, 1),
 			},
 		},
-		&route.Path{
+		{
 			BGPPath: &route.BGPPath{
 				NextHop: net.IPv4FromOctets(192, 168, 3, 1),
 			},

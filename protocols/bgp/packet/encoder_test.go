@@ -108,7 +108,7 @@ func TestSerializeOptParams(t *testing.T) {
 		{
 			name: "AddPath",
 			optParams: []OptParam{
-				OptParam{
+				{
 					Type:   2,
 					Length: 6,
 					Value: Capabilities{
@@ -129,7 +129,7 @@ func TestSerializeOptParams(t *testing.T) {
 		{
 			name: "Multi Protocol Support (IPv6), 32 bit ASNs",
 			optParams: []OptParam{
-				OptParam{
+				{
 					Length: 12,
 					Type:   CapabilitiesParamType,
 					Value: Capabilities{

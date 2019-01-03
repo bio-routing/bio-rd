@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -58,11 +59,11 @@ func (s establishedState) run() (state, string) {
 func (s *establishedState) init() error {
 	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
 	if err != nil {
-		return fmt.Errorf("Unable to get local address: %v", err)
+		return errors.Wrap(err, "Unable to get local address")
 	}
 	localAddr, err := bnet.IPFromString(host)
 	if err != nil {
-		return fmt.Errorf("Unable to parse address: %v", err)
+		return errors.Wrap(err, "Unable to parse address")
 	}
 
 	n := &routingtable.Neighbor{

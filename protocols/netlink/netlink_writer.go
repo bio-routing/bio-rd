@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
@@ -144,7 +145,7 @@ func (nw *NetlinkWriter) addKernel(pfx bnet.Prefix) error {
 	err = netlink.RouteAdd(route)
 	if err != nil {
 		log.Errorf("Error while adding route: %v", err)
-		return fmt.Errorf("Error while adding route: %v", err)
+		return errors.Wrap(err, "Error while adding route")
 	}
 
 	return nil
@@ -163,7 +164,7 @@ func (nw *NetlinkWriter) removeKernel(pfx bnet.Prefix, paths []*route.Path) erro
 
 	err = netlink.RouteDel(route)
 	if err != nil {
-		return fmt.Errorf("Error while removing route: %v", err)
+		return errors.Wrap(err, "Error while removing route")
 	}
 
 	return nil

@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/pkg/errors"
 )
 
 // TLV is an interface that all TLVs must fulfill
@@ -42,7 +42,7 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 	for read < uint16(length) {
 		err = decode.Decode(buf, headFields)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode fields: %v", err)
+			return nil, errors.Wrap(err, "Unable to decode fields")
 		}
 
 		read += 2
@@ -69,7 +69,7 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 		}
 
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read TLV: %v", err)
+			return nil, errors.Wrap(err, "Unable to read TLV")
 		}
 		TLVs = append(TLVs, tlv)
 	}

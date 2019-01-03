@@ -8,6 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -98,7 +99,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	if a.addPathTX {
 		pathID, err := a.pathIDManager.addPath(p)
 		if err != nil {
-			return fmt.Errorf("Unable to get path ID: %v", err)
+			return errors.Wrap(err, "Unable to get path ID")
 		}
 
 		p.BGPPath.PathIdentifier = pathID
