@@ -70,7 +70,7 @@ type LSPDU struct {
 func (l *LSPDU) updateLength() {
 	l.Length = LSPDUMinLen + HeaderLen
 	for i := range l.TLVs {
-		l.Length += uint16(l.TLVs[i].Length())
+		l.Length += 2 + uint16(l.TLVs[i].Length())
 	}
 }
 
