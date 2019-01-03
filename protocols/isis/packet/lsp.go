@@ -124,6 +124,10 @@ func (l *LSPDU) SerializeChecksumRelevant(buf *bytes.Buffer) {
 	buf.Write(convert.Uint32Byte(l.SequenceNumber))
 	buf.Write(convert.Uint16Byte(l.Checksum))
 	buf.WriteByte(l.TypeBlock)
+
+	for _, TLV := range l.TLVs {
+		TLV.Serialize(buf)
+	}
 }
 
 // Serialize serializes a linke state PDU
@@ -132,10 +136,6 @@ func (l *LSPDU) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(l.Length))
 	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
 	l.SerializeChecksumRelevant(buf)
-
-	for _, TLV := range l.TLVs {
-		TLV.Serialize(buf)
-	}
 }
 
 // DecodeLSPDU decodes an LSPDU
