@@ -96,11 +96,9 @@ func csum(input []byte) uint16 {
 
 		left -= partialLen
 	}
-	fmt.Printf("c0: %d\n", c0)
-	fmt.Printf("c1: %d\n", c1)
 
-	fmt.Printf("len(input)-12-1 = %d\n", len(input)-12-1)
-	x = ((len(input)-12-1)*c0 - c1) % 255
+	z := ((len(input)-12-1)*c0 - c1)
+	x = int(z % 255)
 
 	if x < 0 {
 		x += 255
@@ -110,46 +108,13 @@ func csum(input []byte) uint16 {
 	if y > 255 {
 		y -= 255
 	}
-
-	fmt.Printf("x: %x\n", x)
-	fmt.Printf("y: %x\n", y)
-	return uint16(x)*256 + uint16(y)
-}
-
-func csum2(input []byte) (uint8, uint8) {
-	c0 := uint16(0)
-	c1 := uint16(0)
-	ck0 := uint8(0)
-	ck1 := uint8(0)
-
-	for i := range input {
-		fmt.Printf("i: %d\n", i)
-		c0 = (c0 + uint16(input[i])) % 255
-		c1 = (c1 + c0) % 255
-		fmt.Printf("c0: %d\n", c0)
-		fmt.Printf("c1: %d\n", c1)
-	}
-
-	ck0 = uint8((255 - (c0+c1)%255))
-	ck1 = uint8(c1 % 255)
-
-	if ck0 == 0 {
-		ck0 = 255
-	}
-
-	if ck1 == 0 {
-		ck1 = 255
-	}
-
-	fmt.Printf("CSUM: %x %x\n", ck0, ck1)
-	return uint8(ck0), uint8(ck1)
+	return (uint16(x) << 8) | (uint16(y) & 0xFF)
 }
 
 // SetChecksum sets the checksum of an LSPDU
 func (l *LSPDU) SetChecksum() {
 	buf := bytes.NewBuffer(nil)
 	l.SerializeChecksumRelevant(buf)
-	fmt.Printf("Input: %v\n", buf.Bytes())
 	l.Checksum = csum(buf.Bytes())
 }
 
@@ -159,10 +124,6 @@ func (l *LSPDU) SerializeChecksumRelevant(buf *bytes.Buffer) {
 	buf.Write(convert.Uint32Byte(l.SequenceNumber))
 	buf.Write(convert.Uint16Byte(l.Checksum))
 	buf.WriteByte(l.TypeBlock)
-
-	for _, TLV := range l.TLVs {
-		TLV.Serialize(buf)
-	}
 }
 
 // Serialize serializes a linke state PDU
@@ -171,6 +132,10 @@ func (l *LSPDU) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(l.Length))
 	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
 	l.SerializeChecksumRelevant(buf)
+
+	for _, TLV := range l.TLVs {
+		TLV.Serialize(buf)
+	}
 }
 
 // DecodeLSPDU decodes an LSPDU
