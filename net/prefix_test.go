@@ -300,13 +300,11 @@ func TestGetSupernet(t *testing.T) {
 
 func TestContains(t *testing.T) {
 	tests := []struct {
-		name     string
 		a        Prefix
 		b        Prefix
 		expected bool
 	}{
 		{
-			name: "Test 1",
 			a: Prefix{
 				addr:   IPv4(0),
 				pfxlen: 0,
@@ -318,7 +316,6 @@ func TestContains(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "Test 2",
 			a: Prefix{
 				addr:   IPv4(100),
 				pfxlen: 24,
@@ -330,7 +327,6 @@ func TestContains(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "Test 3",
 			a: Prefix{
 				addr:   IPv4(167772160),
 				pfxlen: 8,
@@ -342,7 +338,6 @@ func TestContains(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "Test 4",
 			a: Prefix{
 				addr:   IPv4(167772160),
 				pfxlen: 8,
@@ -354,7 +349,6 @@ func TestContains(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "Test 5",
 			a: Prefix{
 				addr:   IPv4(167772160),
 				pfxlen: 8,
@@ -366,7 +360,6 @@ func TestContains(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "Test 6",
 			a: Prefix{
 				addr:   IPv4(167772160),
 				pfxlen: 8,
@@ -378,7 +371,6 @@ func TestContains(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "Test 7",
 			a: Prefix{
 				addr:   IPv4FromOctets(169, 0, 0, 0),
 				pfxlen: 25,
@@ -390,7 +382,6 @@ func TestContains(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "IPv6: 2001:678:1e0:100::/56 is subnet of 2001:678:1e0::/48",
 			a: Prefix{
 				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
 				pfxlen: 48,
@@ -402,10 +393,20 @@ func TestContains(t *testing.T) {
 			},
 		},
 		{
-			name: "IPv6: 2001:678:1e0:100::/56 is subnet of 2001:678:1e0::/48",
 			a: Prefix{
 				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0),
 				pfxlen: 56,
+			},
+			b: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
+				pfxlen: 64,
+			},
+			expected: false,
+		},
+		{
+			a: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0),
+				pfxlen: 65,
 			},
 			b: Prefix{
 				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
@@ -417,7 +418,7 @@ func TestContains(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.a.Contains(test.b)
-		assert.Equal(t, res, test.expected, "Unexpected result %v for test %s: %s contains %s", res, test.name, test.a, test.b)
+		assert.Equal(t, res, test.expected, "Subnet %s contains %s", test.a, test.b)
 	}
 }
 
