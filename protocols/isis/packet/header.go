@@ -7,6 +7,10 @@ import (
 	"github.com/bio-routing/bio-rd/util/decode"
 )
 
+const (
+	HeaderLen = 8
+)
+
 // ISISHeader represents an ISIS header
 type ISISHeader struct {
 	ProtoDiscriminator  uint8

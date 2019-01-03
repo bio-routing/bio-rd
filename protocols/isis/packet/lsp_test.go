@@ -261,7 +261,7 @@ func TestSetChecksum(t *testing.T) {
 		{
 			name: "Test #1",
 			lspdu: &LSPDU{
-				Length:            27,
+				Length:            29,
 				RemainingLifetime: 3591,
 				LSPID: LSPID{
 					SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
