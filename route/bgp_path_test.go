@@ -311,9 +311,40 @@ func TestLength(t *testing.T) {
 
 	for _, test := range tests {
 		calcLen := test.path.Length()
+		assert.Equal(t, test.expected, calcLen, test.name)
+	}
+}
+func TestBGPPathString(t *testing.T) {
+	tests := []struct {
+		input          BGPPath
+		expectedPrint  string
+		expectedString string
+	}{
+		{
+			input: BGPPath{
+				EBGP:         true,
+				OriginatorID: 23,
+				ClusterList:  []uint32{10, 20},
+			},
+			expectedString: "Local Pref: 0, Origin: Incomplete, AS Path: , BGP type: external, NEXT HOP: 0:0:0:0:0:0:0:0, MED: 0, Path ID: 0, Source: 0:0:0:0:0:0:0:0, Communities: [], LargeCommunities: [], OriginatorID: 0.0.0.23, ClusterList 0.0.0.10 0.0.0.20",
+			expectedPrint: `		Local Pref: 0
+		Origin: Incomplete
+		AS Path: 
+		BGP type: external
+		NEXT HOP: 0:0:0:0:0:0:0:0
+		MED: 0
+		Path ID: 0
+		Source: 0:0:0:0:0:0:0:0
+		Communities: []
+		LargeCommunities: []
+		OriginatorID: 0.0.0.23
+		ClusterList 0.0.0.10 0.0.0.20
+`,
+		},
+	}
 
-		if calcLen != test.expected {
-			t.Errorf("Unexpected result for test %q: Expected: %d Got: %d", test.name, test.expected, calcLen)
-		}
+	for _, test := range tests {
+		assert.Equal(t, test.expectedString, test.input.String())
+		assert.Equal(t, test.expectedPrint, test.input.Print())
 	}
 }
