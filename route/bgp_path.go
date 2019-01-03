@@ -236,6 +236,8 @@ func (b *BGPPath) better(c *BGPPath) bool {
 
 // Print all known information about a route in logfile friendly format
 func (b *BGPPath) String() string {
+	buf := &strings.Builder{}
+
 	origin := ""
 	switch b.Origin {
 	case 0:
@@ -251,30 +253,32 @@ func (b *BGPPath) String() string {
 		bgpType = "external"
 	}
 
-	ret := fmt.Sprintf("Local Pref: %d, ", b.LocalPref)
-	ret += fmt.Sprintf("Origin: %s, ", origin)
-	ret += fmt.Sprintf("AS Path: %v, ", b.ASPath)
-	ret += fmt.Sprintf("BGP type: %s, ", bgpType)
-	ret += fmt.Sprintf("NEXT HOP: %s, ", b.NextHop)
-	ret += fmt.Sprintf("MED: %d, ", b.MED)
-	ret += fmt.Sprintf("Path ID: %d, ", b.PathIdentifier)
-	ret += fmt.Sprintf("Source: %s, ", b.Source)
-	ret += fmt.Sprintf("Communities: %v, ", b.Communities)
-	ret += fmt.Sprintf("LargeCommunities: %v, ", b.LargeCommunities)
+	fmt.Fprintf(buf, "Local Pref: %d, ", b.LocalPref)
+	fmt.Fprintf(buf, "Origin: %s, ", origin)
+	fmt.Fprintf(buf, "AS Path: %v, ", b.ASPath)
+	fmt.Fprintf(buf, "BGP type: %s, ", bgpType)
+	fmt.Fprintf(buf, "NEXT HOP: %s, ", b.NextHop)
+	fmt.Fprintf(buf, "MED: %d, ", b.MED)
+	fmt.Fprintf(buf, "Path ID: %d, ", b.PathIdentifier)
+	fmt.Fprintf(buf, "Source: %s, ", b.Source)
+	fmt.Fprintf(buf, "Communities: %v, ", b.Communities)
+	fmt.Fprintf(buf, "LargeCommunities: %v", b.LargeCommunities)
 
 	if b.OriginatorID != 0 {
 		oid := convert.Uint32Byte(b.OriginatorID)
-		ret += fmt.Sprintf("OriginatorID: %d.%d.%d.%d, ", oid[0], oid[1], oid[2], oid[3])
+		fmt.Fprintf(buf, ", OriginatorID: %d.%d.%d.%d", oid[0], oid[1], oid[2], oid[3])
 	}
 	if b.ClusterList != nil {
-		ret += fmt.Sprintf("ClusterList %s", b.ClusterListString())
+		fmt.Fprintf(buf, ", ClusterList %s", b.ClusterListString())
 	}
 
-	return ret
+	return buf.String()
 }
 
 // Print all known information about a route in human readable form
 func (b *BGPPath) Print() string {
+	buf := &strings.Builder{}
+
 	origin := ""
 	switch b.Origin {
 	case 0:
@@ -290,26 +294,26 @@ func (b *BGPPath) Print() string {
 		bgpType = "external"
 	}
 
-	ret := fmt.Sprintf("\t\tLocal Pref: %d\n", b.LocalPref)
-	ret += fmt.Sprintf("\t\tOrigin: %s\n", origin)
-	ret += fmt.Sprintf("\t\tAS Path: %v\n", b.ASPath)
-	ret += fmt.Sprintf("\t\tBGP type: %s\n", bgpType)
-	ret += fmt.Sprintf("\t\tNEXT HOP: %s\n", b.NextHop)
-	ret += fmt.Sprintf("\t\tMED: %d\n", b.MED)
-	ret += fmt.Sprintf("\t\tPath ID: %d\n", b.PathIdentifier)
-	ret += fmt.Sprintf("\t\tSource: %s\n", b.Source)
-	ret += fmt.Sprintf("\t\tCommunities: %v\n", b.Communities)
-	ret += fmt.Sprintf("\t\tLargeCommunities: %v\n", b.LargeCommunities)
+	fmt.Fprintf(buf, "\t\tLocal Pref: %d\n", b.LocalPref)
+	fmt.Fprintf(buf, "\t\tOrigin: %s\n", origin)
+	fmt.Fprintf(buf, "\t\tAS Path: %v\n", b.ASPath)
+	fmt.Fprintf(buf, "\t\tBGP type: %s\n", bgpType)
+	fmt.Fprintf(buf, "\t\tNEXT HOP: %s\n", b.NextHop)
+	fmt.Fprintf(buf, "\t\tMED: %d\n", b.MED)
+	fmt.Fprintf(buf, "\t\tPath ID: %d\n", b.PathIdentifier)
+	fmt.Fprintf(buf, "\t\tSource: %s\n", b.Source)
+	fmt.Fprintf(buf, "\t\tCommunities: %v\n", b.Communities)
+	fmt.Fprintf(buf, "\t\tLargeCommunities: %v\n", b.LargeCommunities)
 
 	if b.OriginatorID != 0 {
 		oid := convert.Uint32Byte(b.OriginatorID)
-		ret += fmt.Sprintf("\t\tOriginatorID: %d.%d.%d.%d\n", oid[0], oid[1], oid[2], oid[3])
+		fmt.Fprintf(buf, "\t\tOriginatorID: %d.%d.%d.%d\n", oid[0], oid[1], oid[2], oid[3])
 	}
 	if b.ClusterList != nil {
-		ret += fmt.Sprintf("\t\tClusterList %s\n", b.ClusterListString())
+		fmt.Fprintf(buf, "\t\tClusterList %s\n", b.ClusterListString())
 	}
 
-	return ret
+	return buf.String()
 }
 
 // Prepend the given BGPPath with the given ASN given times
@@ -400,31 +404,44 @@ func (b *BGPPath) ComputeHash() string {
 
 // CommunitiesString returns the formated communities
 func (b *BGPPath) CommunitiesString() string {
-	str := ""
-	for _, com := range b.Communities {
-		str += types.CommunityStringForUint32(com) + " "
+	str := &strings.Builder{}
+
+	for i, com := range b.Communities {
+		if i > 0 {
+			str.WriteByte(' ')
+		}
+		str.WriteString(types.CommunityStringForUint32(com))
 	}
 
-	return strings.TrimRight(str, " ")
+	return str.String()
 }
 
 // ClusterListString returns the formated ClusterList
 func (b *BGPPath) ClusterListString() string {
-	str := ""
-	for _, cid := range b.ClusterList {
+	str := &strings.Builder{}
+
+	for i, cid := range b.ClusterList {
+		if i > 0 {
+			str.WriteByte(' ')
+		}
 		octes := convert.Uint32Byte(cid)
-		str += fmt.Sprintf("%d.%d.%d.%d ", octes[0], octes[1], octes[2], octes[3])
+
+		fmt.Fprintf(str, "%d.%d.%d.%d", octes[0], octes[1], octes[2], octes[3])
 	}
 
-	return strings.TrimRight(str, " ")
+	return str.String()
 }
 
 // LargeCommunitiesString returns the formated communities
 func (b *BGPPath) LargeCommunitiesString() string {
-	str := ""
-	for _, com := range b.LargeCommunities {
-		str += com.String() + " "
+	str := &strings.Builder{}
+
+	for i, com := range b.LargeCommunities {
+		if i > 0 {
+			str.WriteByte(' ')
+		}
+		str.WriteString(com.String())
 	}
 
-	return strings.TrimRight(str, " ")
+	return str.String()
 }

@@ -497,14 +497,23 @@ func TestBitAtPosition(t *testing.T) {
 			position: 1,
 			expected: true,
 		},
+		{
+			name:     "IPv4: invalid position",
+			input:    IPv4(0),
+			position: 33,
+			expected: false,
+		},
+		{
+			name:     "IPv6: invalid position",
+			input:    IPv6(0, 0),
+			position: 129,
+			expected: false,
+		},
 	}
 
 	for _, test := range tests {
 		b := test.input.BitAtPosition(test.position)
-		if b != test.expected {
-			t.Errorf("%s: Unexpected failure: Bit %d of %v is %v. Expected %v",
-				test.name, test.position, test.input, b, test.expected)
-		}
+		assert.Equal(t, test.expected, b, test.name)
 	}
 }
 
@@ -548,5 +557,28 @@ func TestIPFromString(t *testing.T) {
 
 			assert.Equal(t, test.expected, ip)
 		})
+	}
+}
+
+func TestSizeBytes(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    IP
+		expected uint8
+	}{
+		{
+			name:     "IPv4",
+			input:    IPv4(0),
+			expected: 4,
+		},
+		{
+			name:     "IPv6",
+			input:    IPv6(0, 0),
+			expected: 16,
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expected, test.input.SizeBytes(), test.name)
 	}
 }

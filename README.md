@@ -3,7 +3,7 @@
 A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustness!
 
 [![CircleCI](https://circleci.com/gh/bio-routing/bio-rd/tree/master.svg?style=shield)](https://circleci.com/gh/bio-routing/bio-rd/tree/master)
-[![Coverage Status](https://coveralls.io/repos/bio-routing/bio-rd/badge.svg?branch=master&service=github)](https://coveralls.io/github/bio-routing/bio-rd?branch=master)
+[![Codecov](https://codecov.io/gh/bio-routing/bio-rd/branch/master/graph/badge.svg)](https://codecov.io/gh/bio-routing/bio-rd)
 [![Go ReportCard](http://goreportcard.com/badge/bio-routing/bio-rd)](http://goreportcard.com/report/bio-routing/bio-rd)
 [![Go Doc](https://godoc.org/github.com/bio-routing/bio-rd?status.svg)](https://godoc.org/github.com/bio-routing/bio-rd)
 
