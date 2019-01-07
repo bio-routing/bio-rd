@@ -12,13 +12,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
-type PeerInfo struct {
-	PeerAddr bnet.IP
-	PeerASN  uint32
-	LocalASN uint32
-	States   []string
-}
-
 type peer struct {
 	server    *bgpServer
 	addr      bnet.IP
@@ -66,23 +59,6 @@ func (p *peer) addressFamily(afi uint16, safi uint8) *peerAddressFamily {
 		return p.ipv6
 	default:
 		return nil
-	}
-}
-
-func (p *peer) snapshot() PeerInfo {
-	p.fsmsMu.Lock()
-	defer p.fsmsMu.Unlock()
-	states := make([]string, 0, len(p.fsms))
-	for _, fsm := range p.fsms {
-		fsm.stateMu.RLock()
-		states = append(states, stateName(fsm.state))
-		fsm.stateMu.RUnlock()
-	}
-	return PeerInfo{
-		PeerAddr: p.addr,
-		PeerASN:  p.peerASN,
-		LocalASN: p.localASN,
-		States:   states,
 	}
 }
 
