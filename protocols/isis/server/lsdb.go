@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
@@ -54,6 +55,15 @@ func newLSDB(server *ISISServer) *lsdb {
 
 	protoSupportedTLV := packet.NewProtocolsSupportedTLV([]uint8{0xcc, 0x8e})
 	localLSPDU.TLVs = append(localLSPDU.TLVs, protoSupportedTLV)
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		hostnameTLV := packet.NewDynamicHostnameTLV([]byte(hostname))
+		localLSPDU.TLVs = append(localLSPDU.TLVs, hostnameTLV)
+	}
+
+	ipInterfaceAddrTLV := packet.NewIPInterfaceAddressesTLV([]uint32{3232235520})
+	localLSPDU.TLVs = append(localLSPDU.TLVs, ipInterfaceAddrTLV)
 
 	localLSPDU.SetChecksum()
 	lsdb.lsps[localLSPID] = newLSDBEntry(localLSPDU)
@@ -246,7 +256,8 @@ func (lsdb *lsdb) getCSNP() *packet.CSNP {
 		StartLSPID: packet.LSPID{},
 		EndLSPID: packet.LSPID{
 			SystemID:     types.SystemID{255, 255, 255, 255, 255, 255},
-			PseudonodeID: 65535,
+			PseudonodeID: 255,
+			LSPNumber:    255,
 		},
 		TLVs: make([]packet.TLV, 0, 1),
 	}

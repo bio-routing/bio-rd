@@ -75,6 +75,18 @@ func (h *P2PHello) GetP2PAdjTLV() *P2PAdjacencyStateTLV {
 	return nil
 }
 
+// GetIPInterfaceAddressesesTLV gets the IP Interface Addresses TLV
+func (h *P2PHello) GetIPInterfaceAddressesesTLV() *IPInterfaceAddressesTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != IPInterfaceAddressesTLVType {
+			continue
+		}
+
+		return tlv.(*IPInterfaceAddressesTLV)
+	}
+	return nil
+}
+
 // Serialize serializes a P2P Hello
 func (h *P2PHello) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(h.CircuitType)

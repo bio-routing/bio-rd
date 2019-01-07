@@ -266,6 +266,7 @@ func TestSetChecksum(t *testing.T) {
 				LSPID: LSPID{
 					SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 					PseudonodeID: 0,
+					LSPNumber:    0,
 				},
 				SequenceNumber: 1,
 				TypeBlock:      3,

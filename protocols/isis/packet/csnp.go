@@ -25,7 +25,6 @@ type CSNP struct {
 	StartLSPID LSPID
 	EndLSPID   LSPID
 	TLVs       []TLV
-	//LSPEntries []LSPEntry
 }
 
 func compareLSPIDs(lspIDA, lspIDB LSPID) bool {
@@ -89,7 +88,8 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 	res[0].StartLSPID = LSPID{}
 	res[len(res)-1].EndLSPID = LSPID{
 		SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		PseudonodeID: 0xffff,
+		PseudonodeID: 0xff,
+		LSPNumber:    0xff,
 	}
 
 	return res

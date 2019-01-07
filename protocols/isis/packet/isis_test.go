@@ -76,10 +76,10 @@ func TestDecode(t *testing.T) {
 							TLVLength:               2,
 							NetworkLayerProtocolIDs: []uint8{0xcc, 0x8e},
 						},
-						&IPInterfaceAddressTLV{
-							TLVType:     132,
-							TLVLength:   4,
-							IPv4Address: 3232235776,
+						&IPInterfaceAddressesTLV{
+							TLVType:       132,
+							TLVLength:     4,
+							IPv4Addresses: []uint32{3232235776},
 						},
 						&AreaAddressesTLV{
 							TLVType:   1,

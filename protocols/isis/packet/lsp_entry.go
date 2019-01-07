@@ -15,10 +15,10 @@ const (
 
 // LSPEntry represents an LSP entry in a CSNP PDU
 type LSPEntry struct {
-	SequenceNumber    uint32
 	RemainingLifetime uint16
-	LSPChecksum       uint16
 	LSPID             LSPID
+	SequenceNumber    uint32
+	LSPChecksum       uint16
 }
 
 // Serialize serializes an LSPEntry

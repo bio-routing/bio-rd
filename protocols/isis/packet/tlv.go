@@ -56,8 +56,8 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 			tlv, err = readChecksumTLV(buf, tlvType, tlvLength)
 		case ProtocolsSupportedTLVType:
 			tlv, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
-		case IPInterfaceAddressTLVType:
-			tlv, err = readIPInterfaceAddressTLV(buf, tlvType, tlvLength)
+		case IPInterfaceAddressesTLVType:
+			tlv, err = readIPInterfaceAddressesTLV(buf, tlvType, tlvLength)
 		case AreaAddressesTLVType:
 			tlv, err = readAreaAddressesTLV(buf, tlvType, tlvLength)
 		case P2PAdjacencyStateTLVType:

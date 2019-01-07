@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/device"
+	"github.com/bio-routing/tflow2/convert"
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
@@ -49,6 +50,11 @@ type level struct {
 	Priority      uint8
 	neighbors     map[types.MACAddress]*neighbor
 	neighborsMu   sync.RWMutex
+}
+
+func (l *level) get3ByteMetric() [3]byte {
+	bytes := convert.Uint32Byte(l.Metric)
+	return [3]byte{bytes[1], bytes[2], bytes[3]}
 }
 
 func (ifa *netIf) DeviceUpdate(d *device.Device) {
@@ -229,6 +235,13 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket, src types.MACAd
 		if _, ok := ifa.l2.neighbors[src]; !ok {
 			p2pAdjTLV := hello.GetP2PAdjTLV()
 			if p2pAdjTLV == nil {
+				log.Warningf("Received a P2P hello PDU without P2P Adjacency TLV on %s", ifa.name)
+				return
+			}
+
+			ipIfAddrTLV := hello.GetIPInterfaceAddressesesTLV()
+			if ipIfAddrTLV == nil {
+				log.Warningf("Received a P2P hello PDU without IP Interface Addresses TLV on %s", ifa.name)
 				return
 			}
 
@@ -238,6 +251,7 @@ func (ifa *netIf) processIngressP2PHello(pkt *packet.ISISPacket, src types.MACAd
 				holdingTime:            hello.HoldingTimer,
 				localCircuitID:         hello.LocalCircuitID,
 				extendedLocalCircuitID: p2pAdjTLV.ExtendedLocalCircuitID,
+				ipInterfaceAddresses:   ipIfAddrTLV.IPv4Addresses,
 			}
 			fmt.Printf("DEBUG: extendedLocalCircuitID: %v\n", p2pAdjTLV.ExtendedLocalCircuitID)
 
@@ -340,7 +354,7 @@ func (ifa *netIf) p2pHelloTLVs() []packet.TLV {
 	protocolsSupportedTLV := packet.NewProtocolsSupportedTLV(ifa.supportedProtocols)
 	areaAddressesTLV := packet.NewAreaAddressesTLV(ifa.isisServer.getAreas())
 
-	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressTLV(3232235523) //FIXME: Insert address automatically
+	ipInterfaceAddressesTLV := packet.NewIPInterfaceAddressesTLV([]uint32{3232235523}) //FIXME: Insert address automatically
 
 	return []packet.TLV{
 		p2pAdjStateTLV,

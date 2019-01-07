@@ -32,6 +32,15 @@ func (d *DynamicHostNameTLV) Value() interface{} {
 	return d
 }
 
+// NewDynamicHostnameTLV creates a new dynamic hostname TLV
+func NewDynamicHostnameTLV(name []byte) *DynamicHostNameTLV {
+	return &DynamicHostNameTLV{
+		TLVType:   DynamicHostNameTLVType,
+		TLVLength: uint8(len(name)),
+		Hostname:  name,
+	}
+}
+
 func readDynamicHostnameTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*DynamicHostNameTLV, error) {
 	pdu := &DynamicHostNameTLV{
 		TLVType:   tlvType,

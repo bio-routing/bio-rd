@@ -19,7 +19,8 @@ const (
 // LSPID represents a Link State Packet ID
 type LSPID struct {
 	SystemID     types.SystemID
-	PseudonodeID uint16
+	PseudonodeID uint8
+	LSPNumber    uint8
 }
 
 func (l *LSPID) String() string {
@@ -29,7 +30,8 @@ func (l *LSPID) String() string {
 // Serialize serializes an LSPID
 func (l *LSPID) Serialize(buf *bytes.Buffer) {
 	buf.Write(l.SystemID[:])
-	buf.Write(convert.Uint16Byte(l.PseudonodeID))
+	buf.WriteByte(l.PseudonodeID)
+	buf.WriteByte(l.LSPNumber)
 }
 
 // Compare returns 1 if l is bigger m, 0 if they are equal, else -1

@@ -33,8 +33,15 @@ func main() {
 					Priority:      0,
 				},
 			},
+			{
+				Name:             "lo",
+				Passive:          true,
+				P2P:              true,
+				ISISLevel2Config: &config.ISISLevelConfig{},
+			},
 		},
 		MinLSPTransmissionInterval: 100,
+		TrafficEngineeringRouterID: [4]byte{10, 20, 30, 40},
 	}
 
 	ds, err := device.New()

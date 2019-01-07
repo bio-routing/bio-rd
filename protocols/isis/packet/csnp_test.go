@@ -85,7 +85,8 @@ func TestNewCSNPs(t *testing.T) {
 					StartLSPID: LSPID{},
 					EndLSPID: LSPID{
 						SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-						PseudonodeID: 0xffff,
+						PseudonodeID: 0xff,
+						LSPNumber:    0xff,
 					},
 					TLVs: []TLV{
 						&LSPEntriesTLV{
@@ -176,7 +177,8 @@ func TestNewCSNPs(t *testing.T) {
 					},
 					EndLSPID: LSPID{
 						SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-						PseudonodeID: 0xffff,
+						PseudonodeID: 0xff,
+						LSPNumber:    0xff,
 					},
 					TLVs: []TLV{
 						&LSPEntriesTLV{
@@ -268,7 +270,8 @@ func TestNewCSNPs(t *testing.T) {
 					},
 					EndLSPID: LSPID{
 						SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-						PseudonodeID: 0xffff,
+						PseudonodeID: 0xff,
+						LSPNumber:    0xff,
 					},
 					TLVs: []TLV{
 						&LSPEntriesTLV{
@@ -313,12 +316,14 @@ func TestCSNPSerialize(t *testing.T) {
 					CircuitID: 0,
 				},
 				StartLSPID: LSPID{
-					SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-					PseudonodeID: 256,
+					SystemID:     types.SystemID{0x11, 0x22, 0x33, 0x44, 0x55, 0x66},
+					PseudonodeID: 0,
+					LSPNumber:    0,
 				},
 				EndLSPID: LSPID{
-					SystemID:     types.SystemID{11, 22, 33, 44, 55, 67},
-					PseudonodeID: 255,
+					SystemID:     types.SystemID{0x11, 0x22, 0x33, 0x44, 0x55, 0x67},
+					PseudonodeID: 0xff,
+					LSPNumber:    0,
 				},
 				TLVs: []TLV{
 					&LSPEntriesTLV{
@@ -326,29 +331,30 @@ func TestCSNPSerialize(t *testing.T) {
 						TLVLength: 16,
 						LSPEntries: []*LSPEntry{
 							{
-								SequenceNumber:    123,
 								RemainingLifetime: 255,
-								LSPChecksum:       111,
 								LSPID: LSPID{
 									SystemID:     types.SystemID{10, 20, 30, 40, 50, 61},
 									PseudonodeID: 11,
+									LSPNumber:    0,
 								},
+								SequenceNumber: 123,
+								LSPChecksum:    111,
 							},
 						},
 					},
 				},
 			},
 			expected: []byte{
-				0, 43,
-				10, 20, 30, 40, 50, 60, 0,
-				11, 22, 33, 44, 55, 66, 1, 0,
-				11, 22, 33, 44, 55, 67, 0, 255,
-				9,
-				16,
-				0, 255,
-				10, 20, 30, 40, 50, 61, 0, 11,
-				0, 0, 0, 123,
-				0, 111,
+				0, 43, // Length
+				10, 20, 30, 40, 50, 60, 0, // SourceID
+				0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0, 0, // Start LDP ID
+				0x11, 0x22, 0x33, 0x44, 0x55, 0x67, 0xff, 0, // End LSP ID
+				9,      // TLV Type
+				16,     // TLV Length
+				0, 255, // Remaining Lifetime
+				10, 20, 30, 40, 50, 61, 11, 0, // LSP ID
+				0, 0, 0, 123, // Seq. Nr.
+				0, 111, // Checksum
 			},
 		},
 	}
