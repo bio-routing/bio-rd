@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	"github.com/taktv6/tflow2/convert"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 const (

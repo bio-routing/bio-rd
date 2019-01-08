@@ -6,7 +6,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/taktv6/tflow2/convert"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 // L2Hello represents a broadcast L2 hello
