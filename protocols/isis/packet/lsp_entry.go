@@ -36,6 +36,7 @@ func decodeLSPEntry(buf *bytes.Buffer) (*LSPEntry, error) {
 		&lspEntry.RemainingLifetime,
 		&lspEntry.LSPID.SystemID,
 		&lspEntry.LSPID.PseudonodeID,
+		&lspEntry.LSPID.LSPNumber,
 		&lspEntry.SequenceNumber,
 		&lspEntry.LSPChecksum,
 	}

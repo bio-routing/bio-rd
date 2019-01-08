@@ -49,7 +49,6 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 	left := len(lspEntries)
 	lspsPerCSNP := (maxPDULen - CSNPMinLen) / LSPEntryLen
 	numCSNPs := int(math.Ceil(float64(left) / float64(lspsPerCSNP)))
-	fmt.Printf("numCSNPs: %d\n", numCSNPs)
 	res := make([]CSNP, numCSNPs)
 
 	sort.Slice(lspEntries, func(a, b int) bool {
@@ -146,8 +145,10 @@ func DecodeCSNP(buf *bytes.Buffer) (*CSNP, error) {
 		&csnp.SourceID,
 		&csnp.StartLSPID.SystemID,
 		&csnp.StartLSPID.PseudonodeID,
+		&csnp.StartLSPID.LSPNumber,
 		&csnp.EndLSPID.SystemID,
 		&csnp.EndLSPID.PseudonodeID,
+		&csnp.EndLSPID.LSPNumber,
 	}
 
 	err := decode.Decode(buf, fields)
@@ -157,7 +158,7 @@ func DecodeCSNP(buf *bytes.Buffer) (*CSNP, error) {
 
 	tlvs, err := readTLVs(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read TVLs")
+		return nil, errors.Wrap(err, "Unable to read TLVs")
 	}
 
 	csnp.TLVs = tlvs

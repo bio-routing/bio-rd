@@ -174,7 +174,7 @@ func TestDecodeLSPDU(t *testing.T) {
 		{
 			name: "LSP with two TLVs",
 			input: []byte{
-				0, 29, // Length
+				0, 30, // Length
 				0, 200, // Lifetime
 				10, 20, 30, 40, 50, 60, 0, 10, // LSPID
 				0, 0, 1, 0, // Sequence Number
@@ -185,11 +185,12 @@ func TestDecodeLSPDU(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &LSPDU{
-				Length:            29,
+				Length:            30,
 				RemainingLifetime: 200,
 				LSPID: LSPID{
 					SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
-					PseudonodeID: 10,
+					PseudonodeID: 0,
+					LSPNumber:    10,
 				},
 				SequenceNumber: 256,
 				Checksum:       0,
@@ -241,8 +242,9 @@ func TestString(t *testing.T) {
 			input: &LSPID{
 				SystemID:     types.SystemID{1, 2, 3, 4, 5, 6},
 				PseudonodeID: 5,
+				LSPNumber:    7,
 			},
-			expected: "010203.040506-05",
+			expected: "010203.040506.05-07",
 		},
 	}
 
@@ -289,7 +291,7 @@ func TestSetChecksum(t *testing.T) {
 					},
 				},
 			},
-			expected: 0x0b1e,
+			expected: 0x35ae,
 		},
 	}
 

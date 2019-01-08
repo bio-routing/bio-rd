@@ -71,7 +71,7 @@ func TestNewAreaAddressesTLV(t *testing.T) {
 			input: []types.AreaID{},
 			expected: &AreaAddressesTLV{
 				TLVType:   1,
-				TLVLength: 1,
+				TLVLength: 0,
 				AreaIDs:   []types.AreaID{},
 			},
 		},
@@ -98,18 +98,6 @@ func TestNewAreaAddressesTLV(t *testing.T) {
 		tlv := NewAreaAddressesTLV(test.input)
 		assert.Equalf(t, test.expected, tlv, "Test %q", test.name)
 	}
-}
-
-func TestAreaAddressesTLV(t *testing.T) {
-	tlv := NewAreaAddressesTLV([]types.AreaID{})
-
-	assert.Equal(t, uint8(1), tlv.Type())
-	assert.Equal(t, uint8(1), tlv.Length())
-	assert.Equal(t, AreaAddressesTLV{
-		TLVType:   1,
-		TLVLength: 1,
-		AreaIDs:   []types.AreaID{},
-	}, tlv.Value())
 }
 
 func TestAreaAddressesTLVSerialize(t *testing.T) {

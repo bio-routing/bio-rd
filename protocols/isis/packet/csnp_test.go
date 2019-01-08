@@ -398,10 +398,10 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "CSNP with one LSPEntry",
 			input: []byte{
-				0, 43, // Length
+				0, 41, // PDU Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
 				11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
-				11, 22, 33, 77, 88, 0, 0, 200, // EndLSPID
+				11, 22, 33, 77, 88, 99, 0, 200, // EndLSPID
 				9,    // TLV Type
 				16,   // TLV Length
 				1, 0, // Remaining Lifetime
@@ -412,18 +412,20 @@ func TestDecodeCSNP(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &CSNP{
-				PDULength: 43,
+				PDULength: 41,
 				SourceID: types.SourceID{
 					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
 				},
 				StartLSPID: LSPID{
 					SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-					PseudonodeID: 100,
+					PseudonodeID: 0,
+					LSPNumber:    100,
 				},
 				EndLSPID: LSPID{
-					SystemID:     types.SystemID{11, 22, 33, 77, 88, 0},
-					PseudonodeID: 200,
+					SystemID:     types.SystemID{11, 22, 33, 77, 88, 99},
+					PseudonodeID: 0,
+					LSPNumber:    200,
 				},
 				TLVs: []TLV{
 					&LSPEntriesTLV{
@@ -436,7 +438,8 @@ func TestDecodeCSNP(t *testing.T) {
 								LSPChecksum:       512,
 								LSPID: LSPID{
 									SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-									PseudonodeID: 20,
+									PseudonodeID: 0,
+									LSPNumber:    20,
 								},
 							},
 						},
@@ -447,7 +450,7 @@ func TestDecodeCSNP(t *testing.T) {
 		{
 			name: "PSNP with two LSPEntries",
 			input: []byte{
-				0, 62, // Length
+				0, 59, // Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
 				11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
 				11, 22, 33, 77, 88, 0, 0, 200, // EndLSPID
@@ -466,18 +469,20 @@ func TestDecodeCSNP(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &CSNP{
-				PDULength: 62,
+				PDULength: 59,
 				SourceID: types.SourceID{
 					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
 				},
 				StartLSPID: LSPID{
 					SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-					PseudonodeID: 100,
+					PseudonodeID: 0,
+					LSPNumber:    100,
 				},
 				EndLSPID: LSPID{
 					SystemID:     types.SystemID{11, 22, 33, 77, 88, 0},
-					PseudonodeID: 200,
+					PseudonodeID: 0,
+					LSPNumber:    200,
 				},
 				TLVs: []TLV{
 					&LSPEntriesTLV{
@@ -490,7 +495,8 @@ func TestDecodeCSNP(t *testing.T) {
 								LSPChecksum:       512,
 								LSPID: LSPID{
 									SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-									PseudonodeID: 20,
+									PseudonodeID: 0,
+									LSPNumber:    20,
 								},
 							},
 							{
@@ -499,7 +505,8 @@ func TestDecodeCSNP(t *testing.T) {
 								LSPChecksum:       512,
 								LSPID: LSPID{
 									SystemID:     types.SystemID{11, 22, 33, 44, 55, 67},
-									PseudonodeID: 21,
+									PseudonodeID: 0,
+									LSPNumber:    21,
 								},
 							},
 						},

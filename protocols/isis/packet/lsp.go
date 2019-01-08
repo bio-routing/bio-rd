@@ -24,7 +24,7 @@ type LSPID struct {
 }
 
 func (l *LSPID) String() string {
-	return fmt.Sprintf("%02d%02d%02d.%02d%02d%02d-%02d", l.SystemID[0], l.SystemID[1], l.SystemID[2], l.SystemID[3], l.SystemID[4], l.SystemID[5], l.PseudonodeID)
+	return fmt.Sprintf("%02d%02d%02d.%02d%02d%02d.%02d-%02d", l.SystemID[0], l.SystemID[1], l.SystemID[2], l.SystemID[3], l.SystemID[4], l.SystemID[5], l.PseudonodeID, l.LSPNumber)
 }
 
 // Serialize serializes an LSPID
@@ -134,7 +134,6 @@ func (l *LSPDU) SerializeChecksumRelevant(buf *bytes.Buffer) {
 
 // Serialize serializes a linke state PDU
 func (l *LSPDU) Serialize(buf *bytes.Buffer) {
-	l.updateLength()
 	buf.Write(convert.Uint16Byte(l.Length))
 	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
 	l.SerializeChecksumRelevant(buf)
@@ -149,6 +148,7 @@ func DecodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 		&pdu.RemainingLifetime,
 		&pdu.LSPID.SystemID,
 		&pdu.LSPID.PseudonodeID,
+		&pdu.LSPID.LSPNumber,
 		&pdu.SequenceNumber,
 		&pdu.Checksum,
 		&pdu.TypeBlock,

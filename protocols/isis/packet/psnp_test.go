@@ -36,7 +36,7 @@ func TestNewPSNPs(t *testing.T) {
 			maxPDULength: 1492,
 			expected: []PSNP{
 				{
-					PDULength: 24,
+					PDULength: 35,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -69,6 +69,7 @@ func TestNewPSNPs(t *testing.T) {
 					LSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 200,
+						LSPNumber:    100,
 					},
 				},
 				{
@@ -78,13 +79,14 @@ func TestNewPSNPs(t *testing.T) {
 					LSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 100,
+						LSPNumber:    200,
 					},
 				},
 			},
-			maxPDULength: 24,
+			maxPDULength: 35,
 			expected: []PSNP{
 				{
-					PDULength: 24,
+					PDULength: 35,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -97,12 +99,13 @@ func TestNewPSNPs(t *testing.T) {
 							LSPID: LSPID{
 								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 								PseudonodeID: 200,
+								LSPNumber:    100,
 							},
 						},
 					},
 				},
 				{
-					PDULength: 24,
+					PDULength: 35,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -115,6 +118,7 @@ func TestNewPSNPs(t *testing.T) {
 							LSPID: LSPID{
 								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 								PseudonodeID: 100,
+								LSPNumber:    200,
 							},
 						},
 					},
@@ -135,6 +139,7 @@ func TestNewPSNPs(t *testing.T) {
 					LSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 200,
+						LSPNumber:    10,
 					},
 				},
 				{
@@ -144,13 +149,14 @@ func TestNewPSNPs(t *testing.T) {
 					LSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 100,
+						LSPNumber:    20,
 					},
 				},
 			},
-			maxPDULength: 28,
+			maxPDULength: 40,
 			expected: []PSNP{
 				{
-					PDULength: 24,
+					PDULength: 35,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -163,12 +169,13 @@ func TestNewPSNPs(t *testing.T) {
 							LSPID: LSPID{
 								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 								PseudonodeID: 200,
+								LSPNumber:    10,
 							},
 						},
 					},
 				},
 				{
-					PDULength: 24,
+					PDULength: 35,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -181,6 +188,7 @@ func TestNewPSNPs(t *testing.T) {
 							LSPID: LSPID{
 								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 								PseudonodeID: 100,
+								LSPNumber:    20,
 							},
 						},
 					},
@@ -201,6 +209,7 @@ func TestNewPSNPs(t *testing.T) {
 					LSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 200,
+						LSPNumber:    10,
 					},
 				},
 				{
@@ -210,13 +219,14 @@ func TestNewPSNPs(t *testing.T) {
 					LSPID: LSPID{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 100,
+						LSPNumber:    20,
 					},
 				},
 			},
-			maxPDULength: 40,
+			maxPDULength: 51,
 			expected: []PSNP{
 				{
-					PDULength: 40,
+					PDULength: 51,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -229,6 +239,7 @@ func TestNewPSNPs(t *testing.T) {
 							LSPID: LSPID{
 								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 								PseudonodeID: 200,
+								LSPNumber:    10,
 							},
 						},
 						{
@@ -238,6 +249,7 @@ func TestNewPSNPs(t *testing.T) {
 							LSPID: LSPID{
 								SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 								PseudonodeID: 100,
+								LSPNumber:    20,
 							},
 						},
 					},
@@ -303,6 +315,7 @@ func TestPSNPSerialize(t *testing.T) {
 						LSPID: LSPID{
 							SystemID:     types.SystemID{10, 20, 30, 40, 50, 61},
 							PseudonodeID: 11,
+							LSPNumber:    10,
 						},
 						SequenceNumber: 123,
 						LSPChecksum:    111,
@@ -315,7 +328,7 @@ func TestPSNPSerialize(t *testing.T) {
 				9,      // TLV Type
 				16,     // TLV Length
 				0, 255, // Remaining Lifetime
-				10, 20, 30, 40, 50, 61, 0, 11, // LSPID
+				10, 20, 30, 40, 50, 61, 11, 10, // LSPID
 				0, 0, 0, 123, // Sequence Number
 				0, 111, // Checksum
 			},
@@ -339,7 +352,7 @@ func TestDecodePSNP(t *testing.T) {
 		{
 			name: "Incomplete PSNP",
 			input: []byte{
-				0, 25, // Length
+				0, 33, // Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
 			},
 			wantFail: true,
@@ -347,7 +360,7 @@ func TestDecodePSNP(t *testing.T) {
 		{
 			name: "Incomplete PSNP LSPEntry",
 			input: []byte{
-				0, 25, // Length
+				0, 33, // Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
 				0, 0, 0, 20, // Sequence Number
 			},
@@ -356,17 +369,20 @@ func TestDecodePSNP(t *testing.T) {
 		{
 			name: "PSNP with one LSPEntry",
 			input: []byte{
-				0, 25, // Length
+				0, 33, // Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
-				0, 0, 0, 20, // Sequence Number
+
 				1, 0, // Remaining Lifetime
-				2, 0, // Checksum
 				11, 22, 33, 44, 55, 66, // SystemID
-				0, 20, // Pseudonode ID
+				0,           // Pseudonode ID
+				20,          // LSPNumber
+				0, 0, 0, 20, // Sequence Number
+				2, 0, // Checksum
+
 			},
 			wantFail: false,
 			expected: &PSNP{
-				PDULength: 25,
+				PDULength: 33,
 				SourceID: types.SourceID{
 					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,
@@ -378,7 +394,8 @@ func TestDecodePSNP(t *testing.T) {
 						LSPChecksum:       512,
 						LSPID: LSPID{
 							SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
-							PseudonodeID: 20,
+							PseudonodeID: 0,
+							LSPNumber:    20,
 						},
 					},
 				},
@@ -387,22 +404,26 @@ func TestDecodePSNP(t *testing.T) {
 		{
 			name: "PSNP with two LSPEntries",
 			input: []byte{
-				0, 41, // Length
+				0, 49, // Length
 				10, 20, 30, 40, 50, 60, 0, // Source ID
-				0, 0, 0, 20, // Sequence Number
+
 				1, 0, // Remaining Lifetime
-				2, 0, // Checksum
 				11, 22, 33, 44, 55, 66, // SystemID
-				0, 20, // Pseudonode ID
-				0, 0, 0, 21, // Sequence Number
-				2, 0, // Remaining Lifetime
+				20,          // Pseudonode ID
+				0,           // LSP Number
+				0, 0, 0, 20, // Sequence Number
 				2, 0, // Checksum
+
+				2, 0, // Remaining Lifetime
 				11, 22, 33, 44, 55, 67, // SystemID
-				0, 21, // Pseudonode ID
+				21,          // Pseudonode ID
+				00,          // LSP Number
+				0, 0, 0, 21, // Sequence Number
+				2, 0, // Checksum
 			},
 			wantFail: false,
 			expected: &PSNP{
-				PDULength: 41,
+				PDULength: 49,
 				SourceID: types.SourceID{
 					SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 					CircuitID: 0,

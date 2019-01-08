@@ -52,7 +52,7 @@ func TestGetP2PAdjTLV(t *testing.T) {
 			name: "Test #1",
 			hello: &P2PHello{
 				TLVs: []TLV{
-					P2PAdjacencyStateTLV{
+					&P2PAdjacencyStateTLV{
 						TLVType: P2PAdjacencyStateTLVType,
 					},
 				},

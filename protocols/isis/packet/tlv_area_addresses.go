@@ -85,7 +85,6 @@ func (a AreaAddressesTLV) Serialize(buf *bytes.Buffer) {
 
 	for _, area := range a.AreaIDs {
 		buf.WriteByte(uint8(len(area)))
-		fmt.Printf("Writing Area: %v\n", area)
 		buf.Write(area)
 	}
 }
