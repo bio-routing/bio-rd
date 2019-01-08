@@ -8,6 +8,74 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetIPInterfaceAddressesesTLV(t *testing.T) {
+	tests := []struct {
+		name     string
+		hello    *P2PHello
+		expected *IPInterfaceAddressesTLV
+	}{
+		{
+			name: "Test #1",
+			hello: &P2PHello{
+				TLVs: []TLV{
+					NewIPInterfaceAddressesTLV([]uint32{111}),
+				},
+			},
+			expected: &IPInterfaceAddressesTLV{
+				TLVType:       IPInterfaceAddressesTLVType,
+				TLVLength:     4,
+				IPv4Addresses: []uint32{111},
+			},
+		},
+		{
+			name: "Test #1",
+			hello: &P2PHello{
+				TLVs: []TLV{},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		ret := test.hello.GetIPInterfaceAddressesesTLV()
+		assert.Equalf(t, test.expected, ret, "Test %q", test.name)
+	}
+}
+
+func TestGetP2PAdjTLV(t *testing.T) {
+	tests := []struct {
+		name     string
+		hello    *P2PHello
+		expected *P2PAdjacencyStateTLV
+	}{
+		{
+			name: "Test #1",
+			hello: &P2PHello{
+				TLVs: []TLV{
+					P2PAdjacencyStateTLV{
+						TLVType: P2PAdjacencyStateTLVType,
+					},
+				},
+			},
+			expected: &P2PAdjacencyStateTLV{
+				TLVType: P2PAdjacencyStateTLVType,
+			},
+		},
+		{
+			name: "Test #1",
+			hello: &P2PHello{
+				TLVs: []TLV{},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		ret := test.hello.GetP2PAdjTLV()
+		assert.Equalf(t, test.expected, ret, "Test %q", test.name)
+	}
+}
+
 func TestP2PHelloSerialize(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -240,10 +308,10 @@ func TestDecodeISISHello(t *testing.T) {
 						TLVLength:               2,
 						NetworkLayerProtocolIDs: []byte{0xcc, 0x8e},
 					},
-					&IPInterfaceAddressTLV{
-						TLVType:     132,
-						TLVLength:   4,
-						IPv4Address: 167772160,
+					&IPInterfaceAddressesTLV{
+						TLVType:       132,
+						TLVLength:     4,
+						IPv4Addresses: []uint32{167772160},
 					},
 					&AreaAddressesTLV{
 						TLVType:   1,

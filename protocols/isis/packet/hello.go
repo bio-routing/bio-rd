@@ -2,11 +2,11 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
+	"github.com/taktv6/tflow2/convert"
 )
 
 // L2Hello represents a broadcast L2 hello
@@ -31,10 +31,61 @@ type P2PHello struct {
 }
 
 const (
-	P2PHelloMinSize = 20
-	ISISHeaderSize  = 8
-	L2CircuitType   = 2
+	P2PHelloMinLen = 20
+	ISISHeaderLen  = 8
+	L2CircuitType  = 2
 )
+
+// GetProtocolsSupportedTLV gets the protocols supported TLV
+func (h *P2PHello) GetProtocolsSupportedTLV() *ProtocolsSupportedTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != ProtocolsSupportedTLVType {
+			continue
+		}
+
+		return tlv.(*ProtocolsSupportedTLV)
+	}
+
+	return nil
+}
+
+// GetAreaAddressesTLV gets the area addresses TLV
+func (h *P2PHello) GetAreaAddressesTLV() *AreaAddressesTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != AreaAddressesTLVType {
+			continue
+		}
+
+		return tlv.(*AreaAddressesTLV)
+	}
+
+	return nil
+}
+
+// GetP2PAdjTLV gets the P2P Adjacency TLV from the P2P Hello
+func (h *P2PHello) GetP2PAdjTLV() *P2PAdjacencyStateTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != P2PAdjacencyStateTLVType {
+			continue
+		}
+
+		return tlv.(*P2PAdjacencyStateTLV)
+	}
+
+	return nil
+}
+
+// GetIPInterfaceAddressesesTLV gets the IP Interface Addresses TLV
+func (h *P2PHello) GetIPInterfaceAddressesesTLV() *IPInterfaceAddressesTLV {
+	for _, tlv := range h.TLVs {
+		if tlv.Type() != IPInterfaceAddressesTLVType {
+			continue
+		}
+
+		return tlv.(*IPInterfaceAddressesTLV)
+	}
+	return nil
+}
 
 // Serialize serializes a P2P Hello
 func (h *P2PHello) Serialize(buf *bytes.Buffer) {
@@ -63,12 +114,12 @@ func DecodeP2PHello(buf *bytes.Buffer) (*P2PHello, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode fields")
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
 	TLVs, err := readTLVs(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read TLVs")
+		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
 	}
 
 	pdu.TLVs = TLVs
@@ -91,12 +142,12 @@ func DecodeL2Hello(buf *bytes.Buffer) (*L2Hello, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode fields")
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
 	TLVs, err := readTLVs(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read TLVs")
+		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
 	}
 
 	pdu.TLVs = TLVs

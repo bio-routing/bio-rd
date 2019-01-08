@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	"github.com/pkg/errors"
 )
 
 // AreaAddressesTLVType is the type value of an area address TLV
@@ -29,14 +29,14 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 	for read < tlvLength {
 		areaLen, err := buf.ReadByte()
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read")
+			return nil, fmt.Errorf("Unable to read: %v", err)
 		}
 		read++
 
 		newArea := make(types.AreaID, areaLen)
 		_, err = buf.Read(newArea)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read")
+			return nil, fmt.Errorf("Unable to read: %v", err)
 		}
 		read += areaLen
 
@@ -50,14 +50,14 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 // NewAreaAddressesTLV creates a new area addresses TLV
 func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 	a := &AreaAddressesTLV{
-		TLVType:   AreaAddressesTLVType,
-		TLVLength: 0,
-		AreaIDs:   make([]types.AreaID, len(areas)),
+		TLVType: AreaAddressesTLVType,
+		AreaIDs: make([]types.AreaID, len(areas)),
 	}
 
 	for i, area := range areas {
-		a.TLVLength += uint8(len(area)) + 1
+		a.TLVLength += uint8(len(areas[i])) + 1
 		a.AreaIDs[i] = area
+		fmt.Printf("AREA: %v\n", area)
 	}
 
 	return a
@@ -85,6 +85,7 @@ func (a AreaAddressesTLV) Serialize(buf *bytes.Buffer) {
 
 	for _, area := range a.AreaIDs {
 		buf.WriteByte(uint8(len(area)))
+		fmt.Printf("Writing Area: %v\n", area)
 		buf.Write(area)
 	}
 }

@@ -3,8 +3,6 @@ package packet
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 // UnknownTLV represents an unknown TLV
@@ -23,11 +21,11 @@ func readUnknownTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*Unknown
 
 	n, err := buf.Read(pdu.TLVValue)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read")
+		return nil, fmt.Errorf("Unable to read: %v", err)
 	}
 
 	if n != int(tlvLength) {
-		return nil, fmt.Errorf("Read incomplete")
+		return nil, fmt.Errorf("Read of TLVType %d incomplete", pdu.TLVType)
 	}
 
 	return pdu, nil

@@ -2,31 +2,31 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 	"math"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/decode"
 	umath "github.com/bio-routing/bio-rd/util/math"
-	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
+	"github.com/taktv6/tflow2/convert"
 )
 
 const (
 	// PSNPMinLen is the minimal length of PSNP PDU
-	PSNPMinLen = 8
+	PSNPMinLen = 17
 )
 
 // PSNP represents a Partial Sequence Number PDU
 type PSNP struct {
 	PDULength  uint16
-	SourceID   types.SystemID
-	LSPEntries []LSPEntry
+	SourceID   types.SourceID
+	LSPEntries []*LSPEntry
 }
 
 // NewPSNPs creates the necessary number of PSNP PDUs to carry all LSPEntries
-func NewPSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []PSNP {
+func NewPSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []PSNP {
 	left := len(lspEntries)
-	lspsPerPSNP := (maxPDULen - PSNPMinLen) / LSPEntryLen
+	lspsPerPSNP := (maxPDULen - PSNPMinLen - 2) / LSPEntryLen
 	numPSNPs := int(math.Ceil(float64(left) / float64(lspsPerPSNP)))
 	res := make([]PSNP, numPSNPs)
 
@@ -46,13 +46,13 @@ func NewPSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []P
 	return res
 }
 
-func newPSNP(sourceID types.SystemID, lspEntries []LSPEntry) *PSNP {
+func newPSNP(sourceID types.SourceID, lspEntries []*LSPEntry) *PSNP {
 	if len(lspEntries) == 0 {
 		return nil
 	}
 
 	psnp := PSNP{
-		PDULength:  PSNPMinLen + uint16(len(lspEntries))*LSPEntryLen,
+		PDULength:  PSNPMinLen + 2 + uint16(len(lspEntries))*LSPEntryLen,
 		SourceID:   sourceID,
 		LSPEntries: lspEntries,
 	}
@@ -63,11 +63,8 @@ func newPSNP(sourceID types.SystemID, lspEntries []LSPEntry) *PSNP {
 // Serialize serializes PSNPs
 func (c *PSNP) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(c.PDULength))
-	buf.Write(c.SourceID[:])
-
-	for _, lspEntry := range c.LSPEntries {
-		lspEntry.Serialize(buf)
-	}
+	buf.Write(c.SourceID.Serialize())
+	NewLSPEntriesTLV(c.LSPEntries).Serialize(buf)
 }
 
 // DecodePSNP decodes a Partion Sequence Number PDU
@@ -81,17 +78,17 @@ func DecodePSNP(buf *bytes.Buffer) (*PSNP, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode fields")
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
 	nEntries := (psnp.PDULength - PSNPMinLen) / LSPEntryLen
-	psnp.LSPEntries = make([]LSPEntry, nEntries)
+	psnp.LSPEntries = make([]*LSPEntry, nEntries)
 	for i := uint16(0); i < nEntries; i++ {
 		lspEntry, err := decodeLSPEntry(buf)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get LSPEntries")
+			return nil, fmt.Errorf("Unable to get LSPEntries: %v", err)
 		}
-		psnp.LSPEntries[i] = *lspEntry
+		psnp.LSPEntries[i] = lspEntry
 	}
 
 	return psnp, nil

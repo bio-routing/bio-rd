@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/pkg/errors"
 )
 
 // TLV is an interface that all TLVs must fulfill
@@ -42,7 +42,7 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 	for read < uint16(length) {
 		err = decode.Decode(buf, headFields)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to decode fields")
+			return nil, fmt.Errorf("Unable to decode fields: %v", err)
 		}
 
 		read += 2
@@ -56,20 +56,22 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 			tlv, err = readChecksumTLV(buf, tlvType, tlvLength)
 		case ProtocolsSupportedTLVType:
 			tlv, err = readProtocolsSupportedTLV(buf, tlvType, tlvLength)
-		case IPInterfaceAddressTLVType:
-			tlv, err = readIPInterfaceAddressTLV(buf, tlvType, tlvLength)
+		case IPInterfaceAddressesTLVType:
+			tlv, err = readIPInterfaceAddressesTLV(buf, tlvType, tlvLength)
 		case AreaAddressesTLVType:
 			tlv, err = readAreaAddressesTLV(buf, tlvType, tlvLength)
 		case P2PAdjacencyStateTLVType:
 			tlv, err = readP2PAdjacencyStateTLV(buf, tlvType, tlvLength)
 		case ISNeighborsTLVType:
 			tlv, err = readISNeighborsTLV(buf, tlvType, tlvLength)
+		case LSPEntriesTLVType:
+			tlv, err = readLSPEntriesTLV(buf, tlvType, tlvLength)
 		default:
 			tlv, err = readUnknownTLV(buf, tlvType, tlvLength)
 		}
 
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read TLV")
+			return nil, fmt.Errorf("Unable to read TLV: %v", err)
 		}
 		TLVs = append(TLVs, tlv)
 	}
