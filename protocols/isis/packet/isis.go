@@ -64,7 +64,5 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 		pkt.Body = psnp
 	}
 
-
-
 	return pkt, nil
 }
