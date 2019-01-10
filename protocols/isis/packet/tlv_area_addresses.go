@@ -57,29 +57,28 @@ func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 	for i, area := range areas {
 		a.TLVLength += uint8(len(areas[i])) + 1
 		a.AreaIDs[i] = area
-		fmt.Printf("AREA: %v\n", area)
 	}
 
 	return a
 }
 
 // Type gets the type of the TLV
-func (a AreaAddressesTLV) Type() uint8 {
+func (a *AreaAddressesTLV) Type() uint8 {
 	return a.TLVType
 }
 
 // Length gets the length of the TLV
-func (a AreaAddressesTLV) Length() uint8 {
+func (a *AreaAddressesTLV) Length() uint8 {
 	return a.TLVLength
 }
 
 // Value gets the TLV itself
-func (a AreaAddressesTLV) Value() interface{} {
+func (a *AreaAddressesTLV) Value() interface{} {
 	return a
 }
 
 // Serialize serializes an area address TLV
-func (a AreaAddressesTLV) Serialize(buf *bytes.Buffer) {
+func (a *AreaAddressesTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(a.TLVType)
 	buf.WriteByte(a.TLVLength)
 

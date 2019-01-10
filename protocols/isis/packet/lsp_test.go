@@ -273,7 +273,7 @@ func TestSetChecksum(t *testing.T) {
 				SequenceNumber: 1,
 				TypeBlock:      3,
 				TLVs: []TLV{
-					AreaAddressesTLV{
+					&AreaAddressesTLV{
 						TLVType:   AreaAddressesTLVType,
 						TLVLength: 6,
 						AreaIDs: []types.AreaID{

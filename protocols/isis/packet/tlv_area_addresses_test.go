@@ -150,3 +150,28 @@ func TestAreaAddressesTLVSerialize(t *testing.T) {
 		assert.Equalf(t, test.expected, buf.Bytes(), "Test %q", test.name)
 	}
 }
+
+func TestAreaAddressesTLVType(t *testing.T) {
+	tlv := &AreaAddressesTLV{
+		TLVType: 100,
+	}
+
+	assert.Equal(t, uint8(100), tlv.Type())
+}
+
+func TestAreaAddressesTLVLength(t *testing.T) {
+	tlv := &AreaAddressesTLV{
+		TLVLength: 123,
+	}
+
+	assert.Equal(t, uint8(123), tlv.Length())
+}
+
+func TestAreaAddressesTLVValue(t *testing.T) {
+	tlv := &AreaAddressesTLV{
+		TLVLength: 123,
+		AreaIDs:   []types.AreaID{},
+	}
+
+	assert.Equal(t, tlv, tlv.Value())
+}
