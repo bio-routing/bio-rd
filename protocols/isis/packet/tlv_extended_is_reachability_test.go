@@ -9,7 +9,50 @@ import (
 )
 
 func TestExtendedISReachabilityTLVSerialize(t *testing.T) {
+	tests := []struct {
+		name     string
+		tlv      *ExtendedISReachabilityTLV
+		expected []byte
+	}{
+		{
+			name: "Test #1",
+			tlv: &ExtendedISReachabilityTLV{
+				TLVType:   22,
+				TLVLength: 21,
+				Neighbors: []*ExtendedISReachabilityNeighbor{
+					{
+						NeighborID: types.SourceID{
+							SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
+							CircuitID: 100,
+						},
+						Metric:       [3]byte{0, 0, 123},
+						SubTLVLength: 8,
+						SubTLVs: []TLV{
+							NewLinkLocalRemoteIdentifiersSubTLV(1000, 2000),
+						},
+					},
+				},
+			},
+			expected: []byte{
+				22,
+				21,
+				10, 20, 30, 40, 50, 60,
+				100,
+				0, 0, 123,
+				8,
+				4,
+				8,
+				0, 0, 0x3, 0xe8,
+				0, 0, 0x7, 0xd0,
+			},
+		},
+	}
 
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		test.tlv.Serialize(buf)
+		assert.Equal(t, test.expected, buf.Bytes(), test.name)
+	}
 }
 
 func TestExtendedISReachabilityNeighborAddSubTLV(t *testing.T) {
