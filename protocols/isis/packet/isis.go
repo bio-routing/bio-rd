@@ -57,7 +57,7 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 		}
 		pkt.Body = csnp
 	case L2_PSNP_TYPE:
-		psnp, err := DecodeCSNP(buf)
+		psnp, err := DecodePSNP(buf)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode PSNP: %v", err)
 		}
