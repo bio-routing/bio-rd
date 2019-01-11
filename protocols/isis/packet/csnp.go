@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 	"math"
 	"sort"
 
@@ -14,16 +15,16 @@ import (
 
 const (
 	// CSNPMinLen is the minimal length of a CSNP
-	CSNPMinLen = 24
+	CSNPMinLen = PSNPMinLen + 16
 )
 
 // CSNP represents a Complete Sequence Number PDU
 type CSNP struct {
 	PDULength  uint16
-	SourceID   [6]byte
+	SourceID   types.SourceID
 	StartLSPID LSPID
 	EndLSPID   LSPID
-	LSPEntries []LSPEntry
+	TLVs       []TLV
 }
 
 func compareLSPIDs(lspIDA, lspIDB LSPID) bool {
@@ -44,7 +45,7 @@ func compareLSPIDs(lspIDA, lspIDB LSPID) bool {
 }
 
 // NewCSNPs creates the necessary number of CSNP PDUs to carry all LSPEntries
-func NewCSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []CSNP {
+func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []CSNP {
 	left := len(lspEntries)
 	lspsPerCSNP := (maxPDULen - CSNPMinLen) / LSPEntryLen
 	numCSNPs := int(math.Ceil(float64(left) / float64(lspsPerCSNP)))
@@ -71,8 +72,11 @@ func NewCSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []C
 		start := i * lspsPerCSNP
 		end := umath.Min(lspsPerCSNP, left)
 
-		slice := lspEntries[start : start+end]
-		csnp := newCSNP(sourceID, slice)
+		entries := lspEntries[start : start+end]
+		tlvs := []TLV{
+			NewLSPEntriesTLV(entries),
+		}
+		csnp := newCSNP(sourceID, entries[0].LSPID, entries[len(entries)-1].LSPID, tlvs)
 		if csnp == nil {
 			continue
 		}
@@ -83,38 +87,52 @@ func NewCSNPs(sourceID types.SystemID, lspEntries []LSPEntry, maxPDULen int) []C
 	res[0].StartLSPID = LSPID{}
 	res[len(res)-1].EndLSPID = LSPID{
 		SystemID:     types.SystemID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		PseudonodeID: 0xffff,
+		PseudonodeID: 0xff,
+		LSPNumber:    0xff,
 	}
 
 	return res
 }
 
-func newCSNP(sourceID types.SystemID, lspEntries []LSPEntry) *CSNP {
-	if len(lspEntries) == 0 {
-		return nil
+func newCSNP(sourceID types.SourceID, startLSPID LSPID, endLSPID LSPID, tlvs []TLV) *CSNP {
+	tlvsLen := uint16(0)
+	for i := range tlvs {
+		tlvsLen += uint16(tlvs[i].Length())
 	}
 
 	csnp := CSNP{
-		PDULength:  uint16(CSNPMinLen + len(lspEntries)*LSPEntryLen),
+		PDULength:  uint16(CSNPMinLen + tlvsLen),
 		SourceID:   sourceID,
-		StartLSPID: lspEntries[0].LSPID,
-		EndLSPID:   lspEntries[len(lspEntries)-1].LSPID,
-		LSPEntries: lspEntries,
+		StartLSPID: startLSPID,
+		EndLSPID:   endLSPID,
+		TLVs:       tlvs,
 	}
 
 	return &csnp
 }
 
+// GetLSPEntries returns LSP Entries from the LSP Entries TLV
+func (c *CSNP) GetLSPEntries() []*LSPEntry {
+	for _, tlv := range c.TLVs {
+		if tlv.Type() != LSPEntriesTLVType {
+			continue
+		}
+
+		return tlv.Value().(*LSPEntriesTLV).LSPEntries
+	}
+
+	return nil
+}
+
 // Serialize serializes CSNPs
 func (c *CSNP) Serialize(buf *bytes.Buffer) {
-	c.PDULength = uint16(CSNPMinLen + len(c.LSPEntries)*LSPEntryLen)
 	buf.Write(convert.Uint16Byte(c.PDULength))
-	buf.Write(c.SourceID[:])
+	buf.Write(c.SourceID.Serialize())
 	c.StartLSPID.Serialize(buf)
 	c.EndLSPID.Serialize(buf)
 
-	for _, lspEntry := range c.LSPEntries {
-		lspEntry.Serialize(buf)
+	for i := range c.TLVs {
+		c.TLVs[i].Serialize(buf)
 	}
 }
 
@@ -127,24 +145,22 @@ func DecodeCSNP(buf *bytes.Buffer) (*CSNP, error) {
 		&csnp.SourceID,
 		&csnp.StartLSPID.SystemID,
 		&csnp.StartLSPID.PseudonodeID,
+		&csnp.StartLSPID.LSPNumber,
 		&csnp.EndLSPID.SystemID,
 		&csnp.EndLSPID.PseudonodeID,
+		&csnp.EndLSPID.LSPNumber,
 	}
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode fields")
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
-	nEntries := (csnp.PDULength - CSNPMinLen) / LSPEntryLen
-	csnp.LSPEntries = make([]LSPEntry, nEntries)
-	for i := uint16(0); i < nEntries; i++ {
-		lspEntry, err := decodeLSPEntry(buf)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get LSPEntries")
-		}
-		csnp.LSPEntries[i] = *lspEntry
+	tlvs, err := readTLVs(buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to read TLVs")
 	}
 
+	csnp.TLVs = tlvs
 	return csnp, nil
 }

@@ -10,22 +10,22 @@ import (
 func TestNewIPInterfaceAddressTLV(t *testing.T) {
 	tests := []struct {
 		name     string
-		addr     uint32
-		expected *IPInterfaceAddressTLV
+		addrs    []uint32
+		expected *IPInterfaceAddressesTLV
 	}{
 		{
-			name: "Test #1",
-			addr: 100,
-			expected: &IPInterfaceAddressTLV{
-				TLVType:     132,
-				TLVLength:   4,
-				IPv4Address: 100,
+			name:  "Test #1",
+			addrs: []uint32{100},
+			expected: &IPInterfaceAddressesTLV{
+				TLVType:       132,
+				TLVLength:     4,
+				IPv4Addresses: []uint32{100},
 			},
 		},
 	}
 
 	for _, test := range tests {
-		tlv := NewIPInterfaceAddressTLV(test.addr)
+		tlv := NewIPInterfaceAddressesTLV(test.addrs)
 		assert.Equalf(t, test.expected, tlv, "Test %q", test.name)
 	}
 }
@@ -36,7 +36,7 @@ func TestReadIPInterfaceAddressTLV(t *testing.T) {
 		input     []byte
 		tlvLength uint8
 		wantFail  bool
-		expected  *IPInterfaceAddressTLV
+		expected  *IPInterfaceAddressesTLV
 	}{
 		{
 			name: "Full",
@@ -44,10 +44,10 @@ func TestReadIPInterfaceAddressTLV(t *testing.T) {
 				0, 0, 0, 100,
 			},
 			tlvLength: 4,
-			expected: &IPInterfaceAddressTLV{
-				TLVType:     132,
-				TLVLength:   4,
-				IPv4Address: 100,
+			expected: &IPInterfaceAddressesTLV{
+				TLVType:       132,
+				TLVLength:     4,
+				IPv4Addresses: []uint32{100},
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestReadIPInterfaceAddressTLV(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		tlv, err := readIPInterfaceAddressTLV(buf, 132, test.tlvLength)
+		tlv, err := readIPInterfaceAddressesTLV(buf, 132, test.tlvLength)
 
 		if err != nil {
 			if test.wantFail {

@@ -2,10 +2,10 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -15,34 +15,35 @@ const (
 
 // LSPEntry represents an LSP entry in a CSNP PDU
 type LSPEntry struct {
-	SequenceNumber    uint32
 	RemainingLifetime uint16
-	LSPChecksum       uint16
 	LSPID             LSPID
+	SequenceNumber    uint32
+	LSPChecksum       uint16
 }
 
 // Serialize serializes an LSPEntry
 func (l *LSPEntry) Serialize(buf *bytes.Buffer) {
-	buf.Write(convert.Uint32Byte(l.SequenceNumber))
 	buf.Write(convert.Uint16Byte(l.RemainingLifetime))
-	buf.Write(convert.Uint16Byte(l.LSPChecksum))
 	l.LSPID.Serialize(buf)
+	buf.Write(convert.Uint32Byte(l.SequenceNumber))
+	buf.Write(convert.Uint16Byte(l.LSPChecksum))
 }
 
 func decodeLSPEntry(buf *bytes.Buffer) (*LSPEntry, error) {
 	lspEntry := &LSPEntry{}
 
 	fields := []interface{}{
-		&lspEntry.SequenceNumber,
 		&lspEntry.RemainingLifetime,
-		&lspEntry.LSPChecksum,
 		&lspEntry.LSPID.SystemID,
 		&lspEntry.LSPID.PseudonodeID,
+		&lspEntry.LSPID.LSPNumber,
+		&lspEntry.SequenceNumber,
+		&lspEntry.LSPChecksum,
 	}
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode fields")
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
 	return lspEntry, nil
