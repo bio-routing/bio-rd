@@ -10,3 +10,7 @@ type neighbors struct {
 	db   map[types.MACAddress]*neighbor
 	dbMu sync.RWMutex
 }
+
+func newNeighbors() *neighbors {
+	return nil
+}

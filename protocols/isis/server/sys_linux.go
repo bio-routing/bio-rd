@@ -9,7 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/syscallwrappers"
 )
 
-func (n *netIf) openPacketSocket() error {
+func (b *bioSys) openPacketSocket() error {
 	socket, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_DGRAM, syscall.ETH_P_ALL)
 	if err != nil {
 		return fmt.Errorf("socket() failed: %v", err)
@@ -27,11 +27,11 @@ func (n *netIf) openPacketSocket() error {
 	return nil
 }
 
-func (n *netIf) closePacketSocket() error {
+func (b *bioSys) closePacketSocket() error {
 	return syscall.Close(n.socket)
 }
 
-func (n *netIf) mcastJoin(addr [6]byte) error {
+func (b *bioSys) mcastJoin(addr [6]byte) error {
 	if syscallwrappers.JoinISISMcast(n.socket, int(n.device.Index)) != 0 {
 		return fmt.Errorf("setsockopt failed")
 	}
@@ -39,7 +39,7 @@ func (n *netIf) mcastJoin(addr [6]byte) error {
 	return nil
 }
 
-func (n *netIf) recvPacket() (pkt []byte, src types.MACAddress, err error) {
+func (b *bioSys) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 	buf := make([]byte, 1500)
 	nBytes, from, err := syscall.Recvfrom(n.socket, buf, 0)
 	if err != nil {
@@ -52,7 +52,7 @@ func (n *netIf) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 	return buf[:nBytes], src, nil
 }
 
-func (n *netIf) sendPacket(pkt []byte, dst [6]byte) error {
+func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 	ll := syscall.SockaddrLinklayer{
 		//Protocol: htons(uint16(len(pkt) + 3)),
 		Ifindex: int(n.device.Index),

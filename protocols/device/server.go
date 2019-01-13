@@ -6,6 +6,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Updater is a device updater interface
+type Updater interface {
+	Subscribe(Client, string)
+	Unsubscribe(Client, string)
+}
+
 // Server represents a device server
 type Server struct {
 	devices           map[uint64]*Device
@@ -67,14 +73,33 @@ func (ds *Server) Subscribe(client Client, devName string) {
 		client.DeviceUpdate(d)
 	}
 
-	ds.clientsByDeviceMu.RLock()
-	defer ds.clientsByDeviceMu.RUnlock()
+	ds.clientsByDeviceMu.Lock()
+	defer ds.clientsByDeviceMu.Unlock()
 
 	if _, ok := ds.clientsByDevice[devName]; !ok {
 		ds.clientsByDevice[devName] = make([]Client, 0)
 	}
 
 	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)
+}
+
+// Unsubscribe unsubscribes a client
+func (ds *Server) Unsubscribe(client Client, devName string) {
+	ds.clientsByDeviceMu.Lock()
+	defer ds.clientsByDeviceMu.Unlock()
+
+	if _, ok := ds.clientsByDevice[devName]; !ok {
+		return
+	}
+
+	for i := range ds.clientsByDevice[devName] {
+		if ds.clientsByDevice[devName][i] != client {
+			continue
+		}
+
+		ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName][:i], ds.clientsByDevice[devName][i+1:]...)
+		return
+	}
 }
 
 func (ds *Server) addDevice(d *Device) {
