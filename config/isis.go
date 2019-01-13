@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
@@ -10,7 +9,6 @@ import (
 type ISISConfig struct {
 	NETs                       []NET
 	Interfaces                 []ISISInterfaceConfig
-	MinLSPTransmissionInterval time.Duration
 	TrafficEngineeringRouterID [4]byte
 }
 
