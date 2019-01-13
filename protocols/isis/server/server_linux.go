@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/bio-routing/bio-rd/biosyscall"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/bio-routing/bio-rd/syscallwrappers"
 )
 
 func (n *netIf) openPacketSocket() error {
@@ -16,11 +16,11 @@ func (n *netIf) openPacketSocket() error {
 	}
 	n.socket = socket
 
-	if biosyscall.SetBPFFilter(n.socket) != 0 {
+	if syscallwrappers.SetBPFFilter(n.socket) != 0 {
 		return fmt.Errorf("Unable to set BPF filter")
 	}
 
-	if biosyscall.BindToInterface(n.socket, int(n.device.Index)) != 0 {
+	if syscallwrappers.BindToInterface(n.socket, int(n.device.Index)) != 0 {
 		return fmt.Errorf("Unable to bind to interface")
 	}
 
@@ -32,7 +32,7 @@ func (n *netIf) closePacketSocket() error {
 }
 
 func (n *netIf) mcastJoin(addr [6]byte) error {
-	if biosyscall.JoinISISMcast(n.socket, int(n.device.Index)) != 0 {
+	if syscallwrappers.JoinISISMcast(n.socket, int(n.device.Index)) != 0 {
 		return fmt.Errorf("setsockopt failed")
 	}
 

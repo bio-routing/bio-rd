@@ -1,8 +1,8 @@
 package server
 
 import (
+	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/device"
-	"github.com/bio-routing/isis/config"
 )
 
 //Server represents an ISIS server
