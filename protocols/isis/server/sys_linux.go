@@ -14,13 +14,13 @@ func (b *bioSys) openPacketSocket() error {
 	if err != nil {
 		return fmt.Errorf("socket() failed: %v", err)
 	}
-	n.socket = socket
+	b.socket = socket
 
-	if syscallwrappers.SetBPFFilter(n.socket) != 0 {
+	if syscallwrappers.SetBPFFilter(b.socket) != 0 {
 		return fmt.Errorf("Unable to set BPF filter")
 	}
 
-	if syscallwrappers.BindToInterface(n.socket, int(n.device.Index)) != 0 {
+	if syscallwrappers.BindToInterface(b.socket, int(b.device.Index)) != 0 {
 		return fmt.Errorf("Unable to bind to interface")
 	}
 
@@ -28,11 +28,11 @@ func (b *bioSys) openPacketSocket() error {
 }
 
 func (b *bioSys) closePacketSocket() error {
-	return syscall.Close(n.socket)
+	return syscall.Close(b.socket)
 }
 
 func (b *bioSys) mcastJoin(addr [6]byte) error {
-	if syscallwrappers.JoinISISMcast(n.socket, int(n.device.Index)) != 0 {
+	if syscallwrappers.JoinISISMcast(b.socket, int(b.device.Index)) != 0 {
 		return fmt.Errorf("setsockopt failed")
 	}
 
@@ -41,7 +41,7 @@ func (b *bioSys) mcastJoin(addr [6]byte) error {
 
 func (b *bioSys) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 	buf := make([]byte, 1500)
-	nBytes, from, err := syscall.Recvfrom(n.socket, buf, 0)
+	nBytes, from, err := syscall.Recvfrom(b.socket, buf, 0)
 	if err != nil {
 		return nil, types.MACAddress{}, fmt.Errorf("recvfrom failed: %v", err)
 	}
@@ -55,7 +55,7 @@ func (b *bioSys) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 	ll := syscall.SockaddrLinklayer{
 		//Protocol: htons(uint16(len(pkt) + 3)),
-		Ifindex: int(n.device.Index),
+		Ifindex: int(b.device.Index),
 		Halen:   6, // MAC address length
 	}
 
@@ -71,7 +71,7 @@ func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 
 	ll.Protocol = htons(uint16(len(newPkt)))
 
-	err := syscall.Sendto(n.socket, newPkt, 0, &ll)
+	err := syscall.Sendto(b.socket, newPkt, 0, &ll)
 	if err != nil {
 		return fmt.Errorf("sendto failed: %v", err)
 	}
@@ -81,7 +81,7 @@ func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 
 func htons(input uint16) uint16 {
 	data := make([]byte, 2)
-	binary.BigEndian.PutUint16(data, input)
+	binary.BigEndiab.PutUint16(data, input)
 
 	return uint16(data[1])*256 + uint16(data[0])
 }
