@@ -7,8 +7,16 @@ import (
 	"github.com/bio-routing/bio-rd/util/decode"
 )
 
-// ProtocolsSupportedTLVType is the type value of an protocols supported TLV
-const ProtocolsSupportedTLVType = 129
+const (
+	// ProtocolsSupportedTLVType is the type value of an protocols supported TLV
+	ProtocolsSupportedTLVType = 129
+
+	// NLPIDIPv4 is the Network Layer Protocol ID for IPv4
+	NLPIDIPv4 = uint8(0xcc)
+
+	// NLPIDIPv6 is the Network Layer Protocol ID for IPv6
+	NLPIDIPv6 = uint8(0x8e)
+)
 
 // ProtocolsSupportedTLV represents a protocols supported TLV
 type ProtocolsSupportedTLV struct {
