@@ -15,12 +15,14 @@ import (
 type dev struct {
 	name               string
 	srv                *Server
+	sys                sys
 	up                 bool
 	passive            bool
 	p2p                bool
 	level2             *level
 	supportedProtocols []uint8
 	phy                *device.Device
+
 	//phyMu              sync.RWMutex
 	done chan struct{}
 	wg   sync.WaitGroup
@@ -80,12 +82,12 @@ func (d *dev) DeviceUpdate(phy *device.Device) {
 }
 
 func (d *dev) enable() error {
-	err := d.srv.sys.openPacketSocket()
+	err := d.sys.openPacketSocket()
 	if err != nil {
 		return fmt.Errorf("Failed to open packet socket: %v", err)
 	}
 
-	err = d.srv.sys.mcastJoin(packet.AllP2PISS)
+	err = d.sys.mcastJoin(packet.AllP2PISS)
 	if err != nil {
 		return fmt.Errorf("Failed to join multicast group: %v", err)
 	}
@@ -106,7 +108,7 @@ func (d *dev) enable() error {
 func (d *dev) disable() error {
 	close(d.done)
 
-	err := d.srv.sys.closePacketSocket()
+	err := d.sys.closePacketSocket()
 	if err != nil {
 		return errors.Wrap(err, "Unable to close socket")
 	}

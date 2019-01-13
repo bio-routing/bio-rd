@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
@@ -16,6 +17,7 @@ type sys interface {
 
 type bioSys struct {
 	socket int
+	device *device.Device
 }
 
 type mockSys struct {

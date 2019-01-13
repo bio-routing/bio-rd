@@ -26,9 +26,7 @@ func TestRemoveDevice(t *testing.T) {
 				db: map[string]*dev{
 					"foobar": &dev{
 						done: make(chan struct{}),
-						srv: &Server{
-							sys: &mockSys{},
-						},
+						sys:  &mockSys{},
 						name: "foobar",
 					},
 				},
@@ -54,9 +52,7 @@ func TestRemoveDevice(t *testing.T) {
 				db: map[string]*dev{
 					"foobar": &dev{
 						done: make(chan struct{}),
-						srv: &Server{
-							sys: &mockSys{},
-						},
+						sys:  &mockSys{},
 						name: "foobar",
 					},
 				},
@@ -69,9 +65,7 @@ func TestRemoveDevice(t *testing.T) {
 				db: map[string]*dev{
 					"foobar": &dev{
 						done: make(chan struct{}),
-						srv: &Server{
-							sys: &mockSys{},
-						},
+						sys:  &mockSys{},
 						name: "foobar",
 					},
 				},
@@ -88,10 +82,8 @@ func TestRemoveDevice(t *testing.T) {
 				db: map[string]*dev{
 					"foobar": &dev{
 						done: make(chan struct{}),
-						srv: &Server{
-							sys: &mockSys{
-								wantFailClosedPacketSocket: true,
-							},
+						sys: &mockSys{
+							wantFailClosedPacketSocket: true,
 						},
 						name: "foobar",
 					},

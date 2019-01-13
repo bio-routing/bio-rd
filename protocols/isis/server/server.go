@@ -16,7 +16,6 @@ type Server struct {
 	lsdb           *lsdb
 	stop           chan struct{}
 	ds             device.Updater
-	sys            sys
 }
 
 func New(cfg *config.ISISConfig, ds device.Updater) *Server {

@@ -26,10 +26,8 @@ func TestEnableDisable(t *testing.T) {
 		{
 			name: "Failed open() for socket",
 			dev: &dev{
-				srv: &Server{
-					sys: &mockSys{
-						wantFailOpenPacketSocket: true,
-					},
+				sys: &mockSys{
+					wantFailOpenPacketSocket: true,
 				},
 			},
 			wantFail: true,
@@ -37,10 +35,8 @@ func TestEnableDisable(t *testing.T) {
 		{
 			name: "Failed mcast join",
 			dev: &dev{
-				srv: &Server{
-					sys: &mockSys{
-						wantFailMcastJoin: true,
-					},
+				sys: &mockSys{
+					wantFailMcastJoin: true,
 				},
 			},
 			wantFail: true,
@@ -48,9 +44,7 @@ func TestEnableDisable(t *testing.T) {
 		{
 			name: "Success",
 			dev: &dev{
-				srv: &Server{
-					sys: &mockSys{},
-				},
+				sys: &mockSys{},
 			},
 			wantFail: false,
 		},
@@ -88,7 +82,7 @@ func TestEnableDisable(t *testing.T) {
 			t.Errorf("Unexpected success for test %q", test.name)
 		}
 
-		assert.Equal(t, true, test.dev.srv.sys.(*mockSys).closePacketSocketCalled)
+		assert.Equal(t, true, test.dev.sys.(*mockSys).closePacketSocketCalled)
 	}
 }
 
@@ -102,10 +96,8 @@ func TestDeviceUpdate(t *testing.T) {
 		{
 			name: "Test #1",
 			dev: &dev{
-				up: false,
-				srv: &Server{
-					sys: &mockSys{},
-				},
+				up:  false,
+				sys: &mockSys{},
 			},
 			update: &device.Device{
 				OperState: device.IfOperUp,
@@ -117,9 +109,7 @@ func TestDeviceUpdate(t *testing.T) {
 			dev: &dev{
 				done: make(chan struct{}),
 				up:   true,
-				srv: &Server{
-					sys: &mockSys{},
-				},
+				sys:  &mockSys{},
 			},
 			update: &device.Device{
 				OperState: device.IfOperLowerLayerDown,
@@ -131,9 +121,7 @@ func TestDeviceUpdate(t *testing.T) {
 			dev: &dev{
 				done: make(chan struct{}),
 				up:   true,
-				srv: &Server{
-					sys: &mockSys{},
-				},
+				sys:  &mockSys{},
 			},
 			update: &device.Device{
 				OperState: device.IfOperDown,
