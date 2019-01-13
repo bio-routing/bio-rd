@@ -94,7 +94,7 @@ func TestDeviceUpdate(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "Test #1",
+			name: "Enable",
 			dev: &dev{
 				up:  false,
 				sys: &mockSys{},
@@ -105,7 +105,7 @@ func TestDeviceUpdate(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "Test #2",
+			name: "Disable #1",
 			dev: &dev{
 				done: make(chan struct{}),
 				up:   true,
@@ -117,7 +117,7 @@ func TestDeviceUpdate(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "Test #3",
+			name: "Disable #2",
 			dev: &dev{
 				done: make(chan struct{}),
 				up:   true,
@@ -127,6 +127,35 @@ func TestDeviceUpdate(t *testing.T) {
 				OperState: device.IfOperDown,
 			},
 			expected: false,
+		},
+		{
+			name: "Enable failed",
+			dev: &dev{
+				up: false,
+				sys: &mockSys{
+					wantFailOpenPacketSocket: true,
+				},
+			},
+			update: &device.Device{
+				OperState: device.IfOperUp,
+			},
+			expected: false,
+			wantFail: true,
+		},
+		{
+			name: "Disable failed",
+			dev: &dev{
+				done: make(chan struct{}),
+				up:   true,
+				sys: &mockSys{
+					wantFailClosedPacketSocket: true,
+				},
+			},
+			update: &device.Device{
+				OperState: device.IfOperLowerLayerDown,
+			},
+			expected: true,
+			wantFail: true,
 		},
 	}
 

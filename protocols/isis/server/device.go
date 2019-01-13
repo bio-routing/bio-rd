@@ -22,13 +22,10 @@ type dev struct {
 	level2             *level
 	supportedProtocols []uint8
 	phy                *device.Device
-
-	//phyMu              sync.RWMutex
-	done chan struct{}
-	wg   sync.WaitGroup
-
-	helloMethod    func()
-	receiverMethod func()
+	done               chan struct{}
+	wg                 sync.WaitGroup
+	helloMethod        func()
+	receiverMethod     func()
 }
 
 type level struct {
@@ -59,7 +56,6 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 		d.level2.neighbors = newNeighbors()
 	}
 
-	//srv.ds.Subscribe(d, ifcfg.Name)
 	return d
 }
 
@@ -121,21 +117,3 @@ func (d *dev) disable() error {
 func (d *dev) receiverRoutine() {
 
 }
-
-/*func (d *dev) receiverRoutine() {
-	for {
-		select {
-		case <-d.done:
-			return
-		default:
-			rawPkt, src, err := d.sys.recvPacket()
-			if err != nil {
-				log.Errorf("recvPacket() failed: %v", err)
-				return
-			}
-
-			d.processIngressPacket(rawPkt, src)
-		}
-	}
-}
-*/

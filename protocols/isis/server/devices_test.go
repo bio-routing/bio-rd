@@ -158,6 +158,9 @@ func TestDeviceAddDevice(t *testing.T) {
 			addIfCfg: &config.ISISInterfaceConfig{
 				Name:    "baz",
 				Passive: true,
+				ISISLevel2Config: &config.ISISLevelConfig{
+					HelloInterval: 5,
+				},
 			},
 			expected: &devices{
 				srv: &Server{
@@ -174,6 +177,9 @@ func TestDeviceAddDevice(t *testing.T) {
 						name:               "baz",
 						passive:            true,
 						supportedProtocols: []uint8{0xcc, 0x8e},
+						level2: &level{
+							HelloInterval: 5,
+						},
 					},
 				},
 			},
