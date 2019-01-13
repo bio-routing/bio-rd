@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/binary"
 	"fmt"
 	"syscall"
 
@@ -69,7 +68,7 @@ func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 
 	newPkt = append(newPkt, pkt...)
 
-	ll.Protocol = len(newPkt))
+	ll.Protocol = uint16(len(newPkt))
 
 	err := syscall.Sendto(b.socket, newPkt, 0, &ll)
 	if err != nil {
