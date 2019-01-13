@@ -24,7 +24,7 @@ func TestRemoveDevice(t *testing.T) {
 					ds: &device.MockServer{},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						done: make(chan struct{}),
 						sys:  &mockSys{},
 						name: "foobar",
@@ -50,7 +50,7 @@ func TestRemoveDevice(t *testing.T) {
 					ds: &device.MockServer{},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						done: make(chan struct{}),
 						sys:  &mockSys{},
 						name: "foobar",
@@ -63,7 +63,7 @@ func TestRemoveDevice(t *testing.T) {
 					ds: &device.MockServer{},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						done: make(chan struct{}),
 						sys:  &mockSys{},
 						name: "foobar",
@@ -80,7 +80,7 @@ func TestRemoveDevice(t *testing.T) {
 					ds: &device.MockServer{},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						done: make(chan struct{}),
 						sys: &mockSys{
 							wantFailClosedPacketSocket: true,
@@ -150,7 +150,7 @@ func TestDeviceAddDevice(t *testing.T) {
 					ds: &device.MockServer{},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						name: "foobar",
 					},
 				},
@@ -167,10 +167,10 @@ func TestDeviceAddDevice(t *testing.T) {
 					},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						name: "foobar",
 					},
-					"baz": &dev{
+					"baz": {
 						name:               "baz",
 						passive:            true,
 						supportedProtocols: []uint8{0xcc, 0x8e},
@@ -186,7 +186,7 @@ func TestDeviceAddDevice(t *testing.T) {
 					ds: &device.MockServer{},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						name: "foobar",
 					},
 				},
@@ -203,7 +203,7 @@ func TestDeviceAddDevice(t *testing.T) {
 					},
 				},
 				db: map[string]*dev{
-					"foobar": &dev{
+					"foobar": {
 						name: "foobar",
 					},
 				},

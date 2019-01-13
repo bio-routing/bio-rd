@@ -131,7 +131,7 @@ func TestUnsubscribe(t *testing.T) {
 			name: "Remove single",
 			ds: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{
+					"eth0": {
 						&mockClient{
 							name: "foo",
 						},
@@ -142,7 +142,7 @@ func TestUnsubscribe(t *testing.T) {
 			unsubscribeClient: 0,
 			expected: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{},
+					"eth0": {},
 				},
 			},
 		},
@@ -150,7 +150,7 @@ func TestUnsubscribe(t *testing.T) {
 			name: "Remove middle",
 			ds: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{
+					"eth0": {
 						&mockClient{
 							name: "foo",
 						},
@@ -167,7 +167,7 @@ func TestUnsubscribe(t *testing.T) {
 			unsubscribeClient: 1,
 			expected: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{
+					"eth0": {
 						&mockClient{
 							name: "foo",
 						},
@@ -182,7 +182,7 @@ func TestUnsubscribe(t *testing.T) {
 			name: "Remove first",
 			ds: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{
+					"eth0": {
 						&mockClient{
 							name: "foo",
 						},
@@ -199,7 +199,7 @@ func TestUnsubscribe(t *testing.T) {
 			unsubscribeClient: 0,
 			expected: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{
+					"eth0": {
 						&mockClient{
 							name: "bar",
 						},
@@ -214,7 +214,7 @@ func TestUnsubscribe(t *testing.T) {
 			name: "Remove last",
 			ds: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{
+					"eth0": {
 						&mockClient{
 							name: "foo",
 						},
@@ -231,7 +231,7 @@ func TestUnsubscribe(t *testing.T) {
 			unsubscribeClient: 2,
 			expected: &Server{
 				clientsByDevice: map[string][]Client{
-					"eth0": []Client{
+					"eth0": {
 						&mockClient{
 							name: "foo",
 						},

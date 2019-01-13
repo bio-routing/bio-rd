@@ -28,20 +28,20 @@ func TestDecrementRemainingLifetimes(t *testing.T) {
 			name: "Test #1",
 			lsdb: &lsdb{
 				lsps: map[packet.LSPID]*lsdbEntry{
-					packet.LSPID{
+					{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 0x00,
 						LSPNumber:    1,
-					}: &lsdbEntry{
+					}: {
 						lspdu: &packet.LSPDU{
 							RemainingLifetime: 5,
 						},
 					},
-					packet.LSPID{
+					{
 						SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
 						PseudonodeID: 0x00,
 						LSPNumber:    1,
-					}: &lsdbEntry{
+					}: {
 						lspdu: &packet.LSPDU{
 							RemainingLifetime: 1,
 						},
@@ -50,11 +50,11 @@ func TestDecrementRemainingLifetimes(t *testing.T) {
 			},
 			expected: &lsdb{
 				lsps: map[packet.LSPID]*lsdbEntry{
-					packet.LSPID{
+					{
 						SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 						PseudonodeID: 0x00,
 						LSPNumber:    1,
-					}: &lsdbEntry{
+					}: {
 						lspdu: &packet.LSPDU{
 							RemainingLifetime: 4,
 						},
@@ -74,20 +74,20 @@ func TestStartStop(t *testing.T) {
 	db := &lsdb{
 		done: make(chan struct{}),
 		lsps: map[packet.LSPID]*lsdbEntry{
-			packet.LSPID{
+			{
 				SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 				PseudonodeID: 0x00,
 				LSPNumber:    1,
-			}: &lsdbEntry{
+			}: {
 				lspdu: &packet.LSPDU{
 					RemainingLifetime: 5,
 				},
 			},
-			packet.LSPID{
+			{
 				SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
 				PseudonodeID: 0x00,
 				LSPNumber:    1,
-			}: &lsdbEntry{
+			}: {
 				lspdu: &packet.LSPDU{
 					RemainingLifetime: 1,
 				},
@@ -97,20 +97,20 @@ func TestStartStop(t *testing.T) {
 	expected := &lsdb{
 		done: make(chan struct{}),
 		lsps: map[packet.LSPID]*lsdbEntry{
-			packet.LSPID{
+			{
 				SystemID:     types.SystemID{10, 20, 30, 40, 50, 60},
 				PseudonodeID: 0x00,
 				LSPNumber:    1,
-			}: &lsdbEntry{
+			}: {
 				lspdu: &packet.LSPDU{
 					RemainingLifetime: 5,
 				},
 			},
-			packet.LSPID{
+			{
 				SystemID:     types.SystemID{11, 22, 33, 44, 55, 66},
 				PseudonodeID: 0x00,
 				LSPNumber:    1,
-			}: &lsdbEntry{
+			}: {
 				lspdu: &packet.LSPDU{
 					RemainingLifetime: 1,
 				},
