@@ -69,7 +69,7 @@ func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 
 	newPkt = append(newPkt, pkt...)
 
-	ll.Protocol = htons(uint16(len(newPkt)))
+	ll.Protocol = len(newPkt))
 
 	err := syscall.Sendto(b.socket, newPkt, 0, &ll)
 	if err != nil {
@@ -77,11 +77,4 @@ func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 	}
 
 	return nil
-}
-
-func htons(input uint16) uint16 {
-	data := make([]byte, 2)
-	binary.BigEndian.PutUint16(data, input)
-
-	return uint16(data[1])*256 + uint16(data[0])
 }
