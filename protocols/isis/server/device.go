@@ -8,7 +8,8 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/pkg/errors"
-	"github.com/prometheus/common/log"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type dev struct {
