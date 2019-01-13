@@ -128,35 +128,6 @@ func TestDeviceUpdate(t *testing.T) {
 			},
 			expected: false,
 		},
-		{
-			name: "Enable failed",
-			dev: &dev{
-				up: false,
-				sys: &mockSys{
-					wantFailOpenPacketSocket: true,
-				},
-			},
-			update: &device.Device{
-				OperState: device.IfOperUp,
-			},
-			expected: false,
-			wantFail: true,
-		},
-		{
-			name: "Disable failed",
-			dev: &dev{
-				done: make(chan struct{}),
-				up:   true,
-				sys: &mockSys{
-					wantFailClosedPacketSocket: true,
-				},
-			},
-			update: &device.Device{
-				OperState: device.IfOperLowerLayerDown,
-			},
-			expected: true,
-			wantFail: true,
-		},
 	}
 
 	for _, test := range tests {
