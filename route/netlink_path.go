@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/vishvananda/netlink"
 )
 
 const (
