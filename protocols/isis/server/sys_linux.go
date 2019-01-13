@@ -81,7 +81,7 @@ func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 
 func htons(input uint16) uint16 {
 	data := make([]byte, 2)
-	binary.BigEndiab.PutUint16(data, input)
+	binary.BigEndian.PutUint16(data, input)
 
 	return uint16(data[1])*256 + uint16(data[0])
 }

@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/vishvananda/netlink"
 )
 
 const (
@@ -280,7 +279,7 @@ func (r *Route) Print() string {
 }
 
 // NetlinkRouteDiff gets the list of elements contained by a but not b
-func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
+/*func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
 	ret := make([]netlink.Route, 0)
 
 	for _, pa := range a {
@@ -326,3 +325,4 @@ func netlinkRouteEquals(a, b *netlink.Route) bool {
 		a.MTU == b.MTU &&
 		a.AdvMSS == b.AdvMSS
 }
+*/

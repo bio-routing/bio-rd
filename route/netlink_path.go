@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/vishvananda/netlink"
 )
 
 const (
@@ -41,7 +40,7 @@ func NewNlPathFromBgpPath(p *BGPPath) *NetlinkPath {
 }
 
 // NewNlPathFromRoute creates a new NetlinkPath object from a netlink.Route object
-func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, error) {
+/*func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, error) {
 	var src bnet.IP
 	var dst bnet.Prefix
 
@@ -107,7 +106,7 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, er
 	}
 
 	return dst, paths, nil
-}
+}*/
 
 // Select compares s with t and returns negative if s < t, 0 if paths are equal, positive if s > t
 func (s *NetlinkPath) Select(t *NetlinkPath) int8 {
