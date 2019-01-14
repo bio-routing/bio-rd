@@ -45,7 +45,7 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 		done:               make(chan struct{}),
 	}
 
-	d.helloMethod = d.receiverRoutine
+	d.helloMethod = d.helloRoutine
 	d.receiverMethod = d.receiverRoutine
 
 	if ifcfg.ISISLevel2Config != nil {
@@ -115,5 +115,9 @@ func (d *dev) disable() error {
 }
 
 func (d *dev) receiverRoutine() {
+	// To be implemented
+}
 
+func (d *dev) helloRoutine() {
+	// To be implemented
 }

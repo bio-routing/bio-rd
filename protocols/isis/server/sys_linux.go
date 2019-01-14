@@ -53,7 +53,6 @@ func (b *bioSys) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 
 func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 	ll := syscall.SockaddrLinklayer{
-		//Protocol: htons(uint16(len(pkt) + 3)),
 		Ifindex: int(b.device.Index),
 		Halen:   6, // MAC address length
 	}
