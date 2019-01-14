@@ -38,8 +38,6 @@ func (p *Path) Select(q *Path) int8 {
 		return p.BGPPath.Select(q.BGPPath)
 	case StaticPathType:
 		return p.StaticPath.Select(q.StaticPath)
-	case NetlinkPathType:
-		return p.NetlinkPath.Select(q.NetlinkPath)
 	}
 
 	panic("Unknown path type")
@@ -52,8 +50,6 @@ func (p *Path) ECMP(q *Path) bool {
 		return p.BGPPath.ECMP(q.BGPPath)
 	case StaticPathType:
 		return p.StaticPath.ECMP(q.StaticPath)
-	case NetlinkPathType:
-		return p.NetlinkPath.ECMP(q.NetlinkPath)
 	}
 
 	panic("Unknown path type")
@@ -109,8 +105,6 @@ func (p *Path) String() string {
 		return "not implemented yet"
 	case BGPPathType:
 		return p.BGPPath.String()
-	case NetlinkPathType:
-		return p.NetlinkPath.String()
 	default:
 		return "Unknown paty type. Probably not implemented yet"
 	}
@@ -124,8 +118,6 @@ func (p *Path) Print() string {
 		protocol = "static"
 	case BGPPathType:
 		protocol = "BGP"
-	case NetlinkPathType:
-		protocol = "Netlink"
 	}
 
 	ret := fmt.Sprintf("\tProtocol: %s\n", protocol)
@@ -134,8 +126,6 @@ func (p *Path) Print() string {
 		ret += "Not implemented yet"
 	case BGPPathType:
 		ret += p.BGPPath.Print()
-	case NetlinkPathType:
-		ret += p.NetlinkPath.Print()
 	}
 
 	return ret
@@ -161,8 +151,6 @@ func (p *Path) NextHop() bnet.IP {
 		return p.BGPPath.NextHop
 	case StaticPathType:
 		return p.StaticPath.NextHop
-	case NetlinkPathType:
-		return p.NetlinkPath.NextHop
 	}
 
 	panic("Unknown path type")
