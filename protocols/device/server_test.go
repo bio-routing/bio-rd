@@ -81,6 +81,7 @@ func TestStop(t *testing.T) {
 
 type mockClient struct {
 	deviceUpdateCalled uint
+	name               string
 }
 
 func (m *mockClient) DeviceUpdate(d *Device) {
@@ -116,4 +117,135 @@ func TestNotify(t *testing.T) {
 	s.delDevice(101)
 	s.notify(101)
 	assert.Equal(t, uint(2), mc.deviceUpdateCalled)
+}
+
+func TestUnsubscribe(t *testing.T) {
+	tests := []struct {
+		name              string
+		ds                *Server
+		unsubscribeDev    string
+		unsubscribeClient int
+		expected          *Server
+	}{
+		{
+			name: "Remove single",
+			ds: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {
+						&mockClient{
+							name: "foo",
+						},
+					},
+				},
+			},
+			unsubscribeDev:    "eth0",
+			unsubscribeClient: 0,
+			expected: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {},
+				},
+			},
+		},
+		{
+			name: "Remove middle",
+			ds: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {
+						&mockClient{
+							name: "foo",
+						},
+						&mockClient{
+							name: "bar",
+						},
+						&mockClient{
+							name: "baz",
+						},
+					},
+				},
+			},
+			unsubscribeDev:    "eth0",
+			unsubscribeClient: 1,
+			expected: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {
+						&mockClient{
+							name: "foo",
+						},
+						&mockClient{
+							name: "baz",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Remove first",
+			ds: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {
+						&mockClient{
+							name: "foo",
+						},
+						&mockClient{
+							name: "bar",
+						},
+						&mockClient{
+							name: "baz",
+						},
+					},
+				},
+			},
+			unsubscribeDev:    "eth0",
+			unsubscribeClient: 0,
+			expected: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {
+						&mockClient{
+							name: "bar",
+						},
+						&mockClient{
+							name: "baz",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Remove last",
+			ds: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {
+						&mockClient{
+							name: "foo",
+						},
+						&mockClient{
+							name: "bar",
+						},
+						&mockClient{
+							name: "baz",
+						},
+					},
+				},
+			},
+			unsubscribeDev:    "eth0",
+			unsubscribeClient: 2,
+			expected: &Server{
+				clientsByDevice: map[string][]Client{
+					"eth0": {
+						&mockClient{
+							name: "foo",
+						},
+						&mockClient{
+							name: "bar",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.ds.Unsubscribe(test.ds.clientsByDevice[test.unsubscribeDev][test.unsubscribeClient], test.unsubscribeDev)
+		assert.Equal(t, test.expected, test.ds, test.name)
+	}
 }
