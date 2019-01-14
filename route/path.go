@@ -8,10 +8,9 @@ import (
 
 // Path represents a network path
 type Path struct {
-	Type        uint8
-	StaticPath  *StaticPath
-	BGPPath     *BGPPath
-	NetlinkPath *NetlinkPath
+	Type       uint8
+	StaticPath *StaticPath
+	BGPPath    *BGPPath
 }
 
 // Select returns negative if p < q, 0 if paths are equal, positive if p > q
