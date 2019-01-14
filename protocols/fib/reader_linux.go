@@ -59,7 +59,7 @@ func (nr *NetlinkReader) Read() {
 		nr.mu.Lock()
 		nr.routes = routes
 
-		log.Debugf("NetlinkRouteDiff: %d", len(route.NetlinkRouteDiff(nr.routes, routes)))
+		log.Debugf("NetlinkRouteDiff: %d", len(NetlinkRouteDiff(nr.routes, routes)))
 		nr.mu.Unlock()
 
 		time.Sleep(nr.options.UpdateInterval)
@@ -81,7 +81,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 
 	// only advertise changed routes
 	nr.mu.RLock()
-	advertise := route.NetlinkRouteDiff(routes, nr.routes)
+	advertise := NetlinkRouteDiff(routes, nr.routes)
 	nr.mu.RUnlock()
 
 	for _, client := range nr.clientManager.Clients() {
@@ -92,7 +92,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 			}
 
 			// create pfx and path from route
-			pfx, paths, err := route.NewPathsFromNlRoute(r, true)
+			pfx, paths, err := NewPathsFromNlRoute(r, true)
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
 					"prefix": pfx.String(),
@@ -135,7 +135,7 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 	}
 
 	// only withdraw changed routes
-	withdraw := route.NetlinkRouteDiff(nr.routes, routes)
+	withdraw := NetlinkRouteDiff(nr.routes, routes)
 	nr.mu.RUnlock()
 
 	for _, client := range nr.clientManager.Clients() {
@@ -146,7 +146,7 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 			}
 
 			// create pfx and path from route
-			pfx, paths, err := route.NewPathsFromNlRoute(r, true)
+			pfx, paths, err := NewPathsFromNlRoute(r, true)
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
 					"prefix": pfx.String(),

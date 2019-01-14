@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/vishvananda/netlink"
 )
 
@@ -67,8 +68,8 @@ func netlinkRouteEquals(a, b *netlink.Route) bool {
 		a.AdvMSS == b.AdvMSS
 }
 
-// NewNlPathFromRoute creates a new NetlinkPath object from a netlink.Route object
-func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, error) {
+// NewNlPathFromRoute creates a new route.FIBPath object from a netlink.Route object
+func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*route.Path, error) {
 	var src bnet.IP
 	var dst bnet.Prefix
 
@@ -99,14 +100,14 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, er
 		dst = bnet.NewPfxFromIPNet(r.Dst)
 	}
 
-	paths := make([]*Path, 0)
+	paths := make([]*route.Path, 0)
 
 	if len(r.MultiPath) > 0 {
 		for _, multiPath := range r.MultiPath {
 			nextHop, _ := bnet.IPFromBytes(multiPath.Gw)
-			paths = append(paths, &Path{
-				Type: NetlinkPathType,
-				NetlinkPath: &NetlinkPath{
+			paths = append(paths, &route.Path{
+				Type: route.FIBPathType,
+				FIBPath: &route.FIBPath{
 					Src:      src,
 					NextHop:  nextHop,
 					Priority: r.Priority,
@@ -119,9 +120,9 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*Path, er
 		}
 	} else {
 		nextHop, _ := bnet.IPFromBytes(r.Gw)
-		paths = append(paths, &Path{
-			Type: NetlinkPathType,
-			NetlinkPath: &NetlinkPath{
+		paths = append(paths, &route.Path{
+			Type: route.FIBPathType,
+			FIBPath: &route.FIBPath{
 				Src:      src,
 				NextHop:  nextHop,
 				Priority: r.Priority,

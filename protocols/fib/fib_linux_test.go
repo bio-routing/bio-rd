@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 	"github.com/vishvananda/netlink"
 )
@@ -157,7 +158,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 		name          string
 		source        netlink.Route
 		expectedPfx   bnet.Prefix
-		expectedPaths []*Path
+		expectedPaths []*route.Path
 		expectError   bool
 	}{
 		{
@@ -172,10 +173,10 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-			expectedPaths: []*Path{
+			expectedPaths: []*route.Path{
 				{
-					Type: NetlinkPathType,
-					NetlinkPath: &NetlinkPath{
+					Type: route.FIBPathType,
+					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(789),
 						Protocol: ProtoKernel,
@@ -216,10 +217,10 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-			expectedPaths: []*Path{
+			expectedPaths: []*route.Path{
 				{
-					Type: NetlinkPathType,
-					NetlinkPath: &NetlinkPath{
+					Type: route.FIBPathType,
+					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(123),
 						Protocol: ProtoKernel,
@@ -229,8 +230,8 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 						Kernel:   true,
 					},
 				}, {
-					Type: NetlinkPathType,
-					NetlinkPath: &NetlinkPath{
+					Type: route.FIBPathType,
+					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(345),
 						Protocol: ProtoKernel,
@@ -254,10 +255,10 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-			expectedPaths: []*Path{
+			expectedPaths: []*route.Path{
 				{
-					Type: NetlinkPathType,
-					NetlinkPath: &NetlinkPath{
+					Type: route.FIBPathType,
+					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(0),
 						NextHop:  bnet.IPv4(789),
 						Protocol: ProtoKernel,
@@ -281,10 +282,10 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx: bnet.NewPfx(bnet.IPv4FromOctets(0, 0, 0, 0), 0),
-			expectedPaths: []*Path{
+			expectedPaths: []*route.Path{
 				{
-					Type: NetlinkPathType,
-					NetlinkPath: &NetlinkPath{
+					Type: route.FIBPathType,
+					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(789),
 						Protocol: ProtoKernel,
@@ -307,7 +308,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx:   bnet.Prefix{},
-			expectedPaths: []*Path{},
+			expectedPaths: []*route.Path{},
 			expectError:   true,
 		},
 		{
@@ -321,10 +322,10 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx: bnet.NewPfx(bnet.IPv6(2001, 0), 48),
-			expectedPaths: []*Path{
+			expectedPaths: []*route.Path{
 				{
-					Type: NetlinkPathType,
-					NetlinkPath: &NetlinkPath{
+					Type: route.FIBPathType,
+					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv6(0, 0),
 						NextHop:  bnet.IPv6(2001, 123),
 						Protocol: ProtoKernel,
@@ -348,10 +349,10 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx: bnet.NewPfx(bnet.IPv6(0, 0), 0),
-			expectedPaths: []*Path{
+			expectedPaths: []*route.Path{
 				{
-					Type: NetlinkPathType,
-					NetlinkPath: &NetlinkPath{
+					Type: route.FIBPathType,
+					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv6(2001, 456),
 						NextHop:  bnet.IPv6(2001, 789),
 						Protocol: ProtoKernel,
@@ -374,7 +375,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Type:     1,
 			},
 			expectedPfx:   bnet.NewPfx(bnet.IPv4(0), 0),
-			expectedPaths: []*Path{{}},
+			expectedPaths: []*route.Path{{}},
 			expectError:   true,
 		},
 	}
