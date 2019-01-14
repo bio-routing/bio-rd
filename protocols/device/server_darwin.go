@@ -7,9 +7,9 @@ import (
 )
 
 func (ds *Server) loadAdapter() error {
-	a, err := newOSAdapterLinux(ds)
+	a, err := newOSAdapterDarwin(ds)
 	if err != nil {
-		return errors.Wrap(err, "Unable to create linux adapter")
+		return errors.Wrap(err, "Unable to create OS X adapter")
 	}
 
 	ds.osAdapter = a
@@ -19,7 +19,7 @@ func (ds *Server) loadAdapter() error {
 type osAdapterDarwin struct {
 }
 
-func newOSAdapterLinux(srv *Server) (*osAdapterDarwin, error) {
+func newOSAdapterDarwin(srv *Server) (*osAdapterDarwin, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
