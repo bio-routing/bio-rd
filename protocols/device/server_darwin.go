@@ -12,3 +12,7 @@ func newOSAdapterDarwin(srv *Server) (*osAdapterDarwin, error) {
 func (o *osAdapterDarwin) start() error {
 	return fmt.Errorf("Not implemented")
 }
+
+func (ds *Server) loadAdapter() error {
+	return fmt.Errorf("Not implemented")
+}

@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/vishvananda/netlink"
 )
 
 const (
@@ -24,8 +23,8 @@ const (
 	// ISISPathType indicates a path is an ISIS path
 	ISISPathType
 
-	// NetlinkPathType indicates a path is an Netlink/Kernel path
-	NetlinkPathType
+	// FIBPathType indicates a path is a FIB path
+	FIBPathType
 )
 
 // Route links a prefix to paths
@@ -277,52 +276,4 @@ func (r *Route) Print() string {
 	}
 
 	return ret
-}
-
-// NetlinkRouteDiff gets the list of elements contained by a but not b
-func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
-	ret := make([]netlink.Route, 0)
-
-	for _, pa := range a {
-		if !netlinkRoutesContains(pa, b) {
-			ret = append(ret, pa)
-		}
-	}
-
-	return ret
-}
-
-func netlinkRoutesContains(needle netlink.Route, haystack []netlink.Route) bool {
-	for i := range haystack {
-		if netlinkRouteEquals(&needle, &haystack[i]) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func netlinkRouteEquals(a, b *netlink.Route) bool {
-	aMaskSize, aMaskBits := a.Dst.Mask.Size()
-	bMaskSize, bMaskBits := b.Dst.Mask.Size()
-
-	return a.LinkIndex == b.LinkIndex &&
-		a.ILinkIndex == b.ILinkIndex &&
-		a.Scope == b.Scope &&
-
-		a.Dst.IP.Equal(b.Dst.IP) &&
-		aMaskSize == bMaskSize &&
-		aMaskBits == bMaskBits &&
-
-		a.Src.Equal(b.Src) &&
-		a.Gw.Equal(b.Gw) &&
-
-		a.Protocol == b.Protocol &&
-		a.Priority == b.Priority &&
-		a.Table == b.Table &&
-		a.Type == b.Type &&
-		a.Tos == b.Tos &&
-		a.Flags == b.Flags &&
-		a.MTU == b.MTU &&
-		a.AdvMSS == b.AdvMSS
 }

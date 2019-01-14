@@ -1,4 +1,4 @@
-package protocolnetlink
+package fib
 
 import (
 	"fmt"

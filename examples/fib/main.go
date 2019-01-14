@@ -7,7 +7,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/protocols/netlink"
+	"github.com/bio-routing/bio-rd/protocols/fib"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	log "github.com/sirupsen/logrus"
 
@@ -43,8 +43,8 @@ func main() {
 	b := server.NewBgpServer()
 	startBGPServer(b, rib, cfg)
 
-	// Netlink communication
-	n := protocolnetlink.NewNetlink(&config.Netlink{
+	// FIB communication
+	n := fib.NewFIB(&config.Netlink{
 		HoldTime:       time.Second * 15,
 		UpdateInterval: time.Second * 15,
 		RoutingTable:   config.RtMain,
