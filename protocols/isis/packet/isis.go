@@ -70,6 +70,8 @@ func Decode(buf *bytes.Buffer) (*ISISPacket, error) {
 			return nil, fmt.Errorf("Unable to decode PSNP: %v", err)
 		}
 		pkt.Body = psnp
+	default:
+		return nil, fmt.Errorf("Invalid packet type: %v", pkt.Header.PDUType)
 	}
 
 	return pkt, nil

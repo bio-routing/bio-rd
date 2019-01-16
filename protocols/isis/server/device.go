@@ -7,12 +7,22 @@ import (
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
 
+type devInterface interface {
+	processP2PHello(*packet.P2PHello, types.MACAddress) error
+	processIngressPacket([]byte, types.MACAddress) error
+	processLSPDU(*packet.LSPDU, types.MACAddress) error
+	processCSNP(*packet.CSNP, types.MACAddress) error
+	processPSNP(*packet.PSNP, types.MACAddress) error
+}
+
 type dev struct {
+	self               devInterface
 	name               string
 	srv                *Server
 	sys                sys
@@ -22,6 +32,7 @@ type dev struct {
 	level2             *level
 	supportedProtocols []uint8
 	phy                *device.Device
+	neighborManager    *neighborManager
 	done               chan struct{}
 	wg                 sync.WaitGroup
 	helloMethod        func()
@@ -29,10 +40,10 @@ type dev struct {
 }
 
 type level struct {
-	HelloInterval uint16
-	HoldTime      uint16
-	Metric        uint32
-	neighbors     *neighbors
+	HelloInterval   uint16
+	HoldTime        uint16
+	Metric          uint32
+	neighborManager *neighborManager
 }
 
 func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
@@ -44,6 +55,7 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 		supportedProtocols: []uint8{packet.NLPIDIPv4, packet.NLPIDIPv6},
 		done:               make(chan struct{}),
 	}
+	d.self = d
 
 	d.helloMethod = d.helloRoutine
 	d.receiverMethod = d.receiverRoutine
@@ -53,7 +65,7 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 		d.level2.HelloInterval = ifcfg.ISISLevel2Config.HelloInterval
 		d.level2.HoldTime = ifcfg.ISISLevel2Config.HoldTime
 		d.level2.Metric = ifcfg.ISISLevel2Config.Metric
-		d.level2.neighbors = newNeighbors()
+		d.level2.neighborManager = newNeighborManager()
 	}
 
 	return d
@@ -112,12 +124,4 @@ func (d *dev) disable() error {
 	d.wg.Wait()
 	d.up = false
 	return nil
-}
-
-func (d *dev) receiverRoutine() {
-	// To be implemented
-}
-
-func (d *dev) helloRoutine() {
-	// To be implemented
 }

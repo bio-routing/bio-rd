@@ -10,4 +10,9 @@ type neighbor struct {
 	extendedLocalCircuitID uint32
 	ipInterfaceAddresses   []uint32
 	//fsm                    *FSM
+	done chan struct{}
+}
+
+func (n *neighbor) dispose() {
+	close(n.done)
 }
