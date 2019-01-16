@@ -128,6 +128,19 @@ func TestProcessIngressPacket(t *testing.T) {
 		expected    *mockDev
 	}{
 		{
+			name: "Recv Fail",
+			dev: &dev{
+				name: "eth0",
+				sys: &mockSys{
+					wantFailRecvPacket: true,
+				},
+			},
+			mockDev:     &mockDev{},
+			wantFail:    true,
+			expectedErr: "receiving packet failed: Fail",
+			expected:    &mockDev{},
+		},
+		{
 			name: "Decode Fail",
 			dev: &dev{
 				name: "eth0",
