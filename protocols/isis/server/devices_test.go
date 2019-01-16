@@ -11,20 +11,20 @@ import (
 func TestRemoveDevice(t *testing.T) {
 	tests := []struct {
 		name           string
-		db             *devices
+		dm             *devicesManager
 		removeName     string
 		wantFail       bool
-		expected       *devices
+		expected       *devicesManager
 		wantUnregister bool
 	}{
 		{
 			name: "Remove existing",
-			db: &devices{
+			dm: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						done: make(chan struct{}),
 						sys:  &mockSys{},
 						name: "foobar",
@@ -32,25 +32,25 @@ func TestRemoveDevice(t *testing.T) {
 				},
 			},
 			removeName: "foobar",
-			expected: &devices{
+			expected: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{
 						UnsubscribeCalled: true,
 						UnsubscribeName:   "foobar",
 					},
 				},
-				db: map[string]*dev{},
+				db: []*dev{},
 			},
 			wantUnregister: true,
 		},
 		{
 			name: "Remove non-existing",
-			db: &devices{
+			dm: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						done: make(chan struct{}),
 						sys:  &mockSys{},
 						name: "foobar",
@@ -58,12 +58,12 @@ func TestRemoveDevice(t *testing.T) {
 				},
 			},
 			removeName: "baz",
-			expected: &devices{
+			expected: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						done: make(chan struct{}),
 						sys:  &mockSys{},
 						name: "foobar",
@@ -75,12 +75,12 @@ func TestRemoveDevice(t *testing.T) {
 		},
 		{
 			name: "Remove existing - disable fails",
-			db: &devices{
+			dm: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						done: make(chan struct{}),
 						sys: &mockSys{
 							wantFailClosedPacketSocket: true,
@@ -90,14 +90,14 @@ func TestRemoveDevice(t *testing.T) {
 				},
 			},
 			removeName: "foobar",
-			expected: &devices{
+			expected: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{
 						UnsubscribeCalled: true,
 						UnsubscribeName:   "foobar",
 					},
 				},
-				db: map[string]*dev{},
+				db: []*dev{},
 			},
 			wantUnregister: true,
 			wantFail:       true,
@@ -105,9 +105,9 @@ func TestRemoveDevice(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := test.db.removeDevice(test.removeName)
+		err := test.dm.removeDevice(test.removeName)
 
-		assert.Equal(t, test.wantUnregister, test.db.srv.ds.(*device.MockServer).UnsubscribeCalled, test.name)
+		assert.Equal(t, test.wantUnregister, test.dm.srv.ds.(*device.MockServer).UnsubscribeCalled, test.name)
 
 		if err != nil {
 			if test.wantFail {
@@ -123,34 +123,38 @@ func TestRemoveDevice(t *testing.T) {
 		}
 
 		// Ignore some attributes
-		for i := range test.db.db {
-			test.db.db[i].srv = nil
-			test.db.db[i].helloMethod = nil
-			test.db.db[i].receiverMethod = nil
-			test.db.db[i].done = nil
+		for i := range test.dm.db {
+			test.dm.db[i].self = nil
+			if test.dm.db[i].level2 != nil {
+				test.dm.db[i].level2.neighborManager = nil
+			}
+			test.dm.db[i].srv = nil
+			test.dm.db[i].helloMethod = nil
+			test.dm.db[i].receiverMethod = nil
+			test.dm.db[i].done = nil
 		}
 
-		assert.Equal(t, test.expected, test.db, test.name)
+		assert.Equal(t, test.expected, test.dm, test.name)
 	}
 }
 
 func TestDeviceAddDevice(t *testing.T) {
 	tests := []struct {
 		name         string
-		db           *devices
+		dm           *devicesManager
 		addIfCfg     *config.ISISInterfaceConfig
 		wantFail     bool
-		expected     *devices
+		expected     *devicesManager
 		wantRegister bool
 	}{
 		{
 			name: "Test #1",
-			db: &devices{
+			dm: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						name: "foobar",
 					},
 				},
@@ -162,18 +166,18 @@ func TestDeviceAddDevice(t *testing.T) {
 					HelloInterval: 5,
 				},
 			},
-			expected: &devices{
+			expected: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{
 						Called: true,
 						Name:   "baz",
 					},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						name: "foobar",
 					},
-					"baz": {
+					{
 						name:               "baz",
 						passive:            true,
 						supportedProtocols: []uint8{0xcc, 0x8e},
@@ -187,12 +191,12 @@ func TestDeviceAddDevice(t *testing.T) {
 		},
 		{
 			name: "Test #2",
-			db: &devices{
+			dm: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						name: "foobar",
 					},
 				},
@@ -201,15 +205,15 @@ func TestDeviceAddDevice(t *testing.T) {
 				Name:    "foobar",
 				Passive: true,
 			},
-			expected: &devices{
+			expected: &devicesManager{
 				srv: &Server{
 					ds: &device.MockServer{
 						Called: true,
 						Name:   "baz",
 					},
 				},
-				db: map[string]*dev{
-					"foobar": {
+				db: []*dev{
+					{
 						name: "foobar",
 					},
 				},
@@ -220,9 +224,9 @@ func TestDeviceAddDevice(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := test.db.addDevice(test.addIfCfg)
+		err := test.dm.addDevice(test.addIfCfg)
 
-		assert.Equal(t, test.wantRegister, test.db.srv.ds.(*device.MockServer).Called, test.name)
+		assert.Equal(t, test.wantRegister, test.dm.srv.ds.(*device.MockServer).Called, test.name)
 
 		if err != nil {
 			if test.wantFail {
@@ -238,13 +242,17 @@ func TestDeviceAddDevice(t *testing.T) {
 		}
 
 		// Ignore some attributes
-		for i := range test.db.db {
-			test.db.db[i].srv = nil
-			test.db.db[i].helloMethod = nil
-			test.db.db[i].receiverMethod = nil
-			test.db.db[i].done = nil
+		for i := range test.dm.db {
+			test.dm.db[i].self = nil
+			if test.dm.db[i].level2 != nil {
+				test.dm.db[i].level2.neighborManager = nil
+			}
+			test.dm.db[i].srv = nil
+			test.dm.db[i].helloMethod = nil
+			test.dm.db[i].receiverMethod = nil
+			test.dm.db[i].done = nil
 		}
 
-		assert.Equal(t, test.expected, test.db, test.name)
+		assert.Equal(t, test.expected, test.dm, test.name)
 	}
 }

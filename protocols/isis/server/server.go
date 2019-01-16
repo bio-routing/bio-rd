@@ -13,7 +13,7 @@ import (
 type Server struct {
 	config         *config.ISISConfig
 	sequenceNumber uint32
-	devices        *devices
+	dm             *devicesManager
 	lsdb           *lsdb
 	stop           chan struct{}
 	ds             device.Updater
@@ -29,7 +29,7 @@ func New(cfg *config.ISISConfig, ds device.Updater, l *log.Logger) *Server {
 		log:            l,
 	}
 
-	s.devices = newDevices(s)
+	s.dm = newDevicesManager(s)
 	s.lsdb = newLSDB(s)
 	return s
 }
@@ -45,10 +45,10 @@ func (s *Server) dispose() {
 
 // AddInterface adds an interface to the ISIS Server
 func (s *Server) AddInterface(ifcfg *config.ISISInterfaceConfig) {
-	s.devices.addDevice(ifcfg)
+	s.dm.addDevice(ifcfg)
 }
 
 // RemoveInterface removes an interface from the ISIS Server
 func (s *Server) RemoveInterface(name string) {
-	s.devices.removeDevice(name)
+	s.dm.removeDevice(name)
 }

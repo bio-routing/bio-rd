@@ -32,7 +32,6 @@ type dev struct {
 	level2             *level
 	supportedProtocols []uint8
 	phy                *device.Device
-	neighborManager    *neighborManager
 	done               chan struct{}
 	wg                 sync.WaitGroup
 	helloMethod        func()

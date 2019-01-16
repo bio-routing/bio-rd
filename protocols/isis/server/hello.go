@@ -18,7 +18,11 @@ func (d *dev) processP2PHello(h *packet.P2PHello, src types.MACAddress) error {
 		return errors.Wrap(err, "Unable to create neighbor object from hello")
 	}
 
-	d.neighborManager.setNeighbor(src, n)
+	if h.CircuitType != 2 {
+		return fmt.Errorf("Unsupported P2P Hello: Level 1")
+	}
+
+	d.level2.neighborManager.setNeighbor(src, n)
 	return nil
 }
 

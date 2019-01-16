@@ -8,48 +8,53 @@ import (
 	"github.com/pkg/errors"
 )
 
-type devices struct {
+type devicesManager struct {
 	srv  *Server
-	db   map[string]*dev
+	db   []*dev
 	dbMu sync.RWMutex
 }
 
-func newDevices(srv *Server) *devices {
-	return &devices{
+func newDevicesManager(srv *Server) *devicesManager {
+	return &devicesManager{
 		srv: srv,
-		db:  make(map[string]*dev),
+		db:  make([]*dev, 0),
 	}
 }
 
-func (db *devices) addDevice(ifcfg *config.ISISInterfaceConfig) error {
-	db.dbMu.Lock()
-	defer db.dbMu.Unlock()
+func (dm *devicesManager) addDevice(ifcfg *config.ISISInterfaceConfig) error {
+	dm.dbMu.Lock()
+	defer dm.dbMu.Unlock()
 
-	if _, ok := db.db[ifcfg.Name]; ok {
-		return fmt.Errorf("Interface exists already")
+	for i := range dm.db {
+		if dm.db[i].name == ifcfg.Name {
+			return fmt.Errorf("Interface exists already")
+		}
 	}
 
-	d := newDev(db.srv, ifcfg)
-	db.db[ifcfg.Name] = d
-
-	db.srv.ds.Subscribe(d, d.name)
+	d := newDev(dm.srv, ifcfg)
+	dm.db = append(dm.db, d)
+	dm.srv.ds.Subscribe(d, d.name)
 	return nil
 }
 
-func (db *devices) removeDevice(name string) error {
-	db.dbMu.Lock()
-	defer db.dbMu.Unlock()
+func (dm *devicesManager) removeDevice(name string) error {
+	dm.dbMu.Lock()
+	defer dm.dbMu.Unlock()
 
-	if _, ok := db.db[name]; !ok {
-		return fmt.Errorf("Interface not found")
+	for i := range dm.db {
+		if dm.db[i].name != name {
+			continue
+		}
+
+		dm.srv.ds.Unsubscribe(dm.db[i], name)
+		err := dm.db[i].disable()
+		if err != nil {
+			return errors.Wrap(err, "Unable to disable interface")
+		}
+
+		dm.db = append(dm.db[:i], dm.db[i+1:]...)
+		return nil
 	}
 
-	db.srv.ds.Unsubscribe(db.db[name], name)
-	err := db.db[name].disable()
-	if err != nil {
-		return errors.Wrap(err, "Unable to disable interface")
-	}
-
-	delete(db.db, name)
-	return nil
+	return fmt.Errorf("Device %q not found", name)
 }
