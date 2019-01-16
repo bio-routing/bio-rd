@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
@@ -42,7 +43,7 @@ type level struct {
 	HelloInterval   uint16
 	HoldTime        uint16
 	Metric          uint32
-	neighborManager *neighborManager
+	neighborManager neighborManagerInterface
 }
 
 func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
@@ -64,7 +65,7 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 		d.level2.HelloInterval = ifcfg.ISISLevel2Config.HelloInterval
 		d.level2.HoldTime = ifcfg.ISISLevel2Config.HoldTime
 		d.level2.Metric = ifcfg.ISISLevel2Config.Metric
-		d.level2.neighborManager = newNeighborManager()
+		d.level2.neighborManager = newNeighborManager(d)
 	}
 
 	return d
@@ -123,4 +124,17 @@ func (d *dev) disable() error {
 	d.wg.Wait()
 	d.up = false
 	return nil
+}
+
+func (d *dev) validateNeighborAddresses(addrs []uint32) []uint32 {
+	res := make([]uint32, 0, len(addrs))
+	for i := range addrs {
+		for j := range d.phy.Addrs {
+			if d.phy.Addrs[j].Contains(bnet.NewPfx(bnet.IPv4(addrs[i]), 32)) {
+				res = append(res, addrs[i])
+			}
+		}
+	}
+
+	return res
 }

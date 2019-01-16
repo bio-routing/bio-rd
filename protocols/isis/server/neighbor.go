@@ -3,6 +3,7 @@ package server
 import "github.com/bio-routing/bio-rd/protocols/isis/types"
 
 type neighbor struct {
+	macAddress             types.MACAddress
 	systemID               types.SystemID
 	dev                    *dev
 	holdingTime            uint16

@@ -6,52 +6,54 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
-type neighborEntry struct {
-	addr types.MACAddress
-	n    *neighbor
+type neighborManagerInterface interface {
+	setNeighbor(n *neighbor)
+	getNeighbor(addr types.MACAddress) *neighbor
 }
 
 type neighborManager struct {
-	db   []neighborEntry
+	dev  *dev
+	db   []*neighbor
 	dbMu sync.RWMutex
+	p2p  bool
 }
 
-func newNeighborManager() *neighborManager {
+func newNeighborManager(d *dev) *neighborManager {
 	return &neighborManager{
-		db: make([]neighborEntry, 0, 1),
+		dev: d,
+		db:  make([]*neighbor, 0, 1),
 	}
 }
 
-func (nm *neighborManager) setNeighbor(addr types.MACAddress, n *neighbor) {
+func (nm *neighborManager) setNeighbor(n *neighbor) {
 	nm.dbMu.RLock()
 	defer nm.dbMu.RUnlock()
 
 	for i := range nm.db {
-		if nm.db[i].addr != addr {
+		if nm.db[i].macAddress != n.macAddress {
 			continue
 		}
 
-		// FIXME: Update
+		// TODO: Verfiy if hello is valid for us
+		nm.db[i] = n
 		return
 	}
 
-	// FIXME: Add
-	nm.db = append(nm.db, neighborEntry{
-		addr: addr,
-		n:    n,
-	})
+	// TODO: Verfiy if hello is valid for us
+	nm.db = append(nm.db, n)
 }
 
-func (nm *neighborManager) getNeighbor(addr types.MACAddress) *neighbor {
+// IS THIS FUNCION NEEDED?
+func (nm *neighborManager) getNeighbor(mac types.MACAddress) *neighbor {
 	nm.dbMu.RLock()
 	defer nm.dbMu.RUnlock()
 
 	for i := range nm.db {
-		if nm.db[i].addr != addr {
+		if nm.db[i].macAddress != mac {
 			continue
 		}
 
-		return nm.db[i].n
+		return nm.db[i]
 	}
 
 	return nil

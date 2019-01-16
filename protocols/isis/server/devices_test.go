@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/stretchr/testify/assert"
 )
@@ -254,5 +255,59 @@ func TestDeviceAddDevice(t *testing.T) {
 		}
 
 		assert.Equal(t, test.expected, test.dm, test.name)
+	}
+}
+
+func TestValidateNeighborAddresses(t *testing.T) {
+	tests := []struct {
+		name     string
+		d        *dev
+		addrs    []uint32
+		expected []uint32
+	}{
+		{
+			name: "Test #1",
+			d: &dev{
+				phy: &device.Device{
+					Addrs: []net.Prefix{
+						net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
+					},
+				},
+			},
+			addrs: []uint32{
+				net.IPv4FromOctets(10, 0, 0, 2).ToUint32(),
+			},
+			expected: []uint32{
+				net.IPv4FromOctets(10, 0, 0, 2).ToUint32(),
+			},
+		},
+		{
+			name: "Test #2",
+			d: &dev{
+				phy: &device.Device{
+					Addrs: []net.Prefix{
+						net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 30),
+						net.NewPfx(net.IPv4FromOctets(10, 0, 0, 4), 30),
+						net.NewPfx(net.IPv4FromOctets(192, 168, 100, 0), 22),
+					},
+				},
+			},
+			addrs: []uint32{
+				net.IPv4FromOctets(100, 100, 100, 100).ToUint32(),
+				net.IPv4FromOctets(10, 0, 0, 5).ToUint32(),
+				net.IPv4FromOctets(10, 0, 0, 9).ToUint32(),
+				net.IPv4FromOctets(192, 168, 101, 22).ToUint32(),
+				net.IPv4FromOctets(10, 0, 0, 22).ToUint32(),
+			},
+			expected: []uint32{
+				net.IPv4FromOctets(10, 0, 0, 5).ToUint32(),
+				net.IPv4FromOctets(192, 168, 101, 22).ToUint32(),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := test.d.validateNeighborAddresses(test.addrs)
+		assert.Equal(t, test.expected, res, test.name)
 	}
 }

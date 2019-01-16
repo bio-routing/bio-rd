@@ -13,20 +13,20 @@ func (d *dev) helloRoutine() {
 }
 
 func (d *dev) processP2PHello(h *packet.P2PHello, src types.MACAddress) error {
-	n, err := d.p2pHelloToNeighbor(h)
-	if err != nil {
-		return errors.Wrap(err, "Unable to create neighbor object from hello")
-	}
-
 	if h.CircuitType != 2 {
 		return fmt.Errorf("Unsupported P2P Hello: Level 1")
 	}
 
-	d.level2.neighborManager.setNeighbor(src, n)
+	n, err := d.p2pHelloToNeighbor(h, src)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create neighbor object from hello")
+	}
+
+	d.level2.neighborManager.setNeighbor(n)
 	return nil
 }
 
-func (d *dev) p2pHelloToNeighbor(h *packet.P2PHello) (*neighbor, error) {
+func (d *dev) p2pHelloToNeighbor(h *packet.P2PHello, src types.MACAddress) (*neighbor, error) {
 	p2pAdjTLV := h.GetP2PAdjTLV()
 	if p2pAdjTLV == nil {
 		return nil, fmt.Errorf("Received a P2P hello PDU without P2P Adjacency TLV on %s", d.name)
@@ -38,6 +38,7 @@ func (d *dev) p2pHelloToNeighbor(h *packet.P2PHello) (*neighbor, error) {
 	}
 
 	n := &neighbor{
+		macAddress:             src,
 		systemID:               h.SystemID,
 		dev:                    d,
 		holdingTime:            h.HoldingTimer,
