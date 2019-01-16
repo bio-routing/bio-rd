@@ -14,8 +14,8 @@ import (
 )
 
 type devInterface interface {
+	processIngressPacket() error
 	processP2PHello(*packet.P2PHello, types.MACAddress) error
-	processIngressPacket([]byte, types.MACAddress) error
 	processLSPDU(*packet.LSPDU, types.MACAddress) error
 	processCSNP(*packet.CSNP, types.MACAddress) error
 	processPSNP(*packet.PSNP, types.MACAddress) error

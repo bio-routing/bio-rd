@@ -27,6 +27,7 @@ type mockSys struct {
 	wantFailSendPacket         bool
 	wantFailRecvPacket         bool
 	recvPktCount               int
+	recvPktPkt                 []byte
 	stopRecvPktFail            chan struct{}
 	stopRecvPktGraceful        chan struct{}
 	closePacketSocketCalled    bool
@@ -75,15 +76,15 @@ func (m *mockSys) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 		}
 	}
 
-	if m.recvPktCount == 0 {
+	if m.recvPktCount == 1 {
 		select {
 		case <-m.stopRecvPktFail:
 			return nil, [6]byte{}, fmt.Errorf("Socket closed")
 		case <-m.stopRecvPktGraceful:
-			return nil, [6]byte{}, fmt.Errorf("Blocking")
+			return m.recvPktPkt, [6]byte{10, 20, 30, 40, 50, 60}, nil
 		}
 	}
 
 	m.recvPktCount--
-	return []byte{1, 2, 3}, [6]byte{10, 20, 30, 40, 50, 60}, nil
+	return m.recvPktPkt, [6]byte{10, 20, 30, 40, 50, 60}, nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
-	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/pkg/errors"
 )
 
@@ -17,21 +16,21 @@ func (d *dev) receiverRoutine() {
 		case <-d.done:
 			return
 		default:
-			rawPkt, src, err := d.sys.recvPacket()
+			err := d.self.processIngressPacket()
 			if err != nil {
-				d.srv.log.Errorf("recvPacket() failed: %v", err)
+				d.srv.log.Errorf("%v", err)
 				return
-			}
-
-			err = d.self.processIngressPacket(rawPkt, src)
-			if err != nil {
-				d.srv.log.Errorf("Unable to process packet: %v", err)
 			}
 		}
 	}
 }
 
-func (d *dev) processIngressPacket(rawPkt []byte, src types.MACAddress) error {
+func (d *dev) processIngressPacket() error {
+	rawPkt, src, err := d.sys.recvPacket()
+	if err != nil {
+		return errors.Wrap(err, "receiving packet failed")
+	}
+
 	pkt, err := packet.Decode(bytes.NewBuffer(rawPkt))
 	if err != nil {
 		return fmt.Errorf("Unable to decode packet from %v on %v: %v: %v", src, d.name, rawPkt, err)

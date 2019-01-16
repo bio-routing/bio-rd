@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btesting "github.com/bio-routing/bio-rd/testing"
@@ -35,7 +34,7 @@ func (md *mockDev) processP2PHello(*packet.P2PHello, types.MACAddress) error {
 	return nil
 }
 
-func (md *mockDev) processIngressPacket([]byte, types.MACAddress) error {
+func (md *mockDev) processIngressPacket() error {
 	md.callCountProcessIngressPacket++
 	if md.wantFailProcessIngressPacket {
 		return fmt.Errorf("processIngressPacket failed")
@@ -75,41 +74,9 @@ func TestReceiverRoutine(t *testing.T) {
 	tests := []struct {
 		name     string
 		dev      *dev
-		expected []byte
+		expected string
+		stopped  bool
 	}{
-		{
-			name: "All OK",
-			dev: &dev{
-				name: "eth0",
-				srv: &Server{
-					log: log.New(),
-				},
-				sys: &mockSys{
-					wantFailRecvPacket:  false,
-					recvPktCount:        1,
-					stopRecvPktFail:     make(chan struct{}),
-					stopRecvPktGraceful: make(chan struct{}),
-				},
-				self: &mockDev{},
-			},
-			expected: []byte("level=error msg=\"recvPacket() failed: Blocking\""),
-		},
-		{
-			name: "Recv fail",
-			dev: &dev{
-				name: "eth0",
-				srv: &Server{
-					log: log.New(),
-				},
-				sys: &mockSys{
-					wantFailRecvPacket:  true,
-					stopRecvPktFail:     make(chan struct{}),
-					stopRecvPktGraceful: make(chan struct{}),
-				},
-				self: &mockDev{},
-			},
-			expected: []byte("level=error msg=\"recvPacket() failed: Stopped\""),
-		},
 		{
 			name: "process fail",
 			dev: &dev{
@@ -117,15 +84,24 @@ func TestReceiverRoutine(t *testing.T) {
 				srv: &Server{
 					log: log.New(),
 				},
-				sys: &mockSys{
-					wantFailRecvPacket:  false,
-					recvPktCount:        1,
-					stopRecvPktFail:     make(chan struct{}),
-					stopRecvPktGraceful: make(chan struct{}),
+				self: &mockDev{
+					wantFailProcessIngressPacket: true,
+				},
+			},
+			expected: "level=error msg=\"processIngressPacket failed\"",
+		},
+		{
+			name: "process ok",
+			dev: &dev{
+				name: "eth0",
+				done: make(chan struct{}),
+				srv: &Server{
+					log: log.New(),
 				},
 				self: &mockDev{},
 			},
-			expected: []byte("level=error msg=\"recvPacket() failed: Blocking\""),
+			stopped:  true,
+			expected: "",
 		},
 	}
 
@@ -133,10 +109,12 @@ func TestReceiverRoutine(t *testing.T) {
 		test.dev.srv.log.Out = bytes.NewBuffer([]byte{})
 		test.dev.srv.log.Formatter = btesting.NewLogFormatter()
 		test.dev.wg.Add(1)
+		if test.stopped {
+			close(test.dev.done)
+		}
 		go test.dev.receiverRoutine()
-		close(test.dev.sys.(*mockSys).stopRecvPktGraceful)
 		test.dev.wg.Wait()
-		assert.Equal(t, test.expected, test.dev.srv.log.Out.(*bytes.Buffer).Bytes(), test.name)
+		assert.Equal(t, test.expected, string(test.dev.srv.log.Out.(*bytes.Buffer).Bytes()), test.name)
 	}
 }
 
@@ -145,68 +123,75 @@ func TestProcessIngressPacket(t *testing.T) {
 		name        string
 		dev         *dev
 		mockDev     *mockDev
-		pkt         []byte
 		wantFail    bool
 		expectedErr string
 		expected    *mockDev
 	}{
 		{
-			name:    "Decode Fail",
-			dev:     newDev(nil, &config.ISISInterfaceConfig{Name: "eth0"}),
-			mockDev: &mockDev{},
-			pkt: []byte{
-				// LLC
-				0xfe, // DSAP
-				0xfe, // SSAP
-				0x03, // Control Fields
+			name: "Decode Fail",
+			dev: &dev{
+				name: "eth0",
+				sys: &mockSys{
+					recvPktPkt: []byte{
+						// LLC
+						0xfe, // DSAP
+						0xfe, // SSAP
+						0x03, // Control Fields
 
-				// Header
-				0x83,
-				20,
-				1,
-				0,
-				17, // PDU Type P2P Hello
-				1,
+						// Header
+						0x83,
+						20,
+						1,
+						0,
+						17, // PDU Type P2P Hello
+						1,
+					},
+				},
 			},
+			mockDev:     &mockDev{},
 			wantFail:    true,
-			expectedErr: "Unable to decode packet from [0 0 0 0 0 0] on eth0: [254 254 3 131 20 1 0 17 1]: Unable to decode header: Unable to decode fields: Unable to read from buffer: EOF",
+			expectedErr: "Unable to decode packet from [10 20 30 40 50 60] on eth0: [254 254 3 131 20 1 0 17 1]: Unable to decode header: Unable to decode fields: Unable to read from buffer: EOF",
 			expected:    &mockDev{},
 		},
 		{
 			name: "Invalid P2P Hello",
-			dev:  newDev(nil, &config.ISISInterfaceConfig{Name: "eth0"}),
+			dev: &dev{
+				name: "eth0",
+				sys: &mockSys{
+					recvPktPkt: []byte{
+						// LLC
+						0xfe, // DSAP
+						0xfe, // SSAP
+						0x03, // Control Fields
+
+						// Header
+						0x83,
+						20,
+						1,
+						0,
+						17, // PDU Type P2P Hello
+						1,
+						0,
+						0,
+
+						// P2P Hello
+						02,
+						0, 0, 0, 0, 0, 2,
+						0, 27,
+						0, 50,
+						1,
+
+						//TLVs
+						240, 5, 0x02, 0x00, 0x00, 0x01, 0x4b,
+						129, 2, 0xcc, 0x8e,
+						132, 4, 192, 168, 1, 0,
+						1, 6, 0x05, 0x49, 0x00, 0x01, 0x00, 0x10,
+						211, 3, 0, 0, 0,
+					},
+				},
+			},
 			mockDev: &mockDev{
 				wantFailProcessP2PHello: true,
-			},
-			pkt: []byte{
-				// LLC
-				0xfe, // DSAP
-				0xfe, // SSAP
-				0x03, // Control Fields
-
-				// Header
-				0x83,
-				20,
-				1,
-				0,
-				17, // PDU Type P2P Hello
-				1,
-				0,
-				0,
-
-				// P2P Hello
-				02,
-				0, 0, 0, 0, 0, 2,
-				0, 27,
-				0, 50,
-				1,
-
-				//TLVs
-				240, 5, 0x02, 0x00, 0x00, 0x01, 0x4b,
-				129, 2, 0xcc, 0x8e,
-				132, 4, 192, 168, 1, 0,
-				1, 6, 0x05, 0x49, 0x00, 0x01, 0x00, 0x10,
-				211, 3, 0, 0, 0,
 			},
 			wantFail: true,
 			expected: &mockDev{
@@ -217,48 +202,52 @@ func TestProcessIngressPacket(t *testing.T) {
 		},
 		{
 			name: "LSPDU fail",
-			dev:  newDev(nil, &config.ISISInterfaceConfig{Name: "eth0"}),
+			dev: &dev{
+				name: "eth0",
+				sys: &mockSys{
+					recvPktPkt: []byte{
+						// LLC
+						0xfe, // DSAP
+						0xfe, // SSAP
+						0x03, // Control Fields
+
+						// Header
+						0x83,
+						20,
+						1,
+						0,
+						0x14, // PDU Type L2 LSPDU
+						1,
+						0,
+						0,
+
+						0, 30, // Length
+						0, 200, // Lifetime
+						10, 20, 30, 40, 50, 60, 0, 10, // LSPID
+						0, 0, 1, 0, // Sequence Number
+						0, 0, // Checksum
+						3,                     // Typeblock
+						137, 5, 1, 2, 3, 4, 5, // Hostname TLV
+						12, 2, 0, 2, // Checksum TLV
+
+						// P2P Hello
+						02,
+						0, 0, 0, 0, 0, 2,
+						0, 27,
+						0, 50,
+						1,
+
+						//TLVs
+						240, 5, 0x02, 0x00, 0x00, 0x01, 0x4b,
+						129, 2, 0xcc, 0x8e,
+						132, 4, 192, 168, 1, 0,
+						1, 6, 0x05, 0x49, 0x00, 0x01, 0x00, 0x10,
+						211, 3, 0, 0, 0,
+					},
+				},
+			},
 			mockDev: &mockDev{
 				wantFailProcessLSPDU: true,
-			},
-			pkt: []byte{
-				// LLC
-				0xfe, // DSAP
-				0xfe, // SSAP
-				0x03, // Control Fields
-
-				// Header
-				0x83,
-				20,
-				1,
-				0,
-				0x14, // PDU Type L2 LSPDU
-				1,
-				0,
-				0,
-
-				0, 30, // Length
-				0, 200, // Lifetime
-				10, 20, 30, 40, 50, 60, 0, 10, // LSPID
-				0, 0, 1, 0, // Sequence Number
-				0, 0, // Checksum
-				3,                     // Typeblock
-				137, 5, 1, 2, 3, 4, 5, // Hostname TLV
-				12, 2, 0, 2, // Checksum TLV
-
-				// P2P Hello
-				02,
-				0, 0, 0, 0, 0, 2,
-				0, 27,
-				0, 50,
-				1,
-
-				//TLVs
-				240, 5, 0x02, 0x00, 0x00, 0x01, 0x4b,
-				129, 2, 0xcc, 0x8e,
-				132, 4, 192, 168, 1, 0,
-				1, 6, 0x05, 0x49, 0x00, 0x01, 0x00, 0x10,
-				211, 3, 0, 0, 0,
 			},
 			wantFail: true,
 			expected: &mockDev{
@@ -269,37 +258,41 @@ func TestProcessIngressPacket(t *testing.T) {
 		},
 		{
 			name: "CSNP fail",
-			dev:  newDev(nil, &config.ISISInterfaceConfig{Name: "eth0"}),
+			dev: &dev{
+				name: "eth0",
+				sys: &mockSys{
+					recvPktPkt: []byte{
+						// LLC
+						0xfe, // DSAP
+						0xfe, // SSAP
+						0x03, // Control Fields
+
+						// Header
+						0x83,
+						20,
+						1,
+						0,
+						0x19, // PDU Type L2 CSNP
+						1,
+						0,
+						0,
+
+						0, 41, // PDU Length
+						10, 20, 30, 40, 50, 60, 0, // Source ID
+						11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
+						11, 22, 33, 77, 88, 99, 0, 200, // EndLSPID
+						9,    // TLV Type
+						16,   // TLV Length
+						1, 0, // Remaining Lifetime
+						11, 22, 33, 44, 55, 66, // SystemID
+						0, 20, // Pseudonode ID
+						0, 0, 0, 20, // Sequence Number
+						2, 0, // Checksum
+					},
+				},
+			},
 			mockDev: &mockDev{
 				wantFailProcessCSNP: true,
-			},
-			pkt: []byte{
-				// LLC
-				0xfe, // DSAP
-				0xfe, // SSAP
-				0x03, // Control Fields
-
-				// Header
-				0x83,
-				20,
-				1,
-				0,
-				0x19, // PDU Type L2 CSNP
-				1,
-				0,
-				0,
-
-				0, 41, // PDU Length
-				10, 20, 30, 40, 50, 60, 0, // Source ID
-				11, 22, 33, 44, 55, 66, 0, 100, // StartLSPID
-				11, 22, 33, 77, 88, 99, 0, 200, // EndLSPID
-				9,    // TLV Type
-				16,   // TLV Length
-				1, 0, // Remaining Lifetime
-				11, 22, 33, 44, 55, 66, // SystemID
-				0, 20, // Pseudonode ID
-				0, 0, 0, 20, // Sequence Number
-				2, 0, // Checksum
 			},
 			wantFail: true,
 			expected: &mockDev{
@@ -310,35 +303,39 @@ func TestProcessIngressPacket(t *testing.T) {
 		},
 		{
 			name: "PSNP fail",
-			dev:  newDev(nil, &config.ISISInterfaceConfig{Name: "eth0"}),
+			dev: &dev{
+				name: "eth0",
+				sys: &mockSys{
+					recvPktPkt: []byte{
+						// LLC
+						0xfe, // DSAP
+						0xfe, // SSAP
+						0x03, // Control Fields
+
+						// Header
+						0x83,
+						20,
+						1,
+						0,
+						0x1b, // PDU Type L2 PSNP
+						1,
+						0,
+						0,
+
+						0, 33, // Length
+						10, 20, 30, 40, 50, 60, 0, // Source ID
+
+						1, 0, // Remaining Lifetime
+						11, 22, 33, 44, 55, 66, // SystemID
+						0,           // Pseudonode ID
+						20,          // LSPNumber
+						0, 0, 0, 20, // Sequence Number
+						2, 0, // Checksum
+					},
+				},
+			},
 			mockDev: &mockDev{
 				wantFailProcessPSNP: true,
-			},
-			pkt: []byte{
-				// LLC
-				0xfe, // DSAP
-				0xfe, // SSAP
-				0x03, // Control Fields
-
-				// Header
-				0x83,
-				20,
-				1,
-				0,
-				0x1b, // PDU Type L2 PSNP
-				1,
-				0,
-				0,
-
-				0, 33, // Length
-				10, 20, 30, 40, 50, 60, 0, // Source ID
-
-				1, 0, // Remaining Lifetime
-				11, 22, 33, 44, 55, 66, // SystemID
-				0,           // Pseudonode ID
-				20,          // LSPNumber
-				0, 0, 0, 20, // Sequence Number
-				2, 0, // Checksum
 			},
 			wantFail: true,
 			expected: &mockDev{
@@ -348,35 +345,39 @@ func TestProcessIngressPacket(t *testing.T) {
 			expectedErr: "Unable to process PSNP: ProcessPSNP failed",
 		},
 		{
-			name:    "PSNP Ok",
-			dev:     newDev(nil, &config.ISISInterfaceConfig{Name: "eth0"}),
-			mockDev: &mockDev{},
-			pkt: []byte{
-				// LLC
-				0xfe, // DSAP
-				0xfe, // SSAP
-				0x03, // Control Fields
+			name: "PSNP Ok",
+			dev: &dev{
+				name: "eth0",
+				sys: &mockSys{
+					recvPktPkt: []byte{
+						// LLC
+						0xfe, // DSAP
+						0xfe, // SSAP
+						0x03, // Control Fields
 
-				// Header
-				0x83,
-				20,
-				1,
-				0,
-				0x1b, // PDU Type L2 PSNP
-				1,
-				0,
-				0,
+						// Header
+						0x83,
+						20,
+						1,
+						0,
+						0x1b, // PDU Type L2 PSNP
+						1,
+						0,
+						0,
 
-				0, 33, // Length
-				10, 20, 30, 40, 50, 60, 0, // Source ID
+						0, 33, // Length
+						10, 20, 30, 40, 50, 60, 0, // Source ID
 
-				1, 0, // Remaining Lifetime
-				11, 22, 33, 44, 55, 66, // SystemID
-				0,           // Pseudonode ID
-				20,          // LSPNumber
-				0, 0, 0, 20, // Sequence Number
-				2, 0, // Checksum
+						1, 0, // Remaining Lifetime
+						11, 22, 33, 44, 55, 66, // SystemID
+						0,           // Pseudonode ID
+						20,          // LSPNumber
+						0, 0, 0, 20, // Sequence Number
+						2, 0, // Checksum
+					},
+				},
 			},
+			mockDev:  &mockDev{},
 			wantFail: false,
 			expected: &mockDev{
 				callCountProcessPSNP: 1,
@@ -386,7 +387,7 @@ func TestProcessIngressPacket(t *testing.T) {
 
 	for _, test := range tests {
 		test.dev.self = test.mockDev
-		err := test.dev.processIngressPacket(test.pkt, types.MACAddress{})
+		err := test.dev.processIngressPacket()
 		if err != nil && !test.wantFail {
 			t.Errorf("Unexpected failure for test %q", test.name)
 			continue
