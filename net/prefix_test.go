@@ -414,6 +414,28 @@ func TestContains(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			a: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 0),
+				pfxlen: 72,
+			},
+			b: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 1),
+				pfxlen: 127,
+			},
+			expected: true,
+		},
+		{
+			a: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 0),
+				pfxlen: 126,
+			},
+			b: Prefix{
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 100, 1),
+				pfxlen: 127,
+			},
+			expected: false,
+		},
 	}
 
 	for _, test := range tests {
