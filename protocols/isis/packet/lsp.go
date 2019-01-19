@@ -167,3 +167,15 @@ func DecodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 	pdu.TLVs = TLVs
 	return pdu, nil
 }
+
+func (l *LSPDU) String() string {
+	buf := bytes.NewBuffer(nil)
+	fmt.Fprintf(buf, "Length: %d\n", l.Length)
+	fmt.Fprintf(buf, "Remaining Lifetime: %d\n", l.RemainingLifetime)
+	fmt.Fprintf(buf, "LPSID: %s\n", l.LSPID.String())
+	fmt.Fprintf(buf, "Sequence Number: %d\n", l.SequenceNumber)
+	fmt.Fprintf(buf, "Checksum: 0x%x\n", l.Checksum)
+	fmt.Fprintf(buf, "Type Block: 0x%x\n", l.TypeBlock)
+
+	return string(buf.Bytes())
+}

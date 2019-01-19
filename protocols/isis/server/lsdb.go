@@ -69,3 +69,23 @@ func (l *lsdb) decrementRemainingLifetimes() {
 		lspdbEntry.lspdu.RemainingLifetime--
 	}
 }
+
+func (l *lsdb) triggerLSPDUGen() {
+	l.srv.log.Infof("Triggered LSPDU generation")
+	l.srv.log.Errorf("LSPDU generation not implemented yet")
+}
+
+func (l *lsdb) dump() []*packet.LSPDU {
+	l.lspsMu.RLock()
+	defer l.lspsMu.RUnlock()
+
+	res := make([]*packet.LSPDU, len(l.lsps))
+	i := 0
+	for k := range l.lsps {
+		lspduCopy := *l.lsps[k].lspdu
+		res[i] = &lspduCopy
+		i++
+	}
+
+	return res
+}

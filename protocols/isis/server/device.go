@@ -23,20 +23,20 @@ type devInterface interface {
 }
 
 type dev struct {
-	self               devInterface
-	name               string
-	srv                *Server
-	sys                sys
-	up                 bool
-	passive            bool
-	p2p                bool
-	level2             *level
-	supportedProtocols []uint8
-	phy                *device.Device
-	done               chan struct{}
-	wg                 sync.WaitGroup
-	helloMethod        func()
-	receiverMethod     func()
+	self           devInterface
+	name           string
+	srv            *Server
+	sys            sys
+	up             bool
+	passive        bool
+	p2p            bool
+	level2         *level
+	phy            *device.Device
+	phyMu          sync.RWMutex
+	done           chan struct{}
+	wg             sync.WaitGroup
+	helloMethod    func()
+	receiverMethod func()
 }
 
 type level struct {
@@ -48,12 +48,11 @@ type level struct {
 
 func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 	d := &dev{
-		name:               ifcfg.Name,
-		srv:                srv,
-		passive:            ifcfg.Passive,
-		p2p:                ifcfg.P2P,
-		supportedProtocols: []uint8{packet.NLPIDIPv4, packet.NLPIDIPv6},
-		done:               make(chan struct{}),
+		name:    ifcfg.Name,
+		srv:     srv,
+		passive: ifcfg.Passive,
+		p2p:     ifcfg.P2P,
+		done:    make(chan struct{}),
 	}
 	d.self = d
 
@@ -65,7 +64,6 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 		d.level2.HelloInterval = ifcfg.ISISLevel2Config.HelloInterval
 		d.level2.HoldTime = ifcfg.ISISLevel2Config.HoldTime
 		d.level2.Metric = ifcfg.ISISLevel2Config.Metric
-		d.level2.neighborManager = newNeighborManager(d)
 	}
 
 	return d
@@ -73,6 +71,9 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 
 // DeviceUpdate receives interface status information and manages ISIS interface state
 func (d *dev) DeviceUpdate(phy *device.Device) {
+	d.phyMu.Lock()
+	defer d.phyMu.Unlock()
+
 	d.phy = phy
 	if d.phy.OperState == device.IfOperUp {
 		err := d.enable()
@@ -108,7 +109,7 @@ func (d *dev) enable() error {
 	d.wg.Add(1)
 	go d.helloMethod()
 
-	log.Infof("ISIS: Interface %q is now up", d.name)
+	d.srv.log.Infof("ISIS: Interface %q is now up", d.name)
 	d.up = true
 	return nil
 }
@@ -128,6 +129,9 @@ func (d *dev) disable() error {
 
 func (d *dev) validateNeighborAddresses(addrs []uint32) []uint32 {
 	res := make([]uint32, 0, len(addrs))
+	d.phyMu.RLock()
+	defer d.phyMu.RUnlock()
+
 	for i := range addrs {
 		for j := range d.phy.Addrs {
 			if d.phy.Addrs[j].Contains(bnet.NewPfx(bnet.IPv4(addrs[i]), 32)) {

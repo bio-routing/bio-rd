@@ -14,6 +14,10 @@ type SourceID struct {
 // MACAddress is an Ethernet MAC address
 type MACAddress [6]byte
 
+func (m MACAddress) String() string {
+	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5])
+}
+
 // AreaID is an ISIS Area ID
 type AreaID []byte
 

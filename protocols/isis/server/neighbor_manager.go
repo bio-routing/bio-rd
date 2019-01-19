@@ -12,49 +12,74 @@ type neighborManagerInterface interface {
 }
 
 type neighborManager struct {
-	dev  *dev
-	db   []*neighbor
-	dbMu sync.RWMutex
-	p2p  bool
+	srv         *Server
+	neighbors   []*neighbor
+	neighborsMu sync.RWMutex
 }
 
-func newNeighborManager(d *dev) *neighborManager {
+func newNeighborManager(s *Server) *neighborManager {
 	return &neighborManager{
-		dev: d,
-		db:  make([]*neighbor, 0, 1),
+		srv:       s,
+		neighbors: make([]*neighbor, 0, 1),
 	}
 }
 
-func (nm *neighborManager) setNeighbor(n *neighbor) {
-	nm.dbMu.RLock()
-	defer nm.dbMu.RUnlock()
+func sameNeighbor(a *neighbor, b *neighbor) bool {
+	if a.dev != b.dev || a.macAddress != b.macAddress {
+		return false
+	}
 
-	for i := range nm.db {
-		if nm.db[i].macAddress != n.macAddress {
-			continue
+	return true
+}
+
+// hello received from neighbor n
+func (nm *neighborManager) hello(n *neighbor) {
+	e := nm.getNeighbor(n.dev, n.macAddress)
+	if e != nil {
+		if e.hello(n) {
+			nm.removeNeighbor(e)
 		}
 
-		// TODO: Verfiy if hello is valid for us
-		nm.db[i] = n
 		return
 	}
 
-	// TODO: Verfiy if hello is valid for us
-	nm.db = append(nm.db, n)
+	nm.newNeighbor(n)
 }
 
-// IS THIS FUNCION NEEDED?
-func (nm *neighborManager) getNeighbor(mac types.MACAddress) *neighbor {
-	nm.dbMu.RLock()
-	defer nm.dbMu.RUnlock()
+func (nm *neighborManager) newNeighbor(n *neighbor) {
+	n.fsm = newFSM(nm.srv, n)
+	nm.addNeighbor(n)
+	n.fsm.start()
+}
 
-	for i := range nm.db {
-		if nm.db[i].macAddress != mac {
+func (nm *neighborManager) removeNeighbor(n *neighbor) {
+	nm.neighborsMu.Lock()
+	defer nm.neighborsMu.Unlock()
+
+	for i := range nm.neighbors {
+		if nm.neighbors[i] == n {
+			nm.neighbors = append(nm.neighbors[:i], nm.neighbors[i+1:]...)
+		}
+	}
+}
+
+func (nm *neighborManager) getNeighbor(d *dev, m types.MACAddress) *neighbor {
+	nm.neighborsMu.RLock()
+	defer nm.neighborsMu.RUnlock()
+
+	for i := range nm.neighbors {
+		if nm.neighbors[i].macAddress != m {
 			continue
 		}
 
-		return nm.db[i]
+		return nm.neighbors[i]
 	}
 
 	return nil
+}
+
+func (nm *neighborManager) addNeighbor(n *neighbor) {
+	nm.neighborsMu.Lock()
+	defer nm.neighborsMu.Unlock()
+	nm.neighbors = append(nm.neighbors, n)
 }
