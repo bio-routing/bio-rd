@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -20,12 +21,14 @@ type bgpServer struct {
 	peers     sync.Map
 	routerID  uint32
 	localASN  uint32
+	metrics   *metrics
 }
 
 type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
+	Metrics() (*BGPMetrics, error)
 }
 
 func NewBgpServer() BGPServer {
@@ -37,6 +40,8 @@ func (b *bgpServer) RouterID() uint32 {
 }
 
 func (b *bgpServer) Start(c *config.Global) error {
+	b.metrics = &metrics{b}
+
 	if err := c.SetDefaultGlobalConfigValues(); err != nil {
 		return errors.Wrap(err, "Failed to load defaults")
 	}
@@ -107,4 +112,12 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 	peer.Start()
 
 	return nil
+}
+
+func (b *bgpServer) Metrics() (*BGPMetrics, error) {
+	if b.metrics == nil {
+		return nil, fmt.Errorf("Server not started yet")
+	}
+
+	return b.metrics.metrics()
 }
