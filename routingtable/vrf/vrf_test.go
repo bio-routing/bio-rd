@@ -48,3 +48,8 @@ func TestRIBByName(t *testing.T) {
 	assert.True(t, found)
 	assert.Exactly(t, rib, foundRIB)
 }
+
+func TestName(t *testing.T) {
+	v := newUntrackedVRF("foo")
+	assert.Equal(t, "foo", v.Name())
+}
