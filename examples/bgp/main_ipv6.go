@@ -16,9 +16,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func startServer(b server.BGPServer) *locRIB.LocRIB {
-	vrf := vrf.NewVRF("master")
-	rib, err := vrf.CreateIPv6UnicastLocRIB("inet6.0")
+func startServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
+	rib, err := v.CreateIPv6UnicastLocRIB("inet6.0")
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -51,6 +50,7 @@ func startServer(b server.BGPServer) *locRIB.LocRIB {
 				BestOnly: true,
 			},
 		},
+		VRF: v,
 	})
 
 	b.AddPeer(config.Peer{
@@ -65,7 +65,6 @@ func startServer(b server.BGPServer) *locRIB.LocRIB {
 		Passive:           true,
 		RouterID:          b.RouterID(),
 		IPv6: &config.AddressFamilyConfig{
-			RIB:          rib,
 			ImportFilter: filter.NewDrainFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
 			AddPathSend: routingtable.ClientOptions{

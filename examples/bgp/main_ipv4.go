@@ -6,18 +6,24 @@ import (
 	"net"
 	"time"
 
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/sirupsen/logrus"
 )
 
 func startServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
-	err := b.Start(&config.Global{
+	rib, err := v.CreateIPv6UnicastLocRIB("inet6.0")
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	err = b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
 			net.IPv4(169, 254, 100, 1),
@@ -26,11 +32,6 @@ func startServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
 	})
 	if err != nil {
 		logrus.Fatalf("Unable to start BGP server: %v", err)
-	}
-
-	rib, err := v.CreateIPv4UnicastLocRIB("inet.0")
-	if err != nil {
-		logrus.Fatal(err)
 	}
 
 	b.AddPeer(config.Peer{
