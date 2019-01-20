@@ -82,3 +82,39 @@ func TestReadDynamicHostnameTLV(t *testing.T) {
 		assert.Equalf(t, test.expected, tlv, "Test %q", test.name)
 	}
 }
+
+func TestNewDynamicHostnameTLV(t *testing.T) {
+	tlv := NewDynamicHostnameTLV([]byte("abcd"))
+
+	expected := &DynamicHostNameTLV{
+		TLVType:   137,
+		TLVLength: 4,
+		Hostname:  []byte("abcd"),
+	}
+
+	assert.Equal(t, expected, tlv)
+}
+
+func TestDynamicHostnameTLVType(t *testing.T) {
+	tlv := &DynamicHostNameTLV{
+		TLVType: 100,
+	}
+
+	assert.Equal(t, uint8(100), tlv.Type())
+}
+
+func TestDynamicHostnameTLVLength(t *testing.T) {
+	tlv := &DynamicHostNameTLV{
+		TLVLength: 123,
+	}
+
+	assert.Equal(t, uint8(123), tlv.Length())
+}
+
+func TestDynamicHostnameTLVValue(t *testing.T) {
+	tlv := &DynamicHostNameTLV{
+		TLVLength: 123,
+	}
+
+	assert.Equal(t, tlv, tlv.Value())
+}

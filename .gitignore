@@ -22,7 +22,7 @@
 bio-rd
 examples/bgp
 examples/bmp
-examples/netlink/netlink
+examples/fib/fib
 examples/device/device
 
 # bazel directories

@@ -13,9 +13,9 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/taktv6/tflow2/convert"
 )
 
 type router struct {

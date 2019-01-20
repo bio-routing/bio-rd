@@ -100,18 +100,6 @@ func TestNewAreaAddressesTLV(t *testing.T) {
 	}
 }
 
-func TestAreaAddressesTLV(t *testing.T) {
-	tlv := NewAreaAddressesTLV([]types.AreaID{})
-
-	assert.Equal(t, uint8(1), tlv.Type())
-	assert.Equal(t, uint8(0), tlv.Length())
-	assert.Equal(t, AreaAddressesTLV{
-		TLVType:   1,
-		TLVLength: 0,
-		AreaIDs:   []types.AreaID{},
-	}, tlv.Value())
-}
-
 func TestAreaAddressesTLVSerialize(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -119,7 +107,7 @@ func TestAreaAddressesTLVSerialize(t *testing.T) {
 		expected []byte
 	}{
 		{
-			name: "Full",
+			name: "Empty",
 			input: &AreaAddressesTLV{
 				TLVType:   1,
 				TLVLength: 0,
@@ -130,7 +118,7 @@ func TestAreaAddressesTLVSerialize(t *testing.T) {
 		{
 			name: "Full",
 			input: &AreaAddressesTLV{
-				TLVType:   8,
+				TLVType:   1,
 				TLVLength: 4,
 				AreaIDs: []types.AreaID{
 					{
@@ -138,7 +126,20 @@ func TestAreaAddressesTLVSerialize(t *testing.T) {
 					},
 				},
 			},
-			expected: []byte{8, 4, 3, 1, 2, 3},
+			expected: []byte{1, 4, 3, 1, 2, 3},
+		},
+		{
+			name: "Real Example",
+			input: &AreaAddressesTLV{
+				TLVType:   1,
+				TLVLength: 7,
+				AreaIDs: []types.AreaID{
+					{
+						0, 4, 0, 1, 0, 16,
+					},
+				},
+			},
+			expected: []byte{1, 7, 6, 0, 4, 0, 1, 0, 16},
 		},
 	}
 
@@ -148,4 +149,29 @@ func TestAreaAddressesTLVSerialize(t *testing.T) {
 
 		assert.Equalf(t, test.expected, buf.Bytes(), "Test %q", test.name)
 	}
+}
+
+func TestAreaAddressesTLVType(t *testing.T) {
+	tlv := &AreaAddressesTLV{
+		TLVType: 100,
+	}
+
+	assert.Equal(t, uint8(100), tlv.Type())
+}
+
+func TestAreaAddressesTLVLength(t *testing.T) {
+	tlv := &AreaAddressesTLV{
+		TLVLength: 123,
+	}
+
+	assert.Equal(t, uint8(123), tlv.Length())
+}
+
+func TestAreaAddressesTLVValue(t *testing.T) {
+	tlv := &AreaAddressesTLV{
+		TLVLength: 123,
+		AreaIDs:   []types.AreaID{},
+	}
+
+	assert.Equal(t, tlv, tlv.Value())
 }

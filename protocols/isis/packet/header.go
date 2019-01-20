@@ -2,9 +2,13 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/pkg/errors"
+)
+
+const (
+	HeaderLen = 8
 )
 
 // ISISHeader represents an ISIS header
@@ -42,7 +46,7 @@ func DecodeHeader(buf *bytes.Buffer) (*ISISHeader, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode fields")
+		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
 	return h, nil

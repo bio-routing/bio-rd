@@ -3,7 +3,7 @@ package packet
 import (
 	"bytes"
 
-	"github.com/taktv6/tflow2/convert"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 type Serializable interface {

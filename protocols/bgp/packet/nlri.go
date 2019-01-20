@@ -7,8 +7,8 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
-	"github.com/taktv6/tflow2/convert"
 )
 
 const (

@@ -2,13 +2,21 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/pkg/errors"
 )
 
-// ProtocolsSupportedTLVType is the type value of an protocols supported TLV
-const ProtocolsSupportedTLVType = 129
+const (
+	// ProtocolsSupportedTLVType is the type value of an protocols supported TLV
+	ProtocolsSupportedTLVType = 129
+
+	// NLPIDIPv4 is the Network Layer Protocol ID for IPv4
+	NLPIDIPv4 = uint8(0xcc)
+
+	// NLPIDIPv6 is the Network Layer Protocol ID for IPv6
+	NLPIDIPv6 = uint8(0x8e)
+)
 
 // ProtocolsSupportedTLV represents a protocols supported TLV
 type ProtocolsSupportedTLV struct {
@@ -32,7 +40,7 @@ func readProtocolsSupportedTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8
 	for i := uint8(0); i < tlvLength; i++ {
 		err := decode.Decode(buf, fields)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to decode fields")
+			return nil, fmt.Errorf("Unable to decode fields: %v", err)
 		}
 		pdu.NetworkLayerProtocolIDs[i] = protoID
 	}

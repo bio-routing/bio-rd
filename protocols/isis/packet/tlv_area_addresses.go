@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	"github.com/pkg/errors"
 )
 
 // AreaAddressesTLVType is the type value of an area address TLV
@@ -29,14 +29,14 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 	for read < tlvLength {
 		areaLen, err := buf.ReadByte()
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read")
+			return nil, fmt.Errorf("Unable to read: %v", err)
 		}
 		read++
 
 		newArea := make(types.AreaID, areaLen)
 		_, err = buf.Read(newArea)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read")
+			return nil, fmt.Errorf("Unable to read: %v", err)
 		}
 		read += areaLen
 
@@ -50,13 +50,12 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 // NewAreaAddressesTLV creates a new area addresses TLV
 func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 	a := &AreaAddressesTLV{
-		TLVType:   AreaAddressesTLVType,
-		TLVLength: 0,
-		AreaIDs:   make([]types.AreaID, len(areas)),
+		TLVType: AreaAddressesTLVType,
+		AreaIDs: make([]types.AreaID, len(areas)),
 	}
 
 	for i, area := range areas {
-		a.TLVLength += uint8(len(area)) + 1
+		a.TLVLength += uint8(len(areas[i])) + 1
 		a.AreaIDs[i] = area
 	}
 
@@ -64,22 +63,22 @@ func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 }
 
 // Type gets the type of the TLV
-func (a AreaAddressesTLV) Type() uint8 {
+func (a *AreaAddressesTLV) Type() uint8 {
 	return a.TLVType
 }
 
 // Length gets the length of the TLV
-func (a AreaAddressesTLV) Length() uint8 {
+func (a *AreaAddressesTLV) Length() uint8 {
 	return a.TLVLength
 }
 
 // Value gets the TLV itself
-func (a AreaAddressesTLV) Value() interface{} {
+func (a *AreaAddressesTLV) Value() interface{} {
 	return a
 }
 
 // Serialize serializes an area address TLV
-func (a AreaAddressesTLV) Serialize(buf *bytes.Buffer) {
+func (a *AreaAddressesTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(a.TLVType)
 	buf.WriteByte(a.TLVLength)
 

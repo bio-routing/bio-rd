@@ -10,9 +10,9 @@ import (
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/taktv6/tflow2/convert"
 )
 
 const (
