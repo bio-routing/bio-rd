@@ -2,10 +2,10 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -43,7 +43,7 @@ func decodeLSPEntry(buf *bytes.Buffer) (*LSPEntry, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	return lspEntry, nil

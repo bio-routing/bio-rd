@@ -2,7 +2,6 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/pkg/errors"
@@ -52,7 +51,7 @@ func readTLV(buf *bytes.Buffer) (TLV, error) {
 
 	err = decode.Decode(buf, headFields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	var tlv TLV
@@ -78,7 +77,7 @@ func readTLV(buf *bytes.Buffer) (TLV, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read TLV: %v", err)
+		return nil, errors.Wrap(err, "Unable to read TLV")
 	}
 
 	return tlv, nil

@@ -2,7 +2,6 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
@@ -119,7 +118,7 @@ func readExtendedIPReachability(buf *bytes.Buffer) (*ExtendedIPReachability, err
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	if !e.hasSubTLVs() {
@@ -129,7 +128,7 @@ func readExtendedIPReachability(buf *bytes.Buffer) (*ExtendedIPReachability, err
 	subTLVsLen := uint8(0)
 	err = decode.Decode(buf, []interface{}{&subTLVsLen})
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	toRead := subTLVsLen

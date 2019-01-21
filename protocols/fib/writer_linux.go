@@ -134,7 +134,7 @@ func (nw *NetlinkWriter) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 func (nw *NetlinkWriter) addKernel(pfx bnet.Prefix) error {
 	route, err := nw.createRoute(pfx, nw.pathTable[pfx])
 	if err != nil {
-		return fmt.Errorf("Could not create Route: %v", err.Error())
+		return errors.Wrap(err, "Could not create route")
 	}
 
 	log.WithFields(log.Fields{
@@ -155,7 +155,7 @@ func (nw *NetlinkWriter) addKernel(pfx bnet.Prefix) error {
 func (nw *NetlinkWriter) removeKernel(pfx bnet.Prefix, paths []*route.Path) error {
 	route, err := nw.createRoute(pfx, nw.pathTable[pfx])
 	if err != nil {
-		return fmt.Errorf("Could not create Route: %v", err.Error())
+		return errors.Wrap(err, "Could not create route")
 	}
 
 	log.WithFields(log.Fields{

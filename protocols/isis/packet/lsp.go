@@ -8,6 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/bio-rd/util/math"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -156,12 +157,12 @@ func DecodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	TLVs, err := readTLVs(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read TLVs: %v", err)
+		return nil, errors.Wrap(err, "Unable to read TLVs")
 	}
 
 	pdu.TLVs = TLVs

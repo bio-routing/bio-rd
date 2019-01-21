@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/pkg/errors"
 )
 
 // DynamicHostNameTLVType is the type value of dynamic hostname TLV
@@ -54,7 +54,7 @@ func readDynamicHostnameTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	return pdu, nil
