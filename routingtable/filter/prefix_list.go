@@ -8,19 +8,17 @@ type PrefixList struct {
 }
 
 func NewPrefixList(pfxs ...net.Prefix) *PrefixList {
-	l := &PrefixList{
+	return &PrefixList{
 		allowed: pfxs,
 		matcher: Exact(),
 	}
-	return l
 }
 
 func NewPrefixListWithMatcher(matcher PrefixMatcher, pfxs ...net.Prefix) *PrefixList {
-	l := &PrefixList{
+	return &PrefixList{
 		allowed: pfxs,
 		matcher: matcher,
 	}
-	return l
 }
 
 func (l *PrefixList) Matches(p net.Prefix) bool {
