@@ -148,9 +148,14 @@ func (rt *RoutingTable) GetLonger(pfx net.Prefix) (res []*route.Route) {
 
 // Dump dumps all routes in table rt into a slice
 func (rt *RoutingTable) Dump() []*route.Route {
+	res := make([]*route.Route, 0)
+
+	if rt.root == nil {
+		return res
+	}
+
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	res := make([]*route.Route, 0)
 	return rt.root.dump(res)
 }

@@ -67,8 +67,14 @@ func (n *node) lpm(needle net.Prefix, res *[]*route.Route) {
 	if !n.dummy {
 		*res = append(*res, n.route)
 	}
-	n.l.lpm(needle, res)
-	n.h.lpm(needle, res)
+
+	if n.l != nil {
+		n.l.lpm(needle, res)
+	}
+
+	if n.h != nil {
+		n.h.lpm(needle, res)
+	}
 }
 
 func (n *node) dumpPfxs(res []*route.Route) []*route.Route {
@@ -109,7 +115,13 @@ func (n *node) get(pfx net.Prefix) *node {
 
 	b := pfx.Addr().BitAtPosition(n.route.Pfxlen() + 1)
 	if !b {
+		if n.l == nil {
+			return nil
+		}
 		return n.l.get(pfx)
+	}
+	if n.h == nil {
+		return nil
 	}
 	return n.h.get(pfx)
 }
@@ -222,8 +234,12 @@ func (n *node) dump(res []*route.Route) []*route.Route {
 		res = append(res, n.route)
 	}
 
-	res = n.l.dump(res)
-	res = n.h.dump(res)
+	if n.l != nil {
+		res = n.l.dump(res)
+	}
+	if n.h != nil {
+		res = n.h.dump(res)
+	}
 
 	return res
 }
