@@ -13,6 +13,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -109,7 +110,7 @@ func (s *Server) Serve() error {
 	// GRPC
 	grpcLis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.grpcSrv.port))
 	if err != nil {
-		return fmt.Errorf("Unable to listen: %v", err)
+		return errors.Wrap(err, "Unable to listen")
 	}
 
 	wg.Add(1)

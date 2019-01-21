@@ -2,7 +2,6 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 	"math"
 	"sort"
 
@@ -153,7 +152,7 @@ func DecodeCSNP(buf *bytes.Buffer) (*CSNP, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	tlvs, err := readTLVs(buf)

@@ -10,6 +10,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/pkg/errors"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -156,7 +157,7 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 
 	err = <-ret
 	if err != nil {
-		return fmt.Errorf("Stream ended: %v", err)
+		return errors.Wrap(err, "Stream ended")
 	}
 
 	return nil

@@ -6,12 +6,13 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/syscallwrappers"
+	"github.com/pkg/errors"
 )
 
 func (b *bioSys) openPacketSocket() error {
 	socket, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_DGRAM, syscall.ETH_P_ALL)
 	if err != nil {
-		return fmt.Errorf("socket() failed: %v", err)
+		return errors.Wrap(err, "socket() failed")
 	}
 	b.socket = socket
 
@@ -42,7 +43,7 @@ func (b *bioSys) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 	buf := make([]byte, 1500)
 	nBytes, from, err := syscall.Recvfrom(b.socket, buf, 0)
 	if err != nil {
-		return nil, types.MACAddress{}, fmt.Errorf("recvfrom failed: %v", err)
+		return nil, types.MACAddress{}, errors.Wrap(err, "recvfrom failed")
 	}
 
 	ll := from.(*syscall.SockaddrLinklayer)
@@ -71,7 +72,7 @@ func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 
 	err := syscall.Sendto(b.socket, newPkt, 0, &ll)
 	if err != nil {
-		return fmt.Errorf("sendto failed: %v", err)
+		return errors.Wrap(err, "sendto failed")
 	}
 
 	return nil

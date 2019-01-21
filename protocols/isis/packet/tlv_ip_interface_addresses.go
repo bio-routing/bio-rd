@@ -2,10 +2,10 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 // IPInterfaceAddressesTLVType is the type value of an IP interface address TLV
@@ -41,7 +41,7 @@ func readIPInterfaceAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uin
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, errors.Wrap(err, "Unable to decode fields")
 	}
 
 	return pdu, nil

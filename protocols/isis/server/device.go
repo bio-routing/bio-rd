@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
@@ -80,12 +79,12 @@ func (d *dev) DeviceUpdate(phy *device.Device) {
 func (d *dev) enable() error {
 	err := d.sys.openPacketSocket()
 	if err != nil {
-		return fmt.Errorf("Failed to open packet socket: %v", err)
+		return errors.Wrap(err, "Failed to open packet socket")
 	}
 
 	err = d.sys.mcastJoin(packet.AllP2PISS)
 	if err != nil {
-		return fmt.Errorf("Failed to join multicast group: %v", err)
+		return errors.Wrap(err, "Failed to join multicast group")
 	}
 
 	d.done = make(chan struct{})

@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/pkg/errors"
 )
 
 // AreaAddressesTLVType is the type value of an area address TLV
@@ -29,14 +29,14 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 	for read < tlvLength {
 		areaLen, err := buf.ReadByte()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read: %v", err)
+			return nil, errors.Wrap(err, "Unable to read")
 		}
 		read++
 
 		newArea := make(types.AreaID, areaLen)
 		_, err = buf.Read(newArea)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read: %v", err)
+			return nil, errors.Wrap(err, "Unable to read")
 		}
 		read += areaLen
 
