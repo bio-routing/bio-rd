@@ -7,8 +7,8 @@ import (
 )
 
 type neighborManagerInterface interface {
-	setNeighbor(n *neighbor)
-	getNeighbor(addr types.MACAddress) *neighbor
+	hello(*neighbor)
+	getNeighbor(d *dev, addr types.MACAddress) *neighbor
 }
 
 type neighborManager struct {

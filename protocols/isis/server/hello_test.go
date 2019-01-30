@@ -5,19 +5,25 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 type mockNeighborManager struct {
 	wantFailGetNeighbor    bool
 	callCounterSetNeighbor int
+	callCounterHello       int
+}
+
+func (mnm *mockNeighborManager) hello(n *neighbor) {
+	mnm.callCounterHello++
 }
 
 func (mnm *mockNeighborManager) setNeighbor(n *neighbor) {
 	mnm.callCounterSetNeighbor++
 }
 
-func (mnm *mockNeighborManager) getNeighbor(addr types.MACAddress) *neighbor {
+func (mnm *mockNeighborManager) getNeighbor(d *dev, addr types.MACAddress) *neighbor {
 	if mnm.wantFailGetNeighbor {
 		return nil
 	}
@@ -37,9 +43,7 @@ func TestProcessP2PHello(t *testing.T) {
 		{
 			name: "Invalid Circuit Type",
 			d: &dev{
-				level2: &level{
-					neighborManager: &mockNeighborManager{},
-				},
+				level2: &level{},
 			},
 			h: &packet.P2PHello{
 				CircuitType:    0x01,
@@ -48,7 +52,7 @@ func TestProcessP2PHello(t *testing.T) {
 				LocalCircuitID: 123,
 			},
 			wantFail: true,
-			wantErr:  "Unsupported P2P Hello: Level 1",
+			wantErr:  "Unsupported P2P Hello: Circuit Type: 1",
 		},
 		{
 			name: "p2pHelloToNeighbor fail",
@@ -67,8 +71,10 @@ func TestProcessP2PHello(t *testing.T) {
 		{
 			name: "Check neighbor manager called",
 			d: &dev{
-				level2: &level{
-					neighborManager: &mockNeighborManager{},
+				level2: &level{},
+				srv: &Server{
+					log: logrus.New(),
+					nm:  &mockNeighborManager{},
 				},
 			},
 			h: &packet.P2PHello{
@@ -91,7 +97,7 @@ func TestProcessP2PHello(t *testing.T) {
 			},
 			wantFail: false,
 			expectedNeighborManager: &mockNeighborManager{
-				callCounterSetNeighbor: 1,
+				callCounterHello: 1,
 			},
 		},
 	}
@@ -113,11 +119,11 @@ func TestProcessP2PHello(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, test.expectedNeighborManager, test.d.level2.neighborManager, test.name)
+		assert.Equal(t, test.expectedNeighborManager, test.d.srv.nm, test.name)
 	}
 }
 
-func TestP2pHelloToNeighbor(t *testing.T) {
+func TestNewNeighbor(t *testing.T) {
 	tests := []struct {
 		name     string
 		d        *dev
@@ -200,7 +206,7 @@ func TestP2pHelloToNeighbor(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		n, err := test.d.p2pHelloToNeighbor(test.h, types.MACAddress{})
+		n, err := test.d.newNeighbor(test.h, types.MACAddress{})
 		if err != nil {
 			if test.wantFail {
 				assert.Equal(t, test.log, err.Error(), test.name)
@@ -216,6 +222,7 @@ func TestP2pHelloToNeighbor(t *testing.T) {
 			continue
 		}
 
+		n.done = nil // ignore channel
 		assert.Equal(t, test.expected, n, test.name)
 	}
 }

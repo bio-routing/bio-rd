@@ -56,8 +56,8 @@ func (s fsmInitializingState) run() (state, string) {
 		}
 
 		fmt.Printf("p2pAdjTLV.NeighborSystemID: %s\n", p2pAdjTLV.NeighborSystemID.String())
-		fmt.Printf("Local:                      %s\n", s.fsm.srv.config.NETs[0].SystemID)
-		if p2pAdjTLV.NeighborSystemID == s.fsm.srv.config.NETs[0].SystemID {
+		fmt.Printf("Local:                      %s\n", s.fsm.neighbor.dev.srv.config.NETs[0].SystemID)
+		if p2pAdjTLV.NeighborSystemID == s.fsm.neighbor.dev.srv.config.NETs[0].SystemID {
 			//return newFSMUpState(s.fsm), "Received P2P Hello with Adjacency TLV including us"
 		}
 

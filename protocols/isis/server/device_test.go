@@ -7,16 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func (d *dev) mockRecv() {
-	<-d.done
-	d.wg.Done()
-}
-
-func (d *dev) mockHello() {
-	<-d.done
-	d.wg.Done()
-}
-
 func TestEnableDisable(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -51,9 +41,7 @@ func TestEnableDisable(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.dev.receiverMethod = test.dev.mockRecv
-		test.dev.helloMethod = test.dev.mockHello
-
+		test.dev.self = newMockDev()
 		err := test.dev.enable()
 		if err != nil {
 			if test.wantFail {
@@ -131,11 +119,8 @@ func TestDeviceUpdate(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.dev.receiverMethod = test.dev.mockRecv
-		test.dev.helloMethod = test.dev.mockHello
-
+		test.dev.self = newMockDev()
 		test.dev.DeviceUpdate(test.update)
-
 		assert.Equal(t, test.expected, test.dev.up, test.name)
 	}
 }

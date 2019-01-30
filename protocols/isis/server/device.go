@@ -15,6 +15,8 @@ import (
 )
 
 type devInterface interface {
+	helloRoutine()
+	receiverRoutine()
 	processIngressPacket() error
 	processP2PHello(*packet.P2PHello, types.MACAddress) error
 	processLSPDU(*packet.LSPDU, types.MACAddress) error
@@ -23,27 +25,24 @@ type devInterface interface {
 }
 
 type dev struct {
-	self           devInterface
-	name           string
-	srv            *Server
-	sys            sys
-	up             bool
-	passive        bool
-	p2p            bool
-	level2         *level
-	phy            *device.Device
-	phyMu          sync.RWMutex
-	done           chan struct{}
-	wg             sync.WaitGroup
-	helloMethod    func()
-	receiverMethod func()
+	self    devInterface
+	name    string
+	srv     *Server
+	sys     sys
+	up      bool
+	passive bool
+	p2p     bool
+	level2  *level
+	phy     *device.Device
+	phyMu   sync.RWMutex
+	done    chan struct{}
+	wg      sync.WaitGroup
 }
 
 type level struct {
-	HelloInterval   uint16
-	HoldTime        uint16
-	Metric          uint32
-	neighborManager neighborManagerInterface
+	HelloInterval uint16
+	HoldTime      uint16
+	Metric        uint32
 }
 
 func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
@@ -55,9 +54,6 @@ func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 		done:    make(chan struct{}),
 	}
 	d.self = d
-
-	d.helloMethod = d.helloRoutine
-	d.receiverMethod = d.receiverRoutine
 
 	if ifcfg.ISISLevel2Config != nil {
 		d.level2 = &level{}
@@ -104,10 +100,10 @@ func (d *dev) enable() error {
 	d.done = make(chan struct{})
 
 	d.wg.Add(1)
-	go d.receiverMethod()
+	go d.self.receiverRoutine()
 
 	d.wg.Add(1)
-	go d.helloMethod()
+	go d.self.helloRoutine()
 
 	d.srv.log.Infof("ISIS: Interface %q is now up", d.name)
 	d.up = true

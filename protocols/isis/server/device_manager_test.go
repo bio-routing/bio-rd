@@ -126,12 +126,7 @@ func TestRemoveDevice(t *testing.T) {
 		// Ignore some attributes
 		for i := range test.dm.db {
 			test.dm.db[i].self = nil
-			if test.dm.db[i].level2 != nil {
-				test.dm.db[i].level2.neighborManager = nil
-			}
 			test.dm.db[i].srv = nil
-			test.dm.db[i].helloMethod = nil
-			test.dm.db[i].receiverMethod = nil
 			test.dm.db[i].done = nil
 		}
 
@@ -179,9 +174,8 @@ func TestDeviceAddDevice(t *testing.T) {
 						name: "foobar",
 					},
 					{
-						name:               "baz",
-						passive:            true,
-						supportedProtocols: []uint8{0xcc, 0x8e},
+						name:    "baz",
+						passive: true,
 						level2: &level{
 							HelloInterval: 5,
 						},
@@ -245,12 +239,7 @@ func TestDeviceAddDevice(t *testing.T) {
 		// Ignore some attributes
 		for i := range test.dm.db {
 			test.dm.db[i].self = nil
-			if test.dm.db[i].level2 != nil {
-				test.dm.db[i].level2.neighborManager = nil
-			}
 			test.dm.db[i].srv = nil
-			test.dm.db[i].helloMethod = nil
-			test.dm.db[i].receiverMethod = nil
 			test.dm.db[i].done = nil
 		}
 

@@ -18,11 +18,25 @@ type mockDev struct {
 	wantFailProcessLSPDU          bool
 	wantFailProcessCSNP           bool
 	wantFailProcessPSNP           bool
+	callCountReceiverRoutine      int
+	callCountHelloRoutine         int
 	callCountProcessP2PHello      int
 	callCountProcessIngressPacket int
 	callCountProcessLSPDU         int
 	callCountProcessCSNP          int
 	callCountProcessPSNP          int
+}
+
+func newMockDev() *mockDev {
+	return &mockDev{}
+}
+
+func (md *mockDev) receiverRoutine() {
+	md.callCountReceiverRoutine++
+}
+
+func (md *mockDev) helloRoutine() {
+	md.callCountHelloRoutine++
 }
 
 func (md *mockDev) processP2PHello(*packet.P2PHello, types.MACAddress) error {

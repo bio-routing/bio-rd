@@ -16,7 +16,7 @@ type Server struct {
 	config             *config.ISISConfig
 	sequenceNumber     uint32
 	dm                 *devicesManager
-	nm                 *neighborManager
+	nm                 neighborManagerInterface
 	lsdb               *lsdb
 	stop               chan struct{}
 	ds                 device.Updater
