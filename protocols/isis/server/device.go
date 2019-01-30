@@ -70,6 +70,12 @@ func (d *dev) DeviceUpdate(phy *device.Device) {
 	d.phyMu.Lock()
 	defer d.phyMu.Unlock()
 
+	if d.sys == nil {
+		d.sys = &bioSys{
+			device: phy,
+		}
+	}
+
 	d.phy = phy
 	if d.phy.OperState == device.IfOperUp {
 		err := d.enable()
