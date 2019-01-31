@@ -65,7 +65,7 @@ func (s *openSentState) automaticStop() (state, string) {
 func (s *openSentState) cease() (state, string) {
 	s.fsm.sendNotification(packet.Cease, 0)
 	s.fsm.con.Close()
-	return newCeaseState(), "Cease"
+	return newIdleState(s.fsm), "Cease"
 }
 
 func (s *openSentState) holdTimerExpired() (state, string) {
@@ -142,7 +142,7 @@ func (s *openSentState) handleOpenMessage(openMsg *packet.BGPOpen) (state, strin
 
 	if s.peerASNRcvd != s.fsm.peer.peerASN {
 		s.fsm.sendNotification(packet.OpenMessageError, packet.BadPeerAS)
-		return newCeaseState(), fmt.Sprintf("Bad Peer AS %d, expected: %d", s.peerASNRcvd, s.fsm.peer.peerASN)
+		return newIdleState(s.fsm), fmt.Sprintf("Bad Peer AS %d, expected: %d", s.peerASNRcvd, s.fsm.peer.peerASN)
 	}
 
 	return newOpenConfirmState(s.fsm), "Received OPEN message"

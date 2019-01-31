@@ -190,8 +190,6 @@ func stateName(s state) string {
 		return "openConfirm"
 	case *establishedState:
 		return "established"
-	case *ceaseState:
-		return "cease"
 	default:
 		panic(fmt.Sprintf("Unknown state: %v", s))
 	}

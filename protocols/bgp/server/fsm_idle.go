@@ -28,7 +28,7 @@ func (s idleState) run() (state, string) {
 		case AutomaticStart:
 			return s.automaticStart()
 		case Cease:
-			return newCeaseState(), "Cease"
+			return newIdleState(s.fsm), "Cease"
 		default:
 			continue
 		}

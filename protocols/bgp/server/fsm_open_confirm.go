@@ -60,7 +60,7 @@ func (s *openConfirmState) automaticStop() (state, string) {
 func (s *openConfirmState) cease() (state, string) {
 	s.fsm.sendNotification(packet.Cease, 0)
 	s.fsm.con.Close()
-	return newCeaseState(), "Cease"
+	return newIdleState(s.fsm), "Cease"
 }
 
 func (s *openConfirmState) holdTimerExpired() (state, string) {

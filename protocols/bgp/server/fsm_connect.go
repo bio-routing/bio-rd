@@ -24,7 +24,7 @@ func (s connectState) run() (state, string) {
 			case ManualStop:
 				return s.manualStop()
 			case Cease:
-				return newCeaseState(), "Cease"
+				return newIdleState(s.fsm), "Cease"
 			default:
 				continue
 			}

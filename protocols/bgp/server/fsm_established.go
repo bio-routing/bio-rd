@@ -27,7 +27,7 @@ func (s establishedState) run() (state, string) {
 	if !s.fsm.ribsInitialized {
 		err := s.init()
 		if err != nil {
-			return newCeaseState(), fmt.Sprintf("Init failed: %v", err)
+			return newIdleState(s.fsm), fmt.Sprintf("Init failed: %v", err)
 		}
 	}
 
@@ -121,7 +121,7 @@ func (s *establishedState) cease() (state, string) {
 	s.fsm.sendNotification(packet.Cease, 0)
 	s.uninit()
 	s.fsm.con.Close()
-	return newCeaseState(), "Cease"
+	return newIdleState(s.fsm), "Cease"
 }
 
 func (s *establishedState) holdTimerExpired() (state, string) {

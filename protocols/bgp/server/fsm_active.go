@@ -45,7 +45,7 @@ func (s *activeState) manualStop() (state, string) {
 
 func (s *activeState) cease() (state, string) {
 	s.fsm.con.Close()
-	return newCeaseState(), "Cease"
+	return newIdleState(s.fsm), "Cease"
 }
 
 func (s *activeState) connectRetryTimerExpired() (state, string) {
