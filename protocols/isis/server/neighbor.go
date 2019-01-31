@@ -53,11 +53,11 @@ func (n *neighbor) hello(h *neighbor) (dispose bool) {
 		return true
 	}
 
+	n.holdingTime = h.holdingTime
 	if !n.holdingTimer.Reset(time.Duration(n.holdingTime)) {
 		n.dispose(fmt.Errorf("Hold timer expired"))
 		return true
 	}
-	n.holdingTime = n.holdingTime
 
 	if !n.ipAddrsEqual(validAddrs) || n.localCircuitID != h.localCircuitID || n.extendedLocalCircuitID != h.extendedLocalCircuitID {
 		n.dev.srv.lsdb.triggerLSPDUGen()
