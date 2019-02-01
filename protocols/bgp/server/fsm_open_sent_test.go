@@ -11,10 +11,10 @@ import (
 
 func TestOpenMsgReceived(t *testing.T) {
 	tests := []struct {
-		asn        uint32
-		name       string
-		msg        packet.BGPOpen
-		wantsCease bool
+		asn      uint32
+		name     string
+		msg      packet.BGPOpen
+		wantIdle bool
 	}{
 		{
 			name: "valid open message (16bit ASN)",
@@ -61,7 +61,7 @@ func TestOpenMsgReceived(t *testing.T) {
 				Version:       4,
 				ASN:           54321,
 			},
-			wantsCease: true,
+			wantIdle: true,
 		},
 	}
 
@@ -90,8 +90,8 @@ func TestOpenMsgReceived(t *testing.T) {
 
 			state, _ := s.handleOpenMessage(&test.msg)
 
-			if test.wantsCease {
-				assert.IsType(t, &ceaseState{}, state, "state")
+			if test.wantIdle {
+				assert.IsType(t, &idleState{}, state, "state")
 				return
 			}
 
