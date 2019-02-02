@@ -32,7 +32,7 @@ func TestDumpRIBIn(t *testing.T) {
 						peers: map[bnet.IP]*peer{
 							bnet.IPv4FromOctets(10, 0, 0, 0): {
 								fsms: []*FSM{
-									0: &FSM{
+									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn: adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
 										},
@@ -62,7 +62,7 @@ func TestDumpRIBIn(t *testing.T) {
 						peers: map[bnet.IP]*peer{
 							bnet.IPv4FromOctets(10, 0, 0, 0): {
 								fsms: []*FSM{
-									0: &FSM{
+									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn: adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
 										},
