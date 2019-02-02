@@ -2,12 +2,11 @@ package server
 
 import (
 	"net"
-	"strings"
-	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,7 +18,7 @@ const (
 type bgpServer struct {
 	listeners []*TCPListener
 	acceptCh  chan *net.TCPConn
-	peers     sync.Map
+	peers     *peerManager
 	routerID  uint32
 	localASN  uint32
 }
@@ -90,16 +89,16 @@ func (b *bgpServer) incomingConnectionWorker() {
 	for {
 		c := <-b.acceptCh
 
-		peerAddr := strings.Split(c.RemoteAddr().String(), ":")[0]
-		peerInterface, ok := b.peers.Load(peerAddr)
-		if !ok {
+		peerAddr, _ := bnetutils.BIONetIPFromAddr(c.RemoteAddr().String())
+
+		peer := b.peers.get(peerAddr)
+		if peer == nil {
 			c.Close()
 			log.WithFields(log.Fields{
 				"source": c.RemoteAddr(),
 			}).Warning("TCP connection from unknown source")
 			continue
 		}
-		peer := peerInterface.(*peer)
 
 		log.WithFields(log.Fields{
 			"source": c.RemoteAddr(),
@@ -126,8 +125,7 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 	}
 
 	peer.routerID = c.RouterID
-	peerAddr := peer.GetAddr().String()
-	b.peers.Store(peerAddr, peer)
+	b.peers.add(peer)
 	peer.Start()
 
 	return nil
