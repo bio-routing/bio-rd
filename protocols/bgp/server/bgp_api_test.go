@@ -28,6 +28,26 @@ func TestDumpRIBInOut(t *testing.T) {
 		wantFail  bool
 	}{
 		{
+			name: "Test #0: Non existent peer",
+			apisrv: &BGPAPIServer{
+				srv: &bgpServer{
+					peers: &peerManager{
+						peers: map[bnet.IP]*peer{},
+					},
+				},
+			},
+			addRoutes: []*route.Route{},
+			req: &api.DumpRIBRequest{
+				Peer: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+				Afi:  packet.IPv4AFI,
+				Safi: packet.UnicastSAFI,
+			},
+			expected: &api.DumpRIBResponse{
+				Routes: []*routeapi.Route{},
+			},
+			wantFail: false,
+		},
+		{
 			name: "Test #1: No routes given",
 			apisrv: &BGPAPIServer{
 				srv: &bgpServer{
