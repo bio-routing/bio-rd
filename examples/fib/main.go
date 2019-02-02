@@ -36,7 +36,7 @@ func main() {
 	}
 
 	b := server.NewBgpServer()
-	rib := startBGPServer(b, v)
+	startBGPServer(b, v)
 
 	// FIB communication
 	n := fib.NewFIB(&config.Netlink{
@@ -45,14 +45,6 @@ func main() {
 		RoutingTable:   config.RtMain,
 	}, rib)
 	n.Start()
-
-	go func() {
-		for {
-			log.Debugf("LocRIB count: %d", rib.Count())
-			log.Debugf(rib.String())
-			time.Sleep(time.Second * 10)
-		}
-	}()
 
 	select {}
 }

@@ -9,12 +9,11 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	log "github.com/sirupsen/logrus"
 )
 
-func startBGPServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
+func startBGPServer(b server.BGPServer, v *vrf.VRF) {
 	err := b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
@@ -51,6 +50,4 @@ func startBGPServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
 		},
 		VRF: v,
 	})
-
-	return v.IPv4UnicastRIB()
 }
