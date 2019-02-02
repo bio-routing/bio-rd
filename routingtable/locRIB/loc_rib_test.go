@@ -5,6 +5,7 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -94,4 +95,21 @@ func TestLocRIB_RemovePathUnknown(t *testing.T) {
 				NextHop: bnet.IPv4(2),
 			},
 		}))
+}
+
+func TestPropagation(t *testing.T) {
+	rib := New()
+	err := rib.AddPath(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+		Type:    route.BGPPathType,
+		BGPPath: &route.BGPPath{},
+	})
+	if err != nil {
+		t.Errorf("Unexpected failure: %v", err)
+	}
+
+	c := routingtable.NewRTMockClient()
+	rib.RegisterWithOptions(c, routingtable.ClientOptions{
+		MaxPaths: 10,
+	})
+
 }

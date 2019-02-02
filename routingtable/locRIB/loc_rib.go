@@ -42,6 +42,14 @@ func (a *LocRIB) Count() uint64 {
 	return uint64(len(a.rt.Dump()))
 }
 
+// Dump dumps the RIB
+func (a *LocRIB) Dump() []*route.Route {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	return a.rt.Dump()
+}
+
 // UpdateNewClient sends current state to a new client
 func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 	a.mu.RLock()
@@ -130,6 +138,8 @@ func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route)
 		oldPathsLimit := int(math.Min(float64(oldMaxPaths), float64(len(oldRoute.Paths()))))
 		newPathsLimit := int(math.Min(float64(newMaxPaths), float64(len(newRoute.Paths()))))
 
+		fmt.Printf("oldPathsLimit: %d\n", oldPathsLimit)
+		fmt.Printf("newPathsLimit: %d\n", newPathsLimit)
 		advertise := route.PathsDiff(newRoute.Paths()[0:newPathsLimit], oldRoute.Paths()[0:oldPathsLimit])
 
 		for _, p := range advertise {

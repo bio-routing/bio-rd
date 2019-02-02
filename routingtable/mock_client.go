@@ -26,6 +26,11 @@ func (m *RTMockClient) Removed() []*RemovePathParams {
 	return m.removed
 }
 
+// Dump is here to fulfill an interface
+func (m *RTMockClient) Dump() []*route.Route {
+	return nil
+}
+
 func (m *RTMockClient) AddPath(pfx net.Prefix, p *route.Path) error {
 	return nil
 }

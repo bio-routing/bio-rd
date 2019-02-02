@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -26,6 +28,8 @@ type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
+	DumpRIBIn(peer bnet.IP, afi uint16, safi uint8) []*route.Route
+	DumpRIBOut(peer bnet.IP, afi uint16, safi uint8) []*route.Route
 }
 
 func NewBgpServer() BGPServer {
@@ -60,6 +64,26 @@ func (b *bgpServer) Start(c *config.Global) error {
 	}
 
 	return nil
+}
+
+func (b *bgpServer) DumpRIBIn(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
+	pl, ok := b.peers.Load(peerIP)
+	if !ok {
+		return nil
+	}
+
+	p := pl.(*peer)
+	return p.dumpRIBIn(afi, safi)
+}
+
+func (b *bgpServer) DumpRIBOut(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
+	pl, ok := b.peers.Load(peerIP)
+	if !ok {
+		return nil
+	}
+
+	p := pl.(*peer)
+	return p.dumpRIBOut(afi, safi)
 }
 
 func (b *bgpServer) incomingConnectionWorker() {

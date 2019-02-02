@@ -3,6 +3,7 @@ syntax = "proto3";
 package bio.bgp;
 
 import "github.com/bio-routing/bio-rd/net/api/net.proto";
+import "github.com/bio-routing/bio-rd/route/api/route.proto";
 import "github.com/bio-routing/bio-rd/protocols/bgp/api/session.proto";
 option go_package = "github.com/bio-routing/bio-rd/protocols/bgp/api";
 
@@ -19,6 +20,18 @@ message ListSessionsResponse {
     repeated Session sessions = 1;
 }
 
+message DumpRIBRequest {
+    bio.net.IP peer = 1;
+    uint32 afi = 2;
+    uint32 safi = 3;
+}
+
+message DumpRIBResponse {
+    repeated bio.route.Route routes = 1;
+}
+
 service BgpService {
     rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+    rpc DumpRIBIn(DumpRIBRequest) returns (DumpRIBResponse) {}
+    rpc DumpRIBOut(DumpRIBRequest) returns (DumpRIBResponse) {}
 }
