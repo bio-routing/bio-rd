@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
@@ -25,14 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rib := startServer(b, v)
-
-	go func() {
-		for {
-			fmt.Printf("LocRIB count: %d\n", rib.Count())
-			time.Sleep(time.Second * 10)
-		}
-	}()
+	startServer(b, v)
 
 	select {}
 }
