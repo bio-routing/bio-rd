@@ -141,8 +141,6 @@ func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route)
 		oldPathsLimit := int(math.Min(float64(oldMaxPaths), float64(len(oldRoute.Paths()))))
 		newPathsLimit := int(math.Min(float64(newMaxPaths), float64(len(newRoute.Paths()))))
 
-		fmt.Printf("oldPathsLimit: %d\n", oldPathsLimit)
-		fmt.Printf("newPathsLimit: %d\n", newPathsLimit)
 		advertise := route.PathsDiff(newRoute.Paths()[0:newPathsLimit], oldRoute.Paths()[0:oldPathsLimit])
 
 		for _, p := range advertise {
