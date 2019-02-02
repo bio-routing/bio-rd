@@ -29,6 +29,8 @@ type VRF struct {
 // New creates a new VRF
 func New(name string) (*VRF, error) {
 	v := newUntrackedVRF(name)
+	v.CreateIPv4UnicastLocRIB("inet.0")
+	v.CreateIPv6UnicastLocRIB("inet6.0")
 
 	err := globalRegistry.registerVRF(v)
 	if err != nil {

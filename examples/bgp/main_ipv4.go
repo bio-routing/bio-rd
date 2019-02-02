@@ -18,12 +18,7 @@ import (
 )
 
 func startServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
-	rib, err := v.CreateIPv6UnicastLocRIB("inet6.0")
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	err = b.Start(&config.Global{
+	err := b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
 			net.IPv4(169, 254, 100, 1),
@@ -79,5 +74,5 @@ func startServer(b server.BGPServer, v *vrf.VRF) *locRIB.LocRIB {
 		VRF: v,
 	})
 
-	return rib
+	return v.IPv4UnicastRIB()
 }
