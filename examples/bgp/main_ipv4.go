@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -24,13 +23,13 @@ import (
 func startServer(b server.BGPServer, v *vrf.VRF) {
 	apiSrv := server.NewBGPAPIServer(b)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", "localhost:1337"))
+	lis, err := net.Listen("tcp", ":1337")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 	api.RegisterBgpServiceServer(grpcServer, apiSrv)
-	grpcServer.Serve(lis)
+	go grpcServer.Serve(lis)
 
 	err = b.Start(&config.Global{
 		Listen: true,
