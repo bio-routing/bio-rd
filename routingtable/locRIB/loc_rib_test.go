@@ -6,7 +6,6 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -76,7 +75,7 @@ func TestContainsPfxPath(t *testing.T) {
 		},
 	}
 	for i, tc := range testCases {
-		rib := New()
+		rib := New("inet.0")
 		for _, p := range tc.in {
 			err := rib.AddPath(p.pfx, p.path)
 			assert.Nil(t, err, "could not fill rib in testcase %v", i)
@@ -87,7 +86,7 @@ func TestContainsPfxPath(t *testing.T) {
 }
 
 func TestLocRIB_RemovePathUnknown(t *testing.T) {
-	rib := New()
+	rib := New("inet.0")
 	assert.True(t, rib.RemovePath(bnet.NewPfx(bnet.IPv4(1), 32),
 		&route.Path{
 			Type: route.StaticPathType,

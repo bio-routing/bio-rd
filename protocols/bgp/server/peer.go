@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -165,11 +166,15 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv4 != nil {
 		p.ipv4 = &peerAddressFamily{
-			rib:            c.IPv4.RIB,
+			rib:            c.VRF.IPv4UnicastRIB(),
 			importFilter:   filterOrDefault(c.IPv4.ImportFilter),
 			exportFilter:   filterOrDefault(c.IPv4.ExportFilter),
 			addPathReceive: c.IPv4.AddPathRecv,
 			addPathSend:    c.IPv4.AddPathSend,
+		}
+
+		if p.ipv4.rib == nil {
+			return nil, fmt.Errorf("No RIB for IPv4 unicast configured")
 		}
 	}
 
@@ -191,13 +196,17 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv6 != nil {
 		p.ipv6 = &peerAddressFamily{
-			rib:            c.IPv6.RIB,
+			rib:            c.VRF.IPv6UnicastRIB(),
 			importFilter:   filterOrDefault(c.IPv6.ImportFilter),
 			exportFilter:   filterOrDefault(c.IPv6.ExportFilter),
 			addPathReceive: c.IPv6.AddPathRecv,
 			addPathSend:    c.IPv6.AddPathSend,
 		}
 		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
+
+		if p.ipv6.rib == nil {
+			return nil, fmt.Errorf("No RIB for IPv6 unicast configured")
+		}
 	}
 
 	p.optOpenParams = append(p.optOpenParams, packet.OptParam{
