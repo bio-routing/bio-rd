@@ -45,6 +45,10 @@ func (s *StaticPath) Copy() *StaticPath {
 
 // ToProto converts StaticPath to proto static path
 func (s *StaticPath) ToProto() *api.StaticPath {
+	if s == nil {
+		return nil
+	}
+
 	return &api.StaticPath{
 		NextHop: s.NextHop.ToProto(),
 	}

@@ -35,6 +35,10 @@ type BGPPath struct {
 
 // ToProto converts BGPPath to proto BGPPath
 func (b *BGPPath) ToProto() *api.BGPPath {
+	if b == nil {
+		return nil
+	}
+
 	a := &api.BGPPath{
 		PathIdentifier:    b.PathIdentifier,
 		NextHop:           b.NextHop.ToProto(),

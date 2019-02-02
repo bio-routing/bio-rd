@@ -66,22 +66,20 @@ func (b *bgpServer) Start(c *config.Global) error {
 }
 
 func (b *bgpServer) DumpRIBIn(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
-	pl, ok := b.peers.Load(peerIP)
-	if !ok {
+	p := b.peers.get(peerIP)
+	if p == nil {
 		return nil
 	}
 
-	p := pl.(*peer)
 	return p.dumpRIBIn(afi, safi)
 }
 
 func (b *bgpServer) DumpRIBOut(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
-	pl, ok := b.peers.Load(peerIP)
-	if !ok {
+	p := b.peers.get(peerIP)
+	if p == nil {
 		return nil
 	}
 
-	p := pl.(*peer)
 	return p.dumpRIBOut(afi, safi)
 }
 
