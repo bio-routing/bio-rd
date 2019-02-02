@@ -60,6 +60,7 @@ func TestList(t *testing.T) {
 	m.peers[p1.GetAddr()] = p1
 	m.peers[p2.GetAddr()] = p2
 
-	expected := []*peer{p1, p2}
-	assert.Equal(t, expected, m.list())
+	list := m.list()
+	assert.Contains(t, list, p1)
+	assert.Contains(t, list, p2)
 }
