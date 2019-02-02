@@ -136,6 +136,7 @@ func (s *establishedState) holdTimerExpired() (state, string) {
 func (s *establishedState) keepaliveTimerExpired() (state, string) {
 	err := s.fsm.sendKeepalive()
 	if err != nil {
+		s.uninit()
 		stopTimer(s.fsm.connectRetryTimer)
 		s.fsm.con.Close()
 		s.fsm.connectRetryCounter++
