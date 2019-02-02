@@ -8,11 +8,12 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // LocRIB represents a routing information base
 type LocRIB struct {
+	name             string
 	clientManager    *routingtable.ClientManager
 	rt               *routingtable.RoutingTable
 	mu               sync.RWMutex
@@ -20,12 +21,14 @@ type LocRIB struct {
 }
 
 // New creates a new routing information base
-func New() *LocRIB {
+func New(name string) *LocRIB {
 	a := &LocRIB{
+		name:             name,
 		rt:               routingtable.NewRoutingTable(),
 		contributingASNs: routingtable.NewContributingASNs(),
 	}
 	a.clientManager = routingtable.NewClientManager(a)
+
 	return a
 }
 
@@ -64,7 +67,7 @@ func (a *LocRIB) RouteCount() int64 {
 func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	logrus.WithFields(map[string]interface{}{
+	log.WithFields(map[string]interface{}{
 		"Prefix": pfx,
 		"Route":  p,
 	}).Debug("AddPath to locRIB")
@@ -94,7 +97,7 @@ func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	logrus.WithFields(map[string]interface{}{
+	log.WithFields(map[string]interface{}{
 		"Prefix": pfx,
 		"Route":  p,
 	}).Debug("Remove from locRIB")

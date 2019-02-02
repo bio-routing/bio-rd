@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"time"
-
-	"github.com/sirupsen/logrus"
-
-	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"log"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/sirupsen/logrus"
 )
 
 func strAddr(s string) uint32 {
@@ -20,16 +17,13 @@ func strAddr(s string) uint32 {
 func main() {
 	logrus.Printf("This is a BGP speaker\n")
 
-	rib := locRIB.New()
 	b := server.NewBgpServer()
-	startServer(b, rib)
+	v, err := vrf.New("master")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	go func() {
-		for {
-			fmt.Printf("LocRIB count: %d\n", rib.Count())
-			time.Sleep(time.Second * 10)
-		}
-	}()
+	startServer(b, v)
 
 	select {}
 }

@@ -13,8 +13,8 @@ import (
 func main() {
 	logrus.Printf("This is a BMP speaker\n")
 
-	rib4 := locRIB.New()
-	rib6 := locRIB.New()
+	rib4 := locRIB.New("inet.0")
+	rib6 := locRIB.New("inet6.0")
 	b := server.NewServer()
 	b.AddRouter(net.IP{10, 0, 255, 0}, 30119, rib4, rib6)
 
