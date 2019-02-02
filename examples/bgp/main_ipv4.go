@@ -3,10 +3,13 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net"
 	"time"
 
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"google.golang.org/grpc"
 
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -14,10 +17,22 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/sirupsen/logrus"
+
+	api "github.com/bio-routing/bio-rd/protocols/bgp/api"
 )
 
 func startServer(b server.BGPServer, v *vrf.VRF) {
-	err := b.Start(&config.Global{
+	apiSrv := server.NewBGPAPIServer(b)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", "localhost:1337"))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	api.RegisterBgpServiceServer(grpcServer, apiSrv)
+	grpcServer.Serve(lis)
+
+	err = b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
 			net.IPv4(169, 254, 100, 1),
