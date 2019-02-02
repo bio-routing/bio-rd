@@ -11,13 +11,14 @@ import (
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/stretchr/testify/assert"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
-func TestDumpRIBIn(t *testing.T) {
+func TestDumpRIBInOut(t *testing.T) {
 	tests := []struct {
 		name      string
 		apisrv    *BGPAPIServer
@@ -36,7 +37,8 @@ func TestDumpRIBIn(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn: adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
+											adjRIBOut: adjRIBOut.New(&routingtable.Neighbor{Type: route.BGPPathType}, filter.NewAcceptAllFilter(), true),
 										},
 									},
 								},
@@ -66,7 +68,8 @@ func TestDumpRIBIn(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn: adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
+											adjRIBOut: adjRIBOut.New(&routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true}, filter.NewAcceptAllFilter(), false),
 										},
 									},
 								},
@@ -124,7 +127,8 @@ func TestDumpRIBIn(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn: adjRIBIn.New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 0, 0, true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 0, 0, true),
+											adjRIBOut: adjRIBOut.New(&routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true}, filter.NewAcceptAllFilter(), false),
 										},
 									},
 								},
@@ -156,6 +160,15 @@ func TestDumpRIBIn(t *testing.T) {
 						},
 						LocalPref: 1000,
 						MED:       2000,
+						UnknownAttributes: []types.UnknownPathAttribute{
+							{
+								Optional:   true,
+								Transitive: true,
+								Partial:    true,
+								TypeCode:   222,
+								Value:      []byte{0xff, 0xff},
+							},
+						},
 					},
 				}),
 			},
@@ -191,8 +204,16 @@ func TestDumpRIBIn(t *testing.T) {
 											DataPart2:           3,
 										},
 									},
-									UnknownAttributes: []*routeapi.UnknownPathAttribute{},
-									ClusterList:       []uint32{},
+									ClusterList: []uint32{},
+									UnknownAttributes: []*routeapi.UnknownPathAttribute{
+										{
+											Optional:   true,
+											Transitive: true,
+											Partial:    true,
+											TypeCode:   222,
+											Value:      []byte{0xff, 0xff},
+										},
+									},
 								},
 							},
 						},
@@ -203,6 +224,7 @@ func TestDumpRIBIn(t *testing.T) {
 		},
 	}
 
+	// Test RIBin
 	for _, test := range tests {
 		for _, r := range test.addRoutes {
 			for _, p := range r.Paths() {
@@ -211,6 +233,32 @@ func TestDumpRIBIn(t *testing.T) {
 		}
 
 		res, err := test.apisrv.DumpRIBIn(context.Background(), test.req)
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equal(t, test.expected, res, test.name)
+	}
+
+	// Test RIBout
+	for _, test := range tests {
+		for _, r := range test.addRoutes {
+			for _, p := range r.Paths() {
+				test.apisrv.srv.(*bgpServer).peers.peers[bnet.IPv4FromOctets(10, 0, 0, 0)].fsms[0].ipv4Unicast.adjRIBOut.AddPath(r.Prefix(), p)
+			}
+		}
+
+		res, err := test.apisrv.DumpRIBOut(context.Background(), test.req)
 		if err != nil {
 			if test.wantFail {
 				continue
