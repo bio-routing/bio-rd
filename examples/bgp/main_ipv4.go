@@ -6,18 +6,17 @@ import (
 	"net"
 	"time"
 
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/sirupsen/logrus"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 )
 
-func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
+func startServer(b server.BGPServer, v *vrf.VRF) {
 	err := b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
@@ -41,7 +40,6 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		Passive:           true,
 		RouterID:          b.RouterID(),
 		IPv4: &config.AddressFamilyConfig{
-			RIB:          rib,
 			ImportFilter: filter.NewAcceptAllFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
 			AddPathSend: routingtable.ClientOptions{
@@ -49,6 +47,7 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 			},
 		},
 		RouteServerClient: true,
+		VRF:               v,
 	})
 
 	b.AddPeer(config.Peer{
@@ -64,7 +63,6 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		RouterID:          b.RouterID(),
 		RouteServerClient: true,
 		IPv4: &config.AddressFamilyConfig{
-			RIB:          rib,
 			ImportFilter: filter.NewAcceptAllFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
 			AddPathSend: routingtable.ClientOptions{
@@ -72,5 +70,6 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 			},
 			AddPathRecv: true,
 		},
+		VRF: v,
 	})
 }
