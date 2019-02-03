@@ -17,6 +17,7 @@ type peer struct {
 	server    *bgpServer
 	addr      bnet.IP
 	localAddr bnet.IP
+	passive   bool
 	peerASN   uint32
 	localASN  uint32
 
@@ -123,6 +124,7 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	p := &peer{
 		server:               server,
 		addr:                 c.PeerAddress,
+		passive:              c.Passive,
 		peerASN:              c.PeerAS,
 		localASN:             c.LocalAS,
 		fsms:                 make([]*FSM, 0),
@@ -185,7 +187,9 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 		Value: caps,
 	})
 
-	p.fsms = append(p.fsms, NewActiveFSM(p))
+	if !p.passive {
+		p.fsms = append(p.fsms, NewActiveFSM(p))
+	}
 
 	return p, nil
 }
