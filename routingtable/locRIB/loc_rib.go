@@ -18,6 +18,12 @@ type LocRIB struct {
 	rt               *routingtable.RoutingTable
 	mu               sync.RWMutex
 	contributingASNs *routingtable.ContributingASNs
+	countTarget      *countTarget
+}
+
+type countTarget struct {
+	target uint64
+	ch     chan struct{}
 }
 
 // New creates a new routing information base
@@ -43,6 +49,14 @@ func (a *LocRIB) Count() uint64 {
 	defer a.mu.RUnlock()
 
 	return uint64(len(a.rt.Dump()))
+}
+
+// SetCountTarget sets a target and a channel to send a message to when a certain route count is reached
+func (a *LocRIB) SetCountTarget(count uint64, ch chan struct{}) {
+	a.countTarget = &countTarget{
+		target: count,
+		ch:     ch,
+	}
 }
 
 // UpdateNewClient sends current state to a new client
@@ -89,6 +103,11 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	newRoute := r.Copy()
 
 	a.propagateChanges(oldRoute, newRoute)
+	if a.countTarget != nil {
+		if a.RouteCount() == int64(a.countTarget.target) {
+			a.countTarget.ch <- struct{}{}
+		}
+	}
 	return nil
 }
 

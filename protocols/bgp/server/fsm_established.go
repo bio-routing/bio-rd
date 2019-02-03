@@ -32,7 +32,6 @@ func (s establishedState) run() (state, string) {
 	}
 
 	opt := s.fsm.decodeOptions()
-
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
