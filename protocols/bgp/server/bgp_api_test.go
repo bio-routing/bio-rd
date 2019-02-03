@@ -2,7 +2,10 @@ package server
 
 import (
 	"context"
+	"log"
+	"net"
 	"testing"
+	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/api"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -14,6 +17,8 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
@@ -24,7 +29,7 @@ func TestDumpRIBInOut(t *testing.T) {
 		apisrv    *BGPAPIServer
 		addRoutes []*route.Route
 		req       *api.DumpRIBRequest
-		expected  *api.DumpRIBResponse
+		expected  []*routeapi.Route
 		wantFail  bool
 	}{
 		{
@@ -42,9 +47,7 @@ func TestDumpRIBInOut(t *testing.T) {
 				Afi:  packet.IPv4AFI,
 				Safi: packet.UnicastSAFI,
 			},
-			expected: &api.DumpRIBResponse{
-				Routes: []*routeapi.Route{},
-			},
+			expected: []*routeapi.Route{},
 			wantFail: false,
 		},
 		{
@@ -73,9 +76,7 @@ func TestDumpRIBInOut(t *testing.T) {
 				Afi:  packet.IPv4AFI,
 				Safi: packet.UnicastSAFI,
 			},
-			expected: &api.DumpRIBResponse{
-				Routes: []*routeapi.Route{},
-			},
+			expected: []*routeapi.Route{},
 			wantFail: false,
 		},
 		{
@@ -113,23 +114,21 @@ func TestDumpRIBInOut(t *testing.T) {
 				Afi:  packet.IPv4AFI,
 				Safi: packet.UnicastSAFI,
 			},
-			expected: &api.DumpRIBResponse{
-				Routes: []*routeapi.Route{
-					{
-						Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).ToProto(),
-						Paths: []*routeapi.Path{
-							{
-								Type: routeapi.Path_BGP,
-								BGPPath: &routeapi.BGPPath{
-									OriginatorId:      1,
-									NextHop:           bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
-									Source:            bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
-									ASPath:            []*routeapi.ASPathSegment{},
-									Communities:       []uint32{},
-									LargeCommunities:  []*routeapi.LargeCommunity{},
-									UnknownAttributes: []*routeapi.UnknownPathAttribute{},
-									ClusterList:       []uint32{},
-								},
+			expected: []*routeapi.Route{
+				{
+					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).ToProto(),
+					Paths: []*routeapi.Path{
+						{
+							Type: routeapi.Path_BGP,
+							BGPPath: &routeapi.BGPPath{
+								OriginatorId:      1,
+								NextHop:           bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
+								Source:            bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
+								ASPath:            nil,
+								Communities:       nil,
+								LargeCommunities:  nil,
+								UnknownAttributes: nil,
+								ClusterList:       nil,
 							},
 						},
 					},
@@ -189,6 +188,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								Value:      []byte{0xff, 0xff},
 							},
 						},
+						ClusterList: []uint32{},
 					},
 				}),
 			},
@@ -197,42 +197,40 @@ func TestDumpRIBInOut(t *testing.T) {
 				Afi:  packet.IPv4AFI,
 				Safi: packet.UnicastSAFI,
 			},
-			expected: &api.DumpRIBResponse{
-				Routes: []*routeapi.Route{
-					{
-						Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).ToProto(),
-						Paths: []*routeapi.Path{
-							{
-								Type: routeapi.Path_BGP,
-								BGPPath: &routeapi.BGPPath{
-									OriginatorId: 1,
-									LocalPref:    1000,
-									MED:          2000,
-									NextHop:      bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
-									Source:       bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
-									ASPath: []*routeapi.ASPathSegment{
-										{
-											ASSequence: true,
-											ASNs:       []uint32{15169, 3320},
-										},
+			expected: []*routeapi.Route{
+				{
+					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).ToProto(),
+					Paths: []*routeapi.Path{
+						{
+							Type: routeapi.Path_BGP,
+							BGPPath: &routeapi.BGPPath{
+								OriginatorId: 1,
+								LocalPref:    1000,
+								MED:          2000,
+								NextHop:      bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
+								Source:       bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
+								ASPath: []*routeapi.ASPathSegment{
+									{
+										ASSequence: true,
+										ASNs:       []uint32{15169, 3320},
 									},
-									Communities: []uint32{100, 200, 300},
-									LargeCommunities: []*routeapi.LargeCommunity{
-										{
-											GlobalAdministrator: 1,
-											DataPart1:           2,
-											DataPart2:           3,
-										},
+								},
+								Communities: []uint32{100, 200, 300},
+								LargeCommunities: []*routeapi.LargeCommunity{
+									{
+										GlobalAdministrator: 1,
+										DataPart1:           2,
+										DataPart2:           3,
 									},
-									ClusterList: []uint32{},
-									UnknownAttributes: []*routeapi.UnknownPathAttribute{
-										{
-											Optional:   true,
-											Transitive: true,
-											Partial:    true,
-											TypeCode:   222,
-											Value:      []byte{0xff, 0xff},
-										},
+								},
+								ClusterList: nil,
+								UnknownAttributes: []*routeapi.UnknownPathAttribute{
+									{
+										Optional:   true,
+										Transitive: true,
+										Partial:    true,
+										TypeCode:   222,
+										Value:      []byte{0xff, 0xff},
 									},
 								},
 							},
@@ -252,19 +250,39 @@ func TestDumpRIBInOut(t *testing.T) {
 			}
 		}
 
-		res, err := test.apisrv.DumpRIBIn(context.Background(), test.req)
-		if err != nil {
-			if test.wantFail {
-				continue
+		bufSize := 1024 * 1024
+		lis := bufconn.Listen(bufSize)
+		s := grpc.NewServer()
+		api.RegisterBgpServiceServer(s, test.apisrv)
+		go func() {
+			if err := s.Serve(lis); err != nil {
+				log.Fatalf("Server exited with error: %v", err)
 			}
+		}()
 
-			t.Errorf("Unexpected failure for %q: %v", test.name, err)
-			continue
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(func(string, time.Duration) (net.Conn, error) {
+			return lis.Dial()
+		}), grpc.WithInsecure())
+		if err != nil {
+			t.Fatalf("Failed to dial bufnet: %v", err)
+		}
+		defer conn.Close()
+
+		client := api.NewBgpServiceClient(conn)
+		streamClient, err := client.DumpRIBIn(ctx, test.req)
+		if err != nil {
+			t.Fatalf("AdjRIBInStream client call failed: %v", err)
 		}
 
-		if test.wantFail {
-			t.Errorf("Unexpected success for test %q", test.name)
-			continue
+		res := make([]*routeapi.Route, 0)
+		for {
+			r, err := streamClient.Recv()
+			if err != nil {
+				break
+			}
+
+			res = append(res, r)
 		}
 
 		assert.Equal(t, test.expected, res, test.name)
@@ -278,19 +296,39 @@ func TestDumpRIBInOut(t *testing.T) {
 			}
 		}
 
-		res, err := test.apisrv.DumpRIBOut(context.Background(), test.req)
-		if err != nil {
-			if test.wantFail {
-				continue
+		bufSize := 1024 * 1024
+		lis := bufconn.Listen(bufSize)
+		s := grpc.NewServer()
+		api.RegisterBgpServiceServer(s, test.apisrv)
+		go func() {
+			if err := s.Serve(lis); err != nil {
+				log.Fatalf("Server exited with error: %v", err)
 			}
+		}()
 
-			t.Errorf("Unexpected failure for %q: %v", test.name, err)
-			continue
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(func(string, time.Duration) (net.Conn, error) {
+			return lis.Dial()
+		}), grpc.WithInsecure())
+		if err != nil {
+			t.Fatalf("Failed to dial bufnet: %v", err)
+		}
+		defer conn.Close()
+
+		client := api.NewBgpServiceClient(conn)
+		streamClient, err := client.DumpRIBOut(ctx, test.req)
+		if err != nil {
+			t.Fatalf("AdjRIBInStream client call failed: %v", err)
 		}
 
-		if test.wantFail {
-			t.Errorf("Unexpected success for test %q", test.name)
-			continue
+		res := make([]*routeapi.Route, 0)
+		for {
+			r, err := streamClient.Recv()
+			if err != nil {
+				break
+			}
+
+			res = append(res, r)
 		}
 
 		assert.Equal(t, test.expected, res, test.name)

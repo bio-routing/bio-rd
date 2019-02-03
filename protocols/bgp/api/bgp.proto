@@ -26,12 +26,8 @@ message DumpRIBRequest {
     uint32 safi = 3;
 }
 
-message DumpRIBResponse {
-    repeated bio.route.Route routes = 1;
-}
-
 service BgpService {
     rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
-    rpc DumpRIBIn(DumpRIBRequest) returns (DumpRIBResponse) {}
-    rpc DumpRIBOut(DumpRIBRequest) returns (DumpRIBResponse) {}
+    rpc DumpRIBIn(DumpRIBRequest) returns (stream bio.route.Route) {}
+    rpc DumpRIBOut(DumpRIBRequest) returns (stream bio.route.Route) {}
 }

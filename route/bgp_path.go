@@ -57,6 +57,7 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 	}
 
 	copy(a.Communities, b.Communities)
+	copy(a.ClusterList, b.ClusterList)
 
 	for i := range b.LargeCommunities {
 		a.LargeCommunities[i] = b.LargeCommunities[i].ToProto()
