@@ -22,8 +22,7 @@ func NewRoutingTable() *RoutingTable {
 
 // GetRouteCount gets the amount of stored routes
 func (rt *RoutingTable) GetRouteCount() int64 {
-	return rt.routeCount
-	//return atomic.LoadInt64(&rt.routeCount)
+	return atomic.LoadInt64(&rt.routeCount)
 }
 
 // AddPath adds a path to the routing table
