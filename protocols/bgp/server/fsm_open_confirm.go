@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 )
@@ -31,14 +32,22 @@ func (s openConfirmState) run() (state, string) {
 			default:
 				continue
 			}
-		case <-s.fsm.holdTimer.C:
-			return s.holdTimerExpired()
+		case <-time.After(time.Second):
+			return s.checkHoldtimer()
 		case <-s.fsm.keepaliveTimer.C:
 			return s.keepaliveTimerExpired()
 		case recvMsg := <-s.fsm.msgRecvCh:
 			return s.msgReceived(recvMsg, opt)
 		}
 	}
+}
+
+func (s *openConfirmState) checkHoldtimer() (state, string) {
+	if time.Since(s.fsm.lastUpdateOrKeepalive) > s.fsm.holdTime {
+		return s.holdTimerExpired()
+	}
+
+	return newOpenConfirmState(s.fsm), s.fsm.reason
 }
 
 func (s *openConfirmState) manualStop() (state, string) {
@@ -117,7 +126,7 @@ func (s *openConfirmState) notification(msg *packet.BGPMessage) (state, string) 
 }
 
 func (s *openConfirmState) keepaliveReceived() (state, string) {
-	s.fsm.holdTimer.Reset(s.fsm.holdTime)
+	s.fsm.updateLastUpdateOrKeepalive()
 	return newEstablishedState(s.fsm), "Received KEEPALIVE"
 }
 
