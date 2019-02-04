@@ -897,7 +897,6 @@ func TestSender(t *testing.T) {
 			fsmA.ipv4Unicast.addPathTX = test.addPath
 		}
 
-		fsmA.holdTimer = time.NewTimer(time.Second * 90)
 		fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
 		fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
 		fsmA.state = newEstablishedState(fsmA)

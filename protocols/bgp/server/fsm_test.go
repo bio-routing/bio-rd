@@ -24,7 +24,7 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 		},
 	})
 
-	fsmA.holdTimer = time.NewTimer(time.Second * 90)
+	fsmA.holdTime = time.Second * 180
 	fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
 	fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
 	fsmA.state = newEstablishedState(fsmA)
@@ -112,11 +112,11 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 			b + 25, 169, a, i, 0,
 			0, 0,
 		}
+
 		fsmA.msgRecvCh <- update
 		ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	}
 	time.Sleep(time.Second * 1)
-
 	ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	if ribRouteCount != 0 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
@@ -139,7 +139,7 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 	})
 
 	fsmA.ipv6Unicast.multiProtocol = true
-	fsmA.holdTimer = time.NewTimer(time.Second * 90)
+	fsmA.holdTime = time.Second * 180
 	fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
 	fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
 	fsmA.state = newEstablishedState(fsmA)
