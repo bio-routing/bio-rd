@@ -48,6 +48,14 @@ func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm 
 	}
 }
 
+func (f *fsmAddressFamily) dumpRIBOut() []*route.Route {
+	return f.adjRIBOut.Dump()
+}
+
+func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
+	return f.adjRIBIn.Dump()
+}
+
 func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs := f.rib.GetContributingASNs()
 

@@ -9,6 +9,7 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+	"github.com/bio-routing/bio-rd/route/api"
 )
 
 // BGPPath represents a set of BGP path attributes
@@ -30,6 +31,43 @@ type BGPPath struct {
 	UnknownAttributes []types.UnknownPathAttribute
 	OriginatorID      uint32
 	ClusterList       []uint32
+}
+
+// ToProto converts BGPPath to proto BGPPath
+func (b *BGPPath) ToProto() *api.BGPPath {
+	if b == nil {
+		return nil
+	}
+
+	a := &api.BGPPath{
+		PathIdentifier:    b.PathIdentifier,
+		NextHop:           b.NextHop.ToProto(),
+		LocalPref:         b.LocalPref,
+		ASPath:            b.ASPath.ToProto(),
+		Origin:            uint32(b.Origin),
+		MED:               b.MED,
+		EBGP:              b.EBGP,
+		BGPIdentifier:     b.BGPIdentifier,
+		Source:            b.Source.ToProto(),
+		Communities:       make([]uint32, len(b.Communities)),
+		LargeCommunities:  make([]*api.LargeCommunity, len(b.LargeCommunities)),
+		UnknownAttributes: make([]*api.UnknownPathAttribute, len(b.UnknownAttributes)),
+		OriginatorId:      b.OriginatorID,
+		ClusterList:       make([]uint32, len(b.ClusterList)),
+	}
+
+	copy(a.Communities, b.Communities)
+	copy(a.ClusterList, b.ClusterList)
+
+	for i := range b.LargeCommunities {
+		a.LargeCommunities[i] = b.LargeCommunities[i].ToProto()
+	}
+
+	for i := range b.UnknownAttributes {
+		a.UnknownAttributes[i] = b.UnknownAttributes[i].ToProto()
+	}
+
+	return a
 }
 
 // Length get's the length of serialized path

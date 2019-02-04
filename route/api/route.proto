@@ -38,7 +38,7 @@ message BGPPath {
     repeated LargeCommunity large_communities = 11;
     uint32 originator_id = 12;
     repeated uint32 cluster_list = 13;
-    repeated UnknownAttribute unknown_attributes = 14;
+    repeated UnknownPathAttribute unknown_attributes = 14;
 }
  
 message ASPathSegment {
@@ -52,7 +52,7 @@ message LargeCommunity {
     uint32 data_part2 = 3;
 }
  
-message UnknownAttribute {
+message UnknownPathAttribute {
     bool optional = 1;
     bool transitive = 2;
     bool partial = 3;

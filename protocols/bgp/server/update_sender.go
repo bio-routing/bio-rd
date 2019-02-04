@@ -84,6 +84,11 @@ func (u *UpdateSender) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	return nil
 }
 
+// Dump is here to fulfill an interface
+func (u *UpdateSender) Dump() []*route.Route {
+	return nil
+}
+
 // sender serializes BGP update messages
 func (u *UpdateSender) sender(aggrTime time.Duration) {
 	ticker := time.NewTicker(aggrTime)

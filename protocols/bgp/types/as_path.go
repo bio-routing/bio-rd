@@ -1,6 +1,10 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/bio-routing/bio-rd/route/api"
+)
 
 // ASPath Segment Types
 const (
@@ -21,6 +25,24 @@ type ASPath []ASPathSegment
 type ASPathSegment struct {
 	Type uint8
 	ASNs []uint32
+}
+
+// ToProto converts ASPath to proto ASPath
+func (pa ASPath) ToProto() []*api.ASPathSegment {
+	ret := make([]*api.ASPathSegment, len(pa))
+	for i := range pa {
+		ret[i] = &api.ASPathSegment{
+			ASNs: make([]uint32, len(pa[i].ASNs)),
+		}
+
+		if pa[i].Type == ASSequence {
+			ret[i].ASSequence = true
+		}
+
+		copy(ret[i].ASNs, pa[i].ASNs)
+	}
+
+	return ret
 }
 
 // String converts an ASPath to it's human redable representation

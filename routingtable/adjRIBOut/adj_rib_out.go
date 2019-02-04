@@ -36,6 +36,14 @@ func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter, addPathTX
 	return a
 }
 
+// Dump dumps the RIB
+func (a *AdjRIBOut) Dump() []*route.Route {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	return a.rt.Dump()
+}
+
 // UpdateNewClient sends current state to a new client
 func (a *AdjRIBOut) UpdateNewClient(client routingtable.RouteTableClient) error {
 	return nil
@@ -218,20 +226,6 @@ func (a *AdjRIBOut) Print() string {
 	routes := a.rt.Dump()
 	for _, r := range routes {
 		ret += fmt.Sprintf("%s\n", r.Prefix().String())
-	}
-
-	return ret
-}
-
-// Dump all routes present in this AdjRIBOut
-func (a *AdjRIBOut) Dump() string {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-
-	ret := fmt.Sprintf("DUMPING ADJ-RIB-OUT:\n")
-	routes := a.rt.Dump()
-	for _, r := range routes {
-		ret += fmt.Sprintf("%s\n", r.Print())
 	}
 
 	return ret

@@ -1,6 +1,9 @@
 package route
 
-import bnet "github.com/bio-routing/bio-rd/net"
+import (
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route/api"
+)
 
 // StaticPath represents a static path of a route
 type StaticPath struct {
@@ -38,4 +41,15 @@ func (s *StaticPath) Copy() *StaticPath {
 
 	cp := *s
 	return &cp
+}
+
+// ToProto converts StaticPath to proto static path
+func (s *StaticPath) ToProto() *api.StaticPath {
+	if s == nil {
+		return nil
+	}
+
+	return &api.StaticPath{
+		NextHop: s.NextHop.ToProto(),
+	}
 }

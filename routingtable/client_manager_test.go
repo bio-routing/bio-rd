@@ -12,6 +12,10 @@ type MockClient struct {
 	foo int
 }
 
+func (m MockClient) Dump() []*route.Route {
+	return nil
+}
+
 func (m MockClient) AddPath(net.Prefix, *route.Path) error {
 	return nil
 }

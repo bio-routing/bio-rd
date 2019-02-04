@@ -13,4 +13,5 @@ type RouteTableClient interface {
 	Register(RouteTableClient)
 	Unregister(RouteTableClient)
 	RouteCount() int64
+	Dump() []*route.Route
 }

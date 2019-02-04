@@ -18,7 +18,6 @@ message Session {
         OpenSent = 4;
         OpenConfirmed = 5;
         Established = 6;
-        Ceased = 7;
     }
     State status = 5;
     SessionStats stats = 6;
