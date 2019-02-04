@@ -17,7 +17,7 @@ const (
 
 type bgpServer struct {
 	listeners []*TCPListener
-	acceptCh  chan *net.TCPConn
+	acceptCh  chan net.Conn
 	peers     *peerManager
 	routerID  uint32
 	localASN  uint32
@@ -29,10 +29,13 @@ type BGPServer interface {
 	AddPeer(config.Peer) error
 	DumpRIBIn(peer bnet.IP, afi uint16, safi uint8) []*route.Route
 	DumpRIBOut(peer bnet.IP, afi uint16, safi uint8) []*route.Route
+	ConnectMockPeer(peer config.Peer, con net.Conn)
 }
 
 func NewBgpServer() BGPServer {
-	return &bgpServer{}
+	return &bgpServer{
+		peers: newPeerManager(),
+	}
 }
 
 func (b *bgpServer) RouterID() uint32 {
@@ -49,7 +52,7 @@ func (b *bgpServer) Start(c *config.Global) error {
 	b.localASN = c.LocalASN
 
 	if c.Listen {
-		acceptCh := make(chan *net.TCPConn, 4096)
+		acceptCh := make(chan net.Conn, 4096)
 		for _, addr := range c.LocalAddressList {
 			l, err := NewTCPListener(addr, c.Port, acceptCh)
 			if err != nil {
@@ -88,7 +91,6 @@ func (b *bgpServer) incomingConnectionWorker() {
 		c := <-b.acceptCh
 
 		peerAddr, _ := bnetutils.BIONetIPFromAddr(c.RemoteAddr().String())
-
 		peer := b.peers.get(peerAddr)
 		if peer == nil {
 			c.Close()
@@ -116,6 +118,14 @@ func (b *bgpServer) incomingConnectionWorker() {
 	}
 }
 
+func (b *bgpServer) ConnectMockPeer(peer config.Peer, con net.Conn) {
+	acceptCh := make(chan net.Conn, 4096)
+	b.acceptCh = acceptCh
+	go b.incomingConnectionWorker()
+
+	b.acceptCh <- con
+}
+
 func (b *bgpServer) AddPeer(c config.Peer) error {
 	peer, err := newPeer(c, b)
 	if err != nil {
@@ -124,7 +134,9 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 
 	peer.routerID = c.RouterID
 	b.peers.add(peer)
-	peer.Start()
+	if !c.Passive {
+		peer.Start()
+	}
 
 	return nil
 }

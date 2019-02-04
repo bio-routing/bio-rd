@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net"
-	"time"
 )
 
 type activeState struct {
@@ -63,6 +62,5 @@ func (s *activeState) connectionSuccess(con net.Conn) (state, string) {
 		s.fsm.connectRetryCounter++
 		return newIdleState(s.fsm), fmt.Sprintf("Sending OPEN message failed: %v", err)
 	}
-	s.fsm.holdTimer = time.NewTimer(time.Minute * 4)
 	return newOpenSentState(s.fsm), "Sent OPEN message"
 }
