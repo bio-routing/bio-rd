@@ -3,7 +3,6 @@
 package main
 
 import (
-	"log"
 	"net"
 	"time"
 
@@ -15,7 +14,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	api "github.com/bio-routing/bio-rd/protocols/bgp/api"
 )
@@ -39,7 +38,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		},
 	})
 	if err != nil {
-		logrus.Fatalf("Unable to start BGP server: %v", err)
+		log.Fatalf("Unable to start BGP server: %v", err)
 	}
 
 	b.AddPeer(config.Peer{
