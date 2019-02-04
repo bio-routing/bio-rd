@@ -57,6 +57,7 @@ func (a *LocRIB) Dump() []*route.Route {
 	defer a.mu.RUnlock()
 
 	return a.rt.Dump()
+}
 
 // SetCountTarget sets a target and a channel to send a message to when a certain route count is reached
 func (a *LocRIB) SetCountTarget(count uint64, ch chan struct{}) {
