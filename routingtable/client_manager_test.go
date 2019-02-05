@@ -12,6 +12,10 @@ type MockClient struct {
 	foo int
 }
 
+func (m MockClient) ClientCount() uint64 {
+	return 0
+}
+
 func (m MockClient) Dump() []*route.Route {
 	return nil
 }
