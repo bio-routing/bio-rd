@@ -25,6 +25,7 @@ type UpdateSender struct {
 	toSendMu      sync.Mutex
 	toSend        map[string]*pathPfxs
 	destroyCh     chan struct{}
+	wg            sync.WaitGroup
 }
 
 type pathPfxs struct {
@@ -32,18 +33,16 @@ type pathPfxs struct {
 	pfxs []bnet.Prefix
 }
 
-func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
-	f := fsm.addressFamily(afi, safi)
-
+func newUpdateSender(f *fsmAddressFamily) *UpdateSender {
 	u := &UpdateSender{
-		fsm:           fsm,
+		fsm:           f.fsm,
 		addressFamily: f,
-		iBGP:          fsm.peer.localASN == fsm.peer.peerASN,
-		rrClient:      fsm.peer.routeReflectorClient,
+		iBGP:          f.fsm.peer.localASN == f.fsm.peer.peerASN,
+		rrClient:      f.fsm.peer.routeReflectorClient,
 		destroyCh:     make(chan struct{}),
 		toSend:        make(map[string]*pathPfxs),
 		options: &packet.EncodeOptions{
-			Use32BitASN: fsm.supports4OctetASN,
+			Use32BitASN: f.fsm.supports4OctetASN,
 			UseAddPath:  !f.addPathTX.BestOnly,
 		},
 	}
@@ -52,8 +51,14 @@ func newUpdateSender(fsm *FSM, afi uint16, safi uint8) *UpdateSender {
 	return u
 }
 
+// ClientCount is here to satisfy an interface
+func (u *UpdateSender) ClientCount() uint64 {
+	return 0
+}
+
 // Start starts the update sender
 func (u *UpdateSender) Start(aggrTime time.Duration) {
+	u.wg.Add(1)
 	go u.sender(aggrTime)
 }
 
@@ -99,6 +104,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 	for {
 		select {
 		case <-u.destroyCh:
+			u.wg.Done()
 			return
 		case <-ticker.C:
 		}

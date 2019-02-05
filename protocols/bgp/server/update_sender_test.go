@@ -902,7 +902,7 @@ func TestSender(t *testing.T) {
 		fsmA.state = newEstablishedState(fsmA)
 		fsmA.con = btest.NewMockConn()
 
-		updateSender := newUpdateSender(fsmA, test.afi, packet.UnicastSAFI)
+		updateSender := newUpdateSender(fsmA.addressFamily(test.afi, packet.UnicastSAFI))
 
 		for _, pathPfx := range test.paths {
 			for _, pfx := range pathPfx.pfxs {

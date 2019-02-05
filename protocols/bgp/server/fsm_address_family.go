@@ -66,12 +66,13 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 
 	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, !f.addPathTX.BestOnly)
 
-	f.updateSender = newUpdateSender(f.fsm, f.afi, f.safi)
+	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)
 
 	f.adjRIBOut.Register(f.updateSender)
 
 	f.rib.RegisterWithOptions(f.adjRIBOut, f.addPathTX)
+	f.initialized = true
 }
 
 func (f *fsmAddressFamily) bmpInit() {

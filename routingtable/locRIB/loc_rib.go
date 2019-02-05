@@ -38,6 +38,11 @@ func New(name string) *LocRIB {
 	return a
 }
 
+// ClientCount gets the number of registered clients
+func (a *LocRIB) ClientCount() uint64 {
+	return a.clientManager.ClientCount()
+}
+
 // GetContributingASNs returns a pointer to the list of contributing ASNs
 func (a *LocRIB) GetContributingASNs() *routingtable.ContributingASNs {
 	return a.contributingASNs

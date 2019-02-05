@@ -22,6 +22,10 @@ func NewRTMockClient() *RTMockClient {
 	}
 }
 
+func (m *RTMockClient) ClientCount() uint64 {
+	return 0
+}
+
 func (m *RTMockClient) Removed() []*RemovePathParams {
 	return m.removed
 }

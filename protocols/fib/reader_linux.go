@@ -42,6 +42,11 @@ func NewNetlinkReader(options *config.Netlink) *NetlinkReader {
 	return nr
 }
 
+// ClientCount is here to satisfy an interface
+func (nr *NetlinkReader) ClientCount() uint64 {
+	return 0
+}
+
 // Dump is here to fulfill an interface
 func (nr *NetlinkReader) Dump() []*route.Route {
 	return nil
