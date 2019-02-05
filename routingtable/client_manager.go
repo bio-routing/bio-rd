@@ -39,6 +39,14 @@ func NewClientManager(master RouteTableClient) *ClientManager {
 	}
 }
 
+// ClientCount gets the number of registred clients
+func (c *ClientManager) ClientCount() uint64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return uint64(len(c.clients))
+}
+
 // GetOptions gets the options for a registered client
 func (c *ClientManager) GetOptions(client RouteTableClient) ClientOptions {
 	c.mu.RLock()

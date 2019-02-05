@@ -36,6 +36,11 @@ func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter, addPathTX
 	return a
 }
 
+// ClientCount gets the number of registered clients
+func (a *AdjRIBOut) ClientCount() uint64 {
+	return a.clientManager.ClientCount()
+}
+
 // Dump dumps the RIB
 func (a *AdjRIBOut) Dump() []*route.Route {
 	a.mu.RLock()

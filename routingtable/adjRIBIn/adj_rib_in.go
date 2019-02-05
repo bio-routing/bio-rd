@@ -36,6 +36,11 @@ func New(exportFilter *filter.Filter, contributingASNs *routingtable.Contributin
 	return a
 }
 
+// ClientCount gets the number of registered clients
+func (a *AdjRIBIn) ClientCount() uint64 {
+	return a.clientManager.ClientCount()
+}
+
 // Dump dumps the RIB
 func (a *AdjRIBIn) Dump() []*route.Route {
 	a.mu.Lock()
