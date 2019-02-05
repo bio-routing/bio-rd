@@ -72,6 +72,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	f.adjRIBOut.Register(f.updateSender)
 
 	f.rib.RegisterWithOptions(f.adjRIBOut, f.addPathTX)
+	f.initialized = true
 }
 
 func (f *fsmAddressFamily) bmpInit() {
