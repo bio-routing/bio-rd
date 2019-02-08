@@ -53,3 +53,21 @@ func TestName(t *testing.T) {
 	v := newUntrackedVRF("foo")
 	assert.Equal(t, "foo", v.Name())
 }
+
+func TestUnregister(t *testing.T) {
+	vrfName := "registeredVRF"
+	v, err := New(vrfName)
+	assert.Nil(t, err, "error must be nil on first invokation")
+
+	_, err = New(vrfName)
+	assert.NotNil(t, err, "error must not be nil on second invokation")
+
+	_, found := globalRegistry.vrfs[vrfName]
+	assert.True(t, found, "vrf must be in global registry")
+
+	v.Unregister()
+
+	_, found = globalRegistry.vrfs[vrfName]
+	assert.False(t, found, "vrf must not be in global registry")
+
+}
