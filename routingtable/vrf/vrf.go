@@ -26,7 +26,7 @@ type VRF struct {
 	ribNames map[string]*locRIB.LocRIB
 }
 
-// New creates a new VRF
+// New creates a new VRF. The VRF is registered automatically to the global VRF registry.
 func New(name string) (*VRF, error) {
 	v := newUntrackedVRF(name)
 	v.CreateIPv4UnicastLocRIB("inet.0")
@@ -87,6 +87,11 @@ func (v *VRF) IPv6UnicastRIB() *locRIB.LocRIB {
 
 func (v *VRF) Name() string {
 	return v.name
+}
+
+// Unregister removes this VRF from the global registry.
+func (v *VRF) Unregister() {
+	globalRegistry.unregisterVRF(v)
 }
 
 func (v *VRF) ribForAddressFamily(family addressFamily) *locRIB.LocRIB {
