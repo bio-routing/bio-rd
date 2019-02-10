@@ -8,6 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
@@ -17,6 +18,7 @@ type peer struct {
 	server    *bgpServer
 	addr      bnet.IP
 	localAddr bnet.IP
+	passive   bool
 	peerASN   uint32
 	localASN  uint32
 
@@ -46,6 +48,34 @@ type peerAddressFamily struct {
 
 	addPathSend    routingtable.ClientOptions
 	addPathReceive bool
+}
+
+func (p *peer) dumpRIBIn(afi uint16, safi uint8) []*route.Route {
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.dumpRIBIn()
+}
+
+func (p *peer) dumpRIBOut(afi uint16, safi uint8) []*route.Route {
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.dumpRIBOut()
 }
 
 func (p *peer) addressFamily(afi uint16, safi uint8) *peerAddressFamily {
@@ -123,6 +153,7 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	p := &peer{
 		server:               server,
 		addr:                 c.PeerAddress,
+		passive:              c.Passive,
 		peerASN:              c.PeerAS,
 		localASN:             c.LocalAS,
 		fsms:                 make([]*FSM, 0),
@@ -185,7 +216,9 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 		Value: caps,
 	})
 
-	p.fsms = append(p.fsms, NewActiveFSM(p))
+	if !p.passive {
+		p.fsms = append(p.fsms, NewActiveFSM(p))
+	}
 
 	return p, nil
 }

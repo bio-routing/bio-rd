@@ -897,13 +897,12 @@ func TestSender(t *testing.T) {
 			fsmA.ipv4Unicast.addPathTX = test.addPath
 		}
 
-		fsmA.holdTimer = time.NewTimer(time.Second * 90)
 		fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
 		fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
 		fsmA.state = newEstablishedState(fsmA)
 		fsmA.con = btest.NewMockConn()
 
-		updateSender := newUpdateSender(fsmA, test.afi, packet.UnicastSAFI)
+		updateSender := newUpdateSender(fsmA.addressFamily(test.afi, packet.UnicastSAFI))
 
 		for _, pathPfx := range test.paths {
 			for _, pfx := range pathPfx.pfxs {

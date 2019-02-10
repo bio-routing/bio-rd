@@ -6,6 +6,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +19,7 @@ const (
 
 type bgpServer struct {
 	listeners []*TCPListener
-	acceptCh  chan *net.TCPConn
+	acceptCh  chan net.Conn
 	peers     *peerManager
 	routerID  uint32
 	localASN  uint32
@@ -29,12 +31,15 @@ type BGPServer interface {
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
 	Metrics() (*metrics.BGPMetrics, error)
+	DumpRIBIn(peer bnet.IP, afi uint16, safi uint8) []*route.Route
+	DumpRIBOut(peer bnet.IP, afi uint16, safi uint8) []*route.Route
+	ConnectMockPeer(peer config.Peer, con net.Conn)
 }
 
 // NewBgpServer creates a new instance of bgpServer
 func NewBgpServer() BGPServer {
 	server := &bgpServer{
-		peers: &peerManager{},
+		peers: newPeerManager(),
 	}
 
 	server.metrics = &metricsService{server}
@@ -55,7 +60,7 @@ func (b *bgpServer) Start(c *config.Global) error {
 	b.localASN = c.LocalASN
 
 	if c.Listen {
-		acceptCh := make(chan *net.TCPConn, 4096)
+		acceptCh := make(chan net.Conn, 4096)
 		for _, addr := range c.LocalAddressList {
 			l, err := NewTCPListener(addr, c.Port, acceptCh)
 			if err != nil {
@@ -71,12 +76,29 @@ func (b *bgpServer) Start(c *config.Global) error {
 	return nil
 }
 
+func (b *bgpServer) DumpRIBIn(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
+	p := b.peers.get(peerIP)
+	if p == nil {
+		return nil
+	}
+
+	return p.dumpRIBIn(afi, safi)
+}
+
+func (b *bgpServer) DumpRIBOut(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
+	p := b.peers.get(peerIP)
+	if p == nil {
+		return nil
+	}
+
+	return p.dumpRIBOut(afi, safi)
+}
+
 func (b *bgpServer) incomingConnectionWorker() {
 	for {
 		c := <-b.acceptCh
 
 		peerAddr, _ := bnetutils.BIONetIPFromAddr(c.RemoteAddr().String())
-
 		peer := b.peers.get(peerAddr)
 		if peer == nil {
 			c.Close()
@@ -104,6 +126,14 @@ func (b *bgpServer) incomingConnectionWorker() {
 	}
 }
 
+func (b *bgpServer) ConnectMockPeer(peer config.Peer, con net.Conn) {
+	acceptCh := make(chan net.Conn, 4096)
+	b.acceptCh = acceptCh
+	go b.incomingConnectionWorker()
+
+	b.acceptCh <- con
+}
+
 func (b *bgpServer) AddPeer(c config.Peer) error {
 	peer, err := newPeer(c, b)
 	if err != nil {
@@ -112,7 +142,9 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 
 	peer.routerID = c.RouterID
 	b.peers.add(peer)
-	peer.Start()
+	if !c.Passive {
+		peer.Start()
+	}
 
 	return nil
 }

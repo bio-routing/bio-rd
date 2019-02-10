@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/bio-routing/bio-rd/route/api"
 )
 
 // LargeCommunity represents a large community (RFC8195)
@@ -11,6 +13,15 @@ type LargeCommunity struct {
 	GlobalAdministrator uint32
 	DataPart1           uint32
 	DataPart2           uint32
+}
+
+// ToProto converts LargeCommunity to proto LargeCommunity
+func (c *LargeCommunity) ToProto() *api.LargeCommunity {
+	return &api.LargeCommunity{
+		GlobalAdministrator: c.GlobalAdministrator,
+		DataPart1:           c.DataPart1,
+		DataPart2:           c.DataPart2,
+	}
 }
 
 // String transitions a large community to it's human readable representation

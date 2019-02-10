@@ -38,12 +38,20 @@ func (s openSentState) run() (state, string) {
 			default:
 				continue
 			}
-		case <-s.fsm.holdTimer.C:
-			return s.holdTimerExpired()
+		case <-time.After(time.Second):
+			return s.checkHoldtimer()
 		case recvMsg := <-s.fsm.msgRecvCh:
 			return s.msgReceived(recvMsg, opt)
 		}
 	}
+}
+
+func (s *openSentState) checkHoldtimer() (state, string) {
+	if time.Since(s.fsm.lastUpdateOrKeepalive) > s.fsm.holdTime {
+		return s.holdTimerExpired()
+	}
+
+	return newOpenSentState(s.fsm), s.fsm.reason
 }
 
 func (s *openSentState) manualStop() (state, string) {
@@ -130,9 +138,7 @@ func (s *openSentState) openMsgReceived(openMsg *packet.BGPOpen) (state, string)
 func (s *openSentState) handleOpenMessage(openMsg *packet.BGPOpen) (state, string) {
 	s.fsm.holdTime = time.Duration(math.Min(float64(s.fsm.peer.holdTime), float64(time.Duration(openMsg.HoldTime)*time.Second)))
 	if s.fsm.holdTime != 0 {
-		if !s.fsm.holdTimer.Reset(s.fsm.holdTime) {
-			<-s.fsm.holdTimer.C
-		}
+		s.fsm.updateLastUpdateOrKeepalive()
 		s.fsm.keepaliveTime = s.fsm.holdTime / 3
 		s.fsm.keepaliveTimer = time.NewTimer(s.fsm.keepaliveTime)
 	}

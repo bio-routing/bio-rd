@@ -22,8 +22,17 @@ func NewRTMockClient() *RTMockClient {
 	}
 }
 
+func (m *RTMockClient) ClientCount() uint64 {
+	return 0
+}
+
 func (m *RTMockClient) Removed() []*RemovePathParams {
 	return m.removed
+}
+
+// Dump is here to fulfill an interface
+func (m *RTMockClient) Dump() []*route.Route {
+	return nil
 }
 
 func (m *RTMockClient) AddPath(pfx net.Prefix, p *route.Path) error {

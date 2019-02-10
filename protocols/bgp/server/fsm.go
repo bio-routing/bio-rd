@@ -46,8 +46,8 @@ type FSM struct {
 	connectRetryTimer   *time.Timer
 	connectRetryCounter int
 
-	holdTime  time.Duration
-	holdTimer *time.Timer
+	holdTime              time.Duration
+	lastUpdateOrKeepalive time.Time
 
 	keepaliveTime  time.Duration
 	keepaliveTimer *time.Timer
@@ -114,6 +114,10 @@ func newFSM(peer *peer) *FSM {
 	}
 
 	return f
+}
+
+func (fsm *FSM) updateLastUpdateOrKeepalive() {
+	fsm.lastUpdateOrKeepalive = time.Now()
 }
 
 func (fsm *FSM) addressFamily(afi uint16, safi uint8) *fsmAddressFamily {
