@@ -31,8 +31,14 @@ type BGPServer interface {
 	Metrics() (*metrics.BGPMetrics, error)
 }
 
+// NewBgpServer creates a new instance of bgpServer
 func NewBgpServer() BGPServer {
-	return &bgpServer{}
+	server := &bgpServer{
+		peers: &peerManager{},
+	}
+
+	server.metrics = &metricsService{server}
+	return server
 }
 
 func (b *bgpServer) RouterID() uint32 {
@@ -47,8 +53,6 @@ func (b *bgpServer) Start(c *config.Global) error {
 	log.Infof("ROUTER ID: %d\n", c.RouterID)
 	b.routerID = c.RouterID
 	b.localASN = c.LocalASN
-
-	b.metrics = &metricsService{b}
 
 	if c.Listen {
 		acceptCh := make(chan *net.TCPConn, 4096)
@@ -113,10 +117,10 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 	return nil
 }
 
-func (b *bgpServer) Metrics() (*BGPMetrics, error) {
+func (b *bgpServer) Metrics() (*metrics.BGPMetrics, error) {
 	if b.metrics == nil {
 		return nil, fmt.Errorf("Server not started yet")
 	}
 
-	return b.metrics.metrics()
+	return b.metrics.metrics(), nil
 }

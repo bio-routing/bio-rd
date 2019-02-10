@@ -56,7 +56,7 @@ func (b *metricsService) metricsForFamily(family *fsmAddressFamily) *metrics.BGP
 	return &metrics.BGPAddressFamilyMetrics{
 		AFI:            family.afi,
 		SAFI:           family.safi,
-		RoutesReceived: family.adjRIBIn.RouteCount(),
-		RoutesSent:     family.adjRIBOut.RouteCount(),
+		RoutesReceived: uint64(family.adjRIBIn.RouteCount()),
+		RoutesSent:     uint64(family.adjRIBOut.RouteCount()),
 	}
 }

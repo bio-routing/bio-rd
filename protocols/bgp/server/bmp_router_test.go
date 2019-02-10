@@ -337,6 +337,7 @@ func TestProcessPeerUpNotification(t *testing.T) {
 								adjRIBIn:     adjRIBIn.New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, 169090600, 0, false),
 								importFilter: filter.NewAcceptAllFilter(),
 							},
+							counters: &fsmConters{},
 						},
 					},
 				},

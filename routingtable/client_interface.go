@@ -12,5 +12,5 @@ type RouteTableClient interface {
 	UpdateNewClient(RouteTableClient) error
 	Register(RouteTableClient)
 	Unregister(RouteTableClient)
-	RouteCount() uint64
+	RouteCount() int64
 }
