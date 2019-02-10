@@ -10,7 +10,7 @@ type metricsService struct {
 
 func (b *metricsService) metrics() *metrics.BGPMetrics {
 	return &metrics.BGPMetrics{
-		Neighbors: b.peerMetrics(),
+		Peers: b.peerMetrics(),
 	}
 }
 
