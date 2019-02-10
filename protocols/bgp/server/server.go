@@ -5,8 +5,8 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/config"
-	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	"github.com/bio-routing/bio-rd/route"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
@@ -38,6 +38,10 @@ type BGPServer interface {
 
 // NewBgpServer creates a new instance of bgpServer
 func NewBgpServer() BGPServer {
+	return newBgpServer()
+}
+
+func newBgpServer() *bgpServer {
 	server := &bgpServer{
 		peers: newPeerManager(),
 	}

@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"time"
+	//"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
@@ -11,7 +11,7 @@ type BGPPeerMetrics struct {
 	// IP is the remote IP of the peer
 	IP bnet.IP
 	// Since is the duration the session is established
-	Since time.Duration
+	//Since time.Duration
 	// ASN is the ASN of the peer
 	ASN uint32
 	// LocalASN is our local ASN
