@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"sync/atomic"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -97,6 +98,8 @@ func (s *establishedState) uninit() {
 	if s.fsm.ipv6Unicast != nil {
 		s.fsm.ipv6Unicast.dispose()
 	}
+
+	s.fsm.counters.reset()
 }
 
 func (s *establishedState) manualStop() (state, string) {
@@ -184,6 +187,8 @@ func (s *establishedState) notification() (state, string) {
 }
 
 func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
+	atomic.AddUint64(&s.fsm.counters.updatesReceived, 1)
+
 	if s.fsm.holdTime != 0 {
 		s.fsm.holdTimer.Reset(s.fsm.holdTime)
 	}

@@ -6,9 +6,12 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
-type BGPNeighborMetrics struct {
+type BGPPeerMetrics struct {
 	IP              bnet.IP
 	Since           time.Duration
 	ASN             uint32
-	AddressFamilies []*AddressFamilyMetrics
+	LocalASN        uint32
+	UpdatesReceived uint64
+	UpdatesSent     uint64
+	AddressFamilies []*BGPAddressFamilyMetrics
 }

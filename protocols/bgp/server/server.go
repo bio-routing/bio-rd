@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -20,14 +21,14 @@ type bgpServer struct {
 	peers     *peerManager
 	routerID  uint32
 	localASN  uint32
-	metrics   *metrics
+	metrics   *metricsService
 }
 
 type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
-	Metrics() (*BGPMetrics, error)
+	Metrics() (*metrics.BGPMetrics, error)
 }
 
 func NewBgpServer() BGPServer {
@@ -39,8 +40,6 @@ func (b *bgpServer) RouterID() uint32 {
 }
 
 func (b *bgpServer) Start(c *config.Global) error {
-	b.metrics = &metrics{b}
-
 	if err := c.SetDefaultGlobalConfigValues(); err != nil {
 		return errors.Wrap(err, "Failed to load defaults")
 	}
@@ -48,6 +47,8 @@ func (b *bgpServer) Start(c *config.Global) error {
 	log.Infof("ROUTER ID: %d\n", c.RouterID)
 	b.routerID = c.RouterID
 	b.localASN = c.LocalASN
+
+	b.metrics = &metricsService{b}
 
 	if c.Listen {
 		acceptCh := make(chan *net.TCPConn, 4096)

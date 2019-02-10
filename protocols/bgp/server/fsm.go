@@ -70,6 +70,8 @@ type FSM struct {
 	reason     string
 	active     bool
 
+	counters *fsmConters
+
 	connectionCancelFunc context.CancelFunc
 }
 
@@ -100,6 +102,7 @@ func newFSM(peer *peer) *FSM {
 		msgRecvCh:        make(chan []byte),
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
+		counters:         &fsmConters{},
 	}
 
 	if peer.ipv4 != nil {
