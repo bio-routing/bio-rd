@@ -35,11 +35,11 @@ func (b *metricsService) metricsForPeer(peer *peer) *metrics.BGPPeerMetrics {
 		LocalASN:        peer.localASN,
 		IP:              peer.addr,
 		AddressFamilies: make([]*metrics.BGPAddressFamilyMetrics, 0),
-		UpdatesReceived: 0,
-		UpdatesSent:     0,
 	}
 
 	fsm := peer.fsms[0]
+	m.UpdatesReceived = fsm.counters.updatesReceived
+	m.UpdatesSent = fsm.counters.updatesSent
 
 	if peer.ipv4 != nil {
 		m.AddressFamilies = append(m.AddressFamilies, b.metricsForFamily(fsm.ipv4Unicast))
