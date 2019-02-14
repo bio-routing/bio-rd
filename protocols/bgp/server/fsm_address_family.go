@@ -45,6 +45,9 @@ func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm 
 		rib:          family.rib,
 		importFilter: family.importFilter,
 		exportFilter: family.exportFilter,
+		addPathTX: routingtable.ClientOptions{
+			BestOnly: true,
+		},
 	}
 }
 
