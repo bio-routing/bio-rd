@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/bio-routing/bio-rd/routingtable"
 	"net"
 	"testing"
 
@@ -208,6 +209,85 @@ func TestProcessMultiProtocolCapability(t *testing.T) {
 			if fsm.ipv6Unicast != nil {
 				assert.Equal(t, test.expectIPv6MultiProtocol, fsm.ipv6Unicast.multiProtocol)
 			}
+		})
+	}
+}
+
+func TestProcessAddPathCapabilityTX(t *testing.T) {
+	tests := []struct {
+		name     string
+		peer     *peer
+		caps     []packet.AddPathCapability
+		expected routingtable.ClientOptions
+	}{
+		{
+			name: "Add-Path enabled and cap received",
+			peer: &peer{
+				ipv4: &peerAddressFamily{
+					addPathSend: routingtable.ClientOptions{MaxPaths: 3},
+				},
+			},
+			caps: []packet.AddPathCapability{
+				{
+					AFI:         packet.IPv4AFI,
+					SAFI:        packet.UnicastSAFI,
+					SendReceive: packet.AddPathReceive,
+				},
+			},
+			expected: routingtable.ClientOptions{MaxPaths: 3},
+		},
+		{
+			name: "Add-Path enabled and cap not received",
+			peer: &peer{
+				ipv4: &peerAddressFamily{
+					addPathSend: routingtable.ClientOptions{MaxPaths: 3},
+				},
+			},
+			caps:     []packet.AddPathCapability{},
+			expected: routingtable.ClientOptions{BestOnly: true},
+		},
+		{
+			name: "Add-Path disabled and cap received",
+			peer: &peer{
+				ipv4: &peerAddressFamily{
+					addPathSend: routingtable.ClientOptions{BestOnly: true},
+				},
+			},
+			caps: []packet.AddPathCapability{
+				{
+					AFI:         packet.IPv4AFI,
+					SAFI:        packet.UnicastSAFI,
+					SendReceive: packet.AddPathReceive,
+				},
+			},
+			expected: routingtable.ClientOptions{BestOnly: true},
+		},
+		{
+			name: "Add-Path disabled and cap not received",
+			peer: &peer{
+				ipv4: &peerAddressFamily{
+					addPathSend: routingtable.ClientOptions{BestOnly: true},
+				},
+			},
+			caps:     []packet.AddPathCapability{},
+			expected: routingtable.ClientOptions{BestOnly: true},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fsm := newFSM(test.peer)
+			fsm.con = &btesting.MockConn{}
+
+			s := &openSentState{
+				fsm: fsm,
+			}
+
+			for _, cap := range test.caps {
+				s.processAddPathCapability(cap)
+			}
+
+			assert.Equal(t, test.expected, fsm.ipv4Unicast.addPathTX)
 		})
 	}
 }
