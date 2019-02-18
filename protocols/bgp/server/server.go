@@ -3,9 +3,12 @@ package server
 import (
 	"net"
 
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
+
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
+
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/route"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -27,8 +30,8 @@ type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
-	DumpRIBIn(peer bnet.IP, afi uint16, safi uint8) []*route.Route
-	DumpRIBOut(peer bnet.IP, afi uint16, safi uint8) []*route.Route
+	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
+	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
 	ConnectMockPeer(peer config.Peer, con net.Conn)
 }
 
@@ -68,22 +71,42 @@ func (b *bgpServer) Start(c *config.Global) error {
 	return nil
 }
 
-func (b *bgpServer) DumpRIBIn(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
+func (b *bgpServer) GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return nil
 	}
 
-	return p.dumpRIBIn(afi, safi)
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.adjRIBIn.(*adjRIBIn.AdjRIBIn)
 }
 
-func (b *bgpServer) DumpRIBOut(peerIP bnet.IP, afi uint16, safi uint8) []*route.Route {
+func (b *bgpServer) GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return nil
 	}
 
-	return p.dumpRIBOut(afi, safi)
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.adjRIBOut.(*adjRIBOut.AdjRIBOut)
 }
 
 func (b *bgpServer) incomingConnectionWorker() {
