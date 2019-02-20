@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net"
-	"time"
 )
 
 type connectState struct {
@@ -44,7 +43,6 @@ func (s *connectState) connectionSuccess(c net.Conn) (state, string) {
 	if err != nil {
 		return newIdleState(s.fsm), fmt.Sprintf("Unable to send open: %v", err)
 	}
-	s.fsm.holdTimer = time.NewTimer(time.Minute * 4)
 	return newOpenSentState(s.fsm), "TCP connection succeeded"
 }
 

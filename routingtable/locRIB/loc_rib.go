@@ -8,25 +8,39 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // LocRIB represents a routing information base
 type LocRIB struct {
+	name             string
 	clientManager    *routingtable.ClientManager
 	rt               *routingtable.RoutingTable
 	mu               sync.RWMutex
 	contributingASNs *routingtable.ContributingASNs
+	countTarget      *countTarget
+}
+
+type countTarget struct {
+	target uint64
+	ch     chan struct{}
 }
 
 // New creates a new routing information base
-func New() *LocRIB {
+func New(name string) *LocRIB {
 	a := &LocRIB{
+		name:             name,
 		rt:               routingtable.NewRoutingTable(),
 		contributingASNs: routingtable.NewContributingASNs(),
 	}
 	a.clientManager = routingtable.NewClientManager(a)
+
 	return a
+}
+
+// ClientCount gets the number of registered clients
+func (a *LocRIB) ClientCount() uint64 {
+	return a.clientManager.ClientCount()
 }
 
 // GetContributingASNs returns a pointer to the list of contributing ASNs
@@ -40,6 +54,22 @@ func (a *LocRIB) Count() uint64 {
 	defer a.mu.RUnlock()
 
 	return uint64(len(a.rt.Dump()))
+}
+
+// Dump dumps the RIB
+func (a *LocRIB) Dump() []*route.Route {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	return a.rt.Dump()
+}
+
+// SetCountTarget sets a target and a channel to send a message to when a certain route count is reached
+func (a *LocRIB) SetCountTarget(count uint64, ch chan struct{}) {
+	a.countTarget = &countTarget{
+		target: count,
+		ch:     ch,
+	}
 }
 
 // UpdateNewClient sends current state to a new client
@@ -64,7 +94,7 @@ func (a *LocRIB) RouteCount() int64 {
 func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	logrus.WithFields(map[string]interface{}{
+	log.WithFields(map[string]interface{}{
 		"Prefix": pfx,
 		"Route":  p,
 	}).Debug("AddPath to locRIB")
@@ -86,6 +116,11 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	newRoute := r.Copy()
 
 	a.propagateChanges(oldRoute, newRoute)
+	if a.countTarget != nil {
+		if a.RouteCount() == int64(a.countTarget.target) {
+			a.countTarget.ch <- struct{}{}
+		}
+	}
 	return nil
 }
 
@@ -94,7 +129,7 @@ func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	logrus.WithFields(map[string]interface{}{
+	log.WithFields(map[string]interface{}{
 		"Prefix": pfx,
 		"Route":  p,
 	}).Debug("Remove from locRIB")

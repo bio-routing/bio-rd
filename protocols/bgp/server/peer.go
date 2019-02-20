@@ -1,12 +1,14 @@
 package server
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
@@ -16,6 +18,7 @@ type peer struct {
 	server    *bgpServer
 	addr      bnet.IP
 	localAddr bnet.IP
+	passive   bool
 	peerASN   uint32
 	localASN  uint32
 
@@ -45,6 +48,34 @@ type peerAddressFamily struct {
 
 	addPathSend    routingtable.ClientOptions
 	addPathReceive bool
+}
+
+func (p *peer) dumpRIBIn(afi uint16, safi uint8) []*route.Route {
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.dumpRIBIn()
+}
+
+func (p *peer) dumpRIBOut(afi uint16, safi uint8) []*route.Route {
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.dumpRIBOut()
 }
 
 func (p *peer) addressFamily(afi uint16, safi uint8) *peerAddressFamily {
@@ -122,6 +153,7 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	p := &peer{
 		server:               server,
 		addr:                 c.PeerAddress,
+		passive:              c.Passive,
 		peerASN:              c.PeerAS,
 		localASN:             c.LocalAS,
 		fsms:                 make([]*FSM, 0),
@@ -136,11 +168,15 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv4 != nil {
 		p.ipv4 = &peerAddressFamily{
-			rib:            c.IPv4.RIB,
+			rib:            c.VRF.IPv4UnicastRIB(),
 			importFilter:   filterOrDefault(c.IPv4.ImportFilter),
 			exportFilter:   filterOrDefault(c.IPv4.ExportFilter),
 			addPathReceive: c.IPv4.AddPathRecv,
 			addPathSend:    c.IPv4.AddPathSend,
+		}
+
+		if p.ipv4.rib == nil {
+			return nil, fmt.Errorf("No RIB for IPv4 unicast configured")
 		}
 	}
 
@@ -162,13 +198,17 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv6 != nil {
 		p.ipv6 = &peerAddressFamily{
-			rib:            c.IPv6.RIB,
+			rib:            c.VRF.IPv6UnicastRIB(),
 			importFilter:   filterOrDefault(c.IPv6.ImportFilter),
 			exportFilter:   filterOrDefault(c.IPv6.ExportFilter),
 			addPathReceive: c.IPv6.AddPathRecv,
 			addPathSend:    c.IPv6.AddPathSend,
 		}
 		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
+
+		if p.ipv6.rib == nil {
+			return nil, fmt.Errorf("No RIB for IPv6 unicast configured")
+		}
 	}
 
 	p.optOpenParams = append(p.optOpenParams, packet.OptParam{
@@ -176,7 +216,9 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 		Value: caps,
 	})
 
-	p.fsms = append(p.fsms, NewActiveFSM(p))
+	if !p.passive {
+		p.fsms = append(p.fsms, NewActiveFSM(p))
+	}
 
 	return p, nil
 }

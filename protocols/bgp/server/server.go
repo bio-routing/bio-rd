@@ -2,10 +2,14 @@ package server
 
 import (
 	"net"
-	"strings"
-	"sync"
+
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
+
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
+	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,8 +20,8 @@ const (
 
 type bgpServer struct {
 	listeners []*TCPListener
-	acceptCh  chan *net.TCPConn
-	peers     sync.Map
+	acceptCh  chan net.Conn
+	peers     *peerManager
 	routerID  uint32
 	localASN  uint32
 }
@@ -26,10 +30,15 @@ type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
+	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
+	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
+	ConnectMockPeer(peer config.Peer, con net.Conn)
 }
 
 func NewBgpServer() BGPServer {
-	return &bgpServer{}
+	return &bgpServer{
+		peers: newPeerManager(),
+	}
 }
 
 func (b *bgpServer) RouterID() uint32 {
@@ -46,7 +55,7 @@ func (b *bgpServer) Start(c *config.Global) error {
 	b.localASN = c.LocalASN
 
 	if c.Listen {
-		acceptCh := make(chan *net.TCPConn, 4096)
+		acceptCh := make(chan net.Conn, 4096)
 		for _, addr := range c.LocalAddressList {
 			l, err := NewTCPListener(addr, c.Port, acceptCh)
 			if err != nil {
@@ -62,20 +71,57 @@ func (b *bgpServer) Start(c *config.Global) error {
 	return nil
 }
 
+func (b *bgpServer) GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn {
+	p := b.peers.get(peerIP)
+	if p == nil {
+		return nil
+	}
+
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.adjRIBIn.(*adjRIBIn.AdjRIBIn)
+}
+
+func (b *bgpServer) GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut {
+	p := b.peers.get(peerIP)
+	if p == nil {
+		return nil
+	}
+
+	if len(p.fsms) != 1 {
+		return nil
+	}
+
+	fsm := p.fsms[0]
+	f := fsm.addressFamily(afi, safi)
+	if f == nil {
+		return nil
+	}
+
+	return f.adjRIBOut.(*adjRIBOut.AdjRIBOut)
+}
+
 func (b *bgpServer) incomingConnectionWorker() {
 	for {
 		c := <-b.acceptCh
 
-		peerAddr := strings.Split(c.RemoteAddr().String(), ":")[0]
-		peerInterface, ok := b.peers.Load(peerAddr)
-		if !ok {
+		peerAddr, _ := bnetutils.BIONetIPFromAddr(c.RemoteAddr().String())
+		peer := b.peers.get(peerAddr)
+		if peer == nil {
 			c.Close()
 			log.WithFields(log.Fields{
 				"source": c.RemoteAddr(),
 			}).Warning("TCP connection from unknown source")
 			continue
 		}
-		peer := peerInterface.(*peer)
 
 		log.WithFields(log.Fields{
 			"source": c.RemoteAddr(),
@@ -95,6 +141,14 @@ func (b *bgpServer) incomingConnectionWorker() {
 	}
 }
 
+func (b *bgpServer) ConnectMockPeer(peer config.Peer, con net.Conn) {
+	acceptCh := make(chan net.Conn, 4096)
+	b.acceptCh = acceptCh
+	go b.incomingConnectionWorker()
+
+	b.acceptCh <- con
+}
+
 func (b *bgpServer) AddPeer(c config.Peer) error {
 	peer, err := newPeer(c, b)
 	if err != nil {
@@ -102,9 +156,10 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 	}
 
 	peer.routerID = c.RouterID
-	peerAddr := peer.GetAddr().String()
-	b.peers.Store(peerAddr, peer)
-	peer.Start()
+	b.peers.add(peer)
+	if !c.Passive {
+		peer.Start()
+	}
 
 	return nil
 }

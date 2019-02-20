@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -32,7 +33,6 @@ func (s establishedState) run() (state, string) {
 	}
 
 	opt := s.fsm.decodeOptions()
-
 	for {
 		select {
 		case e := <-s.fsm.eventCh:
@@ -46,14 +46,22 @@ func (s establishedState) run() (state, string) {
 			default:
 				continue
 			}
-		case <-s.fsm.holdTimer.C:
-			return s.holdTimerExpired()
 		case <-s.fsm.keepaliveTimer.C:
 			return s.keepaliveTimerExpired()
+		case <-time.After(time.Second):
+			return s.checkHoldtimer()
 		case recvMsg := <-s.fsm.msgRecvCh:
 			return s.msgReceived(recvMsg, opt)
 		}
 	}
+}
+
+func (s *establishedState) checkHoldtimer() (state, string) {
+	if time.Since(s.fsm.lastUpdateOrKeepalive) > s.fsm.holdTime {
+		return s.holdTimerExpired()
+	}
+
+	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
 func (s *establishedState) init() error {
@@ -136,6 +144,7 @@ func (s *establishedState) holdTimerExpired() (state, string) {
 func (s *establishedState) keepaliveTimerExpired() (state, string) {
 	err := s.fsm.sendKeepalive()
 	if err != nil {
+		s.uninit()
 		stopTimer(s.fsm.connectRetryTimer)
 		s.fsm.con.Close()
 		s.fsm.connectRetryCounter++
@@ -184,7 +193,7 @@ func (s *establishedState) notification() (state, string) {
 
 func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 	if s.fsm.holdTime != 0 {
-		s.fsm.holdTimer.Reset(s.fsm.holdTime)
+		s.fsm.updateLastUpdateOrKeepalive()
 	}
 
 	if s.fsm.ipv4Unicast != nil {
@@ -240,7 +249,7 @@ func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16,
 
 func (s *establishedState) keepaliveReceived() (state, string) {
 	if s.fsm.holdTime != 0 {
-		s.fsm.holdTimer.Reset(s.fsm.holdTime)
+		s.fsm.updateLastUpdateOrKeepalive()
 	}
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
