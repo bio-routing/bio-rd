@@ -11,7 +11,6 @@ import (
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
-	"github.com/bio-routing/bio-rd/route"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
