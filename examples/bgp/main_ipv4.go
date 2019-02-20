@@ -6,19 +6,31 @@ import (
 	"net"
 	"time"
 
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"google.golang.org/grpc"
 
 	"github.com/bio-routing/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
-	bnet "github.com/bio-routing/bio-rd/net"
+	api "github.com/bio-routing/bio-rd/protocols/bgp/api"
 )
 
-func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
-	err := b.Start(&config.Global{
+func startServer(b server.BGPServer, v *vrf.VRF) {
+	apiSrv := server.NewBGPAPIServer(b)
+
+	lis, err := net.Listen("tcp", ":1337")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	api.RegisterBgpServiceServer(grpcServer, apiSrv)
+	go grpcServer.Serve(lis)
+
+	err = b.Start(&config.Global{
 		Listen: true,
 		LocalAddressList: []net.IP{
 			net.IPv4(169, 254, 100, 1),
@@ -26,7 +38,7 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		},
 	})
 	if err != nil {
-		logrus.Fatalf("Unable to start BGP server: %v", err)
+		log.Fatalf("Unable to start BGP server: %v", err)
 	}
 
 	b.AddPeer(config.Peer{
@@ -41,7 +53,6 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		Passive:           true,
 		RouterID:          b.RouterID(),
 		IPv4: &config.AddressFamilyConfig{
-			RIB:          rib,
 			ImportFilter: filter.NewAcceptAllFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
 			AddPathSend: routingtable.ClientOptions{
@@ -49,6 +60,7 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 			},
 		},
 		RouteServerClient: true,
+		VRF:               v,
 	})
 
 	b.AddPeer(config.Peer{
@@ -64,7 +76,6 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 		RouterID:          b.RouterID(),
 		RouteServerClient: true,
 		IPv4: &config.AddressFamilyConfig{
-			RIB:          rib,
 			ImportFilter: filter.NewAcceptAllFilter(),
 			ExportFilter: filter.NewAcceptAllFilter(),
 			AddPathSend: routingtable.ClientOptions{
@@ -72,5 +83,6 @@ func startServer(b server.BGPServer, rib *locRIB.LocRIB) {
 			},
 			AddPathRecv: true,
 		},
+		VRF: v,
 	})
 }

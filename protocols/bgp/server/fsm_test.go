@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/stretchr/testify/assert"
-
-	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 // TestFSM255UpdatesIPv4 emulates receiving 255 BGP updates and withdraws. Checks route counts.
@@ -19,13 +18,13 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 		addr:     bnet.IPv4FromOctets(169, 254, 100, 100),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 		ipv4: &peerAddressFamily{
-			rib:          locRIB.New(),
+			rib:          locRIB.New("inet.0"),
 			importFilter: filter.NewAcceptAllFilter(),
 			exportFilter: filter.NewAcceptAllFilter(),
 		},
 	})
 
-	fsmA.holdTimer = time.NewTimer(time.Second * 90)
+	fsmA.holdTime = time.Second * 180
 	fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
 	fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
 	fsmA.state = newEstablishedState(fsmA)
@@ -113,11 +112,11 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 			b + 25, 169, a, i, 0,
 			0, 0,
 		}
+
 		fsmA.msgRecvCh <- update
 		ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	}
 	time.Sleep(time.Second * 1)
-
 	ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	if ribRouteCount != 0 {
 		t.Errorf("Unexpected route count in LocRIB: %d", ribRouteCount)
@@ -133,14 +132,14 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 		addr:     bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0xffff, 0, 0, 0, 1),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 		ipv6: &peerAddressFamily{
-			rib:          locRIB.New(),
+			rib:          locRIB.New("inet6.0"),
 			importFilter: filter.NewAcceptAllFilter(),
 			exportFilter: filter.NewAcceptAllFilter(),
 		},
 	})
 
 	fsmA.ipv6Unicast.multiProtocol = true
-	fsmA.holdTimer = time.NewTimer(time.Second * 90)
+	fsmA.holdTime = time.Second * 180
 	fsmA.keepaliveTimer = time.NewTimer(time.Second * 30)
 	fsmA.connectRetryTimer = time.NewTimer(time.Second * 120)
 	fsmA.state = newEstablishedState(fsmA)

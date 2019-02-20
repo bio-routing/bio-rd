@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route/api"
 )
 
 // Path represents a network path
@@ -58,6 +59,23 @@ func (p *Path) ECMP(q *Path) bool {
 	}
 
 	panic("Unknown path type")
+}
+
+// ToProto converts path to proto path
+func (p *Path) ToProto() *api.Path {
+	a := &api.Path{
+		StaticPath: p.StaticPath.ToProto(),
+		BGPPath:    p.BGPPath.ToProto(),
+	}
+
+	switch p.Type {
+	case StaticPathType:
+		a.Type = api.Path_Static
+	case BGPPathType:
+		a.Type = api.Path_BGP
+	}
+
+	return a
 }
 
 // Equal checks if paths p and q are equal

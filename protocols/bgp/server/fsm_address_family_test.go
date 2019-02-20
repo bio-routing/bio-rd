@@ -1,13 +1,70 @@
 package server
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestFSMAFIInitDispose(t *testing.T) {
+	f := &fsmAddressFamily{
+		afi:          packet.IPv4AFI,
+		safi:         packet.UnicastSAFI,
+		rib:          locRIB.New("inet.0"),
+		importFilter: filter.NewAcceptAllFilter(),
+		exportFilter: filter.NewAcceptAllFilter(),
+		fsm: &FSM{
+			peer: &peer{
+				routerID: 100,
+				localASN: 15169,
+			},
+		},
+		addPathTX: routingtable.ClientOptions{
+			BestOnly: true,
+		},
+	}
+
+	n := &routingtable.Neighbor{
+		LocalASN: 15169,
+	}
+
+	assert.Equal(t, uint64(0), f.rib.ClientCount())
+
+	f.init(n)
+	assert.NotEqual(t, nil, f.adjRIBIn)
+	assert.Equal(t, true, f.rib.GetContributingASNs().IsContributingASN(15169))
+	assert.NotEqual(t, true, f.rib.GetContributingASNs().IsContributingASN(15170))
+
+	assert.NotEqual(t, nil, f.adjRIBOut)
+	assert.NotEqual(t, nil, f.updateSender)
+
+	assert.Equal(t, uint64(1), f.adjRIBIn.ClientCount())
+	assert.Equal(t, uint64(1), f.rib.ClientCount())
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	assert.Equal(t, wg, f.updateSender.wg)
+
+	assert.Equal(t, uint64(1), f.adjRIBOut.ClientCount())
+
+	assert.Equal(t, true, f.initialized)
+
+	// Dispose
+	f.dispose()
+
+	f.updateSender.wg.Wait()
+	assert.Equal(t, false, f.rib.GetContributingASNs().IsContributingASN(15169))
+	assert.Equal(t, uint64(0), f.rib.ClientCount())
+	assert.Equal(t, nil, f.adjRIBOut)
+	assert.Equal(t, false, f.initialized)
+}
 
 func TestProcessAttributes(t *testing.T) {
 	unknown3 := &packet.PathAttribute{

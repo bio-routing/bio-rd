@@ -6,7 +6,7 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
 // Peer defines the configuration for a BGP session
@@ -27,11 +27,11 @@ type Peer struct {
 	AdvertiseIPv4MultiProtocol bool
 	IPv4                       *AddressFamilyConfig
 	IPv6                       *AddressFamilyConfig
+	VRF                        *vrf.VRF
 }
 
 // AddressFamilyConfig represents all configuration parameters specific for an address family
 type AddressFamilyConfig struct {
-	RIB          *locRIB.LocRIB
 	ImportFilter *filter.Filter
 	ExportFilter *filter.Filter
 	AddPathSend  routingtable.ClientOptions

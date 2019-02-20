@@ -16,7 +16,7 @@ type TCPListener struct {
 	closeCh chan struct{}
 }
 
-func NewTCPListener(address net.IP, port uint16, ch chan *net.TCPConn) (*TCPListener, error) {
+func NewTCPListener(address net.IP, port uint16, ch chan net.Conn) (*TCPListener, error) {
 	proto := "tcp4"
 	if address.To4() == nil {
 		proto = "tcp6"

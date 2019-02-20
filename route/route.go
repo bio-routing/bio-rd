@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route/api"
 )
 
 const (
@@ -237,6 +238,20 @@ func compareItemExists(needle *Path, haystack []*Path) bool {
 	}
 
 	return false
+}
+
+// ToProto converts route to proto route
+func (r *Route) ToProto() *api.Route {
+	a := &api.Route{
+		Pfx:   r.pfx.ToProto(),
+		Paths: make([]*api.Path, len(r.paths)),
+	}
+
+	for i := range r.paths {
+		a.Paths[i] = r.paths[i].ToProto()
+	}
+
+	return a
 }
 
 func (r *Route) updateEqualPathCount() {
