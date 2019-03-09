@@ -35,6 +35,14 @@ const (
 	ProtoBio = 45
 )
 
+// PrefixPathsPair is a simple Pair of a prefix and multiple coresponding
+// FIB Paths
+type PrefixPathsPair struct {
+	Pfx   bnet.Prefix
+	Paths []FIBPath
+	Err   error
+}
+
 // FIBPath represents a path learned via Netlink of a route
 type FIBPath struct {
 	Src      bnet.IP
@@ -46,14 +54,25 @@ type FIBPath struct {
 	Kernel   bool // True if the route is already installed in the kernel
 }
 
-// NewNlPathFromBgpPath creates a new FIBPath object from a BGPPath object
-func NewNlPathFromBgpPath(p *BGPPath) *FIBPath {
+// NewFIBPathFromBgpPath creates a new FIBPath object from a BGPPath object
+func NewFIBPathFromBgpPath(p *BGPPath) *FIBPath {
 	return &FIBPath{
 		Src:      p.Source,
 		NextHop:  p.NextHop,
 		Protocol: ProtoBio,
 		Kernel:   false,
 	}
+}
+
+// Equals compares if two  paths are identical
+func (s *FIBPath) Equals(b *FIBPath) bool {
+	return s.Src == b.Src &&
+		s.NextHop == b.NextHop &&
+		s.Priority == b.Priority &&
+		s.Protocol == b.Protocol &&
+		s.Type == b.Type &&
+		s.Table == b.Table &&
+		s.Kernel == b.Kernel
 }
 
 // Select compares s with t and returns negative if s < t, 0 if paths are equal, positive if s > t
@@ -114,6 +133,29 @@ func (s *FIBPath) Copy() *FIBPath {
 
 	cp := *s
 	return &cp
+}
+
+// FIBPathsDiff gets the list of elements contained by a but not b
+func FIBPathsDiff(a, b []FIBPath) []FIBPath {
+	ret := make([]FIBPath, 0)
+
+	for _, pa := range a {
+		if !pa.ContainedIn(b) {
+			ret = append(ret, pa)
+		}
+	}
+
+	return ret
+}
+
+func (s *FIBPath) ContainedIn(haystack []FIBPath) bool {
+	for i := range haystack {
+		if s.Equals(&haystack[i]) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Print all known information about a route in logfile friendly format

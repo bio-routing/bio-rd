@@ -7,6 +7,14 @@ import (
 	api "github.com/bio-routing/bio-rd/net/api"
 )
 
+const (
+	// IPFamily4 is the IPv4 constant
+	IPFamily4 int = 4
+
+	// IPFamily6 is the IPv6 constant
+	IPFamily6 int = 6
+)
+
 // IP represents an IPv4 or IPv6 address
 type IP struct {
 	higher   uint64

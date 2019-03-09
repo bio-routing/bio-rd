@@ -349,7 +349,7 @@ func TestNewNlPath(t *testing.T) {
 
 		switch test.source.Type {
 		case BGPPathType:
-			converted = NewNlPathFromBgpPath(test.source.BGPPath)
+			converted = NewFIBPathFromBgpPath(test.source.BGPPath)
 
 		default:
 			assert.Fail(t, fmt.Sprintf("Source-type %d is not supported", test.source.Type))

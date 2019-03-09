@@ -3,6 +3,7 @@ package fib
 import (
 	"fmt"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 )
 
@@ -22,16 +23,12 @@ func newOSFIBLinux(f *FIB) (*osFibAdapterDarwin, error) {
 	return fib, nil
 }
 
-func (fib *osFibAdapterDarwin) addPath(path route.FIBPath) error {
+func (fib *osFibAdapterDarwin) addPath(pfx bnet.Prefix, path route.FIBPath) error {
 	return fmt.Errorf("Not implemented")
 }
 
-func (fib *osFibAdapterDarwin) rmovePath(path route.FIBPath) error {
+func (fib *osFibAdapterDarwin) removePath(pfx bnet.Prefix, path route.FIBPath) error {
 	return fmt.Errorf("Not implemented")
-}
-
-func (fib *osFibAdapterDarwin) pathCount() int64 {
-	return 0
 }
 
 func (fib *osFibAdapterDarwin) start() error {
