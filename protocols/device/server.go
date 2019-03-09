@@ -1,6 +1,7 @@
 package device
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -36,7 +37,7 @@ func New() (*Server, error) {
 	srv := newWithAdapter(nil)
 	err := srv.loadAdapter()
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to create OS adapter")
+		return nil, errors.Wrap(err, "Unable to create OS specific device adapter")
 	}
 
 	return srv, nil
@@ -67,11 +68,13 @@ func (ds *Server) Stop() {
 }
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
-func (ds *Server) Subscribe(client Client, devName string) {
+func (ds *Server) Subscribe(client Client, devName string) error {
 	d := ds.getLinkState(devName)
-	if d != nil {
-		client.DeviceUpdate(d)
+	if d == nil {
+		return fmt.Errorf("device %s not found", devName)
 	}
+
+	client.DeviceUpdate(d)
 
 	ds.clientsByDeviceMu.Lock()
 	defer ds.clientsByDeviceMu.Unlock()
@@ -81,6 +84,8 @@ func (ds *Server) Subscribe(client Client, devName string) {
 	}
 
 	ds.clientsByDevice[devName] = append(ds.clientsByDevice[devName], client)
+
+	return nil
 }
 
 // Unsubscribe unsubscribes a client

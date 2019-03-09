@@ -8,17 +8,6 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-const (
-	ProtoUnspec   = 0  // unspec (from /etc/iproute2/rt_protos)
-	ProtoRedirect = 1  // redirect (from /etc/iproute2/rt_protos)
-	ProtoKernel   = 2  // kernel (from /etc/iproute2/rt_protos)
-	ProtoBoot     = 3  // boot (from /etc/iproute2/rt_protos)
-	ProtoStatic   = 4  // static (from /etc/iproute2/rt_protos)
-	ProtoZebra    = 11 // zebra (from /etc/iproute2/rt_protos)
-	ProtoBird     = 12 // bird (from /etc/iproute2/rt_protos)
-	ProtoDHCP     = 16 // dhcp (from /etc/iproute2/rt_protos)
-	ProtoBio      = 45 // bio
-)
 
 // NetlinkRouteDiff gets the list of elements contained by a but not b
 func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
@@ -68,7 +57,7 @@ func netlinkRouteEquals(a, b *netlink.Route) bool {
 		a.AdvMSS == b.AdvMSS
 }
 
-// NewNlPathFromRoute creates a new route.FIBPath object from a netlink.Route object
+// NewPathsFromNlRoute creates a new route.FIBPath object from a netlink.Route object
 func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*route.Path, error) {
 	var src bnet.IP
 	var dst bnet.Prefix

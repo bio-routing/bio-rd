@@ -119,6 +119,23 @@ func TestNotify(t *testing.T) {
 	assert.Equal(t, uint(2), mc.deviceUpdateCalled)
 }
 
+func TestSubscribe(t *testing.T) {
+	mc := &mockClient{}
+	a := &mockAdapter{}
+	s := newWithAdapter(a)
+
+	s.addDevice(&Device{
+		Name:  "eth0",
+		Index: 100,
+	})
+
+	err := s.Subscribe(mc, "eth0")
+	assert.Nil(t, err)
+
+	err = s.Subscribe(mc, "eth1")
+	assert.NotNil(t, err)
+}
+
 func TestUnsubscribe(t *testing.T) {
 	tests := []struct {
 		name              string

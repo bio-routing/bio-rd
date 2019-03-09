@@ -7,7 +7,32 @@ import (
 )
 
 const (
-	ProtoBio = 45 // bio
+	// ProtoUnspec equals to unspec from /etc/iproute2/rt_protos
+	ProtoUnspec = 0
+
+	// ProtoRedirect equals to redirect from /etc/iproute2/rt_protos
+	ProtoRedirect = 1
+
+	// ProtoKernel equals to kernel from /etc/iproute2/rt_protos
+	ProtoKernel = 2
+
+	// ProtoBoot equals to boot from /etc/iproute2/rt_protos
+	ProtoBoot = 3
+
+	// ProtoStatic equals to static from /etc/iproute2/rt_protos
+	ProtoStatic = 4
+
+	// ProtoZebra equals to zebra from /etc/iproute2/rt_protos
+	ProtoZebra = 11
+
+	// ProtoBird equals to bird from /etc/iproute2/rt_protos
+	ProtoBird = 12
+
+	// ProtoDHCP equals to dhcp from /etc/iproute2/rt_protos
+	ProtoDHCP = 16
+
+	// ProtoBio bio-rd
+	ProtoBio = 45
 )
 
 // FIBPath represents a path learned via Netlink of a route

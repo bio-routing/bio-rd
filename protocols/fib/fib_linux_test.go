@@ -167,7 +167,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
 				Src:      bnet.IPv4(456).Bytes(),
 				Gw:       bnet.IPv4(789).Bytes(),
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
@@ -179,7 +179,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(789),
-						Protocol: ProtoKernel,
+						Protocol: route.ProtoKernel,
 						Priority: 1,
 						Table:    254,
 						Type:     1,
@@ -211,7 +211,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 						Encap:     nil,
 					},
 				},
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
@@ -223,7 +223,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(123),
-						Protocol: ProtoKernel,
+						Protocol: route.ProtoKernel,
 						Priority: 1,
 						Table:    254,
 						Type:     1,
@@ -234,7 +234,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(345),
-						Protocol: ProtoKernel,
+						Protocol: route.ProtoKernel,
 						Priority: 1,
 						Table:    254,
 						Type:     1,
@@ -249,7 +249,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 			source: netlink.Route{
 				Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
 				Gw:       bnet.IPv4(789).Bytes(),
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
@@ -261,7 +261,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(0),
 						NextHop:  bnet.IPv4(789),
-						Protocol: ProtoKernel,
+						Protocol: route.ProtoKernel,
 						Priority: 1,
 						Table:    254,
 						Type:     1,
@@ -276,7 +276,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 			source: netlink.Route{
 				Src:      bnet.IPv4(456).Bytes(),
 				Gw:       bnet.IPv4(789).Bytes(),
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
@@ -288,7 +288,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv4(456),
 						NextHop:  bnet.IPv4(789),
-						Protocol: ProtoKernel,
+						Protocol: route.ProtoKernel,
 						Priority: 1,
 						Table:    254,
 						Type:     1,
@@ -302,7 +302,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 			name: "No source but no destination",
 			source: netlink.Route{
 				Gw:       bnet.IPv4(789).Bytes(),
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
@@ -316,7 +316,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 			source: netlink.Route{
 				Dst:      bnet.NewPfx(bnet.IPv6(2001, 0), 48).GetIPNet(),
 				Gw:       bnet.IPv6(2001, 123).Bytes(),
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
@@ -328,7 +328,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv6(0, 0),
 						NextHop:  bnet.IPv6(2001, 123),
-						Protocol: ProtoKernel,
+						Protocol: route.ProtoKernel,
 						Priority: 1,
 						Table:    254,
 						Type:     1,
@@ -343,7 +343,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 			source: netlink.Route{
 				Src:      bnet.IPv6(2001, 456).Bytes(),
 				Gw:       bnet.IPv6(2001, 789).Bytes(),
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,
@@ -355,7 +355,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 					FIBPath: &route.FIBPath{
 						Src:      bnet.IPv6(2001, 456),
 						NextHop:  bnet.IPv6(2001, 789),
-						Protocol: ProtoKernel,
+						Protocol: route.ProtoKernel,
 						Priority: 1,
 						Table:    254,
 						Type:     1,
@@ -369,7 +369,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 			name: "no source no destination",
 			source: netlink.Route{
 				Gw:       bnet.IPv4(123).Bytes(),
-				Protocol: ProtoKernel,
+				Protocol: route.ProtoKernel,
 				Priority: 1,
 				Table:    254,
 				Type:     1,

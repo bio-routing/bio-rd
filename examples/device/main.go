@@ -32,7 +32,12 @@ func main() {
 	}
 
 	c := &Client{}
-	s.Subscribe(c, "virbr0")
+	intf := "virbr0"
+	err = s.Subscribe(c, intf)
+	if err != nil {
+		fmt.Printf("Error while subscribing to interface %s: %v", intf, err)
+		os.Exit(1)
+	}
 
 	select {}
 }
