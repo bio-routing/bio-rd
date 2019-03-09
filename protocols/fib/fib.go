@@ -1,31 +1,50 @@
 package fib
 
 import (
-	"github.com/bio-routing/bio-rd/config"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"sync"
+
+	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/pkg/errors"
 )
+
+type fibOsAdapter interface {
+	addPath(path route.FIBPath) error
+	removePath(path route.FIBPath) error
+	pathCount() int64
+	start() error
+}
 
 // FIB is forwarding information base
 type FIB struct {
-	locRib *locRIB.LocRIB
-
-	//writer *NetlinkWriter
-	//reader *NetlinkReader
+	vrf       *vrf.VRF
+	osAdapter fibOsAdapter
+	pathsMu   sync.RWMutex
+	paths     []route.FIBPath
+	done      chan struct{}
 }
 
-// NewFIB creates a new Netlink object and returns the pointer to it
-func NewFIB(options *config.Netlink, locRib *locRIB.LocRIB) *FIB {
-
+// New creates a new Netlink object and returns the pointer to it
+func New(vrf *vrf.VRF) *FIB {
 	n := &FIB{
-		locRib: locRib,
-		//writer: NewNetlinkWriter(options),
-		//reader: NewNetlinkReader(options),
+		vrf:   vrf,
+		paths: make([]route.FIBPath, 0),
+		done:  make(chan struct{}),
 	}
+
+	n.loadFIB()
+
 	return n
 }
 
 // Start the Netlink module
-func (f *FIB) Start() {
+func (f *FIB) Start() error {
+	err := f.osAdapter.start()
+	if err != nil {
+		return errors.Wrap(err, "Unable to start os specific FIB")
+	}
+	return nil
+
 	// connect all RIBs
 	/*options := routingtable.ClientOptions{
 		BestOnly: false,
@@ -41,4 +60,9 @@ func (f *FIB) Start() {
 
 	// Listen for new routes from kernel
 	//go n.reader.Read()
+}
+
+// Stop stops the device server
+func (f *FIB) Stop() {
+	close(f.done)
 }

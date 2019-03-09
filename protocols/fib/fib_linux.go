@@ -8,6 +8,37 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+func (f *FIB) loadFIB() {
+	f.osAdapter = newOSFIBLinux(f)
+}
+
+type osFibAdapterLinux struct {
+	fib *FIB
+}
+
+func newOSFIBLinux(f *FIB) *osFibAdapterLinux {
+	fib := &osFibAdapterLinux{
+		fib: f,
+	}
+
+	return fib
+}
+
+func (fib *osFibAdapterLinux) addPath(path route.FIBPath) error {
+	return fmt.Errorf("Not implemented")
+}
+
+func (fib *osFibAdapterLinux) removePath(path route.FIBPath) error {
+	return fmt.Errorf("Not implemented")
+}
+
+func (fib *osFibAdapterLinux) pathCount() int64 {
+	return 0
+}
+
+func (fib *osFibAdapterLinux) start() error {
+	return fmt.Errorf("Not implemented")
+}
 
 // NetlinkRouteDiff gets the list of elements contained by a but not b
 func NetlinkRouteDiff(a, b []netlink.Route) []netlink.Route {
