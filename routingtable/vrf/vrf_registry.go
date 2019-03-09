@@ -9,14 +9,16 @@ var globalRegistry *vrfRegistry
 
 func init() {
 	globalRegistry = &vrfRegistry{
-		vrfs: make(map[string]*VRF),
+		vrfsName: make(map[string]*VRF),
+		vrfsID:   make(map[uint32]*VRF),
 	}
 }
 
 // vrfRegistry holds a reference to all active VRFs. Every VRF have to have a different name.
 type vrfRegistry struct {
-	vrfs map[string]*VRF
-	mu   sync.Mutex
+	vrfsName map[string]*VRF
+	mu       sync.Mutex
+	vrfsID   map[uint32]*VRF
 }
 
 // registerVRF adds the given VRF from the global registry.
@@ -25,12 +27,18 @@ func (r *vrfRegistry) registerVRF(v *VRF) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, found := r.vrfs[v.name]
+	_, found := r.vrfsName[v.name]
 	if found {
 		return fmt.Errorf("a VRF with the name '%s' already exists", v.name)
 	}
 
-	r.vrfs[v.name] = v
+	_, found = r.vrfsID[v.id]
+	if found {
+		return fmt.Errorf("a VRF with the id '%d' already exists", v.id)
+	}
+
+	r.vrfsName[v.name] = v
+	r.vrfsID[v.id] = v
 	return nil
 }
 
@@ -39,5 +47,6 @@ func (r *vrfRegistry) unregisterVRF(v *VRF) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	delete(r.vrfs, v.name)
+	delete(r.vrfsName, v.name)
+	delete(r.vrfsID, v.id)
 }
