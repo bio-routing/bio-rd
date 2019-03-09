@@ -23,7 +23,7 @@ func newOSFIBLinux(f *FIB) (*osFibAdapterDarwin, error) {
 	return fib, nil
 }
 
-func (fib *osFibAdapterDarwin) addPath(pfx bnet.Prefix, path route.FIBPath) error {
+func (fib *osFibAdapterDarwin) addPath(pfx bnet.Prefix) error {
 	return fmt.Errorf("Not implemented")
 }
 
