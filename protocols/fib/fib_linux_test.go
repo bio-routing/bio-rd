@@ -267,11 +267,11 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		expected, err := convertNlRouteToFIBPath(test.source, true)
+		expected := convertNlRouteToFIBPath(test.source, true)
 		if test.expectError {
-			assert.Error(t, err)
+			//assert.Error(t, err)
 		} else {
-			assert.NoError(t, err)
+			//assert.NoError(t, err)
 			assert.Equalf(t, test.expected[0].Paths, expected[0].Paths, test.name)
 			assert.Equalf(t, test.expected[0].Pfx, expected[0].Pfx, test.name)
 		}

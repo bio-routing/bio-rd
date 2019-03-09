@@ -2,6 +2,7 @@ package fib
 
 import (
 	"fmt"
+	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
@@ -98,68 +99,56 @@ func (f *osFibAdapterLinux) start() error {
 
 	errCnt := 3
 
-	// TODO graceful shutdown this loop in case of closing
-	for {
-		// Family doesn't matter since I only filter by rt_table
-		nlKernelRoutes, err := netlink.RouteListFiltered(bnet.IPFamily4, &netlink.Route{
-			Table: int(f.fib.vrf.ID()),
-		}, netlink.RT_FILTER_TABLE)
+	go func() {
+		// TODO graceful shutdown this loop in case of closing
+		for {
+			// Family doesn't matter since I only filter by rt_table
+			nlKernelRoutes, err := netlink.RouteListFiltered(bnet.IPFamily4, &netlink.Route{
+				Table: int(f.fib.vrf.ID()),
+			}, netlink.RT_FILTER_TABLE)
 
-		if err != nil {
-			if errCnt--; errCnt == 0 {
-				log.WithError(err).Panic("Failed to read routes from kernel")
-			} else {
-				log.WithError(err).Error("Failed to read routes from kernel")
-			}
-		}
-
-		fibPfxPaths, err := convertNlRouteToFIBPath(nlKernelRoutes, true)
-		if err != nil {
-			err = fmt.Errorf("%v: [", err)
-			for _, fibPfxPath := range fibPfxPaths {
-				if fibPfxPath.Err != nil {
-					err = fmt.Errorf("%v, %v", err, fibPfxPath.Err)
+			if err != nil {
+				if errCnt--; errCnt == 0 {
+					log.WithError(err).Panic("Failed to read routes from kernel")
+				} else {
+					log.WithError(err).Error("Failed to read routes from kernel")
 				}
 			}
-			err = fmt.Errorf("%v]", err)
-			return err
+
+			fibPfxPaths := convertNlRouteToFIBPath(nlKernelRoutes, true)
+
+			diffContainedInFib := f.fib.compareFibPfxPath(fibPfxPaths, true)
+			diffContainedInKernel := f.fib.compareFibPfxPath(fibPfxPaths, false)
+
+			// remove diffContainedInFib from FIB
+			for _, staleInFib := range diffContainedInFib {
+				f.fib.removePath(staleInFib.Pfx, staleInFib.Paths)
+			}
+
+			// add diffContainedInKernel to FIB
+			for _, newToFib := range diffContainedInKernel {
+				f.fib.addPath(newToFib.Pfx, newToFib.Paths)
+			}
+
+			// f.fib.callUpdate(fromKernel)
+
+			// TODO: time.Sleep(nr.options.UpdateInterval)
+			time.Sleep(2 * time.Second)
 		}
-
-		diffContainedInFib := f.fib.compareFibPfxPath(fibPfxPaths, true)
-		diffContainedInKernel := f.fib.compareFibPfxPath(fibPfxPaths, false)
-
-		// remove diffContainedInFib from FIB
-		for _, staleInFib := range diffContainedInFib {
-			f.fib.removePath(staleInFib.Pfx, staleInFib.Paths)
-		}
-
-		// add diffContainedInKernel to FIB
-		for _, newToFib := range diffContainedInKernel {
-			f.fib.addPath(newToFib.Pfx, newToFib.Paths)
-		}
-
-		// f.fib.callUpdate(fromKernel)
-
-		// TODO: time.Sleep(nr.options.UpdateInterval)
-	}
-
+	}()
 	return nil
 }
 
 // convertNlRouteToFIBPath creates a new route.FIBPath object from a netlink.Route object
-func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) ([]route.PrefixPathsPair, error) {
+func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) []route.PrefixPathsPair {
 	fibPfxPaths := make([]route.PrefixPathsPair, 0)
-	errHappened := false
 
 	for _, r := range netlinkRoutes {
 		var src bnet.IP
 		var dst bnet.Prefix
 
 		if r.Src == nil && r.Dst == nil {
-			fibPfxPaths = append(fibPfxPaths, route.PrefixPathsPair{
-				Err: fmt.Errorf("Cannot create NlPath, since source and destination are both nil"),
-			})
-			errHappened = true
+			log.Debugf("Cannot create NlPath, since source and destination are both nil")
 			continue
 		}
 
@@ -222,12 +211,5 @@ func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) ([]
 		})
 	}
 
-	var err error
-	if errHappened {
-		err = fmt.Errorf("Failure while converting rt_netlink routes to FIB Paths")
-	} else {
-		err = nil
-	}
-
-	return fibPfxPaths, err
+	return fibPfxPaths
 }

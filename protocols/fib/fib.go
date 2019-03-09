@@ -23,7 +23,6 @@ type FIB struct {
 	vrf           *vrf.VRF
 	osAdapter     fibOsAdapter
 	pathTable     map[bnet.Prefix][]route.FIBPath
-	paths         []route.FIBPath
 	pathsMu       sync.RWMutex
 	clientManager *routingtable.ClientManager
 }
@@ -32,11 +31,11 @@ type FIB struct {
 func New(vrf *vrf.VRF) *FIB {
 	n := &FIB{
 		vrf:       vrf,
-		paths:     make([]route.FIBPath, 0),
 		pathTable: make(map[bnet.Prefix][]route.FIBPath),
 	}
 
 	n.loadFIB()
+	n.clientManager = routingtable.NewClientManager(n)
 
 	return n
 }
@@ -47,7 +46,6 @@ func (f *FIB) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to start os specific FIB")
 	}
-	return nil
 
 	// connect all RIBs
 	options := routingtable.ClientOptions{
@@ -89,6 +87,10 @@ func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
 		addPath = *route.NewFIBPathFromBgpPath(path.BGPPath)
 	case route.FIBPathType:
 		addPath = *path.FIBPath
+
+		if addPath.Kernel {
+			return nil // no need to learn our own originated paths
+		}
 	default:
 		return fmt.Errorf("PathType %d is (currently) not supported", path.Type)
 	}
@@ -105,7 +107,7 @@ func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
 			err = errors.Wrap(err, "Can't add Path to underlying OS Layer")
 			// be transaction safe!
 			if !f.cleanupPathAfterTryToAdd(pfx, addPath) {
-				err = errors.Wrap(err, "Can't rollback pseudotransaction. Somethings terrible wrong!")
+				err = errors.Wrap(err, "Can't rollback pseudo-transaction. Somethings terrible wrong!")
 			}
 			return err
 		}
@@ -119,7 +121,7 @@ func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
 			err = errors.Wrap(err, "Can't add Path to underlying OS Layer")
 			// be transaction safe!
 			if !f.cleanupPathAfterTryToAdd(pfx, addPath) {
-				err = errors.Wrap(err, "Can't rollback pseudotransaction. Somethings terrible wrong!")
+				err = errors.Wrap(err, "Can't rollback pseudo-transaction. Somethings terrible wrong!")
 			}
 			return err
 		}
@@ -158,6 +160,10 @@ func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 		delPath = *route.NewFIBPathFromBgpPath(path.BGPPath)
 	case route.FIBPathType:
 		delPath = *path.FIBPath
+
+		if delPath.Kernel {
+			return false // no need to learn our own originated paths
+		}
 	default:
 		log.Errorf("PathType %d is (currently) not supported", path.Type)
 	}
@@ -185,6 +191,26 @@ func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 	return found
 }
 
+func (f *FIB) addPathToClients(pfx bnet.Prefix, addPath route.FIBPath) {
+	for _, client := range f.clientManager.Clients() {
+		client.AddPath(pfx, &route.Path{
+			Type:    route.FIBPathType,
+			FIBPath: &addPath,
+		})
+	}
+}
+
+func (f *FIB) addPathsToClients(pfx bnet.Prefix, addPaths []route.FIBPath) {
+	for _, client := range f.clientManager.Clients() {
+		for _, addP := range addPaths {
+			client.AddPath(pfx, &route.Path{
+				Type:    route.FIBPathType,
+				FIBPath: &addP,
+			})
+		}
+	}
+}
+
 // this function does not aquire a mutex lock! Be careful!
 func (f *FIB) addPath(pfx bnet.Prefix, addPaths []route.FIBPath) {
 	f.pathsMu.Lock()
@@ -193,13 +219,24 @@ func (f *FIB) addPath(pfx bnet.Prefix, addPaths []route.FIBPath) {
 	existingPaths, found := f.pathTable[pfx]
 	if !found {
 		f.pathTable[pfx] = addPaths
+		f.addPathsToClients(pfx, addPaths)
 		return
 	}
 
 	for _, pToAdd := range addPaths {
 		if !pToAdd.ContainedIn(existingPaths) {
 			existingPaths = append(existingPaths, pToAdd)
+			f.addPathToClients(pfx, pToAdd)
 		}
+	}
+}
+
+func (f *FIB) removePathFromClients(pfx bnet.Prefix, removePath route.FIBPath) {
+	for _, client := range f.clientManager.Clients() {
+		client.RemovePath(pfx, &route.Path{
+			Type:    route.FIBPathType,
+			FIBPath: &removePath,
+		})
 	}
 }
 
@@ -214,12 +251,13 @@ func (f *FIB) removePath(pfx bnet.Prefix, delPaths []route.FIBPath) bool {
 	}
 
 	for _, pToDel := range delPaths {
-		for i, exPath := range existingPaths {
+		for idx, exPath := range existingPaths {
 			if !exPath.Equals(&pToDel) {
 				continue
 			}
 
-			existingPaths = append(f.paths[:i], f.paths[i+1:]...)
+			existingPaths = append(existingPaths[:idx], existingPaths[idx+1:]...)
+			f.removePathFromClients(pfx, pToDel)
 		}
 	}
 
@@ -245,7 +283,10 @@ func (f *FIB) compareFibPfxPath(cmpTo []route.PrefixPathsPair, inFibButNotIncmpT
 				pfxPath.Paths = route.FIBPathsDiff(pfxPath.Paths, paths)
 			}
 		}
-		pfxPathsDiff = append(pfxPathsDiff, pfxPath)
+
+		if len(pfxPath.Paths) > 0 {
+			pfxPathsDiff = append(pfxPathsDiff, pfxPath)
+		}
 	}
 
 	return pfxPathsDiff
@@ -257,27 +298,41 @@ func (f *FIB) Stop() {
 
 // UpdateNewClient Not supported for NetlinkWriter, since the writer is not observable
 func (f *FIB) UpdateNewClient(routingtable.RouteTableClient) error {
-	return fmt.Errorf("Not supported")
+	f.pathsMu.RLock()
+	f.pathsMu.RUnlock()
+
+	for _, client := range f.clientManager.Clients() {
+		for pfx, addPaths := range f.pathTable {
+			for _, addP := range addPaths {
+				client.AddPath(pfx, &route.Path{
+					Type:    route.FIBPathType,
+					FIBPath: &addP,
+				})
+			}
+		}
+	}
+
+	return nil
 }
 
 // Register Not supported for NetlinkWriter, since the writer is not observable
-func (f *FIB) Register(routingtable.RouteTableClient) {
-	log.Panic("Not supported")
+func (f *FIB) Register(client routingtable.RouteTableClient) {
+	f.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
 }
 
 // RegisterWithOptions Not supported, since the writer is not observable
-func (f *FIB) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
-	log.Panic("Not supported")
+func (f *FIB) RegisterWithOptions(client routingtable.RouteTableClient, opt routingtable.ClientOptions) {
+	f.clientManager.RegisterWithOptions(client, opt)
 }
 
 // Unregister is not supported, since the writer is not observable
-func (f *FIB) Unregister(routingtable.RouteTableClient) {
-	log.Panic("Not supported")
+func (f *FIB) Unregister(client routingtable.RouteTableClient) {
+	f.clientManager.Unregister(client)
 }
 
-// ClientCount is currently not implemented
+// ClientCount returns how many clients are connected
 func (f *FIB) ClientCount() uint64 {
-	return 0
+	return f.clientManager.ClientCount()
 }
 
 // Dump is currently not supported

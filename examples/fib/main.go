@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net"
 	"time"
 
@@ -79,6 +80,17 @@ func main() {
 
 	//b := server.NewBgpServer()
 	//startBGPServer(b, v)
+
+	go func() {
+		rib, found := v.RIBByName("inet.0")
+		if found {
+			for {
+				log.Print("\n\n### LocRIB DUmP:")
+				log.Print(rib.Print())
+				time.Sleep(5 * time.Second)
+			}
+		}
+	}()
 
 	f := fib.New(v)
 	startFIB(f)
