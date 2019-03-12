@@ -14,7 +14,7 @@ import (
 
 type fibOsAdapter interface {
 	addPath(pfx bnet.Prefix) error
-	removePath(pfx bnet.Prefix, path route.FIBPath) error
+	removePath(pfx bnet.Prefix, path *route.FIBPath) error
 	start() error
 }
 
@@ -22,22 +22,26 @@ type fibOsAdapter interface {
 type FIB struct {
 	vrf           *vrf.VRF
 	osAdapter     fibOsAdapter
-	pathTable     map[bnet.Prefix][]route.FIBPath
+	pathTable     map[bnet.Prefix][]*route.FIBPath
 	pathsMu       sync.RWMutex
 	clientManager *routingtable.ClientManager
 }
 
 // New creates a new Netlink object and returns the pointer to it
-func New(vrf *vrf.VRF) *FIB {
+func New(v *vrf.VRF) (*FIB, error) {
+	if v == nil {
+		return nil, fmt.Errorf("Cannot create FIB: No VRF given. Please use at least default VRF")
+	}
+
 	n := &FIB{
-		vrf:       vrf,
-		pathTable: make(map[bnet.Prefix][]route.FIBPath),
+		vrf:       v,
+		pathTable: make(map[bnet.Prefix][]*route.FIBPath),
 	}
 
 	n.loadFIB()
 	n.clientManager = routingtable.NewClientManager(n)
 
-	return n
+	return n, nil
 }
 
 // Start the Netlink module
@@ -80,13 +84,13 @@ func (f *FIB) RouteCount() int64 {
 
 // AddPath adds the element from the FIB List
 func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
-	var addPath route.FIBPath
+	var addPath *route.FIBPath
 
 	switch path.Type {
 	case route.BGPPathType:
-		addPath = *route.NewFIBPathFromBgpPath(path.BGPPath)
+		addPath = route.NewFIBPathFromBgpPath(path.BGPPath)
 	case route.FIBPathType:
-		addPath = *path.FIBPath
+		addPath = path.FIBPath
 
 		if addPath.Kernel {
 			return nil // no need to learn our own originated paths
@@ -100,7 +104,7 @@ func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
 
 	existingPaths, found := f.pathTable[pfx]
 	if !found {
-		f.pathTable[pfx] = []route.FIBPath{addPath}
+		f.pathTable[pfx] = []*route.FIBPath{addPath}
 
 		err := f.osAdapter.addPath(pfx)
 		if err != nil {
@@ -131,14 +135,14 @@ func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
 }
 
 // if something goes wrong during adding the path, clean it up!
-func (f *FIB) cleanupPathAfterTryToAdd(pfx bnet.Prefix, path route.FIBPath) bool {
+func (f *FIB) cleanupPathAfterTryToAdd(pfx bnet.Prefix, path *route.FIBPath) bool {
 	existingPaths, found := f.pathTable[pfx]
 	if !found {
 		return false // whooooot???
 	}
 
 	for idx, p := range existingPaths {
-		if !p.Equals(&path) {
+		if !p.Equals(path) {
 			continue
 		}
 
@@ -153,13 +157,13 @@ func (f *FIB) cleanupPathAfterTryToAdd(pfx bnet.Prefix, path route.FIBPath) bool
 
 // RemovePath adds the element from the FIB List
 func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
-	var delPath route.FIBPath
+	var delPath *route.FIBPath
 
 	switch path.Type {
 	case route.BGPPathType:
-		delPath = *route.NewFIBPathFromBgpPath(path.BGPPath)
+		delPath = route.NewFIBPathFromBgpPath(path.BGPPath)
 	case route.FIBPathType:
-		delPath = *path.FIBPath
+		delPath = path.FIBPath
 
 		if delPath.Kernel {
 			return false // no need to learn our own originated paths
@@ -177,7 +181,7 @@ func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 	}
 
 	for idx, p := range existingPaths {
-		if !p.Equals(&delPath) {
+		if !p.Equals(delPath) {
 			continue
 		}
 
@@ -191,28 +195,28 @@ func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 	return found
 }
 
-func (f *FIB) addPathToClients(pfx bnet.Prefix, addPath route.FIBPath) {
+func (f *FIB) addPathToClients(pfx bnet.Prefix, addPath *route.FIBPath) {
 	for _, client := range f.clientManager.Clients() {
 		client.AddPath(pfx, &route.Path{
 			Type:    route.FIBPathType,
-			FIBPath: &addPath,
+			FIBPath: addPath,
 		})
 	}
 }
 
-func (f *FIB) addPathsToClients(pfx bnet.Prefix, addPaths []route.FIBPath) {
+func (f *FIB) addPathsToClients(pfx bnet.Prefix, addPaths []*route.FIBPath) {
 	for _, client := range f.clientManager.Clients() {
 		for _, addP := range addPaths {
 			client.AddPath(pfx, &route.Path{
 				Type:    route.FIBPathType,
-				FIBPath: &addP,
+				FIBPath: addP,
 			})
 		}
 	}
 }
 
 // this function does not aquire a mutex lock! Be careful!
-func (f *FIB) addPath(pfx bnet.Prefix, addPaths []route.FIBPath) {
+func (f *FIB) addPath(pfx bnet.Prefix, addPaths []*route.FIBPath) {
 	f.pathsMu.Lock()
 	defer f.pathsMu.Unlock()
 
@@ -231,17 +235,17 @@ func (f *FIB) addPath(pfx bnet.Prefix, addPaths []route.FIBPath) {
 	}
 }
 
-func (f *FIB) removePathFromClients(pfx bnet.Prefix, removePath route.FIBPath) {
+func (f *FIB) removePathFromClients(pfx bnet.Prefix, removePath *route.FIBPath) {
 	for _, client := range f.clientManager.Clients() {
 		client.RemovePath(pfx, &route.Path{
 			Type:    route.FIBPathType,
-			FIBPath: &removePath,
+			FIBPath: removePath,
 		})
 	}
 }
 
 // this function does not aquire a mutex lock! Be careful!
-func (f *FIB) removePath(pfx bnet.Prefix, delPaths []route.FIBPath) bool {
+func (f *FIB) removePath(pfx bnet.Prefix, delPaths []*route.FIBPath) bool {
 	f.pathsMu.Lock()
 	defer f.pathsMu.Unlock()
 
@@ -252,7 +256,7 @@ func (f *FIB) removePath(pfx bnet.Prefix, delPaths []route.FIBPath) bool {
 
 	for _, pToDel := range delPaths {
 		for idx, exPath := range existingPaths {
-			if !exPath.Equals(&pToDel) {
+			if !exPath.Equals(pToDel) {
 				continue
 			}
 
@@ -268,11 +272,11 @@ func (f *FIB) removePath(pfx bnet.Prefix, delPaths []route.FIBPath) bool {
 // If inFibButNotIncmpTo=true the diff will show which parts of cmpTo are inside fib,
 // if inFibButNotIncmpTo=false the diff will show which parts of cmpTo are not inside the fib
 // this function does not aquire a mutex lock! Be careful!
-func (f *FIB) compareFibPfxPath(cmpTo []route.PrefixPathsPair, inFibButNotIncmpTo bool) []route.PrefixPathsPair {
+func (f *FIB) compareFibPfxPath(cmpTo []*route.PrefixPathsPair, inFibButNotIncmpTo bool) []*route.PrefixPathsPair {
 	f.pathsMu.Lock()
 	defer f.pathsMu.Unlock()
 
-	pfxPathsDiff := make([]route.PrefixPathsPair, 0)
+	pfxPathsDiff := make([]*route.PrefixPathsPair, 0)
 
 	for _, pfxPath := range cmpTo {
 		paths, found := f.pathTable[pfxPath.Pfx]
@@ -306,7 +310,7 @@ func (f *FIB) UpdateNewClient(routingtable.RouteTableClient) error {
 			for _, addP := range addPaths {
 				client.AddPath(pfx, &route.Path{
 					Type:    route.FIBPathType,
-					FIBPath: &addP,
+					FIBPath: addP,
 				})
 			}
 		}

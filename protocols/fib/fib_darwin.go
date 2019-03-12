@@ -27,7 +27,7 @@ func (fib *osFibAdapterDarwin) addPath(pfx bnet.Prefix) error {
 	return fmt.Errorf("Not implemented")
 }
 
-func (fib *osFibAdapterDarwin) removePath(pfx bnet.Prefix, path route.FIBPath) error {
+func (fib *osFibAdapterDarwin) removePath(pfx bnet.Prefix, path *route.FIBPath) error {
 	return fmt.Errorf("Not implemented")
 }
 

@@ -92,7 +92,11 @@ func main() {
 		}
 	}()
 
-	f := fib.New(v)
+	f, err := fib.New(v)
+	if err == nil {
+		log.Fatal(err)
+	}
+
 	startFIB(f)
 
 	select {}

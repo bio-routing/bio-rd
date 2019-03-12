@@ -47,8 +47,8 @@ func (f *osFibAdapterLinux) addPath(pfx bnet.Prefix) error {
 	return nil
 }
 
-func (f *osFibAdapterLinux) removePath(pfx bnet.Prefix, path route.FIBPath) error {
-	nlRoute, err := f.createRoute(pfx, []route.FIBPath{path})
+func (f *osFibAdapterLinux) removePath(pfx bnet.Prefix, path *route.FIBPath) error {
+	nlRoute, err := f.createRoute(pfx, []*route.FIBPath{path})
 	if err != nil {
 		return errors.Wrap(err, "Could not create route from prefix and path: %v")
 	}
@@ -66,7 +66,7 @@ func (f *osFibAdapterLinux) removePath(pfx bnet.Prefix, path route.FIBPath) erro
 }
 
 // create a route from a prefix and a path
-func (f *osFibAdapterLinux) createRoute(pfx bnet.Prefix, paths []route.FIBPath) (*netlink.Route, error) {
+func (f *osFibAdapterLinux) createRoute(pfx bnet.Prefix, paths []*route.FIBPath) (*netlink.Route, error) {
 	route := &netlink.Route{
 		Dst:      pfx.GetIPNet(),
 		Table:    int(f.fib.vrf.ID()),
@@ -140,8 +140,8 @@ func (f *osFibAdapterLinux) start() error {
 }
 
 // convertNlRouteToFIBPath creates a new route.FIBPath object from a netlink.Route object
-func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) []route.PrefixPathsPair {
-	fibPfxPaths := make([]route.PrefixPathsPair, 0)
+func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) []*route.PrefixPathsPair {
+	fibPfxPaths := make([]*route.PrefixPathsPair, 0)
 
 	for _, r := range netlinkRoutes {
 		var src bnet.IP
@@ -175,13 +175,13 @@ func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) []r
 			dst = bnet.NewPfxFromIPNet(r.Dst)
 		}
 
-		paths := make([]route.FIBPath, 0)
+		paths := make([]*route.FIBPath, 0)
 
 		// If it's multipath, we have to create serveral paths to the same prefix
 		if len(r.MultiPath) > 0 {
 			for _, multiPath := range r.MultiPath {
 				nextHop, _ := bnet.IPFromBytes(multiPath.Gw)
-				paths = append(paths, route.FIBPath{
+				paths = append(paths, &route.FIBPath{
 					Src:      src,
 					NextHop:  nextHop,
 					Priority: r.Priority,
@@ -193,7 +193,7 @@ func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) []r
 			}
 		} else {
 			nextHop, _ := bnet.IPFromBytes(r.Gw)
-			paths = append(paths, route.FIBPath{
+			paths = append(paths, &route.FIBPath{
 				Src:      src,
 				NextHop:  nextHop,
 				Priority: r.Priority,
@@ -204,7 +204,7 @@ func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) []r
 			})
 		}
 
-		fibPfxPaths = append(fibPfxPaths, route.PrefixPathsPair{
+		fibPfxPaths = append(fibPfxPaths, &route.PrefixPathsPair{
 			Pfx:   dst,
 			Paths: paths,
 			Err:   nil,

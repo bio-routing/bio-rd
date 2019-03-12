@@ -39,7 +39,7 @@ const (
 // FIB Paths
 type PrefixPathsPair struct {
 	Pfx   bnet.Prefix
-	Paths []FIBPath
+	Paths []*FIBPath
 	Err   error
 }
 
@@ -136,8 +136,8 @@ func (s *FIBPath) Copy() *FIBPath {
 }
 
 // FIBPathsDiff gets the list of elements contained by a but not b
-func FIBPathsDiff(a, b []FIBPath) []FIBPath {
-	ret := make([]FIBPath, 0)
+func FIBPathsDiff(a, b []*FIBPath) []*FIBPath {
+	ret := make([]*FIBPath, 0)
 
 	for _, pa := range a {
 		if !pa.ContainedIn(b) {
@@ -148,9 +148,10 @@ func FIBPathsDiff(a, b []FIBPath) []FIBPath {
 	return ret
 }
 
-func (s *FIBPath) ContainedIn(haystack []FIBPath) bool {
+// ContainedIn checks if the current object is contained in the haystack array
+func (s *FIBPath) ContainedIn(haystack []*FIBPath) bool {
 	for i := range haystack {
-		if s.Equals(&haystack[i]) {
+		if s.Equals(haystack[i]) {
 			return true
 		}
 	}
