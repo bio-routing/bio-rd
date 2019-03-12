@@ -32,8 +32,8 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-					Paths: []route.FIBPath{
-						route.FIBPath{
+					Paths: []*route.FIBPath{
+						&route.FIBPath{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(789),
 							Protocol: route.ProtoKernel,
@@ -80,8 +80,8 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-					Paths: []route.FIBPath{
-						route.FIBPath{
+					Paths: []*route.FIBPath{
+						&route.FIBPath{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(123),
 							Protocol: route.ProtoKernel,
@@ -90,7 +90,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 							Type:     1,
 							Kernel:   true,
 						},
-						route.FIBPath{
+						&route.FIBPath{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(345),
 							Protocol: route.ProtoKernel,
@@ -120,8 +120,8 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-					Paths: []route.FIBPath{
-						route.FIBPath{
+					Paths: []*route.FIBPath{
+						&route.FIBPath{
 							Src:      bnet.IPv4(0),
 							NextHop:  bnet.IPv4(789),
 							Protocol: route.ProtoKernel,
@@ -151,8 +151,8 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(0, 0, 0, 0), 0),
-					Paths: []route.FIBPath{
-						route.FIBPath{
+					Paths: []*route.FIBPath{
+						&route.FIBPath{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(789),
 							Protocol: route.ProtoKernel,
@@ -181,7 +181,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx:   bnet.Prefix{},
-					Paths: []route.FIBPath{},
+					Paths: make([]*route.FIBPath, 0),
 				},
 			},
 			expectError: true,
@@ -201,8 +201,8 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx: bnet.NewPfx(bnet.IPv6(2001, 0), 48),
-					Paths: []route.FIBPath{
-						route.FIBPath{
+					Paths: []*route.FIBPath{
+						&route.FIBPath{
 							Src:      bnet.IPv6(0, 0),
 							NextHop:  bnet.IPv6(2001, 123),
 							Protocol: route.ProtoKernel,
@@ -231,8 +231,8 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx: bnet.NewPfx(bnet.IPv6(0, 0), 0),
-					Paths: []route.FIBPath{
-						route.FIBPath{
+					Paths: []*route.FIBPath{
+						&route.FIBPath{
 							Src:      bnet.IPv6(2001, 456),
 							NextHop:  bnet.IPv6(2001, 789),
 							Protocol: route.ProtoKernel,
@@ -260,7 +260,8 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			expected: []route.PrefixPathsPair{
 				route.PrefixPathsPair{
 					Pfx:   bnet.NewPfx(bnet.IPv4(0), 0),
-					Paths: []route.FIBPath{{}}},
+					Paths: make([]*route.FIBPath, 0),
+				},
 			},
 			expectError: true,
 		},
