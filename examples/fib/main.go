@@ -85,7 +85,7 @@ func main() {
 		rib, found := v.RIBByName("inet.0")
 		if found {
 			for {
-				log.Print("\n\n### LocRIB DUmP:")
+				log.Print("\n\n\n\n### LocRIB DumP:")
 				log.Print(rib.Print())
 				time.Sleep(5 * time.Second)
 			}
@@ -93,7 +93,7 @@ func main() {
 	}()
 
 	f, err := fib.New(v)
-	if err == nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 

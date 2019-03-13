@@ -273,23 +273,43 @@ func (f *FIB) removePath(pfx bnet.Prefix, delPaths []*route.FIBPath) bool {
 // if inFibButNotIncmpTo=false the diff will show which parts of cmpTo are not inside the fib
 // this function does not aquire a mutex lock! Be careful!
 func (f *FIB) compareFibPfxPath(cmpTo []*route.PrefixPathsPair, inFibButNotIncmpTo bool) []*route.PrefixPathsPair {
-	f.pathsMu.Lock()
-	defer f.pathsMu.Unlock()
-
 	pfxPathsDiff := make([]*route.PrefixPathsPair, 0)
 
-	for _, pfxPath := range cmpTo {
-		paths, found := f.pathTable[pfxPath.Pfx]
-		if found {
-			if inFibButNotIncmpTo {
-				pfxPath.Paths = route.FIBPathsDiff(paths, pfxPath.Paths)
-			} else {
-				pfxPath.Paths = route.FIBPathsDiff(pfxPath.Paths, paths)
+	if len(cmpTo) == 0 {
+		if inFibButNotIncmpTo {
+			for key, value := range f.pathTable {
+				pfxPathsDiff = append(pfxPathsDiff, &route.PrefixPathsPair{
+					Pfx:   key,
+					Paths: value,
+				})
 			}
 		}
 
-		if len(pfxPath.Paths) > 0 {
-			pfxPathsDiff = append(pfxPathsDiff, pfxPath)
+		return pfxPathsDiff
+	}
+
+	f.pathsMu.Lock()
+	defer f.pathsMu.Unlock()
+
+	if len(f.pathTable) == 0 {
+		if inFibButNotIncmpTo {
+			return pfxPathsDiff
+		}
+
+		return cmpTo
+	}
+
+	for _, pfxPathPair := range cmpTo {
+		paths, found := f.pathTable[pfxPathPair.Pfx]
+
+		if found {
+			if inFibButNotIncmpTo {
+				pfxPathPair.Paths = route.FIBPathsDiff(paths, pfxPathPair.Paths)
+			} else {
+				pfxPathPair.Paths = route.FIBPathsDiff(pfxPathPair.Paths, paths)
+			}
+
+			pfxPathsDiff = append(pfxPathsDiff, pfxPathPair)
 		}
 	}
 

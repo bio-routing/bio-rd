@@ -130,10 +130,8 @@ func (f *osFibAdapterLinux) start() error {
 				f.fib.addPath(newToFib.Pfx, newToFib.Paths)
 			}
 
-			// f.fib.callUpdate(fromKernel)
-
 			// TODO: time.Sleep(nr.options.UpdateInterval)
-			time.Sleep(2 * time.Second)
+			time.Sleep(5 * time.Second)
 		}
 	}()
 	return nil
