@@ -21,7 +21,7 @@ A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustnes
 
 #### Netlink
 
-    cd examples/netlink && go build
+    cd examples/netlink && go build .
 
 ### Run Tests
 
