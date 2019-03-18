@@ -24,7 +24,7 @@ A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustnes
     cd examples/device && go build
 
 #### FIB
-See the [README](examples/fib/README.md) in the [example/fib](example/fib) folder for more information
+See the [README](examples/fib/README.md) in the [examples/fib](examples/fib) folder for more information
 
     cd examples/fib && go build
 
