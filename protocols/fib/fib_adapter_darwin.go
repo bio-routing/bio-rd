@@ -23,14 +23,10 @@ func newOSFIBDarwin(f *FIB) (*osFibAdapterDarwin, error) {
 	return fib, nil
 }
 
-func (fib *osFibAdapterDarwin) addPath(pfx bnet.Prefix) error {
+func (fib *osFibAdapterDarwin) addPath(pfx bnet.Prefix, paths []*route.FIBPath) error {
 	return fmt.Errorf("Not implemented")
 }
 
 func (fib *osFibAdapterDarwin) removePath(pfx bnet.Prefix, path *route.FIBPath) error {
-	return fmt.Errorf("Not implemented")
-}
-
-func (fib *osFibAdapterDarwin) start() error {
 	return fmt.Errorf("Not implemented")
 }
