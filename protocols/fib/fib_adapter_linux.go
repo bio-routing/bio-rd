@@ -20,11 +20,11 @@ type osFibAdapterLinux struct {
 }
 
 func newOSFIBLinux(f *FIB) *osFibAdapterLinux {
-	fib := &osFibAdapterLinux{
+	linuxAdapter := &osFibAdapterLinux{
 		fib: f,
 	}
 
-	return fib
+	return linuxAdapter
 }
 
 func (f *osFibAdapterLinux) addPath(pfx bnet.Prefix) error {

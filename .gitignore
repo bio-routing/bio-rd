@@ -27,3 +27,6 @@ examples/device/device
 
 # bazel directories
 /bazel-*
+
+# coverage reports
+coverage.txt

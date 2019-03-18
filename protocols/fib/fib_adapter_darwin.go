@@ -15,7 +15,7 @@ type osFibAdapterDarwin struct {
 	fib *FIB
 }
 
-func newOSFIBLinux(f *FIB) (*osFibAdapterDarwin, error) {
+func newOSFIBDarwin(f *FIB) (*osFibAdapterDarwin, error) {
 	fib := &osFibAdapterDarwin{
 		fib: f,
 	}

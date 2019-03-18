@@ -46,6 +46,10 @@ func New(v *vrf.VRF) (*FIB, error) {
 
 // Start the Netlink module
 func (f *FIB) Start() error {
+	if f.osAdapter == nil {
+		return fmt.Errorf("osAdapter is not loaded correctly")
+	}
+
 	err := f.osAdapter.start()
 	if err != nil {
 		return errors.Wrap(err, "Unable to start os specific FIB")
@@ -68,8 +72,6 @@ func (f *FIB) Start() error {
 		// from FIB to locRIB
 		f.RegisterWithOptions(rib, options)
 	}
-
-	go f.osAdapter.start()
 
 	return nil
 }

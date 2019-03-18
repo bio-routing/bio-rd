@@ -10,6 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNew(t *testing.T) {
+	f, err := New(nil)
+	assert.Error(t, err, "expected error")
+	assert.Nil(t, f, "expected nil")
+}
+
 func TestComparePfxPath(t *testing.T) {
 	v, _ := vrf.NewDefaultVRF()
 	f, _ := New(v)
