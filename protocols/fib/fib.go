@@ -56,17 +56,16 @@ func (f *FIB) Start() error {
 		MaxPaths: ^uint(0), // max int
 	}
 
-	// TODO!!!!!!
-	rib4, found := f.vrf.RIBByName("inet.0") // v4
-	if found {
-		// from locRib to FIB
-		rib4.RegisterWithOptions(f, options)
-	}
+	// register to all ribs in VRF
+	vrfRIBs := f.vrf.GetRIBNames()
+	for _, ribName := range vrfRIBs {
+		rib, found := f.vrf.RIBByName(ribName)
+		if !found {
+			continue
+		}
 
-	rib6, found := f.vrf.RIBByName("inet6.0") //v6?
-	if found {
 		// from locRib to FIB
-		rib6.RegisterWithOptions(f, options)
+		rib.RegisterWithOptions(f, options)
 	}
 
 	return nil
