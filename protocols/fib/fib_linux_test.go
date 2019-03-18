@@ -19,7 +19,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "Simple",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
 					Src:      bnet.IPv4(456).Bytes(),
 					Gw:       bnet.IPv4(789).Bytes(),
@@ -30,10 +30,10 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 				},
 			},
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(789),
 							Protocol: route.ProtoKernel,
@@ -51,7 +51,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "Multiple nexthop",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Dst: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
 					Src: bnet.IPv4(456).Bytes(),
 					MultiPath: []*netlink.NexthopInfo{
@@ -78,10 +78,10 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 				},
 			},
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(123),
 							Protocol: route.ProtoKernel,
@@ -90,7 +90,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 							Type:     1,
 							Kernel:   true,
 						},
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(345),
 							Protocol: route.ProtoKernel,
@@ -107,7 +107,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "No source but destination",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Dst:      bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).GetIPNet(),
 					Gw:       bnet.IPv4(789).Bytes(),
 					Protocol: route.ProtoKernel,
@@ -118,10 +118,10 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			},
 
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4(0),
 							NextHop:  bnet.IPv4(789),
 							Protocol: route.ProtoKernel,
@@ -138,7 +138,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "Source but no destination",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Src:      bnet.IPv4(456).Bytes(),
 					Gw:       bnet.IPv4(789).Bytes(),
 					Protocol: route.ProtoKernel,
@@ -149,10 +149,10 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			},
 
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(0, 0, 0, 0), 0),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4(456),
 							NextHop:  bnet.IPv4(789),
 							Protocol: route.ProtoKernel,
@@ -169,7 +169,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "No source but no destination",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Gw:       bnet.IPv4(789).Bytes(),
 					Protocol: route.ProtoKernel,
 					Priority: 1,
@@ -179,7 +179,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 			},
 
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx:   bnet.Prefix{},
 					Paths: make([]*route.FIBPath, 0),
 				},
@@ -189,7 +189,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "No source but destination IPv6",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Dst:      bnet.NewPfx(bnet.IPv6(2001, 0), 48).GetIPNet(),
 					Gw:       bnet.IPv6(2001, 123).Bytes(),
 					Protocol: route.ProtoKernel,
@@ -199,10 +199,10 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 				},
 			},
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx: bnet.NewPfx(bnet.IPv6(2001, 0), 48),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv6(0, 0),
 							NextHop:  bnet.IPv6(2001, 123),
 							Protocol: route.ProtoKernel,
@@ -219,7 +219,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "Source but no destination IPv6",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Src:      bnet.IPv6(2001, 456).Bytes(),
 					Gw:       bnet.IPv6(2001, 789).Bytes(),
 					Protocol: route.ProtoKernel,
@@ -229,10 +229,10 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 				},
 			},
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx: bnet.NewPfx(bnet.IPv6(0, 0), 0),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv6(2001, 456),
 							NextHop:  bnet.IPv6(2001, 789),
 							Protocol: route.ProtoKernel,
@@ -249,7 +249,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 		{
 			name: "no source no destination",
 			source: []netlink.Route{
-				netlink.Route{
+				{
 					Gw:       bnet.IPv4(123).Bytes(),
 					Protocol: route.ProtoKernel,
 					Priority: 1,
@@ -258,7 +258,7 @@ func TestConvertNlRouteToFIBPath(t *testing.T) {
 				},
 			},
 			expected: []route.PrefixPathsPair{
-				route.PrefixPathsPair{
+				{
 					Pfx:   bnet.NewPfx(bnet.IPv4(0), 0),
 					Paths: make([]*route.FIBPath, 0),
 				},

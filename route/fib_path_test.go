@@ -18,21 +18,21 @@ func TestNetlinkRouteDiff(t *testing.T) {
 		{
 			name: "Equal",
 			left: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(123),
 					Table: 1,
 				},
-				&FIBPath{
+				{
 					Src:   net.IPv4(456),
 					Table: 2,
 				},
 			},
 			right: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(123),
 					Table: 1,
 				},
-				&FIBPath{
+				{
 					Src:   net.IPv4(456),
 					Table: 2,
 				},
@@ -42,11 +42,11 @@ func TestNetlinkRouteDiff(t *testing.T) {
 			name: "Left empty",
 			left: make([]*FIBPath, 0),
 			right: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(123),
 					Table: 1,
 				},
-				&FIBPath{
+				{
 					Src:   net.IPv4(456),
 					Table: 2,
 				},
@@ -55,22 +55,22 @@ func TestNetlinkRouteDiff(t *testing.T) {
 		}, {
 			name: "Right empty",
 			left: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(123),
 					Table: 1,
 				},
-				&FIBPath{
+				{
 					Src:   net.IPv4(456),
 					Table: 2,
 				},
 			},
 			right: make([]*FIBPath, 0),
 			expected: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(123),
 					Table: 1,
 				},
-				&FIBPath{
+				{
 					Src:   net.IPv4(456),
 					Table: 2,
 				},
@@ -78,23 +78,23 @@ func TestNetlinkRouteDiff(t *testing.T) {
 		}, {
 			name: "Diff",
 			left: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(123),
 					Table: 1,
 				},
-				&FIBPath{
+				{
 					Src:   net.IPv4(456),
 					Table: 2,
 				},
 			},
 			right: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(123),
 					Table: 1,
 				},
 			},
 			expected: []*FIBPath{
-				&FIBPath{
+				{
 					Src:   net.IPv4(456),
 					Table: 2,
 				},

@@ -24,8 +24,8 @@ func TestComparePfxPath(t *testing.T) {
 		{
 			name: "in left but not in right",
 			left: map[bnet.Prefix][]*route.FIBPath{
-				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): []*route.FIBPath{
-					&route.FIBPath{
+				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): {
+					{
 						Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 						NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 						Protocol: route.ProtoKernel,
@@ -34,7 +34,7 @@ func TestComparePfxPath(t *testing.T) {
 						Type:     1,
 						Kernel:   true,
 					},
-					&route.FIBPath{
+					{
 						Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 						NextHop:  bnet.IPv4FromOctets(10, 0, 0, 253),
 						Protocol: route.ProtoKernel,
@@ -49,7 +49,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -66,7 +66,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 253),
 							Protocol: route.ProtoKernel,
@@ -82,8 +82,8 @@ func TestComparePfxPath(t *testing.T) {
 		{
 			name: "in right but not in left",
 			left: map[bnet.Prefix][]*route.FIBPath{
-				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): []*route.FIBPath{
-					&route.FIBPath{
+				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): {
+					{
 						Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 						NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 						Protocol: route.ProtoKernel,
@@ -98,7 +98,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -107,7 +107,7 @@ func TestComparePfxPath(t *testing.T) {
 							Type:     1,
 							Kernel:   true,
 						},
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 253),
 							Protocol: route.ProtoKernel,
@@ -124,7 +124,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 253),
 							Protocol: route.ProtoKernel,
@@ -140,8 +140,8 @@ func TestComparePfxPath(t *testing.T) {
 		{
 			name: "left filled, right no paths, only in fib=true",
 			left: map[bnet.Prefix][]*route.FIBPath{
-				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): []*route.FIBPath{
-					&route.FIBPath{
+				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): {
+					{
 						Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 						NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 						Protocol: route.ProtoKernel,
@@ -163,7 +163,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -179,8 +179,8 @@ func TestComparePfxPath(t *testing.T) {
 		{
 			name: "left filled, right no paths, only in fib=false",
 			left: map[bnet.Prefix][]*route.FIBPath{
-				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): []*route.FIBPath{
-					&route.FIBPath{
+				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): {
+					{
 						Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 						NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 						Protocol: route.ProtoKernel,
@@ -214,7 +214,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -243,7 +243,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -260,7 +260,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -276,8 +276,8 @@ func TestComparePfxPath(t *testing.T) {
 		{
 			name: "left yes, right nil, only in fib=true",
 			left: map[bnet.Prefix][]*route.FIBPath{
-				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): []*route.FIBPath{
-					&route.FIBPath{
+				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): {
+					{
 						Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 						NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 						Protocol: route.ProtoKernel,
@@ -294,7 +294,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -310,8 +310,8 @@ func TestComparePfxPath(t *testing.T) {
 		{
 			name: "left yes, right nil, only in fib=false",
 			left: map[bnet.Prefix][]*route.FIBPath{
-				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): []*route.FIBPath{
-					&route.FIBPath{
+				bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24): {
+					{
 						Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 						NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 						Protocol: route.ProtoKernel,
@@ -333,7 +333,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -355,7 +355,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
@@ -372,7 +372,7 @@ func TestComparePfxPath(t *testing.T) {
 				{
 					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 1), 24),
 					Paths: []*route.FIBPath{
-						&route.FIBPath{
+						{
 							Src:      bnet.IPv4FromOctets(10, 0, 0, 1),
 							NextHop:  bnet.IPv4FromOctets(10, 0, 0, 254),
 							Protocol: route.ProtoKernel,
