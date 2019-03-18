@@ -21,7 +21,7 @@ A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustnes
 
 #### Device
 
-    cd examples/devices && go build
+    cd examples/device && go build
 
 ### Run Tests
 
