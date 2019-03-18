@@ -121,3 +121,16 @@ func (v *VRF) RIBByName(name string) (rib *locRIB.LocRIB, found bool) {
 	rib, found = v.ribNames[name]
 	return rib, found
 }
+
+// GetRIBNames returns an []string containing all rib-names
+func (v *VRF) GetRIBNames() []string {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+
+	ribNames := make([]string, 0)
+	for ribName := range v.ribNames {
+		ribNames = append(ribNames, ribName)
+	}
+
+	return ribNames
+}
