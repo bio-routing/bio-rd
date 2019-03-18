@@ -1,103 +1,56 @@
 package main
 
 import (
-	"log"
-	"net"
+	"github.com/bio-routing/bio-rd/route"
 	"time"
 
-	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
-	api "github.com/bio-routing/bio-rd/protocols/bgp/api"
-	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/protocols/fib"
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 )
 
-func startBGPServer(b server.BGPServer, v *vrf.VRF) {
-	apiSrv := server.NewBGPAPIServer(b)
-
-	lis, err := net.Listen("tcp", ":1337")
-	if err != nil {
-		logrus.Fatalf("failed to listen: %v", err)
-	}
-	grpcServer := grpc.NewServer()
-	api.RegisterBgpServiceServer(grpcServer, apiSrv)
-	go grpcServer.Serve(lis)
-
-	err = b.Start(&config.Global{
-		Listen: true,
-		LocalAddressList: []net.IP{
-			net.IPv4(169, 254, 100, 1),
-			net.IPv4(169, 254, 200, 0),
+func addPath(v *vrf.VRF) {
+	pfx := bnet.NewPfx(bnet.IPv4FromOctets(169, 254, 0, 0), uint8(24))
+	fibPath := &route.Path{
+		Type: route.FIBPathType,
+		FIBPath: &route.FIBPath{
+			NextHop:  bnet.IPv4FromOctets(169, 254, 1, 1),
+			Priority: 1,
+			Protocol: route.ProtoBio,
+			Type:     0,
+			Table:    254,
 		},
-	})
-	if err != nil {
-		logrus.Fatalf("Unable to start BGP server: %v", err)
 	}
 
-	b.AddPeer(config.Peer{
-		AdminEnabled:      true,
-		LocalAS:           65200,
-		PeerAS:            65100,
-		PeerAddress:       bnet.IPv4FromOctets(172, 17, 0, 2),
-		LocalAddress:      bnet.IPv4FromOctets(169, 254, 100, 1),
-		ReconnectInterval: time.Second * 15,
-		HoldTime:          time.Second * 90,
-		KeepAlive:         time.Second * 30,
-		Passive:           true,
-		RouterID:          b.RouterID(),
-		RouteServerClient: true,
-		IPv4: &config.AddressFamilyConfig{
-			ImportFilter: filter.NewAcceptAllFilter(),
-			ExportFilter: filter.NewAcceptAllFilter(),
-			AddPathSend: routingtable.ClientOptions{
-				MaxPaths: 10,
-			},
-			AddPathRecv: true,
-		},
-		VRF: v,
-	})
-}
+	rib, found := v.RIBByName("inet.254")
+	if !found {
+		logrus.Fatal("Unable to find RIB inet.254")
+	}
 
-func startFIB(f *fib.FIB) {
-	err := f.Start()
+	err := rib.AddPath(pfx, fibPath)
 	if err != nil {
-		logrus.Fatalf("Unable to start FIB: %v", err)
+		logrus.Errorf("Unable to add Path: Pfx: %s Path: %s", pfx.String(), fibPath.String())
 	}
 }
 
 func main() {
-	logrus.Printf("This is a linux router that speaks BGP\n")
-
 	v, err := vrf.NewDefaultVRF()
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	//b := server.NewBgpServer()
-	//startBGPServer(b, v)
-
-	go func() {
-		rib, found := v.RIBByName("inet.0")
-		if found {
-			for {
-				log.Print("\n\n\n\n### LocRIB DumP:")
-				log.Print(rib.Print())
-				time.Sleep(5 * time.Second)
-			}
-		}
-	}()
-
 	f, err := fib.New(v)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
-	startFIB(f)
+	err = f.Start()
+	if err != nil {
+		logrus.Fatalf("Unable to start FIB: %v", err)
+	}
 
-	select {}
+	time.Sleep(5 * time.Second)
+
+	addPath(v)
 }

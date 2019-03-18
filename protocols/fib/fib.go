@@ -111,6 +111,7 @@ func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
 	if newPath {
 		err = f.osAdapter.addPath(pfx, paths)
 		if err != nil {
+			log.Errorf("Can't add Path to underlying OS Layer: %v", err)
 			return errors.Wrap(err, "Can't add Path to underlying OS Layer")
 		}
 

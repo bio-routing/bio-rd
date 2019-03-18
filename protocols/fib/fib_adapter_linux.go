@@ -34,12 +34,11 @@ func (f *osFibAdapterLinux) addPath(pfx bnet.Prefix, paths []*route.FIBPath) err
 
 	log.WithFields(log.Fields{
 		"Prefix": pfx.String(),
-		"Table":  route.Table,
+		"Route":  route,
 	}).Debug("AddPath to netlink")
 
 	err = netlink.RouteAdd(route)
-	if err != nil {
-		log.Errorf("Error while adding route: %v", err)
+	if err != nil && err.Error() != "file exists" {
 		return errors.Wrap(err, "Error while adding route")
 	}
 
