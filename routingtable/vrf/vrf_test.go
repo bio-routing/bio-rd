@@ -81,3 +81,15 @@ func TestUnregister(t *testing.T) {
 	_, found = globalRegistry.vrfsID[vrfID]
 	assert.False(t, found, "vrf must not be in global registry")
 }
+
+func TestGetRIBNames(t *testing.T) {
+	vrfName := "namedRIBs"
+	vrfID := uint32(8)
+	v, err := New(vrfName, vrfID)
+	assert.Nil(t, err, "error must be nil on first invokation")
+
+	ribNames := v.GetRIBNames()
+	expectedRibNames := []string{"inet.8", "inet6.8"}
+
+	assert.EqualValues(t, expectedRibNames, ribNames, "rib names must match")
+}
