@@ -35,8 +35,8 @@ func NewDefaultVRF() (*VRF, error) {
 // New creates a new VRF. The VRF is registered automatically to the global VRF registry.
 func New(name string, id uint32) (*VRF, error) {
 	v := newUntrackedVRF(name, id)
-	v.CreateIPv4UnicastLocRIB("inet.0")
-	v.CreateIPv6UnicastLocRIB("inet6.0")
+	v.CreateIPv4UnicastLocRIB(fmt.Sprintf("inet.%d", id))
+	v.CreateIPv6UnicastLocRIB(fmt.Sprintf("inet6.%d", id))
 
 	err := globalRegistry.registerVRF(v)
 	if err != nil {
