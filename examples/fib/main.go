@@ -15,11 +15,7 @@ func addPath(v *vrf.VRF) {
 	fibPath := &route.Path{
 		Type: route.FIBPathType,
 		FIBPath: &route.FIBPath{
-			NextHop:  bnet.IPv4FromOctets(169, 254, 1, 1),
-			Priority: 1,
-			Protocol: route.ProtoBio,
-			Type:     0,
-			Table:    254,
+			NextHop: bnet.IPv4FromOctets(169, 254, 1, 1),
 		},
 	}
 
