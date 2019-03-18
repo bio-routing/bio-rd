@@ -323,7 +323,7 @@ func TestPathsContains(t *testing.T) {
 	}
 }
 
-func TestNewNlPath(t *testing.T) {
+func TestNewFIBPath(t *testing.T) {
 	tests := []struct {
 		name     string
 		source   *Path
@@ -349,7 +349,7 @@ func TestNewNlPath(t *testing.T) {
 
 		switch test.source.Type {
 		case BGPPathType:
-			converted = NewFIBPathFromBgpPath(test.source.BGPPath)
+			converted = newFIBPathFromBgpPath(test.source.BGPPath)
 
 		default:
 			assert.Fail(t, fmt.Sprintf("Source-type %d is not supported", test.source.Type))

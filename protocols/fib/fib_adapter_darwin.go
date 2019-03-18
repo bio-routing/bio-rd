@@ -7,7 +7,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 )
 
-func (f *FIB) loadFIB() {
+func (f *FIB) loadOSAdapter() {
 	f.osAdapter = newOSFIBDarwin(f)
 }
 

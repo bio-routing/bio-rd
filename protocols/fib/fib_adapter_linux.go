@@ -2,7 +2,6 @@ package fib
 
 import (
 	"fmt"
-	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
@@ -11,7 +10,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-func (f *FIB) loadFIB() {
+func (f *FIB) loadOSAdapter() {
 	f.osAdapter = newOSFIBLinux(f)
 }
 
@@ -27,8 +26,8 @@ func newOSFIBLinux(f *FIB) *osFibAdapterLinux {
 	return linuxAdapter
 }
 
-func (f *osFibAdapterLinux) addPath(pfx bnet.Prefix) error {
-	route, err := f.createRoute(pfx, f.fib.pathTable[pfx])
+func (f *osFibAdapterLinux) addPath(pfx bnet.Prefix, paths []*route.FIBPath) error {
+	route, err := f.createRoute(pfx, paths)
 	if err != nil {
 		return errors.Wrap(err, "Could not create route from prefix and path: %v")
 	}
@@ -91,123 +90,4 @@ func (f *osFibAdapterLinux) createRoute(pfx bnet.Prefix, paths []*route.FIBPath)
 	}
 
 	return route, nil
-}
-
-func (f *osFibAdapterLinux) start() error {
-	// Start fetching the kernel routes after the hold timer expires
-	// TODO: time.Sleep(nr.options.HoldTime)
-
-	errCnt := 3
-
-	go func() {
-		// TODO graceful shutdown this loop in case of closing
-		for {
-			// Family doesn't matter since I only filter by rt_table
-			nlKernelRoutes, err := netlink.RouteListFiltered(bnet.IPFamily4, &netlink.Route{
-				Table: int(f.fib.vrf.ID()),
-			}, netlink.RT_FILTER_TABLE)
-
-			if err != nil {
-				if errCnt--; errCnt == 0 {
-					log.WithError(err).Panic("Failed to read routes from kernel")
-				} else {
-					log.WithError(err).Error("Failed to read routes from kernel")
-				}
-			}
-
-			fibPfxPaths := convertNlRouteToFIBPath(nlKernelRoutes, true)
-
-			diffContainedInFib := f.fib.compareFibPfxPath(fibPfxPaths, true)
-			diffContainedInKernel := f.fib.compareFibPfxPath(fibPfxPaths, false)
-
-			// remove diffContainedInFib from FIB
-			for _, staleInFib := range diffContainedInFib {
-				f.fib.removePath(staleInFib.Pfx, staleInFib.Paths)
-			}
-
-			// add diffContainedInKernel to FIB
-			for _, newToFib := range diffContainedInKernel {
-				f.fib.addPath(newToFib.Pfx, newToFib.Paths)
-			}
-
-			// TODO: time.Sleep(nr.options.UpdateInterval)
-			time.Sleep(5 * time.Second)
-		}
-	}()
-	return nil
-}
-
-// convertNlRouteToFIBPath creates a new route.FIBPath object from a netlink.Route object
-func convertNlRouteToFIBPath(netlinkRoutes []netlink.Route, fromKernel bool) []*route.PrefixPathsPair {
-	fibPfxPaths := make([]*route.PrefixPathsPair, 0)
-
-	for _, r := range netlinkRoutes {
-		var src bnet.IP
-		var dst bnet.Prefix
-
-		if r.Src == nil && r.Dst == nil {
-			log.Debugf("Cannot create NlPath, since source and destination are both nil")
-			continue
-		}
-
-		if r.Src == nil && r.Dst != nil {
-			dst = bnet.NewPfxFromIPNet(r.Dst)
-			if dst.Addr().IsIPv4() {
-				src = bnet.IPv4(0)
-			} else {
-				src = bnet.IPv6(0, 0)
-			}
-		}
-
-		if r.Src != nil && r.Dst == nil {
-			src, _ = bnet.IPFromBytes(r.Src)
-			if src.IsIPv4() {
-				dst = bnet.NewPfx(bnet.IPv4(0), 0)
-			} else {
-				dst = bnet.NewPfx(bnet.IPv6(0, 0), 0)
-			}
-		}
-
-		if r.Src != nil && r.Dst != nil {
-			src, _ = bnet.IPFromBytes(r.Src)
-			dst = bnet.NewPfxFromIPNet(r.Dst)
-		}
-
-		paths := make([]*route.FIBPath, 0)
-
-		// If it's multipath, we have to create serveral paths to the same prefix
-		if len(r.MultiPath) > 0 {
-			for _, multiPath := range r.MultiPath {
-				nextHop, _ := bnet.IPFromBytes(multiPath.Gw)
-				paths = append(paths, &route.FIBPath{
-					Src:      src,
-					NextHop:  nextHop,
-					Priority: r.Priority,
-					Protocol: r.Protocol,
-					Type:     r.Type,
-					Table:    r.Table,
-					Kernel:   fromKernel,
-				})
-			}
-		} else {
-			nextHop, _ := bnet.IPFromBytes(r.Gw)
-			paths = append(paths, &route.FIBPath{
-				Src:      src,
-				NextHop:  nextHop,
-				Priority: r.Priority,
-				Protocol: r.Protocol,
-				Type:     r.Type,
-				Table:    r.Table,
-				Kernel:   fromKernel,
-			})
-		}
-
-		fibPfxPaths = append(fibPfxPaths, &route.PrefixPathsPair{
-			Pfx:   dst,
-			Paths: paths,
-			Err:   nil,
-		})
-	}
-
-	return fibPfxPaths
 }

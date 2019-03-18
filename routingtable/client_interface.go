@@ -8,6 +8,7 @@ import (
 // RouteTableClient is the interface that every type of RIB must implement
 type RouteTableClient interface {
 	AddPath(net.Prefix, *route.Path) error
+	// TODO: Need some description what the returned bool should indicate
 	RemovePath(net.Prefix, *route.Path) bool
 	UpdateNewClient(RouteTableClient) error
 	Register(RouteTableClient)

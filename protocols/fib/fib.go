@@ -13,9 +13,8 @@ import (
 )
 
 type fibOsAdapter interface {
-	addPath(pfx bnet.Prefix) error
+	addPath(pfx bnet.Prefix, paths []*route.FIBPath) error
 	removePath(pfx bnet.Prefix, path *route.FIBPath) error
-	start() error
 }
 
 // FIB is forwarding information base
@@ -38,7 +37,7 @@ func New(v *vrf.VRF) (*FIB, error) {
 		pathTable: make(map[bnet.Prefix][]*route.FIBPath),
 	}
 
-	n.loadFIB()
+	n.loadOSAdapter()
 	n.clientManager = routingtable.NewClientManager(n)
 
 	return n, nil
@@ -50,11 +49,6 @@ func (f *FIB) Start() error {
 		return fmt.Errorf("osAdapter is not loaded correctly")
 	}
 
-	err := f.osAdapter.start()
-	if err != nil {
-		return errors.Wrap(err, "Unable to start os specific FIB")
-	}
-
 	// connect all RIBs
 	options := routingtable.ClientOptions{
 		BestOnly: false,
@@ -63,14 +57,16 @@ func (f *FIB) Start() error {
 	}
 
 	// TODO!!!!!!
-	rib, found := f.vrf.RIBByName("inet.0") // v4
-	// rib, found := f.vrf.RIBByName("inet6.0") //v6?
+	rib4, found := f.vrf.RIBByName("inet.0") // v4
 	if found {
 		// from locRib to FIB
-		rib.RegisterWithOptions(f, options)
+		rib4.RegisterWithOptions(f, options)
+	}
 
-		// from FIB to locRIB
-		f.RegisterWithOptions(rib, options)
+	rib6, found := f.vrf.RIBByName("inet6.0") //v6?
+	if found {
+		// from locRib to FIB
+		rib6.RegisterWithOptions(f, options)
 	}
 
 	return nil
@@ -80,98 +76,60 @@ func (f *FIB) Start() error {
 func (f *FIB) RouteCount() int64 {
 	f.pathsMu.RLock()
 	defer f.pathsMu.RUnlock()
-	return int64(len(f.pathTable))
-	//return int64(len(f.paths))
+
+	fibCount := int64(0)
+
+	for _, paths := range f.pathTable {
+		fibCount += int64(len(paths))
+	}
+
+	return fibCount
 }
 
-// AddPath adds the element from the FIB List
+// AddPath is called from the RIB when an path is added there
 func (f *FIB) AddPath(pfx bnet.Prefix, path *route.Path) error {
-	var addPath *route.FIBPath
-
-	switch path.Type {
-	case route.BGPPathType:
-		addPath = route.NewFIBPathFromBgpPath(path.BGPPath)
-	case route.FIBPathType:
-		addPath = path.FIBPath
-
-		if addPath.Kernel {
-			return nil // no need to learn our own originated paths
-		}
-	default:
-		return fmt.Errorf("PathType %d is (currently) not supported", path.Type)
+	// Convert Path to FIBPath
+	addPath, err := route.NewFIBPathFromPath(path)
+	if err != nil {
+		return errors.Wrap(err, "Could not convert path to FIB path")
 	}
 
 	f.pathsMu.Lock()
 	defer f.pathsMu.Unlock()
 
-	existingPaths, found := f.pathTable[pfx]
-	if !found {
-		f.pathTable[pfx] = []*route.FIBPath{addPath}
-
-		err := f.osAdapter.addPath(pfx)
-		if err != nil {
-			err = errors.Wrap(err, "Can't add Path to underlying OS Layer")
-			// be transaction safe!
-			if !f.cleanupPathAfterTryToAdd(pfx, addPath) {
-				err = errors.Wrap(err, "Can't rollback pseudo-transaction. Somethings terrible wrong!")
-			}
-			return err
+	paths, found := f.pathTable[pfx]
+	newPath := false
+	if found {
+		if !addPath.ContainedIn(paths) {
+			paths = append(paths, addPath)
+			newPath = true
 		}
+	} else {
+		paths = []*route.FIBPath{addPath}
+		newPath = true
 	}
 
-	if !addPath.ContainedIn(existingPaths) {
-		f.pathTable[pfx] = append(existingPaths, addPath)
-
-		err := f.osAdapter.addPath(pfx)
+	if newPath {
+		err = f.osAdapter.addPath(pfx, paths)
 		if err != nil {
-			err = errors.Wrap(err, "Can't add Path to underlying OS Layer")
-			// be transaction safe!
-			if !f.cleanupPathAfterTryToAdd(pfx, addPath) {
-				err = errors.Wrap(err, "Can't rollback pseudo-transaction. Somethings terrible wrong!")
-			}
-			return err
+			return errors.Wrap(err, "Can't add Path to underlying OS Layer")
 		}
+
+		// Save new paths
+		f.pathTable[pfx] = paths
 	}
 
 	return nil
 }
 
-// if something goes wrong during adding the path, clean it up!
-func (f *FIB) cleanupPathAfterTryToAdd(pfx bnet.Prefix, path *route.FIBPath) bool {
-	existingPaths, found := f.pathTable[pfx]
-	if !found {
-		return false // whooooot???
-	}
-
-	for idx, p := range existingPaths {
-		if !p.Equals(path) {
-			continue
-		}
-
-		err := f.osAdapter.removePath(pfx, path)
-		if err != nil {
-			log.Errorf("Can't remove Path from underlying OS Layer: %v", err)
-		}
-		existingPaths = append(existingPaths[:idx], existingPaths[idx+1:]...)
-	}
-	return true
-}
-
 // RemovePath adds the element from the FIB List
+// returns true if something was removed, false otherwise
 func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
-	var delPath *route.FIBPath
-
-	switch path.Type {
-	case route.BGPPathType:
-		delPath = route.NewFIBPathFromBgpPath(path.BGPPath)
-	case route.FIBPathType:
-		delPath = path.FIBPath
-
-		if delPath.Kernel {
-			return false // no need to learn our own originated paths
-		}
-	default:
-		log.Errorf("PathType %d is (currently) not supported", path.Type)
+	// Convert Path to FIBPath
+	delPath, err := route.NewFIBPathFromPath(path)
+	if err != nil {
+		log.Errorf("Could not convert path to FIB path: %v", err)
+		return false
 	}
 
 	f.pathsMu.Lock()
@@ -181,6 +139,8 @@ func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 	if !found {
 		return false
 	}
+
+	pathCountBeforeDel := len(existingPaths)
 
 	for idx, p := range existingPaths {
 		if !p.Equals(delPath) {
@@ -190,85 +150,17 @@ func (f *FIB) RemovePath(pfx bnet.Prefix, path *route.Path) bool {
 		err := f.osAdapter.removePath(pfx, delPath)
 		if err != nil {
 			log.Errorf("Can't remove Path from underlying OS Layer: %v", err)
+			// TODO: continue here and let the path in the paths table, or should we just log the error and remove the path regardles if the underlaying operation fails
 		}
+
+		// remove path from existing paths
 		existingPaths = append(existingPaths[:idx], existingPaths[idx+1:]...)
 	}
 
-	return found
-}
-
-func (f *FIB) addPathToClients(pfx bnet.Prefix, addPath *route.FIBPath) {
-	for _, client := range f.clientManager.Clients() {
-		client.AddPath(pfx, &route.Path{
-			Type:    route.FIBPathType,
-			FIBPath: addPath,
-		})
-	}
-}
-
-func (f *FIB) addPathsToClients(pfx bnet.Prefix, addPaths []*route.FIBPath) {
-	for _, client := range f.clientManager.Clients() {
-		for _, addP := range addPaths {
-			client.AddPath(pfx, &route.Path{
-				Type:    route.FIBPathType,
-				FIBPath: addP,
-			})
-		}
-	}
-}
-
-// this function does not aquire a mutex lock! Be careful!
-func (f *FIB) addPath(pfx bnet.Prefix, addPaths []*route.FIBPath) {
-	f.pathsMu.Lock()
-	defer f.pathsMu.Unlock()
-
-	existingPaths, found := f.pathTable[pfx]
-	if !found {
-		f.pathTable[pfx] = addPaths
-		f.addPathsToClients(pfx, addPaths)
-		return
-	}
-
-	for _, pToAdd := range addPaths {
-		if !pToAdd.ContainedIn(existingPaths) {
-			existingPaths = append(existingPaths, pToAdd)
-			f.addPathToClients(pfx, pToAdd)
-		}
-	}
-}
-
-func (f *FIB) removePathFromClients(pfx bnet.Prefix, removePath *route.FIBPath) {
-	for _, client := range f.clientManager.Clients() {
-		client.RemovePath(pfx, &route.Path{
-			Type:    route.FIBPathType,
-			FIBPath: removePath,
-		})
-	}
-}
-
-// this function does not aquire a mutex lock! Be careful!
-func (f *FIB) removePath(pfx bnet.Prefix, delPaths []*route.FIBPath) bool {
-	f.pathsMu.Lock()
-	defer f.pathsMu.Unlock()
-
-	existingPaths, found := f.pathTable[pfx]
-	if !found {
-		return false
-	}
-
-	for _, pToDel := range delPaths {
-		for idx, exPath := range existingPaths {
-			if !exPath.Equals(pToDel) {
-				continue
-			}
-
-			existingPaths = append(existingPaths[:idx], existingPaths[idx+1:]...)
-			f.removePathFromClients(pfx, pToDel)
-		}
-	}
-
+	// Save
 	f.pathTable[pfx] = existingPaths
-	return true
+
+	return pathCountBeforeDel > len(existingPaths)
 }
 
 // If inFibButNotIncmpTo=true the diff will show which parts of cmpTo are inside fib,

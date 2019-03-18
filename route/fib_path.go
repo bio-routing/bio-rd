@@ -51,16 +51,27 @@ type FIBPath struct {
 	Protocol int
 	Type     int
 	Table    int
-	Kernel   bool // True if the route is already installed in the kernel
 }
 
 // NewFIBPathFromBgpPath creates a new FIBPath object from a BGPPath object
-func NewFIBPathFromBgpPath(p *BGPPath) *FIBPath {
+func newFIBPathFromBgpPath(p *BGPPath) *FIBPath {
 	return &FIBPath{
 		Src:      p.Source,
 		NextHop:  p.NextHop,
 		Protocol: ProtoBio,
-		Kernel:   false,
+	}
+}
+
+func NewFIBPathFromPath(path *Path) (*FIBPath, error) {
+	switch path.Type {
+	case BGPPathType:
+		return newFIBPathFromBgpPath(path.BGPPath), nil
+
+	case FIBPathType:
+		return path.FIBPath, nil
+
+	default:
+		return nil, fmt.Errorf("PathType %d is (currently) not supported", path.Type)
 	}
 }
 
@@ -71,8 +82,7 @@ func (s *FIBPath) Equals(b *FIBPath) bool {
 		s.Priority == b.Priority &&
 		s.Protocol == b.Protocol &&
 		s.Type == b.Type &&
-		s.Table == b.Table &&
-		s.Kernel == b.Kernel
+		s.Table == b.Table
 }
 
 // Select compares s with t and returns negative if s < t, 0 if paths are equal, positive if s > t
