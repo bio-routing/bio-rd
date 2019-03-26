@@ -1,8 +1,6 @@
 package server
 
 import (
-	"time"
-
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 )
 
@@ -30,10 +28,6 @@ func (b *metricsService) peerMetrics() []*metrics.BGPPeerMetrics {
 	peers := make([]*metrics.BGPPeerMetrics, 0)
 
 	for _, peer := range b.server.peers.list() {
-		if len(peer.fsms) == 0 {
-			continue
-		}
-
 		m := b.metricsForPeer(peer)
 		peers = append(peers, m)
 	}
@@ -47,14 +41,20 @@ func (b *metricsService) metricsForPeer(peer *peer) *metrics.BGPPeerMetrics {
 		LocalASN:        peer.localASN,
 		IP:              peer.addr,
 		AddressFamilies: make([]*metrics.BGPAddressFamilyMetrics, 0),
+		VRF:             peer.vrf.Name(),
 	}
 
-	fsm := peer.fsms[0]
+	var fsms = peer.fsms
+	if len(fsms) == 0 {
+		return m
+	}
+
+	fsm := fsms[0]
 	m.Status = b.statusFromFSM(fsm)
 	m.Up = m.Status == statusEstablished
 
 	if m.Up {
-		m.Since = time.Since(fsm.establishedDate)
+		m.Since = fsm.establishedTime
 	}
 
 	m.UpdatesReceived = fsm.counters.updatesReceived

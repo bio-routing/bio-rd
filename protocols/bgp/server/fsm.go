@@ -77,7 +77,7 @@ type FSM struct {
 	reason     string
 	active     bool
 
-	establishedDate time.Time
+	establishedTime time.Time
 	counters        fsmConters
 
 	connectionCancelFunc context.CancelFunc
@@ -178,7 +178,7 @@ func (fsm *FSM) run() {
 		}
 
 		if oldState != newState && newState == stateNameEstablished {
-			fsm.establishedDate = time.Now()
+			fsm.establishedTime = time.Now()
 		}
 
 		fsm.stateMu.Lock()
