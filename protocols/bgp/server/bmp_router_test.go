@@ -339,7 +339,6 @@ func TestProcessPeerUpNotification(t *testing.T) {
 								importFilter: filter.NewAcceptAllFilter(),
 								addPathTX:    routingtable.ClientOptions{BestOnly: true},
 							},
-							counters: &fsmConters{},
 						},
 					},
 				},

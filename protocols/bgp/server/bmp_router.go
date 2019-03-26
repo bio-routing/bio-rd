@@ -313,7 +313,6 @@ func (r *router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 			ipv4:      &peerAddressFamily{},
 			ipv6:      &peerAddressFamily{},
 		},
-		counters: &fsmConters{},
 	}
 
 	fsm.peer.configureBySentOpen(sentOpen)

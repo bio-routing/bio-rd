@@ -4,14 +4,19 @@ package metrics
 type BGPAddressFamilyMetrics struct {
 	// AFI is the identifier for the address family
 	AFI uint16
+
 	// SAFI is the identifier for the sub address family
 	SAFI uint8
+
 	// RoutesReceived is the number of routes we recevied
 	RoutesReceived uint64
+
 	// RoutesRejected is the number of routes we recevied and did not accept
 	//RoutesRejected uint64
+
 	// RoutesAccepted is the number of routes we recevied and did accept
 	//RoutesAccepted uint64
+
 	// RoutesAccepted is the number of routes we sent
 	RoutesSent uint64
 }
