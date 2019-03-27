@@ -11,12 +11,6 @@ type BGPAddressFamilyMetrics struct {
 	// RoutesReceived is the number of routes we recevied
 	RoutesReceived uint64
 
-	// RoutesRejected is the number of routes we recevied and did not accept
-	//RoutesRejected uint64
-
-	// RoutesAccepted is the number of routes we recevied and did accept
-	//RoutesAccepted uint64
-
 	// RoutesAccepted is the number of routes we sent
 	RoutesSent uint64
 }
