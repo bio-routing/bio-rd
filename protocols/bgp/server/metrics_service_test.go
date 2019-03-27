@@ -1,12 +1,13 @@
 package server
 
 import (
+	"testing"
+	"time"
+
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
@@ -56,7 +57,7 @@ func TestMetrics(t *testing.T) {
 						UpdatesSent:     4,
 						VRF:             "inet.0",
 						Up:              true,
-						Status:          statusEstablished,
+						State:           stateEstablished,
 						Since:           establishedTime,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
@@ -94,7 +95,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						Status:   statusIdle,
+						State:    stateIdle,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -127,7 +128,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						Status:   statusActive,
+						State:    stateActive,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -160,7 +161,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						Status:   statusOpenSent,
+						State:    stateOpenSent,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -193,7 +194,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						Status:   statusOpenConfirm,
+						State:    stateOpenConfirm,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -226,7 +227,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						Status:   statusConnect,
+						State:    stateConnect,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,

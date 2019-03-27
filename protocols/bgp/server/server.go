@@ -33,7 +33,7 @@ type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
-  Metrics() (*metrics.BGPMetrics, error)
+	Metrics() (*metrics.BGPMetrics, error)
 	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
 	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
 	ConnectMockPeer(peer config.Peer, con net.Conn)

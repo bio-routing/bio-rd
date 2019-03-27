@@ -1,23 +1,15 @@
 package metrics
 
 import (
-	bnet "github.com/bio-routing/bio-rd/net"
 	"time"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 // BGPPeerMetrics provides metrics for one BGP session
 type BGPPeerMetrics struct {
 	// IP is the remote IP of the peer
 	IP bnet.IP
-
-	// Since is the time the session was established
-	Since time.Time
-
-	// Status of the BGP session (Down = 0, Idle = 1, Connect = 2, OpenSent = 3, OpenConfirm = 4, Established = 5)
-	Status uint8
-
-	// Up returns if the session is established
-	Up bool
 
 	// ASN is the ASN of the peer
 	ASN uint32
@@ -27,6 +19,15 @@ type BGPPeerMetrics struct {
 
 	// VRF is the name of the VRF the peer is configured in
 	VRF string
+
+	// Since is the time the session was established
+	Since time.Time
+
+	// State of the BGP session (Down = 0, Idle = 1, Connect = 2, Active = 3, OpenSent = 4, OpenConfirm = 5, Established = 6)
+	State uint8
+
+	// Up returns if the session is established
+	Up bool
 
 	// UpdatesReceived is the number of update messages received on this session
 	UpdatesReceived uint64

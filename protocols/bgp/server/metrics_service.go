@@ -5,13 +5,13 @@ import (
 )
 
 const (
-	statusDown        = 0
-	statusIdle        = 1
-	statusConnect     = 2
-	statusActive      = 3
-	statusOpenSent    = 4
-	statusOpenConfirm = 5
-	statusEstablished = 6
+	stateDown        = 0
+	stateIdle        = 1
+	stateConnect     = 2
+	stateActive      = 3
+	stateOpenSent    = 4
+	stateOpenConfirm = 5
+	stateEstablished = 6
 )
 
 type metricsService struct {
@@ -50,8 +50,8 @@ func (b *metricsService) metricsForPeer(peer *peer) *metrics.BGPPeerMetrics {
 	}
 
 	fsm := fsms[0]
-	m.Status = b.statusFromFSM(fsm)
-	m.Up = m.Status == statusEstablished
+	m.State = b.statusFromFSM(fsm)
+	m.Up = m.State == stateEstablished
 
 	if m.Up {
 		m.Since = fsm.establishedTime
@@ -83,18 +83,18 @@ func (b *metricsService) metricsForFamily(family *fsmAddressFamily) *metrics.BGP
 func (b *metricsService) statusFromFSM(fsm *FSM) uint8 {
 	switch fsm.state.(type) {
 	case *idleState:
-		return statusIdle
+		return stateIdle
 	case *connectState:
-		return statusConnect
+		return stateConnect
 	case *activeState:
-		return statusActive
+		return stateActive
 	case *openSentState:
-		return statusOpenSent
+		return stateOpenSent
 	case *openConfirmState:
-		return statusOpenConfirm
+		return stateOpenConfirm
 	case *establishedState:
-		return statusEstablished
+		return stateEstablished
 	}
 
-	return statusDown
+	return stateDown
 }
