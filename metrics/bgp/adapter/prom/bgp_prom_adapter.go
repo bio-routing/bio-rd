@@ -42,6 +42,11 @@ func init() {
 	routesAcceptedDesc = prometheus.NewDesc(prefix+"route_accepted_count", "Number of routes accepted", labels, nil)
 }
 
+// NewCollector creates a new collector instance for the given BGP server
+func NewCollector(server server.BGPServer) prometheus.Collector {
+	return &bgpCollector{server}
+}
+
 // BGPCollector provides a collector for BGP metrics of BIO to use with Prometheus
 type bgpCollector struct {
 	server server.BGPServer
