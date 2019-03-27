@@ -85,6 +85,7 @@ func (v *VRF) IPv6UnicastRIB() *locRIB.LocRIB {
 	return v.ribForAddressFamily(addressFamily{afi: afiIPv6, safi: safiUnicast})
 }
 
+// Name is the name of the VRF
 func (v *VRF) Name() string {
 	return v.name
 }
@@ -107,4 +108,14 @@ func (v *VRF) ribForAddressFamily(family addressFamily) *locRIB.LocRIB {
 func (v *VRF) RIBByName(name string) (rib *locRIB.LocRIB, found bool) {
 	rib, found = v.ribNames[name]
 	return rib, found
+}
+
+func (v *VRF) nameForRIB(rib *locRIB.LocRIB) string {
+	for name, r := range v.ribNames {
+		if r == rib {
+			return name
+		}
+	}
+
+	return ""
 }

@@ -48,12 +48,9 @@ func (a *LocRIB) GetContributingASNs() *routingtable.ContributingASNs {
 	return a.contributingASNs
 }
 
-//Count routes from the LocRIP
+// Count routes from the LocRIB
 func (a *LocRIB) Count() uint64 {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-
-	return uint64(len(a.rt.Dump()))
+	return uint64(a.rt.GetRouteCount())
 }
 
 // Dump dumps the RIB
