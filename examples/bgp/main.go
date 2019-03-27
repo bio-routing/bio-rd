@@ -42,5 +42,5 @@ func startMetricsEndpoint(server server.BGPServer) {
 
 	http.Handle("/metrics", promhttp.Handler())
 	logrus.Info("Metrics are available :8080/metrics")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	logrus.Error(http.ListenAndServe(":8080", nil))
 }
