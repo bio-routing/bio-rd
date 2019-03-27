@@ -41,6 +41,7 @@ func startMetricsEndpoint(server server.BGPServer) {
 	prometheus.MustRegister(prom_vrf.NewCollector())
 
 	http.Handle("/metrics", promhttp.Handler())
+	
 	logrus.Info("Metrics are available :8080/metrics")
 	logrus.Error(http.ListenAndServe(":8080", nil))
 }
