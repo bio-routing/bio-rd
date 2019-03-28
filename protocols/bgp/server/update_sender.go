@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -180,6 +181,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 		if err != nil {
 			log.Errorf("Failed to serialize and send: %v", err)
 		}
+		atomic.AddUint64(&u.fsm.counters.updatesSent, 1)
 	}
 }
 

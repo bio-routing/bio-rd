@@ -13,7 +13,8 @@ type RemovePathParams struct {
 }
 
 type RTMockClient struct {
-	removed []*RemovePathParams
+	removed        []*RemovePathParams
+	FakeRouteCount int64
 }
 
 func NewRTMockClient() *RTMockClient {
@@ -67,5 +68,5 @@ func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
 }
 
 func (m *RTMockClient) RouteCount() int64 {
-	return 0
+	return m.FakeRouteCount
 }

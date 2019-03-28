@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"sync"
 	"time"
 
@@ -36,6 +37,7 @@ type peer struct {
 	ipv4MultiProtocolAdvertised bool
 	clusterID                   uint32
 
+	vrf  *vrf.VRF
 	ipv4 *peerAddressFamily
 	ipv6 *peerAddressFamily
 }
@@ -164,6 +166,7 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 		routeServerClient:    c.RouteServerClient,
 		routeReflectorClient: c.RouteReflectorClient,
 		clusterID:            c.RouteReflectorClusterID,
+		vrf:                  c.VRF,
 	}
 
 	if c.IPv4 != nil {

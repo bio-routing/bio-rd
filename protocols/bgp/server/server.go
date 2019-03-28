@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -24,21 +26,31 @@ type bgpServer struct {
 	peers     *peerManager
 	routerID  uint32
 	localASN  uint32
+	metrics   *metricsService
 }
 
 type BGPServer interface {
 	RouterID() uint32
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
+	Metrics() (*metrics.BGPMetrics, error)
 	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
 	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
 	ConnectMockPeer(peer config.Peer, con net.Conn)
 }
 
+// NewBgpServer creates a new instance of bgpServer
 func NewBgpServer() BGPServer {
-	return &bgpServer{
+	return newBgpServer()
+}
+
+func newBgpServer() *bgpServer {
+	server := &bgpServer{
 		peers: newPeerManager(),
 	}
+
+	server.metrics = &metricsService{server}
+	return server
 }
 
 func (b *bgpServer) RouterID() uint32 {
@@ -162,4 +174,12 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 	}
 
 	return nil
+}
+
+func (b *bgpServer) Metrics() (*metrics.BGPMetrics, error) {
+	if b.metrics == nil {
+		return nil, fmt.Errorf("Server not started yet")
+	}
+
+	return b.metrics.metrics(), nil
 }

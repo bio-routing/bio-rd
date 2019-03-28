@@ -41,3 +41,17 @@ func (r *vrfRegistry) unregisterVRF(v *VRF) {
 
 	delete(r.vrfs, v.name)
 }
+
+func (r *vrfRegistry) list() []*VRF {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	l := make([]*VRF, len(r.vrfs))
+	i := 0
+	for _, v := range r.vrfs {
+		l[i] = v
+		i++
+	}
+
+	return l
+}

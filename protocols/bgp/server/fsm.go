@@ -22,6 +22,13 @@ const (
 	AutomaticStartWithPassiveTcpEstablishment = 5
 	AutomaticStop                             = 8
 	Cease                                     = 100
+	stateNameIdle                             = "idle"
+	stateNameConnect                          = "connect"
+	stateNameActive                           = "active"
+	stateNameOpenSent                         = "openSent"
+	stateNameOpenConfirm                      = "openConfirm"
+	stateNameEstablished                      = "established"
+	stateNameCease                            = "cease"
 )
 
 type state interface {
@@ -70,6 +77,9 @@ type FSM struct {
 	reason     string
 	active     bool
 
+	establishedTime time.Time
+	counters        fsmCounters
+
 	connectionCancelFunc context.CancelFunc
 }
 
@@ -100,6 +110,7 @@ func newFSM(peer *peer) *FSM {
 		msgRecvCh:        make(chan []byte),
 		msgRecvFailCh:    make(chan error),
 		stopMsgRecvCh:    make(chan struct{}),
+		counters:         fsmCounters{},
 	}
 
 	if peer.ipv4 != nil {
@@ -162,8 +173,12 @@ func (fsm *FSM) run() {
 			}).Info("FSM: Neighbor state change")
 		}
 
-		if newState == "cease" {
+		if newState == stateNameCease {
 			return
+		}
+
+		if oldState != newState && newState == stateNameEstablished {
+			fsm.establishedTime = time.Now()
 		}
 
 		fsm.stateMu.Lock()
@@ -183,19 +198,19 @@ func (fsm *FSM) cancelRunningGoRoutines() {
 func stateName(s state) string {
 	switch s.(type) {
 	case *idleState:
-		return "idle"
+		return stateNameIdle
 	case *connectState:
-		return "connect"
+		return stateNameConnect
 	case *activeState:
-		return "active"
+		return stateNameActive
 	case *openSentState:
-		return "openSent"
+		return stateNameOpenSent
 	case *openConfirmState:
-		return "openConfirm"
+		return stateNameOpenConfirm
 	case *establishedState:
-		return "established"
+		return stateNameEstablished
 	case *ceaseState:
-		return "cease"
+		return stateNameCease
 	default:
 		panic(fmt.Sprintf("Unknown state: %v", s))
 	}
