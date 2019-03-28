@@ -25,6 +25,9 @@ type Peer struct {
 	RouteReflectorClient       bool
 	RouteReflectorClusterID    uint32
 	AdvertiseIPv4MultiProtocol bool
+	ReceivePrefixLimit         uint
+	AcceptPrefixLimit          uint
+	AnnouncePrefixLimit        uint
 	IPv4                       *AddressFamilyConfig
 	IPv6                       *AddressFamilyConfig
 	VRF                        *vrf.VRF

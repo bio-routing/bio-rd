@@ -1449,3 +1449,70 @@ func TestAddPathIBGP(t *testing.T) {
 		}
 	}
 }
+
+func TestPrefixLimit(t *testing.T) {
+	tests := []struct {
+		name                string
+		prefixesToAdd       uint
+		announcePrefixLimit uint
+		wantsHitError       bool
+		expectedLimitHit    uint
+	}{
+		{
+			name:          "no limit configured",
+			prefixesToAdd: 3,
+		},
+		{
+			name:                "prefix limit hit",
+			prefixesToAdd:       3,
+			announcePrefixLimit: 2,
+			wantsHitError:       true,
+			expectedLimitHit:    2,
+		},
+		{
+			name:                "prefix limit hit (exact)",
+			prefixesToAdd:       2,
+			announcePrefixLimit: 2,
+			wantsHitError:       true,
+			expectedLimitHit:    2,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rib := New(&routingtable.Neighbor{}, filter.NewAcceptAllFilter(), false)
+			rib.announcePrefixLimit = test.announcePrefixLimit
+
+			p := &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					NextHop: net.IPv4FromOctets(192, 168, 0, 0),
+				},
+			}
+
+			var err error
+			for i := uint(0); i < test.prefixesToAdd; i++ {
+				pfx := net.NewPfx(net.IPv4(uint32(i)), 32)
+				err = rib.AddPath(pfx, p)
+				if err != nil {
+					break
+				}
+			}
+
+			if !test.wantsHitError && err == nil {
+				return
+			}
+
+			if err == nil {
+				t.Fatal("expected error, got none")
+			}
+
+			switch err.(type) {
+			case *routingtable.PrefixLimitHitError:
+				assert.Equal(t, test.expectedLimitHit, err.(*routingtable.PrefixLimitHitError).Limit())
+			default:
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}

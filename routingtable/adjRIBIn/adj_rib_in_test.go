@@ -356,3 +356,90 @@ func TestUnregister(t *testing.T) {
 	assert.Equal(t, &routingtable.RemovePathParams{pfxs[0], paths[1]}, r[1], "Withdraw 2")
 	assert.Equal(t, &routingtable.RemovePathParams{pfxs[1], paths[2]}, r[2], "Withdraw 3")
 }
+
+func TestPrefixLimit(t *testing.T) {
+	tests := []struct {
+		name                string
+		prefixesToAdd       uint
+		receivePrefixLimit  uint
+		acceptedPrefixLimit uint
+		wantsHitError       bool
+		expectedLimitHit    uint
+	}{
+		{
+			name:          "no limit configured",
+			prefixesToAdd: 3,
+		},
+		{
+			name:                "prefix limit hit after policy",
+			prefixesToAdd:       3,
+			receivePrefixLimit:  5,
+			acceptedPrefixLimit: 2,
+			wantsHitError:       true,
+			expectedLimitHit:    2,
+		},
+		{
+			name:                "prefix limit hit after policy (exact)",
+			prefixesToAdd:       2,
+			receivePrefixLimit:  5,
+			acceptedPrefixLimit: 2,
+			wantsHitError:       true,
+			expectedLimitHit:    2,
+		},
+		{
+			name:                "prefix limit hit before policy",
+			prefixesToAdd:       3,
+			receivePrefixLimit:  2,
+			acceptedPrefixLimit: 5,
+			wantsHitError:       true,
+			expectedLimitHit:    2,
+		},
+		{
+			name:                "prefix limit hit before policy (exact)",
+			prefixesToAdd:       2,
+			receivePrefixLimit:  2,
+			acceptedPrefixLimit: 5,
+			wantsHitError:       true,
+			expectedLimitHit:    2,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rib := New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, 1, 0, false)
+			rib.acceptedPrefixLimit = test.acceptedPrefixLimit
+			rib.receivePrefixLimit = test.receivePrefixLimit
+
+			p := &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					NextHop: net.IPv4FromOctets(192, 168, 0, 0),
+				},
+			}
+
+			var err error
+			for i := uint(0); i < test.prefixesToAdd; i++ {
+				pfx := net.NewPfx(net.IPv4(uint32(i)), 32)
+				err = rib.AddPath(pfx, p)
+				if err != nil {
+					break
+				}
+			}
+
+			if !test.wantsHitError && err == nil {
+				return
+			}
+
+			if err == nil {
+				t.Fatal("expected error, got none")
+			}
+
+			switch err.(type) {
+			case *routingtable.PrefixLimitHitError:
+				assert.Equal(t, test.expectedLimitHit, err.(*routingtable.PrefixLimitHitError).Limit())
+			default:
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}

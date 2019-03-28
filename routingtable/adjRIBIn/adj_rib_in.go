@@ -12,14 +12,16 @@ import (
 
 // AdjRIBIn represents an Adjacency RIB In as described in RFC4271
 type AdjRIBIn struct {
-	clientManager    *routingtable.ClientManager
-	rt               *routingtable.RoutingTable
-	mu               sync.RWMutex
-	exportFilter     *filter.Filter
-	contributingASNs *routingtable.ContributingASNs
-	routerID         uint32
-	clusterID        uint32
-	addPathRX        bool
+	clientManager       *routingtable.ClientManager
+	rt                  *routingtable.RoutingTable
+	mu                  sync.RWMutex
+	exportFilter        *filter.Filter
+	contributingASNs    *routingtable.ContributingASNs
+	routerID            uint32
+	clusterID           uint32
+	receivePrefixLimit  uint
+	acceptedPrefixLimit uint
+	addPathRX           bool
 }
 
 // New creates a new Adjacency RIB In
@@ -95,18 +97,12 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
-	if p.BGPPath.OriginatorID == a.routerID {
-		return nil
+	if a.receivePrefixLimit > 0 && a.rt.GetRouteCount()+1 >= int64(a.receivePrefixLimit) {
+		return routingtable.NewPrefixLimitHitError(a.receivePrefixLimit)
 	}
 
-	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
-	if len(p.BGPPath.ClusterList) > 0 {
-		for _, cid := range p.BGPPath.ClusterList {
-			if cid == a.clusterID {
-				return nil
-			}
-		}
+	if a.shouldIgnorePath(p) {
+		return nil
 	}
 
 	if a.addPathRX {
@@ -126,10 +122,32 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 		return nil
 	}
 
+	if a.acceptedPrefixLimit > 0 && a.rt.GetRouteCount()+1 >= int64(a.acceptedPrefixLimit) {
+		return routingtable.NewPrefixLimitHitError(a.acceptedPrefixLimit)
+	}
+
 	for _, client := range a.clientManager.Clients() {
 		client.AddPath(pfx, p)
 	}
 	return nil
+}
+
+func (a *AdjRIBIn) shouldIgnorePath(p *route.Path) bool {
+	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
+	if p.BGPPath.OriginatorID == a.routerID {
+		return true
+	}
+
+	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
+	if len(p.BGPPath.ClusterList) > 0 {
+		for _, cid := range p.BGPPath.ClusterList {
+			if cid == a.clusterID {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {

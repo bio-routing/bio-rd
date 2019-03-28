@@ -14,13 +14,14 @@ import (
 
 // AdjRIBOut represents an Adjacency RIB Out with BGP add path
 type AdjRIBOut struct {
-	clientManager *routingtable.ClientManager
-	rt            *routingtable.RoutingTable
-	neighbor      *routingtable.Neighbor
-	addPathTX     bool
-	pathIDManager *pathIDManager
-	exportFilter  *filter.Filter
-	mu            sync.RWMutex
+	clientManager       *routingtable.ClientManager
+	rt                  *routingtable.RoutingTable
+	neighbor            *routingtable.Neighbor
+	addPathTX           bool
+	pathIDManager       *pathIDManager
+	exportFilter        *filter.Filter
+	announcePrefixLimit uint
+	mu                  sync.RWMutex
 }
 
 // New creates a new Adjacency RIB Out with BGP add path
@@ -108,6 +109,10 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
+	if a.announcePrefixLimit > 0 && a.rt.GetRouteCount()+1 >= int64(a.announcePrefixLimit) {
+		return routingtable.NewPrefixLimitHitError(a.announcePrefixLimit)
+	}
 
 	if a.addPathTX {
 		pathID, err := a.pathIDManager.addPath(p)
