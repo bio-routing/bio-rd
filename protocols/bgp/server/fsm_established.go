@@ -202,11 +202,23 @@ func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 	}
 
 	if s.fsm.ipv4Unicast != nil {
-		s.fsm.ipv4Unicast.processUpdate(u)
+		err := s.fsm.ipv4Unicast.processUpdate(u)
+		if err != nil {
+			c, msg := s.handleUpdateError(err)
+			if c {
+				return newCeaseState(), msg
+			}
+		}
 	}
 
 	if s.fsm.ipv6Unicast != nil {
-		s.fsm.ipv6Unicast.processUpdate(u)
+		err := s.fsm.ipv6Unicast.processUpdate(u)
+		if err != nil {
+			c, msg := s.handleUpdateError(err)
+			if c {
+				return newCeaseState(), msg
+			}
+		}
 	}
 
 	afi, safi := s.updateAddressFamily(u)
@@ -226,10 +238,21 @@ func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 		if s.fsm.ipv6Unicast == nil {
 			log.Warnf("Received update for family IPv6 unicast, but this family is not configured.")
 		}
-
 	}
 
 	return newEstablishedState(s.fsm), s.fsm.reason
+}
+
+func (s *establishedState) handleUpdateError(err error) (cease bool, msg string) {
+	switch err.(type) {
+	case *routingtable.PrefixLimitHitError:
+		cease = true
+		msg = "Threshold reached: Maximum Number of Prefixes Received"
+		return
+	default:
+		log.Warnf("Error while adding path: %v", err)
+		return
+	}
 }
 
 func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16, safi uint8) {

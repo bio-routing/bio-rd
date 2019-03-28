@@ -113,16 +113,25 @@ func (f *fsmAddressFamily) dispose() {
 	f.initialized = false
 }
 
-func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) error {
 	if f.safi != packet.UnicastSAFI {
-		return
+		return nil
 	}
 
-	f.multiProtocolUpdates(u)
+	err := f.multiProtocolUpdates(u)
+	if err != nil {
+		return err
+	}
+
 	if f.afi == packet.IPv4AFI {
 		f.withdraws(u)
-		f.updates(u)
+		err := f.updates(u)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
@@ -131,27 +140,37 @@ func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
 	}
 }
 
-func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) error {
 	for r := u.NLRI; r != nil; r = r.Next {
 		path := f.newRoutePath()
 		f.processAttributes(u.PathAttributes, path)
 
-		f.adjRIBIn.AddPath(r.Prefix, path)
+		err := f.adjRIBIn.AddPath(r.Prefix, path)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate) error {
 	path := f.newRoutePath()
 	f.processAttributes(u.PathAttributes, path)
 
 	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
 		switch pa.TypeCode {
 		case packet.MultiProtocolReachNLRICode:
-			f.multiProtocolUpdate(path, pa.Value.(packet.MultiProtocolReachNLRI))
+			err := f.multiProtocolUpdate(path, pa.Value.(packet.MultiProtocolReachNLRI))
+			if err != nil {
+				return err
+			}
 		case packet.MultiProtocolUnreachNLRICode:
 			f.multiProtocolWithdraw(path, pa.Value.(packet.MultiProtocolUnreachNLRI))
 		}
 	}
+
+	return nil
 }
 
 func (f *fsmAddressFamily) newRoutePath() *route.Path {
@@ -164,16 +183,21 @@ func (f *fsmAddressFamily) newRoutePath() *route.Path {
 	}
 }
 
-func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) {
+func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.MultiProtocolReachNLRI) error {
 	if f.afi != nlri.AFI || f.safi != nlri.SAFI {
-		return
+		return nil
 	}
 
 	path.BGPPath.NextHop = nlri.NextHop
 
 	for n := nlri.NLRI; n != nil; n = n.Next {
-		f.adjRIBIn.AddPath(n.Prefix, path)
+		err := f.adjRIBIn.AddPath(n.Prefix, path)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (f *fsmAddressFamily) multiProtocolWithdraw(path *route.Path, nlri packet.MultiProtocolUnreachNLRI) {
