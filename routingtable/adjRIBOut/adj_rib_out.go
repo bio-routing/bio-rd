@@ -91,7 +91,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	if a.announcePrefixLimit > 0 && a.rt.GetRouteCount()+1 >= int64(a.announcePrefixLimit) {
+	if a.announcePrefixLimit > 0 && a.rt.GetRouteCount() >= int64(a.announcePrefixLimit) {
 		return routingtable.NewPrefixLimitError(a.announcePrefixLimit)
 	}
 

@@ -371,6 +371,16 @@ func TestPrefixLimit(t *testing.T) {
 			prefixesToAdd: 3,
 		},
 		{
+			name:               "limit configured but not hit (receivePrefixLimit)",
+			prefixesToAdd:      3,
+			receivePrefixLimit: 3,
+		},
+		{
+			name:                "limit configured but not hit (acceptedPrefixLimit)",
+			prefixesToAdd:       3,
+			acceptedPrefixLimit: 3,
+		},
+		{
 			name:                "prefix limit hit after policy",
 			prefixesToAdd:       3,
 			receivePrefixLimit:  5,
@@ -379,24 +389,8 @@ func TestPrefixLimit(t *testing.T) {
 			expectedLimitHit:    2,
 		},
 		{
-			name:                "prefix limit hit after policy (exact)",
-			prefixesToAdd:       2,
-			receivePrefixLimit:  5,
-			acceptedPrefixLimit: 2,
-			wantsHitError:       true,
-			expectedLimitHit:    2,
-		},
-		{
 			name:                "prefix limit hit before policy",
 			prefixesToAdd:       3,
-			receivePrefixLimit:  2,
-			acceptedPrefixLimit: 5,
-			wantsHitError:       true,
-			expectedLimitHit:    2,
-		},
-		{
-			name:                "prefix limit hit before policy (exact)",
-			prefixesToAdd:       2,
 			receivePrefixLimit:  2,
 			acceptedPrefixLimit: 5,
 			wantsHitError:       true,
