@@ -435,8 +435,8 @@ func TestPrefixLimit(t *testing.T) {
 			}
 
 			switch err.(type) {
-			case *routingtable.PrefixLimitHitError:
-				assert.Equal(t, test.expectedLimitHit, err.(*routingtable.PrefixLimitHitError).Limit())
+			case *routingtable.PrefixLimitError:
+				assert.Equal(t, test.expectedLimitHit, err.(*routingtable.PrefixLimitError).Limit())
 			default:
 				t.Fatalf("unexpected error: %v", err)
 			}

@@ -81,26 +81,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		p.BGPPath.NextHop = a.neighbor.LocalAddress
 	}
 
-	// If the iBGP neighbor is a route reflection client...
-	if a.neighbor.IBGP && a.neighbor.RouteReflectorClient {
-		/*
-		 * RFC4456 Section 8:
-		 * This attribute will carry the BGP Identifier of the originator of the route in the local AS.
-		 * A BGP speaker SHOULD NOT create an ORIGINATOR_ID attribute if one already exists.
-		 */
-		if p.BGPPath.OriginatorID == 0 {
-			p.BGPPath.OriginatorID = p.BGPPath.Source.ToUint32()
-		}
-
-		/*
-		 * When an RR reflects a route, it MUST prepend the local CLUSTER_ID to the CLUSTER_LIST.
-		 * If the CLUSTER_LIST is empty, it MUST create a new one.
-		 */
-		cList := make([]uint32, len(p.BGPPath.ClusterList)+1)
-		copy(cList[1:], p.BGPPath.ClusterList)
-		cList[0] = a.neighbor.ClusterID
-		p.BGPPath.ClusterList = cList
-	}
+	a.routeReflectionHandling(p)
 
 	p, reject := a.exportFilter.ProcessTerms(pfx, p)
 	if reject {
@@ -111,7 +92,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 	defer a.mu.Unlock()
 
 	if a.announcePrefixLimit > 0 && a.rt.GetRouteCount()+1 >= int64(a.announcePrefixLimit) {
-		return routingtable.NewPrefixLimitHitError(a.announcePrefixLimit)
+		return routingtable.NewPrefixLimitError(a.announcePrefixLimit)
 	}
 
 	if a.addPathTX {
@@ -135,6 +116,30 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		}
 	}
 	return nil
+}
+
+func (a *AdjRIBOut) routeReflectionHandling(p *route.Path) {
+	if !a.neighbor.IBGP || !a.neighbor.RouteReflectorClient {
+		return
+	}
+
+	/*
+	 * RFC4456 Section 8:
+	 * This attribute will carry the BGP Identifier of the originator of the route in the local AS.
+	 * A BGP speaker SHOULD NOT create an ORIGINATOR_ID attribute if one already exists.
+	 */
+	if p.BGPPath.OriginatorID == 0 {
+		p.BGPPath.OriginatorID = p.BGPPath.Source.ToUint32()
+	}
+
+	/*
+	 * When an RR reflects a route, it MUST prepend the local CLUSTER_ID to the CLUSTER_LIST.
+	 * If the CLUSTER_LIST is empty, it MUST create a new one.
+	 */
+	cList := make([]uint32, len(p.BGPPath.ClusterList)+1)
+	copy(cList[1:], p.BGPPath.ClusterList)
+	cList[0] = a.neighbor.ClusterID
+	p.BGPPath.ClusterList = cList
 }
 
 // RemovePath removes the path for prefix `pfx`

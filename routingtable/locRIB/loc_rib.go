@@ -91,10 +91,12 @@ func (a *LocRIB) RouteCount() int64 {
 func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
 	log.WithFields(map[string]interface{}{
 		"Prefix": pfx,
 		"Route":  p,
 	}).Debug("AddPath to locRIB")
+
 	routeExisted := false
 	oldRoute := &route.Route{}
 	r := a.rt.Get(pfx)

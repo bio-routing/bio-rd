@@ -67,7 +67,10 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, !f.addPathTX.BestOnly)
+	f.adjRIBOut = &prefixLimitDecorator{
+		client: adjRIBOut.New(n, f.exportFilter, !f.addPathTX.BestOnly),
+		fsm:    f.fsm,
+	}
 
 	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)

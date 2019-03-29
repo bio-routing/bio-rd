@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-// MockConn mock an connection
+// MockConn mocks an connection
 type MockConn struct {
 	net.Conn
 	Buf    *bytes.Buffer

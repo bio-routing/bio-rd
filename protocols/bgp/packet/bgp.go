@@ -59,8 +59,9 @@ const (
 	MalformedASPath           = 11
 
 	// Notification Msg Subcodes
-	AdministrativeShutdown = 2
-	AdministrativeReset    = 4
+	MaximumNumberOfPrefixesReached = 1
+	AdministrativeShutdown         = 2
+	AdministrativeReset            = 4
 
 	// Attribute Type Codes
 	OriginAttr           = 1

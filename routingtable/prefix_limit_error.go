@@ -2,21 +2,21 @@ package routingtable
 
 import "fmt"
 
-// PrefixLimitHitError represents an error when a prefix limit (on a Adj-RIB was hit)
-type PrefixLimitHitError struct {
+// PrefixLimitError represents an error when a prefix limit (on a Adj-RIB was hit)
+type PrefixLimitError struct {
 	limit uint
 }
 
-// NewPrefixLimitHitError creates a new error
-func NewPrefixLimitHitError(limit uint) *PrefixLimitHitError {
-	return &PrefixLimitHitError{limit}
+// NewPrefixLimitError creates a new error
+func NewPrefixLimitError(limit uint) *PrefixLimitError {
+	return &PrefixLimitError{limit}
 }
 
-func (err *PrefixLimitHitError) Error() string {
+func (err *PrefixLimitError) Error() string {
 	return fmt.Sprintf("Prefix if %d limit was hit", err.limit)
 }
 
 // Limit gives a notion about the threashold hit
-func (err *PrefixLimitHitError) Limit() uint {
+func (err *PrefixLimitError) Limit() uint {
 	return err.limit
 }

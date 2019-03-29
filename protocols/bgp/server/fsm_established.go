@@ -245,7 +245,8 @@ func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 
 func (s *establishedState) handleUpdateError(err error) (cease bool, msg string) {
 	switch err.(type) {
-	case *routingtable.PrefixLimitHitError:
+	case *routingtable.PrefixLimitError:
+		s.fsm.sendNotification(packet.Cease, packet.MaximumNumberOfPrefixesReached)
 		cease = true
 		msg = "Threshold reached: Maximum Number of Prefixes Received"
 		return

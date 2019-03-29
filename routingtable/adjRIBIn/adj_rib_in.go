@@ -98,7 +98,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	defer a.mu.Unlock()
 
 	if a.receivePrefixLimit > 0 && a.rt.GetRouteCount()+1 >= int64(a.receivePrefixLimit) {
-		return routingtable.NewPrefixLimitHitError(a.receivePrefixLimit)
+		return routingtable.NewPrefixLimitError(a.receivePrefixLimit)
 	}
 
 	if a.shouldIgnorePath(p) {
@@ -123,7 +123,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	}
 
 	if a.acceptedPrefixLimit > 0 && a.rt.GetRouteCount()+1 >= int64(a.acceptedPrefixLimit) {
-		return routingtable.NewPrefixLimitHitError(a.acceptedPrefixLimit)
+		return routingtable.NewPrefixLimitError(a.acceptedPrefixLimit)
 	}
 
 	for _, client := range a.clientManager.Clients() {
