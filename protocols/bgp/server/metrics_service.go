@@ -4,16 +4,6 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 )
 
-const (
-	stateDown        = 0
-	stateIdle        = 1
-	stateConnect     = 2
-	stateActive      = 3
-	stateOpenSent    = 4
-	stateOpenConfirm = 5
-	stateEstablished = 6
-)
-
 type metricsService struct {
 	server *bgpServer
 }
@@ -51,7 +41,7 @@ func (b *metricsService) metricsForPeer(peer *peer) *metrics.BGPPeerMetrics {
 
 	fsm := fsms[0]
 	m.State = b.statusFromFSM(fsm)
-	m.Up = m.State == stateEstablished
+	m.Up = m.State == metrics.StateEstablished
 
 	if m.Up {
 		m.Since = fsm.establishedTime
@@ -83,18 +73,18 @@ func (b *metricsService) metricsForFamily(family *fsmAddressFamily) *metrics.BGP
 func (b *metricsService) statusFromFSM(fsm *FSM) uint8 {
 	switch fsm.state.(type) {
 	case *idleState:
-		return stateIdle
+		return metrics.StateIdle
 	case *connectState:
-		return stateConnect
+		return metrics.StateConnect
 	case *activeState:
-		return stateActive
+		return metrics.StateActive
 	case *openSentState:
-		return stateOpenSent
+		return metrics.StateOpenSent
 	case *openConfirmState:
-		return stateOpenConfirm
+		return metrics.StateOpenConfirm
 	case *establishedState:
-		return stateEstablished
+		return metrics.StateEstablished
 	}
 
-	return stateDown
+	return metrics.StateDown
 }

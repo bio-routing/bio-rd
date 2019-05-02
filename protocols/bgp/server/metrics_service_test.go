@@ -57,7 +57,7 @@ func TestMetrics(t *testing.T) {
 						UpdatesSent:     4,
 						VRF:             "inet.0",
 						Up:              true,
-						State:           stateEstablished,
+						State:           metrics.StateEstablished,
 						Since:           establishedTime,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
@@ -95,7 +95,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						State:    stateIdle,
+						State:    metrics.StateIdle,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -128,7 +128,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						State:    stateActive,
+						State:    metrics.StateActive,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -161,7 +161,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						State:    stateOpenSent,
+						State:    metrics.StateOpenSent,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -194,7 +194,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						State:    stateOpenConfirm,
+						State:    metrics.StateOpenConfirm,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
@@ -227,7 +227,7 @@ func TestMetrics(t *testing.T) {
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
-						State:    stateConnect,
+						State:    metrics.StateConnect,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
 								AFI:  packet.IPv4AFI,
