@@ -5,44 +5,61 @@ import (
 	"sync"
 )
 
-var globalRegistry *vrfRegistry
+var globalRegistry *VRFRegistry
 
 func init() {
-	globalRegistry = &vrfRegistry{
-		vrfs: make(map[string]*VRF),
+	globalRegistry = NewVRFRegistry()
+}
+
+// VRFRegistry holds a reference to all active VRFs. Every VRF have to have a different name.
+type VRFRegistry struct {
+	vrfs map[uint64]*VRF
+	mu   sync.Mutex
+}
+
+func NewVRFRegistry() *VRFRegistry {
+	return &VRFRegistry{
+		vrfs: make(map[uint64]*VRF),
 	}
 }
 
-// vrfRegistry holds a reference to all active VRFs. Every VRF have to have a different name.
-type vrfRegistry struct {
-	vrfs map[string]*VRF
-	mu   sync.Mutex
+func (r *VRFRegistry) CreateVRFIfNotExists(name string, rd uint64) *VRF {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.vrfs[rd]; ok {
+		return r.vrfs[rd]
+	}
+
+	r.vrfs[rd] = newUntrackedVRF(name, rd)
+	r.vrfs[rd].CreateIPv4UnicastLocRIB("inet.0")
+	r.vrfs[rd].CreateIPv6UnicastLocRIB("inet6.0")
+	return r.vrfs[rd]
 }
 
 // registerVRF adds the given VRF from the global registry.
 // An error is returned if there is already a VRF registered with the same name.
-func (r *vrfRegistry) registerVRF(v *VRF) error {
+func (r *VRFRegistry) registerVRF(v *VRF) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, found := r.vrfs[v.name]
-	if found {
+	if _, ok := r.vrfs[v.routeDistinguisher]; ok {
 		return fmt.Errorf("a VRF with the name '%s' already exists", v.name)
 	}
 
-	r.vrfs[v.name] = v
+	r.vrfs[v.routeDistinguisher] = v
 	return nil
 }
 
 // unregisterVRF removes the given VRF from the global registry.
-func (r *vrfRegistry) unregisterVRF(v *VRF) {
+func (r *VRFRegistry) unregisterVRF(v *VRF) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	delete(r.vrfs, v.name)
+	delete(r.vrfs, v.routeDistinguisher)
 }
 
-func (r *vrfRegistry) list() []*VRF {
+func (r *VRFRegistry) List() []*VRF {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -54,4 +71,20 @@ func (r *vrfRegistry) list() []*VRF {
 	}
 
 	return l
+}
+
+// GetVRFByRD gets a VRF by it's Route Distinguisher
+func GetVRFByRD(rd uint64) *VRF {
+	return globalRegistry.getVRFByRD(rd)
+}
+
+func (r *VRFRegistry) getVRFByRD(rd uint64) *VRF {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.vrfs[rd]; ok {
+		return r.vrfs[rd]
+	}
+
+	return nil
 }

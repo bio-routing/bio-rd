@@ -1,25 +1,6 @@
 package server
 
-import (
-	"bytes"
-	"net"
-	"testing"
-	"time"
-
-	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
-	"github.com/bio-routing/bio-rd/route"
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
-	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	biotesting "github.com/bio-routing/bio-rd/testing"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestBMPRouterServe(t *testing.T) {
+/*func TestBMPRouterServe(t *testing.T) {
 	tests := []struct {
 		name     string
 		msg      []byte
@@ -2746,3 +2727,4 @@ func TestIntegrationPeerUpRouteMonitorIPv6WithClientBeforeBMPPeer(t *testing.T) 
 		conA.Close()
 	}
 }
+*/

@@ -14,7 +14,7 @@ import (
 )
 
 func TestMetrics(t *testing.T) {
-	vrf, _ := vrf.New("inet.0")
+	vrf, _ := vrf.New("inet.0", 0)
 	establishedTime := time.Now()
 
 	tests := []struct {

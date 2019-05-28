@@ -6,7 +6,7 @@ import (
 
 // Metrics returns metrics for all VRFs
 func Metrics() []*metrics.VRFMetrics {
-	vrfs := globalRegistry.list()
+	vrfs := globalRegistry.List()
 
 	m := make([]*metrics.VRFMetrics, len(vrfs))
 	i := 0

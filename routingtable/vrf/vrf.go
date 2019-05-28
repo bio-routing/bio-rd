@@ -20,15 +20,16 @@ type addressFamily struct {
 
 // VRF a list of RIBs for different address families building a routing instance
 type VRF struct {
-	name     string
-	ribs     map[addressFamily]*locRIB.LocRIB
-	mu       sync.Mutex
-	ribNames map[string]*locRIB.LocRIB
+	name               string
+	routeDistinguisher uint64
+	ribs               map[addressFamily]*locRIB.LocRIB
+	mu                 sync.Mutex
+	ribNames           map[string]*locRIB.LocRIB
 }
 
 // New creates a new VRF. The VRF is registered automatically to the global VRF registry.
-func New(name string) (*VRF, error) {
-	v := newUntrackedVRF(name)
+func New(name string, rd uint64) (*VRF, error) {
+	v := newUntrackedVRF(name, rd)
 	v.CreateIPv4UnicastLocRIB("inet.0")
 	v.CreateIPv6UnicastLocRIB("inet6.0")
 
@@ -40,11 +41,12 @@ func New(name string) (*VRF, error) {
 	return v, nil
 }
 
-func newUntrackedVRF(name string) *VRF {
+func newUntrackedVRF(name string, rd uint64) *VRF {
 	return &VRF{
-		name:     name,
-		ribs:     make(map[addressFamily]*locRIB.LocRIB),
-		ribNames: make(map[string]*locRIB.LocRIB),
+		name:               name,
+		routeDistinguisher: rd,
+		ribs:               make(map[addressFamily]*locRIB.LocRIB),
+		ribNames:           make(map[string]*locRIB.LocRIB),
 	}
 }
 
@@ -88,6 +90,11 @@ func (v *VRF) IPv6UnicastRIB() *locRIB.LocRIB {
 // Name is the name of the VRF
 func (v *VRF) Name() string {
 	return v.name
+}
+
+// RD returns the route distinguisher of the VRF
+func (v *VRF) RD() uint64 {
+	return v.routeDistinguisher
 }
 
 // Unregister removes this VRF from the global registry.

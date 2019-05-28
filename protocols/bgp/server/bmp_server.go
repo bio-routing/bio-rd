@@ -9,7 +9,6 @@ import (
 
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -21,7 +20,8 @@ const (
 
 // BMPServer represents a BMP server
 type BMPServer struct {
-	routers    map[string]*router
+	routers    map[string]*Router
+	routersMu  sync.RWMutex
 	ribClients map[string]map[afiClient]struct{}
 	gloablMu   sync.RWMutex
 }
@@ -34,7 +34,7 @@ type afiClient struct {
 // NewServer creates a new BMP server
 func NewServer() *BMPServer {
 	return &BMPServer{
-		routers:    make(map[string]*router),
+		routers:    make(map[string]*Router),
 		ribClients: make(map[string]map[afiClient]struct{}),
 	}
 }
@@ -89,14 +89,14 @@ func (b *BMPServer) UnsubscribeRIBs(client routingtable.RouteTableClient, rtr ne
 }
 
 // AddRouter adds a router to which we connect with BMP
-func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRIB) {
+func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 	b.gloablMu.Lock()
 	defer b.gloablMu.Unlock()
 
-	r := newRouter(addr, port, rib4, rib6)
+	r := newRouter(addr, port)
 	b.routers[fmt.Sprintf("%s", r.address.String())] = r
 
-	go func(r *router) {
+	go func(r *Router) {
 		for {
 			<-r.reconnectTimer.C
 			c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port))
@@ -150,4 +150,16 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 	}
 
 	return buffer[0:toRead], nil
+}
+
+func (b *BMPServer) GetRouters() []*Router {
+	b.routersMu.RLock()
+	defer b.routersMu.RUnlock()
+
+	r := make([]*Router, 0, len(b.routers))
+	for name := range b.routers {
+		r = append(r, b.routers[name])
+	}
+
+	return r
 }

@@ -53,6 +53,11 @@ func (a *LocRIB) Count() uint64 {
 	return uint64(a.rt.GetRouteCount())
 }
 
+// LPM performs a longest prefix match on the routing table
+func (a *LocRIB) LPM(pfx net.Prefix) (res []*route.Route) {
+	return a.rt.LPM(pfx)
+}
+
 // Dump dumps the RIB
 func (a *LocRIB) Dump() []*route.Route {
 	a.mu.RLock()
