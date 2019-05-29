@@ -40,7 +40,7 @@ func NewServer() *BMPServer {
 }
 
 // SubscribeRIBs subscribes c for all RIB updates of router rtr
-func (b *BMPServer) SubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
+/*func (b *BMPServer) SubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
 	b.gloablMu.Lock()
 	defer b.gloablMu.Unlock()
 
@@ -64,10 +64,10 @@ func (b *BMPServer) SubscribeRIBs(client routingtable.RouteTableClient, rtr net.
 	}
 
 	b.routers[rtrStr].subscribeRIBs(client, afi)
-}
+}*/
 
 // UnsubscribeRIBs unsubscribes client from RIBs of address family afi
-func (b *BMPServer) UnsubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
+/*func (b *BMPServer) UnsubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
 	b.gloablMu.Lock()
 	defer b.gloablMu.Unlock()
 
@@ -86,7 +86,7 @@ func (b *BMPServer) UnsubscribeRIBs(client routingtable.RouteTableClient, rtr ne
 
 	delete(b.ribClients[rtrStr], ac)
 	b.routers[rtrStr].unsubscribeRIBs(client, afi)
-}
+}*/
 
 // AddRouter adds a router to which we connect with BMP
 func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
@@ -162,4 +162,19 @@ func (b *BMPServer) GetRouters() []*Router {
 	}
 
 	return r
+}
+
+func (b *BMPServer) GetRouter(name string) *Router {
+	b.routersMu.RLock()
+	defer b.routersMu.RUnlock()
+
+	for x := range b.routers {
+		if x != name {
+			continue
+		}
+
+		return b.routers[x]
+	}
+
+	return nil
 }

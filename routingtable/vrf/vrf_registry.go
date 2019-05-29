@@ -75,10 +75,10 @@ func (r *VRFRegistry) List() []*VRF {
 
 // GetVRFByRD gets a VRF by it's Route Distinguisher
 func GetVRFByRD(rd uint64) *VRF {
-	return globalRegistry.getVRFByRD(rd)
+	return globalRegistry.GetVRFByRD(rd)
 }
 
-func (r *VRFRegistry) getVRFByRD(rd uint64) *VRF {
+func (r *VRFRegistry) GetVRFByRD(rd uint64) *VRF {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

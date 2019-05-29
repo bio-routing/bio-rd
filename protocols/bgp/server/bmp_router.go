@@ -64,6 +64,10 @@ func newRouter(addr net.IP, port uint16) *Router {
 	}
 }
 
+func (r *Router) GetVRF(rd uint64) *vrf.VRF {
+	return r.vrfRegistry.GetVRFByRD(rd)
+}
+
 func (r *Router) GetVRFs() []*vrf.VRF {
 	return r.vrfRegistry.List()
 }
@@ -74,7 +78,7 @@ func (r *Router) Name() string {
 	return r.name
 }
 
-func (r *Router) subscribeRIBs(client routingtable.RouteTableClient, afi uint8) {
+/*func (r *Router) subscribeRIBs(client routingtable.RouteTableClient, afi uint8) {
 	ac := afiClient{
 		afi:    afi,
 		client: client,
@@ -87,7 +91,7 @@ func (r *Router) subscribeRIBs(client routingtable.RouteTableClient, afi uint8) 
 	}
 	r.ribClients[ac] = struct{}{}
 
-	/*r.neighborsMu.Lock()
+	r.neighborsMu.Lock()
 	defer r.neighborsMu.Unlock()
 	for _, n := range r.neighbors {
 		if afi == packet.IPv4AFI {
@@ -96,7 +100,7 @@ func (r *Router) subscribeRIBs(client routingtable.RouteTableClient, afi uint8) 
 		if afi == packet.IPv6AFI {
 			n.fsm.ipv6Unicast.adjRIBIn.Register(client)
 		}
-	}*/
+	}
 }
 
 func (r *Router) unsubscribeRIBs(client routingtable.RouteTableClient, afi uint8) {
@@ -112,7 +116,7 @@ func (r *Router) unsubscribeRIBs(client routingtable.RouteTableClient, afi uint8
 	}
 	delete(r.ribClients, ac)
 
-	/*r.neighborsMu.Lock()
+	r.neighborsMu.Lock()
 	defer r.neighborsMu.Unlock()
 	for _, n := range r.neighbors {
 		if !n.fsm.ribsInitialized {
@@ -124,8 +128,8 @@ func (r *Router) unsubscribeRIBs(client routingtable.RouteTableClient, afi uint8
 		if afi == packet.IPv6AFI {
 			n.fsm.ipv6Unicast.adjRIBIn.Unregister(client)
 		}
-	}*/
-}
+	}
+}*/
 
 func (r *Router) serve(con net.Conn) {
 	r.con = con
