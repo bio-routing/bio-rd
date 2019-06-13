@@ -8,6 +8,9 @@ option go_package = "github.com/bio-routing/bio-rd/cmd/ris/api";
 
 service RoutingInformationService {
     rpc LPM(LPMRequest) returns (LPMResponse) {}
+    rpc Get(GetRequest) returns (GetResponse) {}
+    rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {}
+    rpc adjRIBInStream(AdjRIBInStreamRequest) returns (stream RIBUpdate);
 }
 
 message LPMRequest {
@@ -18,4 +21,39 @@ message LPMRequest {
 
 message LPMResponse {
     repeated bio.route.Route routes = 1;
+}
+
+message GetRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    bio.net.Prefix pfx = 3;
+}
+
+message GetResponse {
+    repeated bio.route.Route routes = 1;
+}
+
+message GetLongerRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    bio.net.Prefix pfx = 3;
+}
+
+message GetLongerResponse {
+    repeated bio.route.Route routes = 1;
+}
+
+message AdjRIBInStreamRequest {
+    bio.net.IP router = 1;
+    enum AFISAFI {
+        IPv4Unicast = 0;
+        IPv6Unicast = 1;
+    }
+    AFISAFI afisafi = 2;
+}
+
+message RIBUpdate {
+    bio.net.IP peer = 1;
+    bool advertisement = 2;
+    bio.route.Route route = 3;
 }

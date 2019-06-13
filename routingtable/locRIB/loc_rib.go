@@ -58,6 +58,16 @@ func (a *LocRIB) LPM(pfx net.Prefix) (res []*route.Route) {
 	return a.rt.LPM(pfx)
 }
 
+// Get gets a route
+func (a *LocRIB) Get(pfx net.Prefix) *route.Route {
+	return a.rt.Get(pfx)
+}
+
+// GetLonger gets all more specifics
+func (a *LocRIB) GetLonger(pfx net.Prefix) (res []*route.Route) {
+	return a.rt.GetLonger(pfx)
+}
+
 // Dump dumps the RIB
 func (a *LocRIB) Dump() []*route.Route {
 	a.mu.RLock()

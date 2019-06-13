@@ -118,9 +118,297 @@ func (m *LPMResponse) GetRoutes() []*api1.Route {
 	return nil
 }
 
+type GetRequest struct {
+	Router               string      `protobuf:"bytes,1,opt,name=router,proto3" json:"router,omitempty"`
+	VrfId                uint64      `protobuf:"varint,2,opt,name=vrf_id,json=vrfId,proto3" json:"vrf_id,omitempty"`
+	Pfx                  *api.Prefix `protobuf:"bytes,3,opt,name=pfx,proto3" json:"pfx,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *GetRequest) Reset()         { *m = GetRequest{} }
+func (m *GetRequest) String() string { return proto.CompactTextString(m) }
+func (*GetRequest) ProtoMessage()    {}
+func (*GetRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ffe1202aa518913f, []int{2}
+}
+
+func (m *GetRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetRequest.Unmarshal(m, b)
+}
+func (m *GetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetRequest.Marshal(b, m, deterministic)
+}
+func (m *GetRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetRequest.Merge(m, src)
+}
+func (m *GetRequest) XXX_Size() int {
+	return xxx_messageInfo_GetRequest.Size(m)
+}
+func (m *GetRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetRequest proto.InternalMessageInfo
+
+func (m *GetRequest) GetRouter() string {
+	if m != nil {
+		return m.Router
+	}
+	return ""
+}
+
+func (m *GetRequest) GetVrfId() uint64 {
+	if m != nil {
+		return m.VrfId
+	}
+	return 0
+}
+
+func (m *GetRequest) GetPfx() *api.Prefix {
+	if m != nil {
+		return m.Pfx
+	}
+	return nil
+}
+
+type GetResponse struct {
+	Routes               []*api1.Route `protobuf:"bytes,1,rep,name=routes,proto3" json:"routes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *GetResponse) Reset()         { *m = GetResponse{} }
+func (m *GetResponse) String() string { return proto.CompactTextString(m) }
+func (*GetResponse) ProtoMessage()    {}
+func (*GetResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ffe1202aa518913f, []int{3}
+}
+
+func (m *GetResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetResponse.Unmarshal(m, b)
+}
+func (m *GetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetResponse.Marshal(b, m, deterministic)
+}
+func (m *GetResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetResponse.Merge(m, src)
+}
+func (m *GetResponse) XXX_Size() int {
+	return xxx_messageInfo_GetResponse.Size(m)
+}
+func (m *GetResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetResponse proto.InternalMessageInfo
+
+func (m *GetResponse) GetRoutes() []*api1.Route {
+	if m != nil {
+		return m.Routes
+	}
+	return nil
+}
+
+type GetLongerRequest struct {
+	Router               string      `protobuf:"bytes,1,opt,name=router,proto3" json:"router,omitempty"`
+	VrfId                uint64      `protobuf:"varint,2,opt,name=vrf_id,json=vrfId,proto3" json:"vrf_id,omitempty"`
+	Pfx                  *api.Prefix `protobuf:"bytes,3,opt,name=pfx,proto3" json:"pfx,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *GetLongerRequest) Reset()         { *m = GetLongerRequest{} }
+func (m *GetLongerRequest) String() string { return proto.CompactTextString(m) }
+func (*GetLongerRequest) ProtoMessage()    {}
+func (*GetLongerRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ffe1202aa518913f, []int{4}
+}
+
+func (m *GetLongerRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetLongerRequest.Unmarshal(m, b)
+}
+func (m *GetLongerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetLongerRequest.Marshal(b, m, deterministic)
+}
+func (m *GetLongerRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetLongerRequest.Merge(m, src)
+}
+func (m *GetLongerRequest) XXX_Size() int {
+	return xxx_messageInfo_GetLongerRequest.Size(m)
+}
+func (m *GetLongerRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetLongerRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetLongerRequest proto.InternalMessageInfo
+
+func (m *GetLongerRequest) GetRouter() string {
+	if m != nil {
+		return m.Router
+	}
+	return ""
+}
+
+func (m *GetLongerRequest) GetVrfId() uint64 {
+	if m != nil {
+		return m.VrfId
+	}
+	return 0
+}
+
+func (m *GetLongerRequest) GetPfx() *api.Prefix {
+	if m != nil {
+		return m.Pfx
+	}
+	return nil
+}
+
+type GetLongerResponse struct {
+	Routes               []*api1.Route `protobuf:"bytes,1,rep,name=routes,proto3" json:"routes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *GetLongerResponse) Reset()         { *m = GetLongerResponse{} }
+func (m *GetLongerResponse) String() string { return proto.CompactTextString(m) }
+func (*GetLongerResponse) ProtoMessage()    {}
+func (*GetLongerResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ffe1202aa518913f, []int{5}
+}
+
+func (m *GetLongerResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetLongerResponse.Unmarshal(m, b)
+}
+func (m *GetLongerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetLongerResponse.Marshal(b, m, deterministic)
+}
+func (m *GetLongerResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetLongerResponse.Merge(m, src)
+}
+func (m *GetLongerResponse) XXX_Size() int {
+	return xxx_messageInfo_GetLongerResponse.Size(m)
+}
+func (m *GetLongerResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetLongerResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetLongerResponse proto.InternalMessageInfo
+
+func (m *GetLongerResponse) GetRoutes() []*api1.Route {
+	if m != nil {
+		return m.Routes
+	}
+	return nil
+}
+
+type AdjRIBInStreamRequest struct {
+	Router               *api.IP  `protobuf:"bytes,1,opt,name=router,proto3" json:"router,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AdjRIBInStreamRequest) Reset()         { *m = AdjRIBInStreamRequest{} }
+func (m *AdjRIBInStreamRequest) String() string { return proto.CompactTextString(m) }
+func (*AdjRIBInStreamRequest) ProtoMessage()    {}
+func (*AdjRIBInStreamRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ffe1202aa518913f, []int{6}
+}
+
+func (m *AdjRIBInStreamRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AdjRIBInStreamRequest.Unmarshal(m, b)
+}
+func (m *AdjRIBInStreamRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AdjRIBInStreamRequest.Marshal(b, m, deterministic)
+}
+func (m *AdjRIBInStreamRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AdjRIBInStreamRequest.Merge(m, src)
+}
+func (m *AdjRIBInStreamRequest) XXX_Size() int {
+	return xxx_messageInfo_AdjRIBInStreamRequest.Size(m)
+}
+func (m *AdjRIBInStreamRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_AdjRIBInStreamRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AdjRIBInStreamRequest proto.InternalMessageInfo
+
+func (m *AdjRIBInStreamRequest) GetRouter() *api.IP {
+	if m != nil {
+		return m.Router
+	}
+	return nil
+}
+
+type RIBUpdate struct {
+	Peer                 *api.IP     `protobuf:"bytes,1,opt,name=peer,proto3" json:"peer,omitempty"`
+	Advertisement        bool        `protobuf:"varint,2,opt,name=advertisement,proto3" json:"advertisement,omitempty"`
+	Route                *api1.Route `protobuf:"bytes,3,opt,name=route,proto3" json:"route,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *RIBUpdate) Reset()         { *m = RIBUpdate{} }
+func (m *RIBUpdate) String() string { return proto.CompactTextString(m) }
+func (*RIBUpdate) ProtoMessage()    {}
+func (*RIBUpdate) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ffe1202aa518913f, []int{7}
+}
+
+func (m *RIBUpdate) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RIBUpdate.Unmarshal(m, b)
+}
+func (m *RIBUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RIBUpdate.Marshal(b, m, deterministic)
+}
+func (m *RIBUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RIBUpdate.Merge(m, src)
+}
+func (m *RIBUpdate) XXX_Size() int {
+	return xxx_messageInfo_RIBUpdate.Size(m)
+}
+func (m *RIBUpdate) XXX_DiscardUnknown() {
+	xxx_messageInfo_RIBUpdate.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RIBUpdate proto.InternalMessageInfo
+
+func (m *RIBUpdate) GetPeer() *api.IP {
+	if m != nil {
+		return m.Peer
+	}
+	return nil
+}
+
+func (m *RIBUpdate) GetAdvertisement() bool {
+	if m != nil {
+		return m.Advertisement
+	}
+	return false
+}
+
+func (m *RIBUpdate) GetRoute() *api1.Route {
+	if m != nil {
+		return m.Route
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*LPMRequest)(nil), "bio.ris.LPMRequest")
 	proto.RegisterType((*LPMResponse)(nil), "bio.ris.LPMResponse")
+	proto.RegisterType((*GetRequest)(nil), "bio.ris.GetRequest")
+	proto.RegisterType((*GetResponse)(nil), "bio.ris.GetResponse")
+	proto.RegisterType((*GetLongerRequest)(nil), "bio.ris.GetLongerRequest")
+	proto.RegisterType((*GetLongerResponse)(nil), "bio.ris.GetLongerResponse")
+	proto.RegisterType((*AdjRIBInStreamRequest)(nil), "bio.ris.AdjRIBInStreamRequest")
+	proto.RegisterType((*RIBUpdate)(nil), "bio.ris.RIBUpdate")
 }
 
 func init() {
@@ -128,25 +416,36 @@ func init() {
 }
 
 var fileDescriptor_ffe1202aa518913f = []byte{
-	// 274 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x91, 0x4f, 0x4f, 0x84, 0x30,
-	0x10, 0xc5, 0x45, 0x74, 0x8d, 0xe5, 0xa0, 0xa9, 0x7f, 0x82, 0x9c, 0x90, 0x13, 0xc6, 0x58, 0x12,
-	0xf6, 0xe0, 0xdd, 0xdb, 0x26, 0xbb, 0x91, 0xd4, 0x9b, 0x07, 0xcd, 0x02, 0x65, 0x9d, 0x03, 0x2d,
-	0x4e, 0x0b, 0xd9, 0x8f, 0x6f, 0xda, 0x92, 0x18, 0x2f, 0xea, 0xa5, 0x9d, 0xe9, 0xe4, 0xf5, 0xf7,
-	0x66, 0x86, 0x2c, 0x77, 0x60, 0x3e, 0xc6, 0x9a, 0x35, 0xaa, 0x2f, 0x6a, 0x50, 0x0f, 0xa8, 0x46,
-	0x03, 0x72, 0xe7, 0xe3, 0xb6, 0x68, 0xfa, 0xb6, 0x40, 0xd0, 0xc5, 0x76, 0x00, 0x7b, 0xb3, 0x01,
-	0x95, 0x51, 0xf4, 0xa4, 0x06, 0xc5, 0x10, 0x74, 0x52, 0xfc, 0xae, 0x96, 0xc2, 0x38, 0xa5, 0x14,
-	0xc6, 0x2b, 0x93, 0x3f, 0x70, 0x36, 0x15, 0x1e, 0x66, 0x23, 0x2f, 0xca, 0xde, 0x08, 0x59, 0x57,
-	0x1b, 0x2e, 0x3e, 0x47, 0xa1, 0x0d, 0xbd, 0x26, 0x0b, 0x57, 0xc4, 0x38, 0x48, 0x83, 0xfc, 0x94,
-	0xcf, 0x19, 0xbd, 0x22, 0x8b, 0x09, 0xbb, 0x77, 0x68, 0xe3, 0xc3, 0x34, 0xc8, 0x8f, 0xf8, 0xf1,
-	0x84, 0xdd, 0xaa, 0xa5, 0xb7, 0x24, 0x1c, 0xba, 0x7d, 0x1c, 0xa6, 0x41, 0x1e, 0x95, 0x67, 0xcc,
-	0x3a, 0xb7, 0x76, 0x2a, 0x14, 0x1d, 0xec, 0xb9, 0xad, 0x65, 0x8f, 0x24, 0x72, 0xff, 0xeb, 0x41,
-	0x49, 0x2d, 0x68, 0x3e, 0x03, 0x74, 0x1c, 0xa4, 0x61, 0x1e, 0x95, 0xe7, 0x4e, 0xe4, 0x0d, 0x71,
-	0x7b, 0xce, 0x48, 0x5d, 0x3e, 0x93, 0x1b, 0xee, 0x1b, 0x58, 0xc9, 0x4e, 0x61, 0xbf, 0x35, 0xa0,
-	0xe4, 0x8b, 0xc0, 0x09, 0x1a, 0x41, 0x4b, 0x12, 0xae, 0xab, 0x0d, 0xbd, 0x60, 0xf3, 0xb0, 0xd8,
-	0x77, 0x0f, 0xc9, 0xe5, 0xcf, 0x47, 0x0f, 0xce, 0x0e, 0x9e, 0xee, 0x5f, 0xef, 0xfe, 0xbd, 0x8f,
-	0x7a, 0xe1, 0xa6, 0xb3, 0xfc, 0x0a, 0x00, 0x00, 0xff, 0xff, 0xcd, 0xe2, 0x24, 0x19, 0xc3, 0x01,
-	0x00, 0x00,
+	// 449 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x94, 0x41, 0x6f, 0xd3, 0x30,
+	0x14, 0xc7, 0x97, 0x75, 0x2b, 0xf4, 0x45, 0xc0, 0x30, 0x0c, 0x75, 0x39, 0x40, 0x09, 0x08, 0x05,
+	0x21, 0x12, 0x94, 0x1d, 0xb8, 0xc0, 0x81, 0x0a, 0x51, 0x45, 0xea, 0xa4, 0xca, 0x13, 0x17, 0x0e,
+	0xa0, 0xb4, 0x79, 0x29, 0x46, 0x8a, 0x1d, 0x1c, 0x37, 0x9a, 0xf8, 0x16, 0x7c, 0x63, 0x64, 0x3b,
+	0xcb, 0x12, 0x51, 0xc1, 0x76, 0xe8, 0xa5, 0xb5, 0xfd, 0xfc, 0x7f, 0xff, 0x9f, 0xfd, 0x9e, 0x03,
+	0xa7, 0x6b, 0xa6, 0xbe, 0x6f, 0x96, 0xe1, 0x4a, 0x14, 0xd1, 0x92, 0x89, 0xd7, 0x52, 0x6c, 0x14,
+	0xe3, 0x6b, 0x3b, 0xce, 0xa2, 0x55, 0x91, 0x45, 0x92, 0x55, 0x51, 0x5a, 0x32, 0xfd, 0x1f, 0x96,
+	0x52, 0x28, 0x41, 0x6e, 0x2d, 0x99, 0x08, 0x25, 0xab, 0xbc, 0xe8, 0xdf, 0x6a, 0x8e, 0xca, 0x28,
+	0x39, 0x2a, 0xab, 0xf4, 0xfe, 0x63, 0xa7, 0xa7, 0x68, 0xcd, 0xf4, 0xc8, 0x8a, 0xfc, 0xaf, 0x00,
+	0xf3, 0xc5, 0x19, 0xc5, 0x9f, 0x1b, 0xac, 0x14, 0x79, 0x04, 0x43, 0x13, 0x94, 0x63, 0x67, 0xe2,
+	0x04, 0x23, 0xda, 0xcc, 0xc8, 0x31, 0x0c, 0x6b, 0x99, 0x7f, 0x63, 0xd9, 0x78, 0x7f, 0xe2, 0x04,
+	0x07, 0xf4, 0xb0, 0x96, 0x79, 0x92, 0x91, 0xa7, 0x30, 0x28, 0xf3, 0x8b, 0xf1, 0x60, 0xe2, 0x04,
+	0x6e, 0x7c, 0x2f, 0xd4, 0xe4, 0x1a, 0x67, 0x21, 0x31, 0x67, 0x17, 0x54, 0xc7, 0xfc, 0xb7, 0xe0,
+	0x9a, 0xfc, 0x55, 0x29, 0x78, 0x85, 0x24, 0x68, 0x0c, 0xaa, 0xb1, 0x33, 0x19, 0x04, 0x6e, 0x7c,
+	0x64, 0x44, 0x16, 0x88, 0xea, 0xdf, 0xc6, 0xb2, 0xd2, 0x60, 0x33, 0x54, 0x3b, 0x05, 0x33, 0xf9,
+	0x6f, 0x0c, 0x96, 0xc1, 0xd1, 0x0c, 0xd5, 0x5c, 0xf0, 0x35, 0xca, 0xdd, 0xe1, 0xbd, 0x87, 0xfb,
+	0x1d, 0x97, 0x1b, 0x43, 0xbe, 0x83, 0xe3, 0x0f, 0xd9, 0x0f, 0x9a, 0x4c, 0x13, 0x7e, 0xae, 0x24,
+	0xa6, 0xc5, 0x25, 0xe9, 0xb3, 0x1e, 0xa9, 0x1b, 0xbb, 0xad, 0x7b, 0xb2, 0xb8, 0xc4, 0xf6, 0x7f,
+	0xc1, 0x88, 0x26, 0xd3, 0xcf, 0x65, 0x96, 0x2a, 0x24, 0x4f, 0xe0, 0xa0, 0xc4, 0xed, 0xfb, 0x4d,
+	0x80, 0x3c, 0x87, 0x3b, 0x69, 0x56, 0xa3, 0x54, 0xac, 0xc2, 0x02, 0xb9, 0x32, 0x67, 0xbd, 0x4d,
+	0xfb, 0x8b, 0xe4, 0x05, 0x1c, 0x9a, 0xec, 0xcd, 0xa9, 0xff, 0x46, 0xb7, 0xe1, 0xf8, 0xf7, 0x3e,
+	0x9c, 0x50, 0xdb, 0xb9, 0x09, 0xcf, 0x85, 0x2c, 0x52, 0xc5, 0x04, 0x3f, 0x47, 0x59, 0xb3, 0x15,
+	0x92, 0x18, 0x06, 0xf3, 0xc5, 0x19, 0x79, 0x10, 0x36, 0xaf, 0x24, 0xbc, 0x6a, 0x5e, 0xef, 0x61,
+	0x7f, 0xd1, 0xde, 0x99, 0xbf, 0xa7, 0x35, 0x33, 0x54, 0x1d, 0xcd, 0x55, 0x5f, 0x75, 0x34, 0x9d,
+	0x66, 0xf0, 0xf7, 0xc8, 0x47, 0x18, 0xb5, 0xd7, 0x4f, 0x4e, 0xba, 0x9b, 0x7a, 0x85, 0xf7, 0xbc,
+	0x6d, 0xa1, 0x36, 0xcb, 0x27, 0xb8, 0x9b, 0xf6, 0xaa, 0x40, 0x1e, 0xb7, 0xfb, 0xb7, 0x96, 0xc7,
+	0x23, 0x6d, 0xbc, 0x2d, 0xc0, 0x1b, 0x67, 0xfa, 0xea, 0xcb, 0xcb, 0x6b, 0x7f, 0x4a, 0x96, 0x43,
+	0xf3, 0xb0, 0x4f, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0x9d, 0xb4, 0xae, 0x1d, 0x7e, 0x04, 0x00,
+	0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -162,6 +461,9 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RoutingInformationServiceClient interface {
 	LPM(ctx context.Context, in *LPMRequest, opts ...grpc.CallOption) (*LPMResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetLonger(ctx context.Context, in *GetLongerRequest, opts ...grpc.CallOption) (*GetLongerResponse, error)
+	AdjRIBInStream(ctx context.Context, in *AdjRIBInStreamRequest, opts ...grpc.CallOption) (RoutingInformationService_AdjRIBInStreamClient, error)
 }
 
 type routingInformationServiceClient struct {
@@ -181,9 +483,62 @@ func (c *routingInformationServiceClient) LPM(ctx context.Context, in *LPMReques
 	return out, nil
 }
 
+func (c *routingInformationServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/bio.ris.RoutingInformationService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routingInformationServiceClient) GetLonger(ctx context.Context, in *GetLongerRequest, opts ...grpc.CallOption) (*GetLongerResponse, error) {
+	out := new(GetLongerResponse)
+	err := c.cc.Invoke(ctx, "/bio.ris.RoutingInformationService/GetLonger", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routingInformationServiceClient) AdjRIBInStream(ctx context.Context, in *AdjRIBInStreamRequest, opts ...grpc.CallOption) (RoutingInformationService_AdjRIBInStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_RoutingInformationService_serviceDesc.Streams[0], "/bio.ris.RoutingInformationService/adjRIBInStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &routingInformationServiceAdjRIBInStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type RoutingInformationService_AdjRIBInStreamClient interface {
+	Recv() (*RIBUpdate, error)
+	grpc.ClientStream
+}
+
+type routingInformationServiceAdjRIBInStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *routingInformationServiceAdjRIBInStreamClient) Recv() (*RIBUpdate, error) {
+	m := new(RIBUpdate)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // RoutingInformationServiceServer is the server API for RoutingInformationService service.
 type RoutingInformationServiceServer interface {
 	LPM(context.Context, *LPMRequest) (*LPMResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetLonger(context.Context, *GetLongerRequest) (*GetLongerResponse, error)
+	AdjRIBInStream(*AdjRIBInStreamRequest, RoutingInformationService_AdjRIBInStreamServer) error
 }
 
 func RegisterRoutingInformationServiceServer(s *grpc.Server, srv RoutingInformationServiceServer) {
@@ -208,6 +563,63 @@ func _RoutingInformationService_LPM_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoutingInformationService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutingInformationServiceServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bio.ris.RoutingInformationService/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutingInformationServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutingInformationService_GetLonger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLongerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutingInformationServiceServer).GetLonger(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bio.ris.RoutingInformationService/GetLonger",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutingInformationServiceServer).GetLonger(ctx, req.(*GetLongerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutingInformationService_AdjRIBInStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(AdjRIBInStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(RoutingInformationServiceServer).AdjRIBInStream(m, &routingInformationServiceAdjRIBInStreamServer{stream})
+}
+
+type RoutingInformationService_AdjRIBInStreamServer interface {
+	Send(*RIBUpdate) error
+	grpc.ServerStream
+}
+
+type routingInformationServiceAdjRIBInStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *routingInformationServiceAdjRIBInStreamServer) Send(m *RIBUpdate) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _RoutingInformationService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "bio.ris.RoutingInformationService",
 	HandlerType: (*RoutingInformationServiceServer)(nil),
@@ -216,7 +628,21 @@ var _RoutingInformationService_serviceDesc = grpc.ServiceDesc{
 			MethodName: "LPM",
 			Handler:    _RoutingInformationService_LPM_Handler,
 		},
+		{
+			MethodName: "Get",
+			Handler:    _RoutingInformationService_Get_Handler,
+		},
+		{
+			MethodName: "GetLonger",
+			Handler:    _RoutingInformationService_GetLonger_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "adjRIBInStream",
+			Handler:       _RoutingInformationService_AdjRIBInStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "github.com/bio-routing/bio-rd/cmd/ris/api/ris.proto",
 }

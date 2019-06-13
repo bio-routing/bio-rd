@@ -3,15 +3,23 @@
 
 package api
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import bio_net "github.com/bio-routing/bio-rd/net/api"
+import (
+	fmt "fmt"
+	api "github.com/bio-routing/bio-rd/net/api"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Session_State int32
 
@@ -34,6 +42,7 @@ var Session_State_name = map[int32]string{
 	5: "OpenConfirmed",
 	6: "Established",
 }
+
 var Session_State_value = map[string]int32{
 	"Disabled":      0,
 	"Idle":          1,
@@ -47,31 +56,57 @@ var Session_State_value = map[string]int32{
 func (x Session_State) String() string {
 	return proto.EnumName(Session_State_name, int32(x))
 }
-func (Session_State) EnumDescriptor() ([]byte, []int) { return fileDescriptor1, []int{0, 0} }
 
-type Session struct {
-	LocalAddress     *bio_net.IP   `protobuf:"bytes,1,opt,name=local_address,json=localAddress" json:"local_address,omitempty"`
-	NeighborAddress  *bio_net.IP   `protobuf:"bytes,2,opt,name=neighbor_address,json=neighborAddress" json:"neighbor_address,omitempty"`
-	LocalAsn         uint32        `protobuf:"varint,3,opt,name=local_asn,json=localAsn" json:"local_asn,omitempty"`
-	PeerAsn          uint32        `protobuf:"varint,4,opt,name=peer_asn,json=peerAsn" json:"peer_asn,omitempty"`
-	Status           Session_State `protobuf:"varint,5,opt,name=status,enum=bio.bgp.Session_State" json:"status,omitempty"`
-	Stats            *SessionStats `protobuf:"bytes,6,opt,name=stats" json:"stats,omitempty"`
-	EstablishedSince uint64        `protobuf:"varint,7,opt,name=established_since,json=establishedSince" json:"established_since,omitempty"`
+func (Session_State) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_5b53032c0bb76d75, []int{0, 0}
 }
 
-func (m *Session) Reset()                    { *m = Session{} }
-func (m *Session) String() string            { return proto.CompactTextString(m) }
-func (*Session) ProtoMessage()               {}
-func (*Session) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
+type Session struct {
+	LocalAddress         *api.IP       `protobuf:"bytes,1,opt,name=local_address,json=localAddress,proto3" json:"local_address,omitempty"`
+	NeighborAddress      *api.IP       `protobuf:"bytes,2,opt,name=neighbor_address,json=neighborAddress,proto3" json:"neighbor_address,omitempty"`
+	LocalAsn             uint32        `protobuf:"varint,3,opt,name=local_asn,json=localAsn,proto3" json:"local_asn,omitempty"`
+	PeerAsn              uint32        `protobuf:"varint,4,opt,name=peer_asn,json=peerAsn,proto3" json:"peer_asn,omitempty"`
+	Status               Session_State `protobuf:"varint,5,opt,name=status,proto3,enum=bio.bgp.Session_State" json:"status,omitempty"`
+	Stats                *SessionStats `protobuf:"bytes,6,opt,name=stats,proto3" json:"stats,omitempty"`
+	EstablishedSince     uint64        `protobuf:"varint,7,opt,name=established_since,json=establishedSince,proto3" json:"established_since,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
 
-func (m *Session) GetLocalAddress() *bio_net.IP {
+func (m *Session) Reset()         { *m = Session{} }
+func (m *Session) String() string { return proto.CompactTextString(m) }
+func (*Session) ProtoMessage()    {}
+func (*Session) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5b53032c0bb76d75, []int{0}
+}
+
+func (m *Session) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Session.Unmarshal(m, b)
+}
+func (m *Session) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Session.Marshal(b, m, deterministic)
+}
+func (m *Session) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Session.Merge(m, src)
+}
+func (m *Session) XXX_Size() int {
+	return xxx_messageInfo_Session.Size(m)
+}
+func (m *Session) XXX_DiscardUnknown() {
+	xxx_messageInfo_Session.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Session proto.InternalMessageInfo
+
+func (m *Session) GetLocalAddress() *api.IP {
 	if m != nil {
 		return m.LocalAddress
 	}
 	return nil
 }
 
-func (m *Session) GetNeighborAddress() *bio_net.IP {
+func (m *Session) GetNeighborAddress() *api.IP {
 	if m != nil {
 		return m.NeighborAddress
 	}
@@ -114,18 +149,41 @@ func (m *Session) GetEstablishedSince() uint64 {
 }
 
 type SessionStats struct {
-	MessagesIn     uint64 `protobuf:"varint,1,opt,name=messages_in,json=messagesIn" json:"messages_in,omitempty"`
-	MessagesOut    uint64 `protobuf:"varint,2,opt,name=messages_out,json=messagesOut" json:"messages_out,omitempty"`
-	Flaps          uint64 `protobuf:"varint,3,opt,name=flaps" json:"flaps,omitempty"`
-	RoutesReceived uint64 `protobuf:"varint,4,opt,name=routes_received,json=routesReceived" json:"routes_received,omitempty"`
-	RoutesImported uint64 `protobuf:"varint,5,opt,name=routes_imported,json=routesImported" json:"routes_imported,omitempty"`
-	RoutesExported uint64 `protobuf:"varint,6,opt,name=routes_exported,json=routesExported" json:"routes_exported,omitempty"`
+	MessagesIn           uint64   `protobuf:"varint,1,opt,name=messages_in,json=messagesIn,proto3" json:"messages_in,omitempty"`
+	MessagesOut          uint64   `protobuf:"varint,2,opt,name=messages_out,json=messagesOut,proto3" json:"messages_out,omitempty"`
+	Flaps                uint64   `protobuf:"varint,3,opt,name=flaps,proto3" json:"flaps,omitempty"`
+	RoutesReceived       uint64   `protobuf:"varint,4,opt,name=routes_received,json=routesReceived,proto3" json:"routes_received,omitempty"`
+	RoutesImported       uint64   `protobuf:"varint,5,opt,name=routes_imported,json=routesImported,proto3" json:"routes_imported,omitempty"`
+	RoutesExported       uint64   `protobuf:"varint,6,opt,name=routes_exported,json=routesExported,proto3" json:"routes_exported,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SessionStats) Reset()                    { *m = SessionStats{} }
-func (m *SessionStats) String() string            { return proto.CompactTextString(m) }
-func (*SessionStats) ProtoMessage()               {}
-func (*SessionStats) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
+func (m *SessionStats) Reset()         { *m = SessionStats{} }
+func (m *SessionStats) String() string { return proto.CompactTextString(m) }
+func (*SessionStats) ProtoMessage()    {}
+func (*SessionStats) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5b53032c0bb76d75, []int{1}
+}
+
+func (m *SessionStats) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SessionStats.Unmarshal(m, b)
+}
+func (m *SessionStats) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SessionStats.Marshal(b, m, deterministic)
+}
+func (m *SessionStats) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SessionStats.Merge(m, src)
+}
+func (m *SessionStats) XXX_Size() int {
+	return xxx_messageInfo_SessionStats.Size(m)
+}
+func (m *SessionStats) XXX_DiscardUnknown() {
+	xxx_messageInfo_SessionStats.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SessionStats proto.InternalMessageInfo
 
 func (m *SessionStats) GetMessagesIn() uint64 {
 	if m != nil {
@@ -170,16 +228,16 @@ func (m *SessionStats) GetRoutesExported() uint64 {
 }
 
 func init() {
+	proto.RegisterEnum("bio.bgp.Session_State", Session_State_name, Session_State_value)
 	proto.RegisterType((*Session)(nil), "bio.bgp.Session")
 	proto.RegisterType((*SessionStats)(nil), "bio.bgp.SessionStats")
-	proto.RegisterEnum("bio.bgp.Session_State", Session_State_name, Session_State_value)
 }
 
 func init() {
-	proto.RegisterFile("github.com/bio-routing/bio-rd/protocols/bgp/api/session.proto", fileDescriptor1)
+	proto.RegisterFile("github.com/bio-routing/bio-rd/protocols/bgp/api/session.proto", fileDescriptor_5b53032c0bb76d75)
 }
 
-var fileDescriptor1 = []byte{
+var fileDescriptor_5b53032c0bb76d75 = []byte{
 	// 469 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x93, 0x4d, 0x6f, 0xd3, 0x4e,
 	0x10, 0xc6, 0xff, 0x6e, 0xfc, 0x92, 0xff, 0x38, 0x69, 0xdc, 0x15, 0x20, 0x03, 0x07, 0x42, 0x2e,
