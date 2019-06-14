@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
@@ -25,7 +28,7 @@ func NewServer(b *server.BMPServer) *Server {
 	}
 }
 
-func (s Server) getRIB(rtr string, vrfID uint64, p *netapi.Prefix) (*locRIB.LocRIB, error) {
+func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*locRIB.LocRIB, error) {
 	r := s.bmp.GetRouter(rtr)
 	if r == nil {
 		return nil, fmt.Errorf("Unable to get router %q", rtr)
@@ -36,12 +39,8 @@ func (s Server) getRIB(rtr string, vrfID uint64, p *netapi.Prefix) (*locRIB.LocR
 		return nil, fmt.Errorf("Unable to get VRF %d", vrfID)
 	}
 
-	if p == nil {
-		return nil, fmt.Errorf("Not prefix given")
-	}
-
 	var rib *locRIB.LocRIB
-	switch p.Address.Version {
+	switch ipVersion {
 	case netapi.IP_IPv4:
 		rib = v.IPv4UnicastRIB()
 	case netapi.IP_IPv6:
@@ -59,7 +58,7 @@ func (s Server) getRIB(rtr string, vrfID uint64, p *netapi.Prefix) (*locRIB.LocR
 
 // LPM provides a longest prefix match service
 func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx)
+	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,7 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 
 // Get gets a prefix (exact match)
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx)
+	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +97,7 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // GetLonger gets all more specifics of a prefix
 func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.GetLongerResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx)
+	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +113,115 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 	return res, nil
 }
 
-func (s *Server) AdjRIBInStream(req *pb.AdjRIBInStreamRequest, srv pb.RoutingInformationService_AdjRIBInStreamServer) error {
+func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
+	ipVersion := netapi.IP_IPv4
+	switch req.Afisafi {
+	case pb.ObserveRIBRequest_IPv4Unicast:
+		ipVersion = netapi.IP_IPv4
+	case pb.ObserveRIBRequest_IPv6Unicast:
+		ipVersion = netapi.IP_IPv6
+	default:
+		return fmt.Errorf("Unknown AFI/SAFI")
+	}
+
+	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
+	if err != nil {
+		return err
+	}
+
+	rc := newRIBClient()
+	ret := make(chan error)
+	go func() {
+		var err error
+		toSend := &pb.RIBUpdate{
+			Route: &routeapi.Route{
+				Paths: make([]*routeapi.Path, 1),
+			},
+		}
+
+		for {
+			u := <-rc.ch
+			toSend.Advertisement = u.advertisement
+			toSend.Route.Pfx = u.prefix.ToProto()
+			toSend.Route.Paths[0] = u.path.ToProto()
+
+			err = stream.Send(toSend)
+			if err != nil {
+				ret <- err
+				return
+			}
+		}
+	}()
+
+	rib.RegisterWithOptions(rc, routingtable.ClientOptions{
+		MaxPaths: 100,
+	})
+
+	err = <-ret
+	if err != nil {
+		return fmt.Errorf("Stream ended: %v", err)
+	}
+
+	return nil
+}
+
+type update struct {
+	advertisement bool
+	prefix        net.Prefix
+	path          *route.Path
+}
+
+type ribClient struct {
+	ch chan update
+}
+
+func newRIBClient() *ribClient {
+	return &ribClient{
+		ch: make(chan update),
+	}
+}
+
+func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
+	r.ch <- update{
+		advertisement: true,
+		prefix:        pfx,
+		path:          path,
+	}
+
+	return nil
+}
+
+func (r *ribClient) RemovePath(pfx net.Prefix, path *route.Path) bool {
+	r.ch <- update{
+		advertisement: false,
+		prefix:        pfx,
+		path:          path,
+	}
+
+	return false
+}
+
+func (r *ribClient) UpdateNewClient(routingtable.RouteTableClient) error {
+	return nil
+}
+
+func (r *ribClient) Register(routingtable.RouteTableClient) {
+}
+
+func (r *ribClient) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
+}
+
+func (r *ribClient) Unregister(routingtable.RouteTableClient) {
+}
+
+func (r *ribClient) RouteCount() int64 {
+	return -1
+}
+
+func (r *ribClient) ClientCount() uint64 {
+	return 0
+}
+
+func (r *ribClient) Dump() []*route.Route {
 	return nil
 }
