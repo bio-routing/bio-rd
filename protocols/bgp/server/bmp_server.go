@@ -39,55 +39,6 @@ func NewServer() *BMPServer {
 	}
 }
 
-// SubscribeRIBs subscribes c for all RIB updates of router rtr
-/*func (b *BMPServer) SubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
-	b.gloablMu.Lock()
-	defer b.gloablMu.Unlock()
-
-	rtrStr := rtr.String()
-	if _, ok := b.ribClients[rtrStr]; !ok {
-		b.ribClients[rtrStr] = make(map[afiClient]struct{})
-	}
-
-	ac := afiClient{
-		afi:    afi,
-		client: client,
-	}
-	if _, ok := b.ribClients[rtrStr][ac]; ok {
-		return
-	}
-
-	b.ribClients[rtrStr][ac] = struct{}{}
-
-	if _, ok := b.routers[rtrStr]; !ok {
-		return
-	}
-
-	b.routers[rtrStr].subscribeRIBs(client, afi)
-}*/
-
-// UnsubscribeRIBs unsubscribes client from RIBs of address family afi
-/*func (b *BMPServer) UnsubscribeRIBs(client routingtable.RouteTableClient, rtr net.IP, afi uint8) {
-	b.gloablMu.Lock()
-	defer b.gloablMu.Unlock()
-
-	rtrStr := rtr.String()
-	if _, ok := b.ribClients[rtrStr]; !ok {
-		return
-	}
-
-	ac := afiClient{
-		afi:    afi,
-		client: client,
-	}
-	if _, ok := b.ribClients[rtrStr][ac]; !ok {
-		return
-	}
-
-	delete(b.ribClients[rtrStr], ac)
-	b.routers[rtrStr].unsubscribeRIBs(client, afi)
-}*/
-
 // AddRouter adds a router to which we connect with BMP
 func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 	b.gloablMu.Lock()

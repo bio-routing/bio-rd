@@ -31,7 +31,7 @@ func main() {
 	go http.ListenAndServe("localhost:1337", nil)
 
 	b := server.NewBgpServer()
-	v, err := vrf.New("master")
+	v, err := vrf.New("master", 0)
 	if err != nil {
 		log.Fatal(err)
 	}

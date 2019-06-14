@@ -12,7 +12,7 @@ import (
 )
 
 func TestMetrics(t *testing.T) {
-	green, err := New("green")
+	green, err := New("green", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -20,7 +20,7 @@ func TestMetrics(t *testing.T) {
 	green.IPv4UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 0, 0, 0), 16), &route.Path{})
 	green.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0), 48), &route.Path{})
 
-	red, err := New("red")
+	red, err := New("red", 1)
 	if err != nil {
 		t.Fatal(err)
 	}

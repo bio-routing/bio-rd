@@ -38,13 +38,13 @@ func (r *VRFRegistry) CreateVRFIfNotExists(name string, rd uint64) *VRF {
 }
 
 // registerVRF adds the given VRF from the global registry.
-// An error is returned if there is already a VRF registered with the same name.
+// An error is returned if there is already a VRF registered with the same route distinguisher.
 func (r *VRFRegistry) registerVRF(v *VRF) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if _, ok := r.vrfs[v.routeDistinguisher]; ok {
-		return fmt.Errorf("a VRF with the name '%s' already exists", v.name)
+		return fmt.Errorf("a VRF with the rd '%d' already exists", v.routeDistinguisher)
 	}
 
 	r.vrfs[v.routeDistinguisher] = v

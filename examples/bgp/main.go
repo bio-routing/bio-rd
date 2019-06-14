@@ -24,7 +24,7 @@ func main() {
 	logrus.Printf("This is a BGP speaker\n")
 
 	b := server.NewBgpServer()
-	v, err := vrf.New("master")
+	v, err := vrf.New("master", 0)
 	if err != nil {
 		log.Fatal(err)
 	}
