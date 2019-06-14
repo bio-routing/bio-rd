@@ -130,6 +130,7 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	}
 
 	rc := newRIBClient()
+	defer close(rc.stop)
 	ret := make(chan error)
 	go func() {
 		var err error
@@ -156,10 +157,46 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	rib.RegisterWithOptions(rc, routingtable.ClientOptions{
 		MaxPaths: 100,
 	})
+	defer rib.Unregister(rc)
 
 	err = <-ret
 	if err != nil {
 		return fmt.Errorf("Stream ended: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationService_DumpRIBServer) error {
+	ipVersion := netapi.IP_IPv4
+	switch req.Afisafi {
+	case pb.DumpRIBRequest_IPv4Unicast:
+		ipVersion = netapi.IP_IPv4
+	case pb.DumpRIBRequest_IPv6Unicast:
+		ipVersion = netapi.IP_IPv6
+	default:
+		return fmt.Errorf("Unknown AFI/SAFI")
+	}
+
+	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
+	if err != nil {
+		return err
+	}
+
+	toSend := &pb.DumpRIBReply{
+		Route: &routeapi.Route{
+			Paths: make([]*routeapi.Path, 1),
+		},
+	}
+
+	routes := rib.Dump()
+	for i := range routes {
+		toSend.Route = routes[i].ToProto()
+
+		err = stream.Send(toSend)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -172,20 +209,28 @@ type update struct {
 }
 
 type ribClient struct {
-	ch chan update
+	ch   chan update
+	stop chan struct{}
 }
 
 func newRIBClient() *ribClient {
 	return &ribClient{
-		ch: make(chan update),
+		ch:   make(chan update),
+		stop: make(chan struct{}),
 	}
 }
 
 func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
-	r.ch <- update{
+	u := update{
 		advertisement: true,
 		prefix:        pfx,
 		path:          path,
+	}
+
+	select {
+	case r.ch <- u:
+	case <-r.stop:
+		return nil
 	}
 
 	return nil

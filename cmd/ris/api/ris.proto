@@ -11,6 +11,7 @@ service RoutingInformationService {
     rpc Get(GetRequest) returns (GetResponse) {}
     rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {}
     rpc ObserveRIB(ObserveRIBRequest) returns (stream RIBUpdate);
+    rpc DumpRIB(DumpRIBRequest) returns (stream DumpRIBReply);
 }
 
 message LPMRequest {
@@ -56,4 +57,19 @@ message ObserveRIBRequest {
 message RIBUpdate {
     bool advertisement = 1;
     bio.route.Route route = 2;
+}
+
+
+message DumpRIBRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    enum AFISAFI {
+        IPv4Unicast = 0;
+        IPv6Unicast = 1;
+    }
+    AFISAFI afisafi = 3;
+}
+
+message DumpRIBReply {
+    bio.route.Route route = 1;
 }
