@@ -43,7 +43,8 @@ func newLinuxKernel() (*linuxKernel, error) {
 	}
 
 	return &linuxKernel{
-		h: h,
+		h:      h,
+		routes: make(map[bnet.Prefix]struct{}),
 	}, nil
 }
 
@@ -65,7 +66,7 @@ func (lk *linuxKernel) cleanup() error {
 		Protocol: protoBio,
 	}
 
-	routes, err := lk.h.RouteListFiltered(0, filter, 0)
+	routes, err := lk.h.RouteListFiltered(0, filter, netlink.RT_FILTER_PROTOCOL)
 	if err != nil {
 		return errors.Wrap(err, "Unable to get routes")
 	}

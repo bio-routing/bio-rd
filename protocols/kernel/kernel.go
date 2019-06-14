@@ -16,7 +16,7 @@ type osKernel interface {
 	uninit() error
 }
 
-func NewKernel() (*Kernel, error) {
+func New() (*Kernel, error) {
 	k := &Kernel{}
 	err := k.init()
 	if err != nil {
@@ -57,4 +57,8 @@ func (k *Kernel) ClientCount() uint64 {
 
 func (k *Kernel) Dump() []*route.Route {
 	return nil
+}
+
+func (k *Kernel) Dispose() {
+	k.osKernel.uninit()
 }
