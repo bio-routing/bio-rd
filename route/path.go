@@ -78,6 +78,11 @@ func (p *Path) ToProto() *api.Path {
 	return a
 }
 
+// PathFromProtoRoute translates an proto path to path
+func PathFromProtoRoute(pp *api.Path) *Path {
+	return nil
+}
+
 // Equal checks if paths p and q are equal
 func (p *Path) Equal(q *Path) bool {
 	if p == nil || q == nil {

@@ -45,6 +45,30 @@ func (pa ASPath) ToProto() []*api.ASPathSegment {
 	return ret
 }
 
+// ASPathFromProtoASPath converts an proto ASPath to ASPath
+func ASPathFromProtoASPath(segments []*api.ASPathSegment) ASPath {
+	asPath := make(ASPath, len(segments))
+
+	for i := range segments {
+		s := ASPathSegment{
+			Type: ASSet,
+			ASNs: make([]uint32, len(segments[i].ASNs)),
+		}
+
+		if segments[i].ASSequence {
+			s.Type = ASSequence
+		}
+
+		for j := range segments[i].ASNs {
+			s.ASNs[j] = segments[i].ASNs[j]
+		}
+
+		asPath[i] = s
+	}
+
+	return asPath
+}
+
 // String converts an ASPath to it's human redable representation
 func (pa ASPath) String() (ret string) {
 	for _, p := range pa {

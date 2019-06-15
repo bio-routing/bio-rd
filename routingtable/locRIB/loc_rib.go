@@ -38,6 +38,11 @@ func New(name string) *LocRIB {
 	return a
 }
 
+// Name gets the name of the LocRIB
+func (a *LocRIB) Name() string {
+	return a.name
+}
+
 // ClientCount gets the number of registered clients
 func (a *LocRIB) ClientCount() uint64 {
 	return a.clientManager.ClientCount()

@@ -35,3 +35,14 @@ func (u *UnknownPathAttribute) ToProto() *api.UnknownPathAttribute {
 	copy(a.Value, u.Value)
 	return a
 }
+
+// UnknownPathAttributeFromProtoUnknownPathAttribute convers an proto UnknownPathAttribute to UnknownPathAttribute
+func UnknownPathAttributeFromProtoUnknownPathAttribute(x *api.UnknownPathAttribute) UnknownPathAttribute {
+	return UnknownPathAttribute{
+		Optional:   x.Optional,
+		Transitive: x.Transitive,
+		Partial:    x.Partial,
+		TypeCode:   uint8(x.TypeCode),
+		Value:      x.Value,
+	}
+}
