@@ -6,6 +6,16 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
+const (
+	StateDown        = 0
+	StateIdle        = 1
+	StateConnect     = 2
+	StateActive      = 3
+	StateOpenSent    = 4
+	StateOpenConfirm = 5
+	StateEstablished = 6
+)
+
 // BGPPeerMetrics provides metrics for one BGP session
 type BGPPeerMetrics struct {
 	// IP is the remote IP of the peer
