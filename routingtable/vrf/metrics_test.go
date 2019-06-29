@@ -64,7 +64,7 @@ func TestMetrics(t *testing.T) {
 		},
 	}
 
-	actual := Metrics()
+	actual := Metrics(GetGlobalRegistry())
 	sortResult(actual)
 
 	assert.Equal(t, expected, actual)

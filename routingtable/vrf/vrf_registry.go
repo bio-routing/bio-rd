@@ -78,6 +78,12 @@ func GetVRFByRD(rd uint64) *VRF {
 	return globalRegistry.GetVRFByRD(rd)
 }
 
+// GetGlobalRegistry gets the global registry
+func GetGlobalRegistry() *VRFRegistry {
+	return globalRegistry
+}
+
+// GetVRFByRD gets a VRF by route distinguisher
 func (r *VRFRegistry) GetVRFByRD(rd uint64) *VRF {
 	r.mu.Lock()
 	defer r.mu.Unlock()

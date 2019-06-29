@@ -38,7 +38,7 @@ func main() {
 
 func startMetricsEndpoint(server server.BGPServer) {
 	prometheus.MustRegister(prom_bgp.NewCollector(server))
-	prometheus.MustRegister(prom_vrf.NewCollector())
+	prometheus.MustRegister(prom_vrf.NewCollector(vrf.GetGlobalRegistry()))
 
 	http.Handle("/metrics", promhttp.Handler())
 
