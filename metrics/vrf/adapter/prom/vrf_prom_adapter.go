@@ -13,12 +13,14 @@ const (
 )
 
 var (
-	routeCountDesc *prometheus.Desc
+	routeCountDesc       *prometheus.Desc
+	routeCountDescRouter *prometheus.Desc
 )
 
 func init() {
 	labels := []string{"vrf", "rib", "afi", "safi"}
 	routeCountDesc = prometheus.NewDesc(prefix+"route_count", "Number of routes in the RIB", labels, nil)
+	routeCountDescRouter = prometheus.NewDesc(prefix+"route_count", "Number of routes in the RIB", append([]string{"router"}, labels...), nil)
 }
 
 // NewCollector creates a new collector instance for the given BGP server
@@ -38,8 +40,9 @@ func (c *vrfCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- routeCountDesc
 }
 
-func Describe(ch chan<- *prometheus.Desc) {
-	ch <- routeCountDesc
+// DescribeRouter conforms to the prometheus collector interface (used by BMP Server)
+func DescribeRouter(ch chan<- *prometheus.Desc) {
+	ch <- routeCountDescRouter
 }
 
 // Collect conforms to the prometheus collector interface
@@ -50,12 +53,16 @@ func (c *vrfCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *vrfCollector) collectForVRF(ch chan<- prometheus.Metric, v *metrics.VRFMetrics) {
-	CollectForVRF(ch, v)
-}
-
-func CollectForVRF(ch chan<- prometheus.Metric, v *metrics.VRFMetrics) {
 	for _, rib := range v.RIBs {
 		ch <- prometheus.MustNewConstMetric(routeCountDesc, prometheus.GaugeValue, float64(rib.RouteCount),
 			v.Name, rib.Name, strconv.Itoa(int(rib.AFI)), strconv.Itoa(int(rib.SAFI)))
+	}
+}
+
+// CollectForVRFRouter collects metrics for a certain router (used by BMP Server)
+func CollectForVRFRouter(ch chan<- prometheus.Metric, rtr string, v *metrics.VRFMetrics) {
+	for _, rib := range v.RIBs {
+		ch <- prometheus.MustNewConstMetric(routeCountDescRouter, prometheus.GaugeValue, float64(rib.RouteCount),
+			rtr, v.Name, rib.Name, strconv.Itoa(int(rib.AFI)), strconv.Itoa(int(rib.SAFI)))
 	}
 }

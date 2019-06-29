@@ -56,7 +56,7 @@ func (c *bmpCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- terminationMessages
 	ch <- routeMirroringMessages
 
-	vrf_prom.Describe(ch)
+	vrf_prom.DescribeRouter(ch)
 }
 
 // Collect conforms to the prometheus collector interface
@@ -84,6 +84,6 @@ func (c *bmpCollector) collectForRouter(ch chan<- prometheus.Metric, rtr *metric
 	ch <- prometheus.MustNewConstMetric(routeMirroringMessages, prometheus.CounterValue, float64(rtr.RouteMirroringMessages), l...)
 
 	for _, vrfMetric := range rtr.VRFs {
-		vrf_prom.CollectForVRF(ch, vrfMetric)
+		vrf_prom.CollectForVRFRouter(ch, rtr.Name, vrfMetric)
 	}
 }
