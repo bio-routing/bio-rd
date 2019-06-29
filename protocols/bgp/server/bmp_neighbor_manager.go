@@ -60,8 +60,7 @@ func (nm *neighborManager) neighborDown(vrfID uint64, addr [16]byte) error {
 			nm.neighbors[i].fsm.ipv6Unicast.bmpDispose()
 		}
 
-		// TODO: Remove neighbor from slice
-
+		nm.neighbors = append(nm.neighbors[:i], nm.neighbors[i+1:]...)
 		return nil
 	}
 

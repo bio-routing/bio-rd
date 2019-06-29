@@ -254,6 +254,12 @@ func (r *Router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 }
 
 func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
+	r.logger.WithFields(log.Fields{
+		"address":            r.address.String(),
+		"router":             r.name,
+		"peer_distinguisher": msg.PerPeerHeader.PeerDistinguisher,
+		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
+	}).Infof("peer down notification received")
 	err := r.neighborManager.neighborDown(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if err != nil {
 		r.logger.Errorf("Failed to process peer down notification: %v", err)
