@@ -12,6 +12,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 )
 

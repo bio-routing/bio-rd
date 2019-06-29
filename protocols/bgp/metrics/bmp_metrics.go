@@ -1,5 +1,9 @@
 package metrics
 
+import (
+	vrf_metrics "github.com/bio-routing/bio-rd/routingtable/vrf/metrics"
+)
+
 type BMPMetrics struct {
 	Routers []*BMPRouterMetrics
 }
@@ -28,4 +32,6 @@ type BMPRouterMetrics struct {
 
 	// Count of received RouteMirroringMessages
 	RouteMirroringMessages uint64
+
+	VRFs []*vrf_metrics.VRFMetrics
 }

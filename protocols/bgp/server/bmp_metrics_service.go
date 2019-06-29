@@ -4,6 +4,8 @@ import (
 	"sync/atomic"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	vrf_metrics "github.com/bio-routing/bio-rd/routingtable/vrf/metrics"
 )
 
 type bmpMetricsService struct {
@@ -36,6 +38,12 @@ func (b *bmpMetricsService) metricsForRouter(rtr *Router) *metrics.BMPRouterMetr
 		InitiationMessages:           atomic.LoadUint64(&rtr.counters.initiationMessages),
 		TerminationMessages:          atomic.LoadUint64(&rtr.counters.terminationMessages),
 		RouteMirroringMessages:       atomic.LoadUint64(&rtr.counters.routeMirroringMessages),
+	}
+
+	vrfs := rtr.vrfRegistry.List()
+	rm.VRFs = make([]*vrf_metrics.VRFMetrics, 0, len(vrfs))
+	for _, v := range vrfs {
+		rm.VRFs = append(rm.VRFs, vrf.MetricsForVRF(v))
 	}
 
 	return rm
