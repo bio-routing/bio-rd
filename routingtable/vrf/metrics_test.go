@@ -64,16 +64,17 @@ func TestMetrics(t *testing.T) {
 	sortResult(actual)
 
 	assert.Equal(t, expected, actual)
+	_ = green
 }
 
-func sortResult(m []*metrics.VRFMetrics) {
-	sort.Slice(m, func(i, j int) bool {
-		return m[i].Name < m[j].Name
+func sortResult(vrfMetrics []*metrics.VRFMetrics) {
+	sort.Slice(vrfMetrics, func(i, j int) bool {
+		return vrfMetrics[i].Name < vrfMetrics[j].Name
 	})
 
-	for _, v := range m {
-		sort.Slice(v.RIBs, func(i, j int) bool {
-			return m[i].Name < m[j].Name
+	for _, vrfMetric := range vrfMetrics {
+		sort.Slice(vrfMetric.RIBs, func(i, j int) bool {
+			return vrfMetric.RIBs[i].Name < vrfMetric.RIBs[j].Name
 		})
 	}
 }
