@@ -6,24 +6,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable/vrf/metrics"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func TestMetrics(t *testing.T) {
-	green, err := New("green", 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := NewVRFRegistry()
+	green := r.CreateVRFIfNotExists("green", 0)
 	green.IPv4UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 0, 0, 0), 8), &route.Path{})
 	green.IPv4UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 0, 0, 0), 16), &route.Path{})
 	green.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0), 48), &route.Path{})
 
-	red, err := New("red", 1)
-	if err != nil {
-		t.Fatal(err)
-	}
+	red := r.CreateVRFIfNotExists("red", 1)
 	red.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0), 64), &route.Path{})
 	red.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0), 64), &route.Path{})
 
@@ -64,7 +60,7 @@ func TestMetrics(t *testing.T) {
 		},
 	}
 
-	actual := Metrics(GetGlobalRegistry())
+	actual := Metrics(r)
 	sortResult(actual)
 
 	assert.Equal(t, expected, actual)
