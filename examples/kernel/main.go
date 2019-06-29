@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	vrf, err := vrf.New("inet.0")
+	vrf, err := vrf.New("inet.0", 0)
 	if err != nil {
 		log.Errorf("Unable to create VRF: %v", err)
 		os.Exit(1)
