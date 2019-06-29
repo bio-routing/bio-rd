@@ -11,8 +11,10 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/ris/risserver"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
+	"github.com/prometheus/client_golang/prometheus"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
+	prom_bmp "github.com/bio-routing/bio-rd/metrics/bmp/adapter/prom"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -32,6 +34,8 @@ func main() {
 	}
 
 	b := server.NewServer()
+	prometheus.MustRegister(prom_bmp.NewCollector(b))
+
 	for _, r := range cfg.BMPServers {
 		ip := net.ParseIP(r.Address)
 		if ip == nil {
@@ -42,11 +46,13 @@ func main() {
 	}
 
 	s := risserver.NewServer(b)
-	interceptors := []grpc.UnaryServerInterceptor{}
+	unaryInterceptors := []grpc.UnaryServerInterceptor{}
+	streamInterceptors := []grpc.StreamServerInterceptor{}
 	srv, err := servicewrapper.New(
 		uint16(*grpcPort),
 		servicewrapper.HTTP(uint16(*httpPort)),
-		interceptors,
+		unaryInterceptors,
+		streamInterceptors,
 	)
 	if err != nil {
 		log.Errorf("failed to listen: %v", err)

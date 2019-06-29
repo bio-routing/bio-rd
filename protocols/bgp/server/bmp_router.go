@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -37,6 +38,18 @@ type Router struct {
 
 	ribClients   map[afiClient]struct{}
 	ribClientsMu sync.Mutex
+
+	counters routerCounters
+}
+
+type routerCounters struct {
+	routeMonitoringMessages      uint64
+	statisticsReportMessages     uint64
+	peerDownNotificationMessages uint64
+	peerUpNotificationMessages   uint64
+	initiationMessages           uint64
+	terminationMessages          uint64
+	routeMirroringMessages       uint64
 }
 
 type neighbor struct {
@@ -78,59 +91,6 @@ func (r *Router) Name() string {
 	return r.name
 }
 
-/*func (r *Router) subscribeRIBs(client routingtable.RouteTableClient, afi uint8) {
-	ac := afiClient{
-		afi:    afi,
-		client: client,
-	}
-
-	r.ribClientsMu.Lock()
-	defer r.ribClientsMu.Unlock()
-	if _, ok := r.ribClients[ac]; ok {
-		return
-	}
-	r.ribClients[ac] = struct{}{}
-
-	r.neighborsMu.Lock()
-	defer r.neighborsMu.Unlock()
-	for _, n := range r.neighbors {
-		if afi == packet.IPv4AFI {
-			n.fsm.ipv4Unicast.adjRIBIn.Register(client)
-		}
-		if afi == packet.IPv6AFI {
-			n.fsm.ipv6Unicast.adjRIBIn.Register(client)
-		}
-	}
-}
-
-func (r *Router) unsubscribeRIBs(client routingtable.RouteTableClient, afi uint8) {
-	ac := afiClient{
-		afi:    afi,
-		client: client,
-	}
-
-	r.ribClientsMu.Lock()
-	defer r.ribClientsMu.Unlock()
-	if _, ok := r.ribClients[ac]; !ok {
-		return
-	}
-	delete(r.ribClients, ac)
-
-	r.neighborsMu.Lock()
-	defer r.neighborsMu.Unlock()
-	for _, n := range r.neighbors {
-		if !n.fsm.ribsInitialized {
-			continue
-		}
-		if afi == packet.IPv4AFI {
-			n.fsm.ipv4Unicast.adjRIBIn.Unregister(client)
-		}
-		if afi == packet.IPv6AFI {
-			n.fsm.ipv6Unicast.adjRIBIn.Unregister(client)
-		}
-	}
-}*/
-
 func (r *Router) serve(con net.Conn) {
 	r.con = con
 	r.runMu.Lock()
@@ -171,11 +131,15 @@ func (r *Router) serve(con net.Conn) {
 			return
 		case bmppkt.RouteMonitoringType:
 			r.processRouteMonitoringMsg(bmpMsg.(*bmppkt.RouteMonitoringMsg))
+		case bmppkt.RouteMirroringMessageType:
+			atomic.AddUint64(&r.counters.routeMirroringMessages, 1)
 		}
 	}
 }
 
 func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
+	atomic.AddUint64(&r.counters.routeMonitoringMessages, 1)
+
 	n := r.neighborManager.getNeighbor(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if n == nil {
 		r.logger.Errorf("Received route monitoring message for non-existent neighbor %d/%v on %s", msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress, r.address.String())
@@ -187,6 +151,8 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 }
 
 func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
+	atomic.AddUint64(&r.counters.initiationMessages, 1)
+
 	r.nameMu.Lock()
 	defer r.nameMu.Unlock()
 
@@ -225,6 +191,7 @@ func (r *Router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 		permAdminDown = 4
 	)
 
+	atomic.AddUint64(&r.counters.terminationMessages, 1)
 	logMsg := fmt.Sprintf("Received termination message from %s: ", r.address.String())
 	for _, tlv := range msg.TLVs {
 		switch tlv.InformationType {
@@ -260,6 +227,8 @@ func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 		"peer_distinguisher": msg.PerPeerHeader.PeerDistinguisher,
 		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
 	}).Infof("peer down notification received")
+	atomic.AddUint64(&r.counters.peerDownNotificationMessages, 1)
+
 	err := r.neighborManager.neighborDown(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if err != nil {
 		r.logger.Errorf("Failed to process peer down notification: %v", err)
@@ -267,6 +236,7 @@ func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 }
 
 func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error {
+	atomic.AddUint64(&r.counters.peerUpNotificationMessages, 1)
 	r.logger.WithFields(log.Fields{
 		"address":            r.address.String(),
 		"router":             r.name,

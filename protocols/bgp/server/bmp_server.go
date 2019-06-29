@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/tflow2/convert"
@@ -24,6 +25,7 @@ type BMPServer struct {
 	routersMu  sync.RWMutex
 	ribClients map[string]map[afiClient]struct{}
 	gloablMu   sync.RWMutex
+	metrics    *bmpMetricsService
 }
 
 type afiClient struct {
@@ -33,10 +35,13 @@ type afiClient struct {
 
 // NewServer creates a new BMP server
 func NewServer() *BMPServer {
-	return &BMPServer{
+	b := &BMPServer{
 		routers:    make(map[string]*Router),
 		ribClients: make(map[string]map[afiClient]struct{}),
 	}
+
+	b.metrics = &bmpMetricsService{b}
+	return b
 }
 
 // AddRouter adds a router to which we connect with BMP
@@ -78,6 +83,18 @@ func (b *BMPServer) RemoveRouter(addr net.IP, port uint16) {
 	r := b.routers[id]
 	r.stop <- struct{}{}
 	delete(b.routers, id)
+}
+
+func (b *BMPServer) getRouters() []*Router {
+	b.routersMu.RLock()
+	defer b.routersMu.RUnlock()
+
+	ret := make([]*Router, 0, len(b.routers))
+	for r := range b.routers {
+		ret = append(ret, b.routers[r])
+	}
+
+	return ret
 }
 
 func recvBMPMsg(c net.Conn) (msg []byte, err error) {
@@ -128,4 +145,12 @@ func (b *BMPServer) GetRouter(name string) *Router {
 	}
 
 	return nil
+}
+
+func (b *BMPServer) Metrics() (*metrics.BMPMetrics, error) {
+	if b.metrics == nil {
+		return nil, fmt.Errorf("Server not started yet")
+	}
+
+	return b.metrics.metrics(), nil
 }

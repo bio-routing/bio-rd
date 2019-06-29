@@ -10,6 +10,7 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -56,7 +57,7 @@ type grpcSrv struct {
 }
 
 // New creates a new exarpc server wrapper
-func New(grpcPort uint16, h *http.Server, interceptors []grpc.UnaryServerInterceptor) (*Server, error) {
+func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerInterceptor, streamInterceptors []grpc.StreamServerInterceptor) (*Server, error) {
 	s := &Server{
 		grpcSrv: &grpcSrv{port: grpcPort},
 		httpSrv: h,
@@ -65,15 +66,23 @@ func New(grpcPort uint16, h *http.Server, interceptors []grpc.UnaryServerInterce
 	logrusEntry := log.NewEntry(log.StandardLogger())
 	levelOpt := grpc_logrus.WithLevels(codeToLogrusLevel)
 
-	interceptors = append(interceptors,
+	unaryInterceptors = append(unaryInterceptors,
 		grpc_prometheus.UnaryServerInterceptor,
 		grpc_ctxtags.UnaryServerInterceptor(),
-		//grpc_recovery.UnaryServerInterceptor(),
+		grpc_recovery.UnaryServerInterceptor(),
 		grpc_logrus.UnaryServerInterceptor(logrusEntry, levelOpt),
 	)
-	opts := grpc_middleware.WithUnaryServerChain(interceptors...)
 
-	s.grpcSrv.srv = grpc.NewServer(opts)
+	streamInterceptors = append(streamInterceptors,
+		grpc_prometheus.StreamServerInterceptor,
+		grpc_ctxtags.StreamServerInterceptor(),
+		grpc_recovery.StreamServerInterceptor(),
+		grpc_logrus.StreamServerInterceptor(logrusEntry, levelOpt),
+	)
+	unaryOpts := grpc_middleware.WithUnaryServerChain(unaryInterceptors...)
+	streamOpts := grpc_middleware.WithStreamServerChain(streamInterceptors...)
+
+	s.grpcSrv.srv = grpc.NewServer(unaryOpts, streamOpts)
 	reflection.Register(s.grpcSrv.srv)
 	grpc_prometheus.Register(s.grpcSrv.srv)
 	grpc_prometheus.EnableClientHandlingTimeHistogram()
