@@ -129,30 +129,24 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 		return err
 	}
 
-	rc := newRIBClient()
-	defer close(rc.stop)
+	fifo := newUpdateFIFO()
+	rc := newRIBClient(fifo)
 	ret := make(chan error)
-	go func() {
+
+	go func(fifo *updateFIFO) {
 		var err error
-		toSend := &pb.RIBUpdate{
-			Route: &routeapi.Route{
-				Paths: make([]*routeapi.Path, 1),
-			},
-		}
 
 		for {
-			u := <-rc.ch
-			toSend.Advertisement = u.advertisement
-			toSend.Route.Pfx = u.prefix.ToProto()
-			toSend.Route.Paths[0] = u.path.ToProto()
-
-			err = stream.Send(toSend)
-			if err != nil {
-				ret <- err
-				return
+			for _, toSend := range fifo.dequeue() {
+				err = stream.Send(toSend)
+				if err != nil {
+					ret <- err
+					return
+				}
 			}
+
 		}
-	}()
+	}(fifo)
 
 	rib.RegisterWithOptions(rc, routingtable.ClientOptions{
 		MaxPaths: 100,
@@ -209,39 +203,39 @@ type update struct {
 }
 
 type ribClient struct {
-	ch   chan update
-	stop chan struct{}
+	fifo *updateFIFO
 }
 
-func newRIBClient() *ribClient {
+func newRIBClient(fifo *updateFIFO) *ribClient {
 	return &ribClient{
-		ch:   make(chan update),
-		stop: make(chan struct{}),
+		fifo: fifo,
 	}
 }
 
 func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
-	u := update{
-		advertisement: true,
-		prefix:        pfx,
-		path:          path,
-	}
-
-	select {
-	case r.ch <- u:
-	case <-r.stop:
-		return nil
-	}
+	r.fifo.queue(&pb.RIBUpdate{
+		Advertisement: true,
+		Route: &routeapi.Route{
+			Pfx: pfx.ToProto(),
+			Paths: []*routeapi.Path{
+				path.ToProto(),
+			},
+		},
+	})
 
 	return nil
 }
 
 func (r *ribClient) RemovePath(pfx net.Prefix, path *route.Path) bool {
-	r.ch <- update{
-		advertisement: false,
-		prefix:        pfx,
-		path:          path,
-	}
+	r.fifo.queue(&pb.RIBUpdate{
+		Advertisement: false,
+		Route: &routeapi.Route{
+			Pfx: pfx.ToProto(),
+			Paths: []*routeapi.Path{
+				path.ToProto(),
+			},
+		},
+	})
 
 	return false
 }

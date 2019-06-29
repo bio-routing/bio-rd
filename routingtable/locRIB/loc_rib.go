@@ -96,7 +96,9 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 
 	routes := a.rt.Dump()
 	for _, r := range routes {
-		a.propagateChanges(&route.Route{}, r)
+		for _, p := range r.Paths() {
+			client.AddPath(r.Prefix(), p)
+		}
 	}
 
 	return nil
