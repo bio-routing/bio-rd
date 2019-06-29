@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
+	bgp_metrics "github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	vrf_metrics "github.com/bio-routing/bio-rd/routingtable/vrf/metrics"
 )
@@ -41,9 +42,15 @@ func (b *bmpMetricsService) metricsForRouter(rtr *Router) *metrics.BMPRouterMetr
 	}
 
 	vrfs := rtr.vrfRegistry.List()
-	rm.VRFs = make([]*vrf_metrics.VRFMetrics, 0, len(vrfs))
+	rm.VRFMetrics = make([]*vrf_metrics.VRFMetrics, 0, len(vrfs))
 	for _, v := range vrfs {
-		rm.VRFs = append(rm.VRFs, vrf.MetricsForVRF(v))
+		rm.VRFMetrics = append(rm.VRFMetrics, vrf.MetricsForVRF(v))
+	}
+
+	peers := rtr.neighborManager.list()
+	rm.PeerMetrics = make([]*bgp_metrics.BGPPeerMetrics, len(peers))
+	for i := range peers {
+		rm.PeerMetrics[i] = metricsForPeer(peers[i].fsm.peer)
 	}
 
 	return rm

@@ -285,6 +285,10 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 		},
 	}
 
+	fsm.peer.fsms = []*FSM{
+		fsm,
+	}
+
 	fsm.peer.configureBySentOpen(sentOpen)
 
 	rib4, found := fsm.peer.vrf.RIBByName("inet.0")

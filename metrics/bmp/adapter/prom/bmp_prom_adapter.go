@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
+	bgp_prom "github.com/bio-routing/bio-rd/metrics/bgp/adapter/prom"
 	vrf_prom "github.com/bio-routing/bio-rd/metrics/vrf/adapter/prom"
 	log "github.com/sirupsen/logrus"
 )
@@ -57,6 +58,7 @@ func (c *bmpCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- routeMirroringMessages
 
 	vrf_prom.DescribeRouter(ch)
+	bgp_prom.DescribeRouter(ch)
 }
 
 // Collect conforms to the prometheus collector interface
@@ -83,7 +85,11 @@ func (c *bmpCollector) collectForRouter(ch chan<- prometheus.Metric, rtr *metric
 	ch <- prometheus.MustNewConstMetric(terminationMessages, prometheus.CounterValue, float64(rtr.TerminationMessages), l...)
 	ch <- prometheus.MustNewConstMetric(routeMirroringMessages, prometheus.CounterValue, float64(rtr.RouteMirroringMessages), l...)
 
-	for _, vrfMetric := range rtr.VRFs {
+	for _, vrfMetric := range rtr.VRFMetrics {
 		vrf_prom.CollectForVRFRouter(ch, rtr.Name, vrfMetric)
+	}
+
+	for _, peerMetric := range rtr.PeerMetrics {
+		bgp_prom.CollectForPeerRouter(ch, rtr.Name, peerMetric)
 	}
 }

@@ -75,3 +75,15 @@ func (nm *neighborManager) disposeAll() {
 		nm.neighborDown(nm.neighbors[i].vrfID, nm.neighbors[i].peerAddress)
 	}
 }
+
+func (nm *neighborManager) list() []*neighbor {
+	nm.neighborsMu.Lock()
+	defer nm.neighborsMu.Unlock()
+
+	ret := make([]*neighbor, len(nm.neighbors))
+	for i := range nm.neighbors {
+		ret[i] = nm.neighbors[i]
+	}
+
+	return ret
+}
