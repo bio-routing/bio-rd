@@ -110,30 +110,34 @@ func (r *Router) serve(con net.Conn) {
 			return
 		}
 
-		bmpMsg, err := bmppkt.Decode(msg)
-		if err != nil {
-			r.logger.Errorf("Unable to decode BMP message: %v", err)
-			return
-		}
+		r.processMsg(msg)
+	}
+}
 
-		switch bmpMsg.MsgType() {
-		case bmppkt.PeerUpNotificationType:
-			err = r.processPeerUpNotification(bmpMsg.(*bmppkt.PeerUpNotification))
-			if err != nil {
-				r.logger.Errorf("Unable to process peer up notification: %v", err)
-			}
-		case bmppkt.PeerDownNotificationType:
-			r.processPeerDownNotification(bmpMsg.(*bmppkt.PeerDownNotification))
-		case bmppkt.InitiationMessageType:
-			r.processInitiationMsg(bmpMsg.(*bmppkt.InitiationMessage))
-		case bmppkt.TerminationMessageType:
-			r.processTerminationMsg(bmpMsg.(*bmppkt.TerminationMessage))
-			return
-		case bmppkt.RouteMonitoringType:
-			r.processRouteMonitoringMsg(bmpMsg.(*bmppkt.RouteMonitoringMsg))
-		case bmppkt.RouteMirroringMessageType:
-			atomic.AddUint64(&r.counters.routeMirroringMessages, 1)
+func (r *Router) processMsg(msg []byte) {
+	bmpMsg, err := bmppkt.Decode(msg)
+	if err != nil {
+		r.logger.Errorf("Unable to decode BMP message: %v", err)
+		return
+	}
+
+	switch bmpMsg.MsgType() {
+	case bmppkt.PeerUpNotificationType:
+		err = r.processPeerUpNotification(bmpMsg.(*bmppkt.PeerUpNotification))
+		if err != nil {
+			r.logger.Errorf("Unable to process peer up notification: %v", err)
 		}
+	case bmppkt.PeerDownNotificationType:
+		r.processPeerDownNotification(bmpMsg.(*bmppkt.PeerDownNotification))
+	case bmppkt.InitiationMessageType:
+		r.processInitiationMsg(bmpMsg.(*bmppkt.InitiationMessage))
+	case bmppkt.TerminationMessageType:
+		r.processTerminationMsg(bmpMsg.(*bmppkt.TerminationMessage))
+		return
+	case bmppkt.RouteMonitoringType:
+		r.processRouteMonitoringMsg(bmpMsg.(*bmppkt.RouteMonitoringMsg))
+	case bmppkt.RouteMirroringMessageType:
+		atomic.AddUint64(&r.counters.routeMirroringMessages, 1)
 	}
 }
 

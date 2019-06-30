@@ -51,7 +51,7 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 	defer b.gloablMu.Unlock()
 
 	r := newRouter(addr, port)
-	b.routers[fmt.Sprintf("%s", r.address.String())] = r
+	b.addRouter(r)
 
 	go func(r *Router) {
 		for {
@@ -73,6 +73,10 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 			r.serve(c)
 		}
 	}(r)
+}
+
+func (b *BMPServer) addRouter(r *Router) {
+	b.routers[fmt.Sprintf("%s", r.address.String())] = r
 }
 
 // RemoveRouter removes a BMP monitored router
