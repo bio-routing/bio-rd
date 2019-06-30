@@ -47,6 +47,10 @@ func (nm *neighborManager) neighborDown(vrfID uint64, addr [16]byte) error {
 	nm.neighborsMu.Lock()
 	defer nm.neighborsMu.Unlock()
 
+	return nm._neighborDown(vrfID, addr)
+}
+
+func (nm *neighborManager) _neighborDown(vrfID uint64, addr [16]byte) error {
 	for i := range nm.neighbors {
 		if nm.neighbors[i].vrfID != vrfID || nm.neighbors[i].peerAddress != addr {
 			continue
@@ -72,7 +76,7 @@ func (nm *neighborManager) disposeAll() {
 	defer nm.neighborsMu.Unlock()
 
 	for i := range nm.neighbors {
-		nm.neighborDown(nm.neighbors[i].vrfID, nm.neighbors[i].peerAddress)
+		nm._neighborDown(nm.neighbors[i].vrfID, nm.neighbors[i].peerAddress)
 	}
 }
 

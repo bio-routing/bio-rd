@@ -202,7 +202,7 @@ func (r *Router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 		case stringType:
 			logMsg += fmt.Sprintf("Message: %q", string(tlv.Information))
 		case reasonType:
-			reason := convert.Uint16b(tlv.Information[:2])
+			reason := convert.Uint16b(tlv.Information[:1])
 			switch reason {
 			case adminDown:
 				logMsg += "Session administratively down"
