@@ -40,9 +40,17 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 				DataPart2:           666,
 			},
 		},
-		UnknownAttributes: []*api.UnknownPathAttribute{},
-		OriginatorId:      8888,
-		ClusterList:       []uint32{999, 199},
+		UnknownAttributes: []*api.UnknownPathAttribute{
+			{
+				Optional:   true,
+				Transitive: true,
+				Partial:    true,
+				TypeCode:   233,
+				Value:      []byte{200, 222},
+			},
+		},
+		OriginatorId: 8888,
+		ClusterList:  []uint32{999, 199},
 	}
 
 	expected := &BGPPath{
@@ -75,9 +83,17 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 				DataPart2:           666,
 			},
 		},
-		UnknownAttributes: []types.UnknownPathAttribute{},
-		OriginatorID:      8888,
-		ClusterList:       []uint32{999, 199},
+		UnknownAttributes: []types.UnknownPathAttribute{
+			{
+				Optional:   true,
+				Transitive: true,
+				Partial:    true,
+				TypeCode:   233,
+				Value:      []byte{200, 222},
+			},
+		},
+		OriginatorID: 8888,
+		ClusterList:  []uint32{999, 199},
 	}
 
 	result := BGPPathFromProtoBGPPath(input)
