@@ -58,6 +58,9 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 
 // LPM provides a longest prefix match service
 func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, error) {
+	if req.Pfx == nil {
+		panic("XXX")
+	}
 	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
 		return nil, err

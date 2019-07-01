@@ -266,7 +266,7 @@ func RouteFromProtoRoute(ar *api.Route) *Route {
 		switch ar.Paths[i].Type {
 		case api.Path_BGP:
 			p.Type = BGPPathType
-			p.BGPPath = BGPPathFromProtoBGPPath(ar.Paths[i].BGPPath)
+			p.BGPPath = BGPPathFromProtoBGPPath(ar.Paths[i].BgpPath)
 		}
 
 		r.paths = append(r.paths, p)

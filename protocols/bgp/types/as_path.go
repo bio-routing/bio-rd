@@ -32,14 +32,14 @@ func (pa ASPath) ToProto() []*api.ASPathSegment {
 	ret := make([]*api.ASPathSegment, len(pa))
 	for i := range pa {
 		ret[i] = &api.ASPathSegment{
-			ASNs: make([]uint32, len(pa[i].ASNs)),
+			Asns: make([]uint32, len(pa[i].ASNs)),
 		}
 
 		if pa[i].Type == ASSequence {
-			ret[i].ASSequence = true
+			ret[i].AsSequence = true
 		}
 
-		copy(ret[i].ASNs, pa[i].ASNs)
+		copy(ret[i].Asns, pa[i].ASNs)
 	}
 
 	return ret
@@ -52,15 +52,15 @@ func ASPathFromProtoASPath(segments []*api.ASPathSegment) ASPath {
 	for i := range segments {
 		s := ASPathSegment{
 			Type: ASSet,
-			ASNs: make([]uint32, len(segments[i].ASNs)),
+			ASNs: make([]uint32, len(segments[i].Asns)),
 		}
 
-		if segments[i].ASSequence {
+		if segments[i].AsSequence {
 			s.Type = ASSequence
 		}
 
-		for j := range segments[i].ASNs {
-			s.ASNs[j] = segments[i].ASNs[j]
+		for j := range segments[i].Asns {
+			s.ASNs[j] = segments[i].Asns[j]
 		}
 
 		asPath[i] = s

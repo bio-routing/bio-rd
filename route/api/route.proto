@@ -17,7 +17,7 @@ message Path {
     }
     Type type = 1;
     StaticPath static_path = 2;
-    BGPPath BGP_path = 3;
+    BGPPath bgp_path = 3;
 }
  
 message StaticPath {
@@ -28,11 +28,11 @@ message BGPPath {
     uint32 path_identifier = 1;
     bio.net.IP next_hop = 2;
     uint32 local_pref = 3;
-    repeated ASPathSegment AS_path = 4;
+    repeated ASPathSegment as_path = 4;
     uint32 origin = 5;
-    uint32 MED = 6;
-    bool EBGP = 7;
-    uint32 BGP_identifier = 8;
+    uint32 med = 6;
+    bool ebgp = 7;
+    uint32 bgp_identifier = 8;
     bio.net.IP source = 9;
     repeated uint32 communities = 10;
     repeated LargeCommunity large_communities = 11;
@@ -42,8 +42,8 @@ message BGPPath {
 }
  
 message ASPathSegment {
-    bool AS_sequence = 1;
-    repeated uint32 ASNs = 2;
+    bool as_sequence = 1;
+    repeated uint32 asns = 2;
 }
  
 message LargeCommunity {
