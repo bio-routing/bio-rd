@@ -14,18 +14,18 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 		PathIdentifier: 100,
 		NextHop:        bnet.IPv4FromOctets(10, 0, 0, 1).ToProto(),
 		LocalPref:      1000,
-		ASPath: []*api.ASPathSegment{
+		AsPath: []*api.ASPathSegment{
 			{
-				ASSequence: true,
-				ASNs: []uint32{
+				AsSequence: true,
+				Asns: []uint32{
 					3320,
 					201701,
 				},
 			},
 		},
 		Origin:        1,
-		EBGP:          true,
-		BGPIdentifier: 123,
+		Ebgp:          true,
+		BgpIdentifier: 123,
 		Source:        bnet.IPv4FromOctets(10, 0, 0, 2).ToProto(),
 		Communities:   []uint32{100, 200, 300},
 		LargeCommunities: []*api.LargeCommunity{

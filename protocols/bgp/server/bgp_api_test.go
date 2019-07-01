@@ -120,11 +120,11 @@ func TestDumpRIBInOut(t *testing.T) {
 					Paths: []*routeapi.Path{
 						{
 							Type: routeapi.Path_BGP,
-							BGPPath: &routeapi.BGPPath{
+							BgpPath: &routeapi.BGPPath{
 								OriginatorId:      1,
 								NextHop:           bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
 								Source:            bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
-								ASPath:            nil,
+								AsPath:            nil,
 								Communities:       nil,
 								LargeCommunities:  nil,
 								UnknownAttributes: nil,
@@ -203,16 +203,16 @@ func TestDumpRIBInOut(t *testing.T) {
 					Paths: []*routeapi.Path{
 						{
 							Type: routeapi.Path_BGP,
-							BGPPath: &routeapi.BGPPath{
+							BgpPath: &routeapi.BGPPath{
 								OriginatorId: 1,
 								LocalPref:    1000,
-								MED:          2000,
+								Med:          2000,
 								NextHop:      bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
 								Source:       bnet.IPv4FromOctets(100, 100, 100, 100).ToProto(),
-								ASPath: []*routeapi.ASPathSegment{
+								AsPath: []*routeapi.ASPathSegment{
 									{
-										ASSequence: true,
-										ASNs:       []uint32{15169, 3320},
+										AsSequence: true,
+										Asns:       []uint32{15169, 3320},
 									},
 								},
 								Communities: []uint32{100, 200, 300},
