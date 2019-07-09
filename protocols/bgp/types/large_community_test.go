@@ -9,8 +9,26 @@ import (
 
 	"strconv"
 
+	"github.com/bio-routing/bio-rd/route/api"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestLargeCommunityFromProtoCommunity(t *testing.T) {
+	input := &api.LargeCommunity{
+		GlobalAdministrator: 1,
+		DataPart1:           100,
+		DataPart2:           200,
+	}
+
+	expected := LargeCommunity{
+		GlobalAdministrator: 1,
+		DataPart1:           100,
+		DataPart2:           200,
+	}
+
+	result := LargeCommunityFromProtoCommunity(input)
+	assert.Equal(t, expected, result)
+}
 
 func TestParseLargeCommunityString(t *testing.T) {
 	tests := []struct {

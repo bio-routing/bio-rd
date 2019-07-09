@@ -65,7 +65,7 @@ func (p *Path) ECMP(q *Path) bool {
 func (p *Path) ToProto() *api.Path {
 	a := &api.Path{
 		StaticPath: p.StaticPath.ToProto(),
-		BGPPath:    p.BGPPath.ToProto(),
+		BgpPath:    p.BGPPath.ToProto(),
 	}
 
 	switch p.Type {

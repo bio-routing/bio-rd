@@ -24,6 +24,15 @@ func (c *LargeCommunity) ToProto() *api.LargeCommunity {
 	}
 }
 
+// LargeCommunityFromProtoCommunity converts a proto LargeCommunity to LargeCommunity
+func LargeCommunityFromProtoCommunity(alc *api.LargeCommunity) LargeCommunity {
+	return LargeCommunity{
+		GlobalAdministrator: alc.GlobalAdministrator,
+		DataPart1:           alc.DataPart1,
+		DataPart2:           alc.DataPart2,
+	}
+}
+
 // String transitions a large community to it's human readable representation
 func (c *LargeCommunity) String() string {
 	return fmt.Sprintf("(%d,%d,%d)", c.GlobalAdministrator, c.DataPart1, c.DataPart2)

@@ -3,9 +3,102 @@ package route
 import (
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+	"github.com/bio-routing/bio-rd/route/api"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestBGPPathFromProtoBGPPath(t *testing.T) {
+	input := &api.BGPPath{
+		PathIdentifier: 100,
+		NextHop:        bnet.IPv4FromOctets(10, 0, 0, 1).ToProto(),
+		LocalPref:      1000,
+		AsPath: []*api.ASPathSegment{
+			{
+				AsSequence: true,
+				Asns: []uint32{
+					3320,
+					201701,
+				},
+			},
+		},
+		Origin:        1,
+		Ebgp:          true,
+		BgpIdentifier: 123,
+		Source:        bnet.IPv4FromOctets(10, 0, 0, 2).ToProto(),
+		Communities:   []uint32{100, 200, 300},
+		LargeCommunities: []*api.LargeCommunity{
+			{
+				GlobalAdministrator: 222,
+				DataPart1:           500,
+				DataPart2:           600,
+			},
+			{
+				GlobalAdministrator: 333,
+				DataPart1:           555,
+				DataPart2:           666,
+			},
+		},
+		UnknownAttributes: []*api.UnknownPathAttribute{
+			{
+				Optional:   true,
+				Transitive: true,
+				Partial:    true,
+				TypeCode:   233,
+				Value:      []byte{200, 222},
+			},
+		},
+		OriginatorId: 8888,
+		ClusterList:  []uint32{999, 199},
+	}
+
+	expected := &BGPPath{
+		PathIdentifier: 100,
+		NextHop:        bnet.IPv4FromOctets(10, 0, 0, 1),
+		LocalPref:      1000,
+		ASPath: types.ASPath{
+			{
+				Type: types.ASSequence,
+				ASNs: []uint32{
+					3320,
+					201701,
+				},
+			},
+		},
+		Origin:        1,
+		EBGP:          true,
+		BGPIdentifier: 123,
+		Source:        bnet.IPv4FromOctets(10, 0, 0, 2),
+		Communities:   []uint32{100, 200, 300},
+		LargeCommunities: []types.LargeCommunity{
+			{
+				GlobalAdministrator: 222,
+				DataPart1:           500,
+				DataPart2:           600,
+			},
+			{
+				GlobalAdministrator: 333,
+				DataPart1:           555,
+				DataPart2:           666,
+			},
+		},
+		UnknownAttributes: []types.UnknownPathAttribute{
+			{
+				Optional:   true,
+				Transitive: true,
+				Partial:    true,
+				TypeCode:   233,
+				Value:      []byte{200, 222},
+			},
+		},
+		OriginatorID: 8888,
+		ClusterList:  []uint32{999, 199},
+	}
+
+	result := BGPPathFromProtoBGPPath(input)
+	assert.Equal(t, expected, result)
+}
 
 func TestBGPSelect(t *testing.T) {
 	tests := []struct {

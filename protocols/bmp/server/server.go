@@ -9,6 +9,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -18,18 +19,21 @@ const (
 	defaultBufferLen = 4096
 )
 
+// BMPServer represents a BMP speaker
 type BMPServer struct {
 	routers       map[string]*router
 	routersMu     sync.RWMutex
 	reconnectTime uint
 }
 
+// NewServer creates a new BMP server
 func NewServer() *BMPServer {
 	return &BMPServer{
 		routers: make(map[string]*router),
 	}
 }
 
+// AddRouter adds a BMP session to a router to the BMP server
 func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib6 *locRIB.LocRIB) {
 	r := &router{
 		address:          addr,
@@ -39,6 +43,7 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 		reconnectTimer:   time.NewTimer(time.Duration(0)),
 		rib4:             rib4,
 		rib6:             rib6,
+		vrfs:             make([]*vrf.VRF, 0),
 	}
 
 	b.routersMu.Lock()
@@ -63,6 +68,7 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, rib4 *locRIB.LocRIB, rib
 			r.reconnectTime = 0
 			r.con = c
 			r.serve()
+			r.con.Close()
 		}
 	}(r)
 }

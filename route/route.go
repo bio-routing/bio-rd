@@ -254,6 +254,27 @@ func (r *Route) ToProto() *api.Route {
 	return a
 }
 
+// RouteFromProtoRoute converts a proto Route to a Route
+func RouteFromProtoRoute(ar *api.Route) *Route {
+	r := &Route{
+		pfx:   net.NewPrefixFromProtoPrefix(*ar.Pfx),
+		paths: make([]*Path, 0, len(ar.Paths)),
+	}
+
+	for i := range ar.Paths {
+		p := &Path{}
+		switch ar.Paths[i].Type {
+		case api.Path_BGP:
+			p.Type = BGPPathType
+			p.BGPPath = BGPPathFromProtoBGPPath(ar.Paths[i].BgpPath)
+		}
+
+		r.paths = append(r.paths, p)
+	}
+
+	return r
+}
+
 func (r *Route) updateEqualPathCount() {
 	count := uint(1)
 	for i := 0; i < len(r.paths)-1; i++ {

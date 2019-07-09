@@ -5,20 +5,20 @@ import (
 )
 
 // Metrics returns metrics for all VRFs
-func Metrics() []*metrics.VRFMetrics {
-	vrfs := globalRegistry.list()
+func Metrics(r *VRFRegistry) []*metrics.VRFMetrics {
+	vrfs := r.List()
 
 	m := make([]*metrics.VRFMetrics, len(vrfs))
 	i := 0
 	for _, v := range vrfs {
-		m[i] = metricsForVRF(v)
+		m[i] = MetricsForVRF(v)
 		i++
 	}
 
 	return m
 }
 
-func metricsForVRF(v *VRF) *metrics.VRFMetrics {
+func MetricsForVRF(v *VRF) *metrics.VRFMetrics {
 	m := &metrics.VRFMetrics{
 		Name: v.Name(),
 		RIBs: make([]*metrics.RIBMetrics, 0),

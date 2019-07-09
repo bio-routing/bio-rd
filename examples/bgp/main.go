@@ -24,7 +24,7 @@ func main() {
 	logrus.Printf("This is a BGP speaker\n")
 
 	b := server.NewBgpServer()
-	v, err := vrf.New("master")
+	v, err := vrf.New("master", 0)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func main() {
 
 func startMetricsEndpoint(server server.BGPServer) {
 	prometheus.MustRegister(prom_bgp.NewCollector(server))
-	prometheus.MustRegister(prom_vrf.NewCollector())
+	prometheus.MustRegister(prom_vrf.NewCollector(vrf.GetGlobalRegistry()))
 
 	http.Handle("/metrics", promhttp.Handler())
 

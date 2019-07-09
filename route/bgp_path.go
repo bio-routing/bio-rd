@@ -43,11 +43,11 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		PathIdentifier:    b.PathIdentifier,
 		NextHop:           b.NextHop.ToProto(),
 		LocalPref:         b.LocalPref,
-		ASPath:            b.ASPath.ToProto(),
+		AsPath:            b.ASPath.ToProto(),
 		Origin:            uint32(b.Origin),
-		MED:               b.MED,
-		EBGP:              b.EBGP,
-		BGPIdentifier:     b.BGPIdentifier,
+		Med:               b.MED,
+		Ebgp:              b.EBGP,
+		BgpIdentifier:     b.BGPIdentifier,
 		Source:            b.Source.ToProto(),
 		Communities:       make([]uint32, len(b.Communities)),
 		LargeCommunities:  make([]*api.LargeCommunity, len(b.LargeCommunities)),
@@ -68,6 +68,44 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 	}
 
 	return a
+}
+
+// BGPPathFromProtoBGPPath converts a proto BGPPath to BGPPath
+func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
+	p := &BGPPath{
+		PathIdentifier:    pb.PathIdentifier,
+		NextHop:           bnet.IPFromProtoIP(*pb.NextHop),
+		LocalPref:         pb.LocalPref,
+		ASPath:            types.ASPathFromProtoASPath(pb.AsPath),
+		Origin:            uint8(pb.Origin),
+		MED:               pb.Med,
+		EBGP:              pb.Ebgp,
+		BGPIdentifier:     pb.BgpIdentifier,
+		Source:            bnet.IPFromProtoIP(*pb.Source),
+		Communities:       make([]uint32, len(pb.Communities)),
+		LargeCommunities:  make([]types.LargeCommunity, len(pb.LargeCommunities)),
+		UnknownAttributes: make([]types.UnknownPathAttribute, len(pb.UnknownAttributes)),
+		OriginatorID:      pb.OriginatorId,
+		ClusterList:       make([]uint32, len(pb.ClusterList)),
+	}
+
+	for i := range pb.Communities {
+		p.Communities[i] = pb.Communities[i]
+	}
+
+	for i := range pb.LargeCommunities {
+		p.LargeCommunities[i] = types.LargeCommunityFromProtoCommunity(pb.LargeCommunities[i])
+	}
+
+	for i := range pb.UnknownAttributes {
+		p.UnknownAttributes[i] = types.UnknownPathAttributeFromProtoUnknownPathAttribute(pb.UnknownAttributes[i])
+	}
+
+	for i := range pb.ClusterList {
+		p.ClusterList[i] = pb.ClusterList[i]
+	}
+
+	return p
 }
 
 // Length get's the length of serialized path

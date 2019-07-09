@@ -24,6 +24,7 @@ examples/bgp
 examples/bmp
 examples/fib/fib
 examples/device/device
+cmd/ris/ris
 
 # bazel directories
 /bazel-*

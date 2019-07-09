@@ -1,0 +1,3 @@
+bmp_servers:
+  - address: 10.0.255.1
+    port: 30119

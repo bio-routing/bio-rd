@@ -38,6 +38,11 @@ func New(name string) *LocRIB {
 	return a
 }
 
+// Name gets the name of the LocRIB
+func (a *LocRIB) Name() string {
+	return a.name
+}
+
 // ClientCount gets the number of registered clients
 func (a *LocRIB) ClientCount() uint64 {
 	return a.clientManager.ClientCount()
@@ -51,6 +56,21 @@ func (a *LocRIB) GetContributingASNs() *routingtable.ContributingASNs {
 // Count routes from the LocRIB
 func (a *LocRIB) Count() uint64 {
 	return uint64(a.rt.GetRouteCount())
+}
+
+// LPM performs a longest prefix match on the routing table
+func (a *LocRIB) LPM(pfx net.Prefix) (res []*route.Route) {
+	return a.rt.LPM(pfx)
+}
+
+// Get gets a route
+func (a *LocRIB) Get(pfx net.Prefix) *route.Route {
+	return a.rt.Get(pfx)
+}
+
+// GetLonger gets all more specifics
+func (a *LocRIB) GetLonger(pfx net.Prefix) (res []*route.Route) {
+	return a.rt.GetLonger(pfx)
 }
 
 // Dump dumps the RIB
@@ -76,7 +96,9 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 
 	routes := a.rt.Dump()
 	for _, r := range routes {
-		a.propagateChanges(&route.Route{}, r)
+		for _, p := range r.Paths() {
+			client.AddPath(r.Prefix(), p)
+		}
 	}
 
 	return nil
