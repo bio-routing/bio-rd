@@ -181,6 +181,7 @@ func TestAddPathConcurrently(t *testing.T) {
 		}()
 
 		wg.Wait()
+
 		assert.Equal(t, test.expected, rt.root, test.name)
 		assert.Equal(t, test.expectedCount, rt.GetRouteCount(), test.name)
 	}
@@ -321,6 +322,95 @@ func TestAddPath(t *testing.T) {
 			},
 			expectedCount: 5,
 		},
+		{
+			name: "Insert disjunct prefixes plus one child high #2",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 128), 25), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+			},
+			expected: &node{
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 7), nil),
+				skip:  7,
+				dummy: true,
+				l: &node{
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+					l: &node{
+						skip:  1,
+						route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
+						l: &node{
+							skip:  1,
+							route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+						},
+					},
+				},
+				h: &node{
+					skip:  16,
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+					h: &node{
+						skip:  0,
+						route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 128), 25), nil),
+					},
+				},
+			},
+			expectedCount: 5,
+		},
+		{
+			name: "Insert disjunct prefixes plus one child high #3",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 128), 25), nil),
+			},
+			expected: &node{
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 7), nil),
+				skip:  7,
+				dummy: true,
+				l: &node{
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+					l: &node{
+						skip:  1,
+						route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 10), nil),
+						l: &node{
+							skip:  1,
+							route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 12), nil),
+						},
+					},
+				},
+				h: &node{
+					skip:  16,
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 0), 24), nil),
+					h: &node{
+						skip:  0,
+						route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(11, 100, 123, 128), 25), nil),
+					},
+				},
+			},
+			expectedCount: 5,
+		},
+		{
+			name: "Insert triangle #2",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), nil),
+			},
+			expected: &node{
+				route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), nil),
+				skip:  8,
+				l: &node{
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), nil),
+				},
+				h: &node{
+					route: route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), nil),
+				},
+			},
+			expectedCount: 3,
+		},
 	}
 
 	for _, test := range tests {
@@ -329,8 +419,8 @@ func TestAddPath(t *testing.T) {
 			rt.AddPath(route.Prefix(), nil)
 		}
 
-		assert.Equal(t, test.expected, rt.root)
-		assert.Equal(t, test.expectedCount, rt.GetRouteCount())
+		assert.Equal(t, test.expected, rt.root, test.name)
+		assert.Equal(t, test.expectedCount, rt.GetRouteCount(), test.name)
 	}
 }
 

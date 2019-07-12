@@ -127,7 +127,7 @@ func (n *node) addPath(pfx net.Prefix, p *route.Path) (*node, bool) {
 	// is pfx NOT a subnet of this node?
 	if !currentPfx.Contains(pfx) {
 		if pfx.Contains(currentPfx) {
-			return n.insertBefore(pfx, p, n.route.Pfxlen()-n.skip-1), true
+			return n.insertBefore(pfx, p), true
 		}
 
 		return n.newSuperNode(pfx, p), true
@@ -147,6 +147,7 @@ func (n *node) insertLow(pfx net.Prefix, p *route.Path, parentPfxLen uint8) (*no
 		n.l = newNode(pfx, p, pfx.Pfxlen()-parentPfxLen-1, false)
 		return n, true
 	}
+
 	newRoot, isNew := n.l.addPath(pfx, p)
 	n.l = newRoot
 	return n, isNew
@@ -194,14 +195,14 @@ func (n *node) insertChildren(old *node, newPfx net.Prefix, newPath *route.Path)
 	}
 }
 
-func (n *node) insertBefore(pfx net.Prefix, p *route.Path, parentPfxLen uint8) *node {
+func (n *node) insertBefore(pfx net.Prefix, p *route.Path) *node {
 	tmp := n
 
 	pfxLenDiff := n.route.Pfxlen() - pfx.Pfxlen()
 	skip := n.skip - pfxLenDiff
 	new := newNode(pfx, p, skip, false)
 
-	b := pfx.Addr().BitAtPosition(parentPfxLen)
+	b := n.route.Prefix().Addr().BitAtPosition(pfx.Pfxlen() + 1)
 	if !b {
 		new.l = tmp
 		new.l.skip = tmp.route.Pfxlen() - pfx.Pfxlen() - 1
