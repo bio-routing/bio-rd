@@ -175,7 +175,6 @@ func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (
 
 	switch msg.Header.Type {
 	case packet.NotificationMsg:
-		fmt.Println(data)
 		return s.notification()
 	case packet.UpdateMsg:
 		return s.update(msg.Body.(*packet.BGPUpdate))
