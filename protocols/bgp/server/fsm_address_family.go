@@ -84,6 +84,8 @@ func (f *fsmAddressFamily) bmpInit() {
 	if f.rib != nil {
 		f.adjRIBIn.Register(f.rib)
 	}
+
+	f.initialized = true
 }
 
 func (f *fsmAddressFamily) bmpDispose() {

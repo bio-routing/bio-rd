@@ -108,6 +108,8 @@ func (s *establishedState) uninit() {
 	}
 
 	s.fsm.counters.reset()
+
+	s.fsm.ribsInitialized = false
 }
 
 func (s *establishedState) manualStop() (state, string) {
