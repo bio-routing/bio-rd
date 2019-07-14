@@ -50,7 +50,7 @@ func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdat
 		return msg, err
 	}
 
-	msg.WithdrawnRoutes, err = decodeNLRIs(buf, uint16(msg.WithdrawnRoutesLen), IPv4AFI, opt.AddPath)
+	msg.WithdrawnRoutes, err = decodeNLRIs(buf, uint16(msg.WithdrawnRoutesLen), IPv4AFI, opt.AddPathIPv4Unicast)
 	if err != nil {
 		return msg, err
 	}
@@ -67,7 +67,7 @@ func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdat
 
 	nlriLen := uint16(l) - 4 - uint16(msg.TotalPathAttrLen) - uint16(msg.WithdrawnRoutesLen)
 	if nlriLen > 0 {
-		msg.NLRI, err = decodeNLRIs(buf, nlriLen, IPv4AFI, opt.AddPath)
+		msg.NLRI, err = decodeNLRIs(buf, nlriLen, IPv4AFI, opt.AddPathIPv4Unicast)
 		if err != nil {
 			return msg, err
 		}
@@ -131,6 +131,7 @@ func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
 
 // DecodeOpenMsg decodes a BGP OPEN message
 func DecodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
+	fmt.Printf("OPEN: %v\n", buf.Bytes())
 	msg, err := _decodeOpenMsg(buf)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to decode OPEN message")

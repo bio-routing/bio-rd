@@ -23,6 +23,11 @@ type NLRI struct {
 }
 
 func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*NLRI, error) {
+	if addPath {
+		fmt.Printf("AddPath!\n")
+	} else {
+		fmt.Printf("Nix AddPath!\n")
+	}
 	var ret *NLRI
 	var eol *NLRI
 	var nlri *NLRI

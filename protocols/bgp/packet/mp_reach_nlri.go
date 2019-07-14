@@ -37,7 +37,7 @@ func (n *MultiProtocolReachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions
 	return uint16(tempBuf.Len())
 }
 
-func deserializeMultiProtocolReachNLRI(b []byte, addPath bool) (MultiProtocolReachNLRI, error) {
+func deserializeMultiProtocolReachNLRI(b []byte, opt *DecodeOptions) (MultiProtocolReachNLRI, error) {
 	n := MultiProtocolReachNLRI{}
 	nextHopLength := uint8(0)
 
@@ -75,6 +75,10 @@ func deserializeMultiProtocolReachNLRI(b []byte, addPath bool) (MultiProtocolRea
 	}
 
 	variable = variable[1+nextHopLength:] // 1 <- RESERVED field
+	addPath := false
+	if n.AFI == IPv6AFI && n.SAFI == UnicastSAFI {
+		addPath = opt.AddPathIPv6Unicast
+	}
 
 	buf := bytes.NewBuffer(variable)
 	nlri, err := decodeNLRIs(buf, uint16(buf.Len()), n.AFI, addPath)

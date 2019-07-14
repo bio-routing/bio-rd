@@ -177,8 +177,10 @@ func (s *openSentState) processCapabilities(caps packet.Capabilities) {
 }
 
 func (s *openSentState) processCapability(cap packet.Capability) {
+	panic("processCapability")
 	switch cap.Code {
 	case packet.AddPathCapabilityCode:
+		panic("ADD PATH")
 		s.processAddPathCapability(cap.Value.(packet.AddPathCapability))
 	case packet.ASN4CapabilityCode:
 		s.processASN4Capability(cap.Value.(packet.ASN4Capability))
@@ -203,6 +205,7 @@ func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolC
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
+	fmt.Printf("processAddPathCapability\n")
 	if addPathCap.SAFI != packet.UnicastSAFI {
 		return
 	}
@@ -216,10 +219,12 @@ func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapabi
 
 	switch addPathCap.SendReceive {
 	case packet.AddPathReceive:
+		panic("RX")
 		if !peerAddressFamily.addPathSend.BestOnly {
 			f.addPathTX = peerAddressFamily.addPathSend
 		}
 	case packet.AddPathSend:
+		fmt.Printf("Peer can send AddPath\n")
 		if peerAddressFamily.addPathReceive {
 			f.addPathRX = true
 		}

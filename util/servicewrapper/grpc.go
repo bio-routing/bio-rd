@@ -9,9 +9,7 @@ import (
 	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
@@ -63,21 +61,21 @@ func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerIn
 		httpSrv: h,
 	}
 
-	logrusEntry := log.NewEntry(log.StandardLogger())
-	levelOpt := grpc_logrus.WithLevels(codeToLogrusLevel)
+	//logrusEntry := log.NewEntry(log.StandardLogger())
+	//levelOpt := grpc_logrus.WithLevels(codeToLogrusLevel)
 
 	unaryInterceptors = append(unaryInterceptors,
 		grpc_prometheus.UnaryServerInterceptor,
-		grpc_ctxtags.UnaryServerInterceptor(),
+		//grpc_ctxtags.UnaryServerInterceptor(),
 		grpc_recovery.UnaryServerInterceptor(),
-		grpc_logrus.UnaryServerInterceptor(logrusEntry, levelOpt),
+		//grpc_logrus.UnaryServerInterceptor(logrusEntry, levelOpt),
 	)
 
 	streamInterceptors = append(streamInterceptors,
 		grpc_prometheus.StreamServerInterceptor,
-		grpc_ctxtags.StreamServerInterceptor(),
+		//grpc_ctxtags.StreamServerInterceptor(),
 		grpc_recovery.StreamServerInterceptor(),
-		grpc_logrus.StreamServerInterceptor(logrusEntry, levelOpt),
+		//grpc_logrus.StreamServerInterceptor(logrusEntry, levelOpt),
 	)
 	unaryOpts := grpc_middleware.WithUnaryServerChain(unaryInterceptors...)
 	streamOpts := grpc_middleware.WithStreamServerChain(streamInterceptors...)
@@ -97,7 +95,7 @@ func HTTP(port uint16) *http.Server {
 	h := &http.Server{
 		Addr:           fmt.Sprintf(":%d", port),
 		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		WriteTimeout:   45 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 

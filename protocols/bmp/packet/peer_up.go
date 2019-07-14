@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decoder"
 	"github.com/pkg/errors"
@@ -30,6 +31,7 @@ func (p *PeerUpNotification) MsgType() uint8 {
 }
 
 func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotification, error) {
+	fmt.Printf("PEER UP NOTI: %v\n", buf.Bytes())
 	p := &PeerUpNotification{
 		CommonHeader: ch,
 	}
@@ -64,6 +66,9 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 	}
 	p.ReceivedOpenMsg = recvOpenMsg
 
+	fmt.Printf("OPEN TX: %v\n", sentOpenMsg)
+	fmt.Printf("OPEN RX: %v\n", recvOpenMsg)
+
 	if buf.Len() == 0 {
 		return p, nil
 	}
@@ -90,6 +95,7 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 		return nil, errors.Wrap(err, "Unable to read")
 	}
 
+	fmt.Printf("optLen: %d\n", msg[OpenMsgMinLen-1])
 	if msg[OpenMsgMinLen-1] == 0 {
 		return msg, nil
 	}

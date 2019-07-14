@@ -115,6 +115,7 @@ func (r *Router) serve(con net.Conn) {
 }
 
 func (r *Router) processMsg(msg []byte) {
+	fmt.Printf("msg: %v\n", msg)
 	bmpMsg, err := bmppkt.Decode(msg)
 	if err != nil {
 		r.logger.Errorf("Unable to decode BMP message: %v", err)
@@ -144,6 +145,15 @@ func (r *Router) processMsg(msg []byte) {
 func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	atomic.AddUint64(&r.counters.routeMonitoringMessages, 1)
 
+	addrLen := net.IPv4len
+	if msg.PerPeerHeader.GetIPVersion() == 6 {
+		addrLen = net.IPv6len
+	}
+	localAddress, _ := bnet.IPFromBytes(msg.PerPeerHeader.PeerAddress[16-addrLen:])
+	if localAddress.String() != "10.11.129.119" {
+		return
+	}
+
 	n := r.neighborManager.getNeighbor(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if n == nil {
 		r.logger.Errorf("Received route monitoring message for non-existent neighbor %d/%v on %s", msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress, r.address.String())
@@ -151,7 +161,13 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	}
 
 	s := n.fsm.state.(*establishedState)
-	s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
+
+	if n.peerAS == 51324 {
+		fmt.Printf("Update: %v\n", msg.BGPUpdate)
+		fmt.Printf("Options: %v\n", n.opt)
+	}
+
+	s.msgReceived(msg.BGPUpdate, n.opt)
 }
 
 func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
@@ -275,6 +291,10 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	peerAddress, _ := bnet.IPFromBytes(msg.PerPeerHeader.PeerAddress[16-addrLen:])
 	localAddress, _ := bnet.IPFromBytes(msg.LocalAddress[16-addrLen:])
 
+	if peerAddress.String() != "10.11.129.119" {
+		return nil
+	}
+
 	fsm := &FSM{
 		isBMP: true,
 		peer: &peer{
@@ -331,6 +351,8 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 		opt:         fsm.decodeOptions(),
 	}
 
+	fmt.Printf("%v Opts: %v\n", n.peerAddress, n.opt)
+
 	err = r.neighborManager.addNeighbor(n)
 	if err != nil {
 		return errors.Wrap(err, "Unable to add neighbor")
@@ -357,6 +379,7 @@ func (n *neighbor) registerClients(clients map[afiClient]struct{}) {
 func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 	caps := getCaps(msg.OptParams)
 	for _, cap := range caps {
+
 		switch cap.Code {
 		case packet.AddPathCapabilityCode:
 			addPathCap := cap.Value.(packet.AddPathCapability)
@@ -385,14 +408,16 @@ func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 }
 
 func getCaps(optParams []packet.OptParam) packet.Capabilities {
+	ret := make(packet.Capabilities, 0)
 	for _, optParam := range optParams {
 		if optParam.Type != packet.CapabilitiesParamType {
 			continue
 		}
 
-		return optParam.Value.(packet.Capabilities)
+		ret = append(ret, optParam.Value.(packet.Capabilities)...)
 	}
-	return nil
+
+	return ret
 }
 
 func addrToNetIP(a [16]byte) net.IP {

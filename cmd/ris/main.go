@@ -16,6 +16,8 @@ import (
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	prom_bmp "github.com/bio-routing/bio-rd/metrics/bmp/adapter/prom"
 	log "github.com/sirupsen/logrus"
+
+	_ "net/http/pprof"
 )
 
 var (

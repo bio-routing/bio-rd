@@ -14,6 +14,7 @@ import (
 
 type test struct {
 	testNum  int
+	addPath  bool
 	input    []byte
 	wantFail bool
 	expected interface{}
@@ -80,8 +81,60 @@ func BenchmarkDecodeUpdateMsg(b *testing.B) {
 	}
 }
 
-func TestDecode(t *testing.T) {
+func TestDecodeBGPMessage(t *testing.T) {
 	tests := []test{
+		{
+			testNum: 0,
+			addPath: true,
+			input: []byte{
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 60, 2, 0, 0, 0, 28, 64, 1, 1, 0, 64, 2, 0, 64, 3, 4, 81, 95, 2, 213, 64, 5, 4, 0, 0, 0, 100, 192, 8, 4, 254, 176, 1, 244, 0, 0, 0, 2, 32, 31, 205, 128, 140,
+			},
+			wantFail: false,
+			expected: &BGPMessage{
+				Header: &BGPHeader{
+					Length: 60,
+					Type:   2,
+				},
+				Body: &BGPUpdate{
+					TotalPathAttrLen: 28,
+					PathAttributes: &PathAttribute{
+						TypeCode:   1,
+						Length:     1,
+						Transitive: true,
+						Value:      uint8(0),
+						Next: &PathAttribute{
+							TypeCode:   2,
+							Length:     0,
+							Transitive: true,
+							Value:      types.ASPath{},
+							Next: &PathAttribute{
+								TypeCode:   3,
+								Length:     4,
+								Transitive: true,
+								Value:      bnet.IPv4FromOctets(81, 95, 2, 213),
+								Next: &PathAttribute{
+									TypeCode:   5,
+									Length:     4,
+									Transitive: true,
+									Value:      uint32(100),
+									Next: &PathAttribute{
+										Length:     4,
+										Optional:   true,
+										Transitive: true,
+										TypeCode:   8,
+										Value:      []uint32{4272947700},
+									},
+								},
+							},
+						},
+					},
+					NLRI: &NLRI{
+						PathIdentifier: 2,
+						Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(31, 205, 128, 140), 32),
+					},
+				},
+			},
+		},
 		{
 			// Proper packet
 			testNum: 1,
@@ -251,7 +304,9 @@ func TestDecode(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		msg, err := Decode(buf, &DecodeOptions{})
+		msg, err := Decode(buf, &DecodeOptions{
+			AddPath: test.addPath,
+		})
 
 		if err != nil && !test.wantFail {
 			t.Errorf("Unexpected error in test %d: %v", test.testNum, err)
