@@ -115,7 +115,6 @@ func (r *Router) serve(con net.Conn) {
 }
 
 func (r *Router) processMsg(msg []byte) {
-	fmt.Printf("msg: %v\n", msg)
 	bmpMsg, err := bmppkt.Decode(msg)
 	if err != nil {
 		r.logger.Errorf("Unable to decode BMP message: %v", err)
@@ -161,11 +160,6 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	}
 
 	s := n.fsm.state.(*establishedState)
-
-	if n.peerAS == 51324 {
-		fmt.Printf("Update: %v\n", msg.BGPUpdate)
-		fmt.Printf("Options: %v\n", n.opt)
-	}
 
 	s.msgReceived(msg.BGPUpdate, n.opt)
 }
@@ -291,10 +285,6 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	peerAddress, _ := bnet.IPFromBytes(msg.PerPeerHeader.PeerAddress[16-addrLen:])
 	localAddress, _ := bnet.IPFromBytes(msg.LocalAddress[16-addrLen:])
 
-	if peerAddress.String() != "10.11.129.119" {
-		return nil
-	}
-
 	fsm := &FSM{
 		isBMP: true,
 		peer: &peer{
@@ -350,8 +340,6 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 		fsm:         fsm,
 		opt:         fsm.decodeOptions(),
 	}
-
-	fmt.Printf("%v Opts: %v\n", n.peerAddress, n.opt)
 
 	err = r.neighborManager.addNeighbor(n)
 	if err != nil {

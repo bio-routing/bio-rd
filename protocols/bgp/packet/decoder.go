@@ -131,7 +131,6 @@ func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
 
 // DecodeOpenMsg decodes a BGP OPEN message
 func DecodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
-	fmt.Printf("OPEN: %v\n", buf.Bytes())
 	msg, err := _decodeOpenMsg(buf)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to decode OPEN message")
