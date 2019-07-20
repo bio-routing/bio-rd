@@ -2,14 +2,17 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 	"os"
+	"unsafe"
 
 	"google.golang.org/grpc"
 
 	"github.com/bio-routing/bio-rd/cmd/ris/config"
 	"github.com/bio-routing/bio-rd/cmd/ris/risserver"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -27,6 +30,7 @@ var (
 )
 
 func main() {
+	fmt.Printf("Size: %d\n", unsafe.Sizeof(route.BGPPath{}))
 	flag.Parse()
 
 	cfg, err := config.LoadConfig(*configFilePath)

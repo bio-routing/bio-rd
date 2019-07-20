@@ -993,7 +993,10 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			pa := &PathAttribute{
 				Length: l,
 			}
-			err := pa.decodeMultiProtocolReachNLRI(bytes.NewBuffer(test.input), test.addPath)
+
+			err := pa.decodeMultiProtocolReachNLRI(bytes.NewBuffer(test.input), &DecodeOptions{
+				AddPathIPv4Unicast: test.addPath,
+			})
 
 			if test.wantFail {
 				if err != nil {
@@ -1073,7 +1076,7 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 			pa := &PathAttribute{
 				Length: l,
 			}
-			err := pa.decodeMultiProtocolUnreachNLRI(bytes.NewBuffer(test.input), false)
+			err := pa.decodeMultiProtocolUnreachNLRI(bytes.NewBuffer(test.input), &DecodeOptions{})
 
 			if test.wantFail {
 				if err != nil {

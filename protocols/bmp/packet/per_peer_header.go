@@ -36,6 +36,14 @@ func (p *PerPeerHeader) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint32Byte(p.TimestampMicroSeconds))
 }
 
+// LegacyASPaths checks if the A Flag is set
+func (p *PerPeerHeader) LegacyASPaths() bool {
+	if p.PeerFlags&32 == 32 {
+		return true
+	}
+	return false
+}
+
 func decodePerPeerHeader(buf *bytes.Buffer) (*PerPeerHeader, error) {
 	p := &PerPeerHeader{}
 

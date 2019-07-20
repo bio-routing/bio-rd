@@ -15,21 +15,21 @@ import (
 // BGPPath represents a set of BGP path attributes
 type BGPPath struct {
 	PathIdentifier    uint32
-	NextHop           bnet.IP
 	LocalPref         uint32
-	ASPath            types.ASPath
+	MED               uint32
+	BGPIdentifier     uint32
+	OriginatorID      uint32
 	ASPathLen         uint16
 	Origin            uint8
-	MED               uint32
 	EBGP              bool
 	AtomicAggregate   bool
-	Aggregator        *types.Aggregator
-	BGPIdentifier     uint32
+	NextHop           bnet.IP
 	Source            bnet.IP
+	Aggregator        *types.Aggregator
+	ASPath            types.ASPath
 	Communities       []uint32
 	LargeCommunities  []types.LargeCommunity
 	UnknownAttributes []types.UnknownPathAttribute
-	OriginatorID      uint32
 	ClusterList       []uint32
 }
 

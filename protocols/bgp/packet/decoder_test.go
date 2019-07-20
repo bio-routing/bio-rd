@@ -15,6 +15,7 @@ import (
 type test struct {
 	testNum  int
 	addPath  bool
+	asn32bit bool
 	input    []byte
 	wantFail bool
 	expected interface{}
@@ -83,6 +84,62 @@ func BenchmarkDecodeUpdateMsg(b *testing.B) {
 
 func TestDecodeBGPMessage(t *testing.T) {
 	tests := []test{
+		{
+			testNum:  123,
+			asn32bit: true,
+			input: []byte{
+				255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				0, 55, 2,
+				0, 0,
+				0, 24,
+				64, 1, 1, 0,
+				64, 2, 10, 2, 2, 0, 0, 224, 193, 0, 0, 224, 193,
+				64, 3, 4, 194, 59, 190, 76,
+				19, 213, 148, 96,
+				22, 185, 152, 232,
+			},
+			wantFail: false,
+			expected: &BGPMessage{
+				Header: &BGPHeader{
+					Length: 55,
+					Type:   2,
+				},
+				Body: &BGPUpdate{
+					TotalPathAttrLen: 24,
+					PathAttributes: &PathAttribute{
+						TypeCode:   1,
+						Length:     1,
+						Transitive: true,
+						Value:      uint8(0),
+						Next: &PathAttribute{
+							TypeCode:   2,
+							Length:     10,
+							Transitive: true,
+							Value: types.ASPath{
+								{
+									Type: 2,
+									ASNs: []uint32{
+										57537, 57537,
+									},
+								},
+							},
+							Next: &PathAttribute{
+								TypeCode:   3,
+								Length:     4,
+								Transitive: true,
+								Value:      bnet.IPv4FromOctets(194, 59, 190, 76),
+							},
+						},
+					},
+					NLRI: &NLRI{
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(213, 148, 96, 0), 19),
+						Next: &NLRI{
+							Prefix: bnet.NewPfx(bnet.IPv4FromOctets(185, 152, 232, 0), 22),
+						},
+					},
+				},
+			},
+		},
 		{
 			testNum: 0,
 			addPath: true,
@@ -305,7 +362,8 @@ func TestDecodeBGPMessage(t *testing.T) {
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
 		msg, err := Decode(buf, &DecodeOptions{
-			AddPath: test.addPath,
+			AddPathIPv4Unicast: test.addPath,
+			Use32BitASN:        test.asn32bit,
 		})
 
 		if err != nil && !test.wantFail {

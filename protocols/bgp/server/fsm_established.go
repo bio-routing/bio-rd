@@ -161,6 +161,9 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (state, string) {
 	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
+		log.Errorf("Unable to decode: %v", err)
+		fmt.Printf("Packet: %v\n", data)
+		panic("X")
 		switch bgperr := err.(type) {
 		case packet.BGPError:
 			s.fsm.sendNotification(bgperr.ErrorCode, bgperr.ErrorSubCode)

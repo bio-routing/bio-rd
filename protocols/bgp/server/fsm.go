@@ -263,8 +263,6 @@ func (fsm *FSM) msgReceiver() error {
 }
 
 func (fsm *FSM) decodeOptions() *packet.DecodeOptions {
-	fmt.Printf("AddPath RX: %s %v && %v\n", fsm.peer.addr.String(), fsm.peer.ipv4.addPathReceive, fsm.ipv4Unicast.addPathRX)
-
 	return &packet.DecodeOptions{
 		Use32BitASN:        fsm.supports4OctetASN,
 		AddPathIPv4Unicast: fsm.peer.ipv4.addPathReceive && fsm.ipv4Unicast.addPathRX,

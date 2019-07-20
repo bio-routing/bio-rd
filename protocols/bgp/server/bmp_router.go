@@ -141,15 +141,19 @@ func (r *Router) processMsg(msg []byte) {
 	}
 }
 
+func ignorePeer(addr [16]byte) bool {
+	// Ignore kubernetes peers for now
+	if addr[12] == 10 && addr[13] == 11 {
+		return true
+	}
+
+	return false
+}
+
 func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	atomic.AddUint64(&r.counters.routeMonitoringMessages, 1)
 
-	addrLen := net.IPv4len
-	if msg.PerPeerHeader.GetIPVersion() == 6 {
-		addrLen = net.IPv6len
-	}
-	localAddress, _ := bnet.IPFromBytes(msg.PerPeerHeader.PeerAddress[16-addrLen:])
-	if localAddress.String() != "10.11.129.119" {
+	if ignorePeer(msg.PerPeerHeader.PeerAddress) {
 		return
 	}
 
@@ -161,6 +165,7 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 
 	s := n.fsm.state.(*establishedState)
 
+	n.opt.Use32BitASN = !msg.PerPeerHeader.LegacyASPaths()
 	s.msgReceived(msg.BGPUpdate, n.opt)
 }
 
