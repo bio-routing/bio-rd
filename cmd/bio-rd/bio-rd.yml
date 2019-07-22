@@ -1,0 +1,48 @@
+routing_options:
+  autonomous_system: 65100
+  router_id: 169.254.100.1
+policy_options:
+  policy_statements:
+    - name: "PeerA-In"
+      terms:
+        - name: "Reject_certain_stuff"
+          from:
+            route_filters:
+              - prefix: "10.0.0.0/8"
+                matcher: "orlonger"
+              - prefix: "192.168.0.0/24"
+                matcher: "exact"
+              - prefix: "169.254.10.0/24"
+                matcher: "exact"
+          then:
+            reject: true
+        - name: "Accept_all_other"
+          then:
+            accept: true
+    - name: "PeerB-In"
+      terms:
+        - name: "Accept_all"
+          then:
+            accept: true
+    - name: "ACCEPT_ALL"
+      terms:
+        - name: "ACCEPT_ALL"
+          then:
+            accept: true
+      
+protocols:
+  bgp:
+    groups:
+      - name: "IXP RS Clients"
+        local_address: 169.254.100.1
+        route_server_client: true
+        passive: true
+        neighbors:
+          - peer_address: 169.254.100.2
+            peer_as: 65200
+            import: ["PeerA-In"]
+            export: ["ACCEPT_ALL"]
+          - peer_address: 169.254.100.3
+            peer_as: 65300
+            import: ["PeerB-In"]
+            export: ["ACCEPT_ALL"]

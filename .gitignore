@@ -19,7 +19,7 @@
 .vscode
 
 # 'go build' binary
-bio-rd
+/cmd/bio-rd/bio-rd
 examples/bgp
 examples/bmp
 examples/fib/fib
