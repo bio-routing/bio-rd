@@ -51,8 +51,8 @@ func (r *VRFRegistry) registerVRF(v *VRF) error {
 	return nil
 }
 
-// unregisterVRF removes the given VRF from the global registry.
-func (r *VRFRegistry) unregisterVRF(v *VRF) {
+// unregisterVRF removes the given VRF from the registry.
+func (r *VRFRegistry) UnregisterVRF(v *VRF) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -90,6 +90,20 @@ func (r *VRFRegistry) GetVRFByRD(rd uint64) *VRF {
 
 	if _, ok := r.vrfs[rd]; ok {
 		return r.vrfs[rd]
+	}
+
+	return nil
+}
+
+// GetVRFByRD gets a VRF by route distinguisher
+func (r *VRFRegistry) GetVRFByName(name string) *VRF {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, vrf := range r.vrfs {
+		if vrf.name == name {
+			return vrf
+		}
 	}
 
 	return nil

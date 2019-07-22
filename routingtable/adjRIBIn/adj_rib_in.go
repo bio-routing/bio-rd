@@ -12,25 +12,25 @@ import (
 
 // AdjRIBIn represents an Adjacency RIB In as described in RFC4271
 type AdjRIBIn struct {
-	clientManager    *routingtable.ClientManager
-	rt               *routingtable.RoutingTable
-	mu               sync.RWMutex
-	exportFilter     *filter.Filter
-	contributingASNs *routingtable.ContributingASNs
-	routerID         uint32
-	clusterID        uint32
-	addPathRX        bool
+	clientManager     *routingtable.ClientManager
+	rt                *routingtable.RoutingTable
+	mu                sync.RWMutex
+	exportFilterChain filter.Chain
+	contributingASNs  *routingtable.ContributingASNs
+	routerID          uint32
+	clusterID         uint32
+	addPathRX         bool
 }
 
 // New creates a new Adjacency RIB In
-func New(exportFilter *filter.Filter, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32, addPathRX bool) *AdjRIBIn {
+func New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32, addPathRX bool) *AdjRIBIn {
 	a := &AdjRIBIn{
-		rt:               routingtable.NewRoutingTable(),
-		exportFilter:     exportFilter,
-		contributingASNs: contributingASNs,
-		routerID:         routerID,
-		clusterID:        clusterID,
-		addPathRX:        addPathRX,
+		rt:                routingtable.NewRoutingTable(),
+		exportFilterChain: exportFilterChain,
+		contributingASNs:  contributingASNs,
+		routerID:          routerID,
+		clusterID:         clusterID,
+		addPathRX:         addPathRX,
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 	return a
@@ -71,7 +71,7 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 	for _, route := range routes {
 		paths := route.Paths()
 		for _, path := range paths {
-			path, reject := a.exportFilter.ProcessTerms(route.Prefix(), path)
+			path, reject := a.exportFilterChain.Process(route.Prefix(), path)
 			if reject {
 				continue
 			}
@@ -116,7 +116,7 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 		a.removePathsFromClients(pfx, oldPaths)
 	}
 
-	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
 		return nil
 	}
@@ -178,7 +178,7 @@ func (a *AdjRIBIn) removePath(pfx net.Prefix, p *route.Path) bool {
 
 func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
 	for _, path := range paths {
-		path, reject := a.exportFilter.ProcessTerms(pfx, path)
+		path, reject := a.exportFilterChain.Process(pfx, path)
 		if reject {
 			continue
 		}

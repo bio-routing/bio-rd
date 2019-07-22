@@ -8,6 +8,10 @@ import (
 type RejectAction struct {
 }
 
+func NewRejectAction() *RejectAction {
+	return &RejectAction{}
+}
+
 func (*RejectAction) Do(p net.Prefix, pa *route.Path) Result {
 	return Result{
 		Path:      pa,

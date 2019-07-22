@@ -8,7 +8,6 @@ import (
 
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 
-	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
@@ -21,32 +20,37 @@ const (
 )
 
 type bgpServer struct {
-	listeners []*TCPListener
-	acceptCh  chan net.Conn
-	peers     *peerManager
-	routerID  uint32
-	localASN  uint32
-	metrics   *metricsService
+	listenAddrs []string
+	listeners   []*TCPListener
+	acceptCh    chan net.Conn
+	peers       *peerManager
+	routerID    uint32
+	metrics     *metricsService
 }
 
 type BGPServer interface {
 	RouterID() uint32
-	Start(*config.Global) error
-	AddPeer(config.Peer) error
+	Start() error
+	AddPeer(PeerConfig) error
+	GetPeerConfig(bnet.IP) *PeerConfig
+	DisposePeer(bnet.IP)
+	GetPeers() []bnet.IP
 	Metrics() (*metrics.BGPMetrics, error)
 	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
 	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
-	ConnectMockPeer(peer config.Peer, con net.Conn)
+	ConnectMockPeer(peer PeerConfig, con net.Conn)
 }
 
-// NewBgpServer creates a new instance of bgpServer
-func NewBgpServer() BGPServer {
-	return newBgpServer()
+// NewBGPServer creates a new instance of bgpServer
+func NewBGPServer(routerID uint32, addrs []string) BGPServer {
+	return newBGPServer(routerID, addrs)
 }
 
-func newBgpServer() *bgpServer {
+func newBGPServer(routerID uint32, addrs []string) *bgpServer {
 	server := &bgpServer{
-		peers: newPeerManager(),
+		peers:       newPeerManager(),
+		routerID:    routerID,
+		listenAddrs: addrs,
 	}
 
 	server.metrics = &metricsService{server}
@@ -57,21 +61,24 @@ func (b *bgpServer) RouterID() uint32 {
 	return b.routerID
 }
 
-func (b *bgpServer) Start(c *config.Global) error {
-	if err := c.SetDefaultGlobalConfigValues(); err != nil {
-		return errors.Wrap(err, "Failed to load defaults")
+// GetPeers gets a list of all peers
+func (b *bgpServer) GetPeers() []bnet.IP {
+	ret := make([]bnet.IP, 0)
+
+	for _, p := range b.peers.list() {
+		ret = append(ret, p.addr)
 	}
 
-	log.Infof("ROUTER ID: %d\n", c.RouterID)
-	b.routerID = c.RouterID
-	b.localASN = c.LocalASN
+	return ret
+}
 
-	if c.Listen {
+func (b *bgpServer) Start() error {
+	if len(b.listenAddrs) > 0 {
 		acceptCh := make(chan net.Conn, 4096)
-		for _, addr := range c.LocalAddressList {
-			l, err := NewTCPListener(addr, c.Port, acceptCh)
+		for _, addr := range b.listenAddrs {
+			l, err := NewTCPListener(addr, acceptCh)
 			if err != nil {
-				return errors.Wrapf(err, "Failed to start TCPListener for %s", addr.String())
+				return errors.Wrapf(err, "Failed to start TCPListener for %s", addr)
 			}
 			b.listeners = append(b.listeners, l)
 		}
@@ -153,7 +160,7 @@ func (b *bgpServer) incomingConnectionWorker() {
 	}
 }
 
-func (b *bgpServer) ConnectMockPeer(peer config.Peer, con net.Conn) {
+func (b *bgpServer) ConnectMockPeer(peer PeerConfig, con net.Conn) {
 	acceptCh := make(chan net.Conn, 4096)
 	b.acceptCh = acceptCh
 	go b.incomingConnectionWorker()
@@ -161,7 +168,7 @@ func (b *bgpServer) ConnectMockPeer(peer config.Peer, con net.Conn) {
 	b.acceptCh <- con
 }
 
-func (b *bgpServer) AddPeer(c config.Peer) error {
+func (b *bgpServer) AddPeer(c PeerConfig) error {
 	peer, err := newPeer(c, b)
 	if err != nil {
 		return err
@@ -173,7 +180,35 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 		peer.Start()
 	}
 
+	log.WithFields(log.Fields{
+		"peer_address":  c.PeerAddress,
+		"local_address": c.LocalAddress,
+		"peer_as":       c.PeerAS,
+		"local_as":      c.LocalAS,
+	}).Infof("Added BGP peer")
+
 	return nil
+}
+
+// GetPeerConfig gets a BGP peer by its address
+func (b *bgpServer) GetPeerConfig(addr bnet.IP) *PeerConfig {
+	p := b.peers.get(addr)
+	if p != nil {
+		return p.config
+	}
+
+	return nil
+}
+
+func (b *bgpServer) DisposePeer(addr bnet.IP) {
+	p := b.peers.get(addr)
+	if p == nil {
+		return
+	}
+
+	log.Infof("Disposing BGP session with %s", addr.String())
+	p.stop()
+	b.peers.remove(addr)
 }
 
 func (b *bgpServer) Metrics() (*metrics.BGPMetrics, error) {

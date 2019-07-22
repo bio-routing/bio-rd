@@ -5,28 +5,47 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 )
 
+type FilterResult struct {
+	Path      *route.Path
+	Terminate bool
+	Reject    bool
+}
+
 type Filter struct {
+	name  string
 	terms []*Term
 }
 
-func NewFilter(terms []*Term) *Filter {
+func NewFilter(name string, terms []*Term) *Filter {
 	f := &Filter{
+		name:  name,
 		terms: terms,
 	}
 
 	return f
 }
 
-func (f *Filter) ProcessTerms(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
-	modPath = pa
+// Name returns the name of the filter
+func (f *Filter) Name() string {
+	return f.name
+}
+
+// Process processes a filter
+func (f *Filter) Process(p net.Prefix, pa *route.Path) FilterResult {
+	orig := pa
 
 	for _, t := range f.terms {
-		res := t.Process(p, modPath)
+		res := t.Process(p, pa)
 		if res.Terminate {
-			return res.Path, res.Reject
+			return FilterResult{
+				Path:      pa,
+				Terminate: res.Terminate,
+				Reject:    res.Reject,
+			}
 		}
-		modPath = res.Path
 	}
 
-	return modPath, false
+	return FilterResult{
+		Path: orig,
+	}
 }

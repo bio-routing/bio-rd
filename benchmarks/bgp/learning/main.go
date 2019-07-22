@@ -184,4 +184,9 @@ func main() {
 	fmt.Printf("Learning routes took %d ms\n", d/1000000)
 
 	ioutil.WriteFile("profile.pprof", buf.Bytes(), 0644)
+
+	x := bytes.NewBuffer(nil)
+	pprof.WriteHeapProfile(x)
+
+	ioutil.WriteFile("heap.pprof", x.Bytes(), 0644)
 }

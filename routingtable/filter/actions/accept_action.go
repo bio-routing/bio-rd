@@ -8,6 +8,11 @@ import (
 type AcceptAction struct {
 }
 
+// NewAcceptAction returns a new AcceptAction
+func NewAcceptAction() *AcceptAction {
+	return &AcceptAction{}
+}
+
 func (*AcceptAction) Do(p net.Prefix, pa *route.Path) Result {
 	return Result{
 		Path:      pa,

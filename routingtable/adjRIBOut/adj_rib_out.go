@@ -14,23 +14,23 @@ import (
 
 // AdjRIBOut represents an Adjacency RIB Out with BGP add path
 type AdjRIBOut struct {
-	clientManager *routingtable.ClientManager
-	rt            *routingtable.RoutingTable
-	neighbor      *routingtable.Neighbor
-	addPathTX     bool
-	pathIDManager *pathIDManager
-	exportFilter  *filter.Filter
-	mu            sync.RWMutex
+	clientManager     *routingtable.ClientManager
+	rt                *routingtable.RoutingTable
+	neighbor          *routingtable.Neighbor
+	addPathTX         bool
+	pathIDManager     *pathIDManager
+	exportFilterChain filter.Chain
+	mu                sync.RWMutex
 }
 
 // New creates a new Adjacency RIB Out with BGP add path
-func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter, addPathTX bool) *AdjRIBOut {
+func New(neighbor *routingtable.Neighbor, exportFilterChain filter.Chain, addPathTX bool) *AdjRIBOut {
 	a := &AdjRIBOut{
-		rt:            routingtable.NewRoutingTable(),
-		neighbor:      neighbor,
-		pathIDManager: newPathIDManager(),
-		exportFilter:  exportFilter,
-		addPathTX:     addPathTX,
+		rt:                routingtable.NewRoutingTable(),
+		neighbor:          neighbor,
+		pathIDManager:     newPathIDManager(),
+		exportFilterChain: exportFilterChain,
+		addPathTX:         addPathTX,
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 	return a
@@ -101,7 +101,7 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		p.BGPPath.ClusterList = cList
 	}
 
-	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
 		return nil
 	}
@@ -138,7 +138,7 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 		return false
 	}
 
-	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
 		return false
 	}
