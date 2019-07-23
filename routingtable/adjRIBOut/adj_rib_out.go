@@ -285,8 +285,6 @@ func (a *AdjRIBOut) ReplacePath(pfx net.Prefix, old *route.Path, new *route.Path
 
 // RefreshRoute refreshes a route
 func (a *AdjRIBOut) RefreshRoute(pfx net.Prefix, ribPaths []*route.Path) {
-	fmt.Printf("Refreshing prefix %s\n", pfx.String())
-
 	for _, p := range ribPaths {
 		p, propagate := a.bgpChecks(pfx, p)
 		if !propagate {
@@ -297,28 +295,21 @@ func (a *AdjRIBOut) RefreshRoute(pfx net.Prefix, ribPaths []*route.Path) {
 		newPath, newReject := a.exportFilterChainPending.Process(pfx, p)
 
 		if currentReject && newReject {
-			fmt.Printf("AdjRIBOut: Prefix %s is still rejected\n", pfx.String())
 			continue
 		}
 
 		if !currentReject && newReject {
-			// Now filtered out
-			fmt.Printf("AdjRIBOut: Prefix %s is now filtered out\n", pfx.String())
 			a.removePath(pfx, currentPath)
 			continue
 		}
 
 		if currentReject && !newReject {
-			// Not filtered anymore
-			fmt.Printf("AdjRIBOut: Prefix %s is not filtered anymore\n", pfx.String())
 			a.addPath(pfx, newPath)
 			continue
 		}
 
 		if !currentReject && !newReject {
-			// Still accepted. Path may have changed
 			if !currentPath.Equal(newPath) {
-				fmt.Printf("AdjRIBOut: Prefix %s path has changed\n", pfx.String())
 				a.removePath(pfx, currentPath)
 				a.addPath(pfx, newPath)
 			}

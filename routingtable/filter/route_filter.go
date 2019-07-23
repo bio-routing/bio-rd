@@ -1,8 +1,6 @@
 package filter
 
 import (
-	"fmt"
-
 	"github.com/bio-routing/bio-rd/net"
 )
 
@@ -24,12 +22,10 @@ func (f *RouteFilter) Matches(prefix net.Prefix) bool {
 
 func (f *RouteFilter) equal(x *RouteFilter) bool {
 	if f.pattern != x.pattern {
-		fmt.Printf("pattern mismatch\n")
 		return false
 	}
 
 	if !f.matcher.equal(x.matcher) {
-		fmt.Printf("matcher mismatch\n")
 		return false
 	}
 

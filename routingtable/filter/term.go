@@ -1,8 +1,6 @@
 package filter
 
 import (
-	"fmt"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable/filter/actions"
@@ -65,12 +63,10 @@ func (t *Term) processActions(p net.Prefix, pa *route.Path) TermResult {
 
 func (t *Term) equal(x *Term) bool {
 	if len(t.from) != len(x.from) {
-		fmt.Printf("From count differs\n")
 		return false
 	}
 
 	if len(t.then) != len(x.then) {
-		fmt.Printf("Then count differs\n")
 		return false
 	}
 

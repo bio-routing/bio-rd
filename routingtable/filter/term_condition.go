@@ -1,8 +1,6 @@
 package filter
 
 import (
-	"fmt"
-
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 )
@@ -106,23 +104,19 @@ func (t *TermCondition) matchesLargeCommunityFilters(pa *route.Path) bool {
 
 func (t *TermCondition) equal(x *TermCondition) bool {
 	if len(t.routeFilters) != len(x.routeFilters) {
-		fmt.Printf("route filter count differs\n")
 		return false
 	}
 
 	if len(t.communityFilters) != len(x.communityFilters) {
-		fmt.Printf("communityFilters count differs\n")
 		return false
 	}
 
 	if len(t.largeCommunityFilters) != len(x.largeCommunityFilters) {
-		fmt.Printf("large community filters count differs\n")
 		return false
 	}
 
 	for i := range t.routeFilters {
 		if !t.routeFilters[i].equal(x.routeFilters[i]) {
-			fmt.Printf("Route filter differs\n")
 			return false
 		}
 	}
