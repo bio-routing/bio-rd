@@ -20,8 +20,6 @@ func (a *SetLocalPrefAction) Do(p net.Prefix, pa *route.Path) Result {
 		return Result{Path: pa}
 	}
 
-	modified := *pa
-	modified.BGPPath.LocalPref = a.pref
-
-	return Result{Path: &modified}
+	pa.BGPPath.LocalPref = a.pref
+	return Result{Path: pa}
 }

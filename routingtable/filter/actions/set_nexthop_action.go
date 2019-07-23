@@ -21,8 +21,7 @@ func (a *SetNextHopAction) Do(p net.Prefix, pa *route.Path) Result {
 		return Result{Path: pa}
 	}
 
-	modified := pa.Copy()
-	modified.BGPPath.NextHop = a.ip
+	pa.BGPPath.NextHop = a.ip
 
-	return Result{Path: modified}
+	return Result{Path: pa}
 }

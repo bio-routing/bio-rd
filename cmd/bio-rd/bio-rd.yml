@@ -45,9 +45,20 @@ policy_options:
             reject: true
     - name: "PeerA-Out"
       terms:
-        - name: "SET-MED"
+        - name: "SET-MED and prepend"
           then:
             med: 1337
+            as_path_prepend:
+              asn: 51324
+              count: 20
+            accept: true
+    - name: "PeerA-Out2"
+      terms:
+        - name: "SET-MED and next-hop"
+          then:
+            med: 31337
+            next_hop:
+              address: "127.0.0.1"
             accept: true
       
 protocols:

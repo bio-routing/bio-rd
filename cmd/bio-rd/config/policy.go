@@ -42,9 +42,21 @@ type RouteFilter struct {
 }
 
 type PolicyStatementTermThen struct {
-	Accept bool    `yaml:"accept"`
-	Reject bool    `yaml:"reject"`
-	MED    *uint32 `yaml:"med"`
+	Accept        bool           `yaml:"accept"`
+	Reject        bool           `yaml:"reject"`
+	MED           *uint32        `yaml:"med"`
+	LocalPref     *uint32        `yaml:"local_pref"`
+	ASPathPrepend *ASPathPrepend `yaml:"as_path_prepend"`
+	NextHop       *NextHop       `yaml:"next_hop"`
+}
+
+type ASPathPrepend struct {
+	ASN   uint32 `yaml:"asn"`
+	Count uint16 `yaml:"count"`
+}
+
+type NextHop struct {
+	Address string `yaml:"address"`
 }
 
 func (rf *RouteFilter) toFilterRouteFilter() (*filter.RouteFilter, error) {
@@ -131,8 +143,25 @@ func (pst *PolicyStatementTerm) toFilterTerm() (*filter.Term, error) {
 		a = append(a, actions.NewRejectAction())
 	}
 
+	if pst.Then.LocalPref != nil {
+		a = append(a, actions.NewSetLocalPrefAction(*pst.Then.LocalPref))
+	}
+
 	if pst.Then.MED != nil {
 		a = append(a, actions.NewSetMEDAction(*pst.Then.MED))
+	}
+
+	if pst.Then.ASPathPrepend != nil {
+		a = append(a, actions.NewASPathPrependAction(pst.Then.ASPathPrepend.ASN, pst.Then.ASPathPrepend.Count))
+	}
+
+	if pst.Then.NextHop != nil {
+		addr, err := bnet.IPFromString(pst.Then.NextHop.Address)
+		if err != nil {
+			return nil, errors.Wrap(err, "Invalid next_hop address")
+		}
+
+		a = append(a, actions.NewSetNextHopAction(addr))
 	}
 
 	if pst.Then.Accept {

@@ -117,6 +117,7 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 	return nil
 }
 
+// RefreshClient re-sends all propagated paths to a certain client
 func (a *LocRIB) RefreshClient(client routingtable.RouteTableClient) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()

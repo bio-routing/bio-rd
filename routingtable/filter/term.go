@@ -31,8 +31,6 @@ func NewTerm(name string, from []*TermCondition, then []Action) *Term {
 
 // Process processes a path returning if the path should be rejected and returns a possible modified version of the path
 func (t *Term) Process(p net.Prefix, pa *route.Path) TermResult {
-	orig := pa
-
 	if len(t.from) == 0 {
 		return t.processActions(p, pa)
 	}
@@ -43,23 +41,21 @@ func (t *Term) Process(p net.Prefix, pa *route.Path) TermResult {
 		}
 	}
 
-	return TermResult{Path: orig}
+	return TermResult{Path: pa}
 }
 
 func (t *Term) processActions(p net.Prefix, pa *route.Path) TermResult {
-	modPath := pa
-
 	for _, action := range t.then {
-		res := action.Do(p, modPath)
+		res := action.Do(p, pa)
 		if res.Terminate {
 			return TermResult{
-				Path:      modPath,
+				Path:      pa,
 				Terminate: true,
 				Reject:    res.Reject,
 			}
 		}
-		modPath = res.Path
+		pa = res.Path
 	}
 
-	return TermResult{Path: modPath}
+	return TermResult{Path: pa}
 }

@@ -141,7 +141,6 @@ func (a *AdjRIBOut) addPath(pfx bnet.Prefix, p *route.Path) error {
 		a.removePathsFromClients(pfx, oldPaths)
 	}
 
-	fmt.Printf("AdjRIBOut AddPath: MED: %d\n", p.BGPPath.MED)
 	for _, client := range a.clientManager.Clients() {
 		err := client.AddPath(pfx, p)
 		if err != nil {
@@ -319,6 +318,7 @@ func (a *AdjRIBOut) RefreshRoute(pfx net.Prefix, ribPaths []*route.Path) {
 		if !currentReject && !newReject {
 			// Still accepted. Path may have changed
 			if !currentPath.Equal(newPath) {
+				fmt.Printf("AdjRIBOut: Prefix %s path has changed\n", pfx.String())
 				a.removePath(pfx, currentPath)
 				a.addPath(pfx, newPath)
 			}
