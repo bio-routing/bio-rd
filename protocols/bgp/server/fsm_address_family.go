@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -52,11 +53,25 @@ func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm 
 }
 
 func (f *fsmAddressFamily) replaceImportFilterChain(c filter.Chain) {
+	if c.Equal(f.importFilterChain) {
+		fmt.Printf("Import filter did not change\n")
+		return
+	}
+
+	fmt.Printf("Import chain has changed!\n")
+
 	f.importFilterChain = c
 	f.adjRIBIn.ReplaceFilterChain(c)
 }
 
 func (f *fsmAddressFamily) replaceExportFilterChain(c filter.Chain) {
+	if c.Equal(f.exportFilterChain) {
+		fmt.Printf("Export filter did not change\n")
+		return
+	}
+
+	fmt.Printf("Export chain has changed!\n")
+
 	f.exportFilterChain = c
 	f.adjRIBOut.ReplaceFilterChain(c)
 }

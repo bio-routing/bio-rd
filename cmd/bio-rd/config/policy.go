@@ -68,13 +68,13 @@ func (rf *RouteFilter) toFilterRouteFilter() (*filter.RouteFilter, error) {
 	var m filter.PrefixMatcher
 	switch rf.Matcher {
 	case "exact":
-		m = filter.Exact()
+		m = filter.NewExactMatcher()
 	case "orlonger":
-		m = filter.OrLonger()
+		m = filter.NewOrLongerMatcher()
 	case "longer":
-		m = filter.Longer()
+		m = filter.NewLongerMatcher()
 	case "range":
-		m = filter.InRange(rf.LenMin, rf.LenMax)
+		m = filter.NewInRangeMatcher(rf.LenMin, rf.LenMax)
 	default:
 		return nil, fmt.Errorf("Invalid matcher: %q", rf.Matcher)
 	}
@@ -123,7 +123,7 @@ func (ps *PolicyStatement) toFilter() (*filter.Filter, error) {
 
 func (pst *PolicyStatementTerm) toFilterTerm() (*filter.Term, error) {
 	conditions := make([]*filter.TermCondition, 0)
-	a := make([]filter.Action, 0)
+	a := make([]actions.Action, 0)
 
 	routeFilters := make([]*filter.RouteFilter, 0)
 	for i := range pst.From.RouteFilters {

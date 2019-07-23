@@ -23,3 +23,14 @@ func (a *SetLocalPrefAction) Do(p net.Prefix, pa *route.Path) Result {
 	pa.BGPPath.LocalPref = a.pref
 	return Result{Path: pa}
 }
+
+// Equal compares actions
+func (a *SetLocalPrefAction) Equal(b Action) bool {
+	switch b.(type) {
+	case *SetLocalPrefAction:
+	default:
+		return false
+	}
+
+	return true
+}

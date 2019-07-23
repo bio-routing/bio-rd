@@ -126,8 +126,6 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 			}
 
 			if !oldCfg.NeedsRestart(newCfg) {
-				// TODO: Change session
-
 				bgpSrv.ReplaceImportFilterChain(n.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
 				bgpSrv.ReplaceExportFilterChain(n.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
 				continue

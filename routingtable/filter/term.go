@@ -1,15 +1,18 @@
 package filter
 
 import (
+	"fmt"
+
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable/filter/actions"
 )
 
 // Term matches a path against a list of conditions and performs actions if it matches
 type Term struct {
 	name string
 	from []*TermCondition
-	then []Action
+	then []actions.Action
 }
 
 type TermResult struct {
@@ -19,7 +22,7 @@ type TermResult struct {
 }
 
 // NewTerm creates a new term
-func NewTerm(name string, from []*TermCondition, then []Action) *Term {
+func NewTerm(name string, from []*TermCondition, then []actions.Action) *Term {
 	t := &Term{
 		name: name,
 		from: from,
@@ -58,4 +61,30 @@ func (t *Term) processActions(p net.Prefix, pa *route.Path) TermResult {
 	}
 
 	return TermResult{Path: pa}
+}
+
+func (t *Term) equal(x *Term) bool {
+	if len(t.from) != len(x.from) {
+		fmt.Printf("From count differs\n")
+		return false
+	}
+
+	if len(t.then) != len(x.then) {
+		fmt.Printf("Then count differs\n")
+		return false
+	}
+
+	for i := range t.from {
+		if !t.from[i].equal(x.from[i]) {
+			return false
+		}
+	}
+
+	for i := range t.then {
+		if !t.then[i].Equal(x.then[i]) {
+			return false
+		}
+	}
+
+	return true
 }

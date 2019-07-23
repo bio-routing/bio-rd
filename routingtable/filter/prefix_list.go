@@ -10,7 +10,7 @@ type PrefixList struct {
 func NewPrefixList(pfxs ...net.Prefix) *PrefixList {
 	l := &PrefixList{
 		allowed: pfxs,
-		matcher: Exact(),
+		matcher: NewExactMatcher(),
 	}
 	return l
 }

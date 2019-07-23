@@ -112,6 +112,7 @@ func (a *AdjRIBIn) ReplaceFilterChain(c filter.Chain) {
 		}
 	}
 
+	fmt.Printf("LEN OF FILTER CHAIN: %d => %d\n", len(a.exportFilterChain), len(c))
 	a.exportFilterChain = c
 }
 

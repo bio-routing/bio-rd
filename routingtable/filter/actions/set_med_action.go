@@ -28,3 +28,18 @@ func (a *SetMEDAction) Do(p net.Prefix, pa *route.Path) Result {
 
 	return Result{Path: &modified}
 }
+
+// Equal compares actions
+func (a *SetMEDAction) Equal(b Action) bool {
+	switch b.(type) {
+	case *SetMEDAction:
+	default:
+		return false
+	}
+
+	if a.med != b.(*SetMEDAction).med {
+		return false
+	}
+
+	return true
+}

@@ -25,3 +25,18 @@ func (a *SetNextHopAction) Do(p net.Prefix, pa *route.Path) Result {
 
 	return Result{Path: pa}
 }
+
+// Equal compares actions
+func (a *SetNextHopAction) Equal(b Action) bool {
+	switch b.(type) {
+	case *SetNextHopAction:
+	default:
+		return false
+	}
+
+	if a.ip != b.(*SetNextHopAction).ip {
+		return false
+	}
+
+	return true
+}

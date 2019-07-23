@@ -97,7 +97,17 @@ func (pc *PeerConfig) NeedsRestart(x *PeerConfig) bool {
 		return true
 	}
 
-	// TODO: Check all remaining attributes that can not be changed at runtime
+	if pc.VRF != x.VRF {
+		return true
+	}
+
+	if pc.RouterID != x.RouterID {
+		return true
+	}
+
+	if pc.Passive != x.Passive {
+		return true
+	}
 
 	return false
 }
@@ -366,7 +376,11 @@ func addPathCapabilityForFamily(f *AddressFamilyConfig, afi uint16, safi uint8) 
 }
 
 func filterOrDefault(c filter.Chain) filter.Chain {
-	return append(c, filter.NewDrainFilter())
+	if len(c) != 0 {
+		return c
+	}
+
+	return filter.NewDrainFilterChain()
 }
 
 // GetAddr returns the IP address of the peer

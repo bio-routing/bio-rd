@@ -1,6 +1,8 @@
 package filter
 
 import (
+	"fmt"
+
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 )
@@ -20,4 +22,20 @@ func (c Chain) Process(p net.Prefix, pa *route.Path) (modPath *route.Path, rejec
 	}
 
 	return mp, false
+}
+
+// Equal compares twp filter chains
+func (c Chain) Equal(d Chain) bool {
+	if len(c) != len(d) {
+		fmt.Printf("Chain length differs %d != %d\n", len(c), len(d))
+		return false
+	}
+
+	for i := range c {
+		if !c[i].equal(d[i]) {
+			return false
+		}
+	}
+
+	return true
 }

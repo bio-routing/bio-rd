@@ -25,3 +25,22 @@ func (a *ASPathPrependAction) Do(p net.Prefix, pa *route.Path) Result {
 	pa.BGPPath.Prepend(a.asn, a.times)
 	return Result{Path: pa}
 }
+
+// Equal compares actions
+func (a *ASPathPrependAction) Equal(b Action) bool {
+	switch b.(type) {
+	case *ASPathPrependAction:
+	default:
+		return false
+	}
+
+	if a.asn != b.(*ASPathPrependAction).asn {
+		return false
+	}
+
+	if a.times != b.(*ASPathPrependAction).times {
+		return false
+	}
+
+	return true
+}

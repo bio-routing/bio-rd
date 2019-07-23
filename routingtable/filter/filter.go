@@ -1,6 +1,8 @@
 package filter
 
 import (
+	"fmt"
+
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 )
@@ -46,4 +48,19 @@ func (f *Filter) Process(p net.Prefix, pa *route.Path) FilterResult {
 	return FilterResult{
 		Path: pa,
 	}
+}
+
+func (f *Filter) equal(x *Filter) bool {
+	if len(f.terms) != len(x.terms) {
+		fmt.Printf("Term count differs\n")
+		return false
+	}
+
+	for i := range f.terms {
+		if !f.terms[i].equal(x.terms[i]) {
+			return false
+		}
+	}
+
+	return true
 }

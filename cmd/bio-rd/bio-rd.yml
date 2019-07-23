@@ -60,7 +60,7 @@ policy_options:
             next_hop:
               address: "127.0.0.1"
             accept: true
-      
+
 protocols:
   bgp:
     groups:
@@ -72,7 +72,7 @@ protocols:
           - peer_address: 169.254.100.2
             peer_as: 65200
             import: ["ACCEPT_ALL"]
-            export: ["PeerA-Out"]
+            export: ["PeerA-Out2"]
           - peer_address: 169.254.100.3
             peer_as: 65300
             import: ["PeerB-In"]
