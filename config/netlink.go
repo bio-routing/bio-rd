@@ -20,6 +20,6 @@ type Netlink struct {
 	HoldTime          time.Duration
 	UpdateInterval    time.Duration
 	RoutingTable      uint32
-	ImportFilterChain *filter.Chain // Which routes are imported from the Kernel
-	ExportFilterChain *filter.Chain // Which routes are exported to the Kernel
+	ImportFilterChain filter.Chain // Which routes are imported from the Kernel
+	ExportFilterChain filter.Chain // Which routes are exported to the Kernel
 }

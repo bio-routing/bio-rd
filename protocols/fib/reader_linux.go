@@ -25,7 +25,7 @@ const (
 type NetlinkReader struct {
 	clientManager *routingtable.ClientManager
 	options       *config.Netlink
-	filter        *filter.Chain
+	filter        filter.Chain
 
 	mu     sync.RWMutex
 	routes []netlink.Route
