@@ -9,7 +9,7 @@ type Chain []*Filter
 
 // Process processes a filter chain
 func (c Chain) Process(p net.Prefix, pa *route.Path) (modPath *route.Path, reject bool) {
-	mp := pa
+	mp := pa.Copy()
 	for _, f := range c {
 		res := f.Process(p, mp)
 		if res.Terminate {

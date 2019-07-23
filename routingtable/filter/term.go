@@ -7,6 +7,7 @@ import (
 
 // Term matches a path against a list of conditions and performs actions if it matches
 type Term struct {
+	name string
 	from []*TermCondition
 	then []Action
 }
@@ -18,8 +19,9 @@ type TermResult struct {
 }
 
 // NewTerm creates a new term
-func NewTerm(from []*TermCondition, then []Action) *Term {
+func NewTerm(name string, from []*TermCondition, then []Action) *Term {
 	t := &Term{
+		name: name,
 		from: from,
 		then: then,
 	}

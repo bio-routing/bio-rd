@@ -102,6 +102,26 @@ func (pc *PeerConfig) NeedsRestart(x *PeerConfig) bool {
 	return false
 }
 
+// replaceImportFilterChain replaces a peers import filter chain
+func (p *peer) replaceImportFilterChain(c filter.Chain) {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+
+	for _, fsm := range p.fsms {
+		fsm.replaceImportFilterChain(c)
+	}
+}
+
+// replaceExportFilterChain replaces a peers import filter chain
+func (p *peer) replaceExportFilterChain(c filter.Chain) {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+
+	for _, fsm := range p.fsms {
+		fsm.replaceExportFilterChain(c)
+	}
+}
+
 type peerAddressFamily struct {
 	rib *locRIB.LocRIB
 

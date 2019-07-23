@@ -42,8 +42,9 @@ type RouteFilter struct {
 }
 
 type PolicyStatementTermThen struct {
-	Accept bool `yaml:"accept"`
-	Reject bool `yaml:"reject"`
+	Accept bool    `yaml:"accept"`
+	Reject bool    `yaml:"reject"`
+	MED    *uint32 `yaml:"med"`
 }
 
 func (rf *RouteFilter) toFilterRouteFilter() (*filter.RouteFilter, error) {
@@ -130,9 +131,13 @@ func (pst *PolicyStatementTerm) toFilterTerm() (*filter.Term, error) {
 		a = append(a, actions.NewRejectAction())
 	}
 
+	if pst.Then.MED != nil {
+		a = append(a, actions.NewSetMEDAction(*pst.Then.MED))
+	}
+
 	if pst.Then.Accept {
 		a = append(a, actions.NewAcceptAction())
 	}
 
-	return filter.NewTerm(conditions, a), nil
+	return filter.NewTerm(pst.Name, conditions, a), nil
 }

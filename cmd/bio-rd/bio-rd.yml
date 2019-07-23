@@ -21,13 +21,33 @@ policy_options:
             accept: true
     - name: "PeerB-In"
       terms:
-        - name: "Accept_all"
+        - name: "ACCEPT-SOME"
+          from:
+            route_filters:
+              - prefix: "8.8.8.8/32"
+                matcher: "exact"
+              - prefix: "10.0.0.0/8"
+                matcher: "orlonger"
           then:
             accept: true
+        - name: "REJECT"
+          then:
+            reject: true
     - name: "ACCEPT_ALL"
       terms:
         - name: "ACCEPT_ALL"
           then:
+            accept: true
+    - name: "REJECT_ALL"
+      terms:
+        - name: "REJECT_ALL"
+          then:
+            reject: true
+    - name: "PeerA-Out"
+      terms:
+        - name: "SET-MED"
+          then:
+            med: 1337
             accept: true
       
 protocols:
@@ -40,8 +60,8 @@ protocols:
         neighbors:
           - peer_address: 169.254.100.2
             peer_as: 65200
-            import: ["PeerA-In"]
-            export: ["ACCEPT_ALL"]
+            import: ["ACCEPT_ALL"]
+            export: ["PeerA-Out"]
           - peer_address: 169.254.100.3
             peer_as: 65300
             import: ["PeerB-In"]

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -122,6 +123,26 @@ func newFSM(peer *peer) *FSM {
 	}
 
 	return f
+}
+
+func (fsm *FSM) replaceImportFilterChain(c filter.Chain) {
+	if fsm.ipv4Unicast != nil {
+		fsm.ipv4Unicast.replaceImportFilterChain(c)
+	}
+
+	if fsm.ipv6Unicast != nil {
+		fsm.ipv6Unicast.replaceImportFilterChain(c)
+	}
+}
+
+func (fsm *FSM) replaceExportFilterChain(c filter.Chain) {
+	if fsm.ipv4Unicast != nil {
+		fsm.ipv4Unicast.replaceExportFilterChain(c)
+	}
+
+	if fsm.ipv6Unicast != nil {
+		fsm.ipv6Unicast.replaceExportFilterChain(c)
+	}
 }
 
 func (fsm *FSM) updateLastUpdateOrKeepalive() {

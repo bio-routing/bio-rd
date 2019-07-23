@@ -51,6 +51,16 @@ func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm 
 	}
 }
 
+func (f *fsmAddressFamily) replaceImportFilterChain(c filter.Chain) {
+	f.importFilterChain = c
+	f.adjRIBIn.ReplaceFilterChain(c)
+}
+
+func (f *fsmAddressFamily) replaceExportFilterChain(c filter.Chain) {
+	f.exportFilterChain = c
+	f.adjRIBOut.ReplaceFilterChain(c)
+}
+
 func (f *fsmAddressFamily) dumpRIBOut() []*route.Route {
 	return f.adjRIBOut.Dump()
 }
@@ -67,7 +77,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.exportFilterChain, !f.addPathTX.BestOnly)
+	f.adjRIBOut = adjRIBOut.New(f.rib, n, f.exportFilterChain, !f.addPathTX.BestOnly)
 
 	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)

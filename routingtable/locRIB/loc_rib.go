@@ -2,12 +2,13 @@ package locRIB
 
 import (
 	"fmt"
-	"math"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/util/math"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -94,14 +95,48 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
+	opts := a.clientManager.GetOptions(client)
+
 	routes := a.rt.Dump()
 	for _, r := range routes {
-		for _, p := range r.Paths() {
+		n := uint(0)
+		if opts.BestOnly {
+			n = 1
+		} else if opts.EcmpOnly {
+			n = r.ECMPPathCount()
+		} else {
+			n = opts.MaxPaths
+			n = uint(math.Min(int(n), len(r.Paths())))
+		}
+
+		for _, p := range r.Paths()[:n] {
 			client.AddPath(r.Prefix(), p)
 		}
 	}
 
 	return nil
+}
+
+func (a *LocRIB) RefreshClient(client routingtable.RouteTableClient) {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	opts := a.clientManager.GetOptions(client)
+
+	routes := a.rt.Dump()
+	for _, r := range routes {
+		n := uint(0)
+		if opts.BestOnly {
+			n = 1
+		} else if opts.EcmpOnly {
+			n = r.ECMPPathCount()
+		} else {
+			n = opts.MaxPaths
+			n = uint(math.Min(int(n), len(r.Paths())))
+		}
+
+		client.RefreshRoute(r.Prefix(), r.Paths()[:n])
+	}
 }
 
 // RouteCount returns the number of stored routes
@@ -170,6 +205,27 @@ func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	return true
 }
 
+func (a *LocRIB) ReplacePath(pfx net.Prefix, oldPath *route.Path, newPath *route.Path) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	r := a.rt.Get(pfx)
+	if r == nil {
+		log.Errorf("Unable to replace path of prefix %s: prefix not found", pfx.String())
+		return
+	}
+
+	oldRoute := r.Copy()
+	err := r.ReplacePath(oldPath, newPath)
+	if err != nil {
+		log.Errorf("Unable to replace path: %v", err)
+		return
+	}
+
+	r.PathSelection()
+	a.propagateChanges(oldRoute, r)
+}
+
 func (a *LocRIB) propagateChanges(oldRoute *route.Route, newRoute *route.Route) {
 	a.removePathsFromClients(oldRoute, newRoute)
 	a.addPathsToClients(oldRoute, newRoute)
@@ -181,8 +237,8 @@ func (a *LocRIB) addPathsToClients(oldRoute *route.Route, newRoute *route.Route)
 		oldMaxPaths := opts.GetMaxPaths(oldRoute.ECMPPathCount())
 		newMaxPaths := opts.GetMaxPaths(newRoute.ECMPPathCount())
 
-		oldPathsLimit := int(math.Min(float64(oldMaxPaths), float64(len(oldRoute.Paths()))))
-		newPathsLimit := int(math.Min(float64(newMaxPaths), float64(len(newRoute.Paths()))))
+		oldPathsLimit := int(math.Min(int(oldMaxPaths), len(oldRoute.Paths())))
+		newPathsLimit := int(math.Min(int(newMaxPaths), len(newRoute.Paths())))
 
 		advertise := route.PathsDiff(newRoute.Paths()[0:newPathsLimit], oldRoute.Paths()[0:oldPathsLimit])
 
@@ -198,8 +254,8 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 		oldMaxPaths := opts.GetMaxPaths(oldRoute.ECMPPathCount())
 		newMaxPaths := opts.GetMaxPaths(newRoute.ECMPPathCount())
 
-		oldPathsLimit := int(math.Min(float64(oldMaxPaths), float64(len(oldRoute.Paths()))))
-		newPathsLimit := int(math.Min(float64(newMaxPaths), float64(len(newRoute.Paths()))))
+		oldPathsLimit := int(math.Min(int(oldMaxPaths), len(oldRoute.Paths())))
+		newPathsLimit := int(math.Min(int(newMaxPaths), len(newRoute.Paths())))
 
 		withdraw := route.PathsDiff(oldRoute.Paths()[0:oldPathsLimit], newRoute.Paths()[0:newPathsLimit])
 
@@ -272,4 +328,14 @@ func (a *LocRIB) RegisterWithOptions(client routingtable.RouteTableClient, opt r
 // Unregister unregisters a client
 func (a *LocRIB) Unregister(client routingtable.RouteTableClient) {
 	a.clientManager.Unregister(client)
+}
+
+// ReplaceFilterChain is here to fulfill an interface
+func (a *LocRIB) ReplaceFilterChain(filter.Chain) {
+	return
+}
+
+// RefreshRoute is here to fulfill an interface
+func (a *LocRIB) RefreshRoute(net.Prefix, []*route.Path) {
+
 }

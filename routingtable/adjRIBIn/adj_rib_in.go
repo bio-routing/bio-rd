@@ -1,6 +1,7 @@
 package adjRIBIn
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -62,6 +63,62 @@ func (a *AdjRIBIn) Flush() {
 	}
 }
 
+// ReplaceFilterChain replaces the filter chain
+func (a *AdjRIBIn) ReplaceFilterChain(c filter.Chain) {
+	fmt.Printf("RIB-IN: replaceing filter\n")
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	routes := a.rt.Dump()
+	for _, route := range routes {
+		fmt.Printf("Checking %s\n", route.Prefix().String())
+		paths := route.Paths()
+		for _, path := range paths {
+			currentPath, currentReject := a.exportFilterChain.Process(route.Prefix(), path)
+			newPath, newReject := c.Process(route.Prefix(), path)
+
+			if currentReject && newReject {
+				fmt.Printf("Prefix %s is still rejected\n", route.Prefix().String())
+				continue
+			}
+
+			if currentReject && !newReject {
+				fmt.Printf("Prefix %s is changed from rejected to accepted\n", route.Prefix().String())
+				for _, client := range a.clientManager.Clients() {
+					client.AddPath(route.Prefix(), newPath)
+				}
+
+				continue
+			}
+
+			if !currentReject && newReject {
+				fmt.Printf("Prefix %s is changed from accepted to rejected\n", route.Prefix().String())
+
+				for _, client := range a.clientManager.Clients() {
+					client.RemovePath(route.Prefix(), newPath)
+				}
+				continue
+			}
+
+			if !currentReject && !newReject {
+				fmt.Printf("Prefix %s is still accepted\n", route.Prefix().String())
+				for _, client := range a.clientManager.Clients() {
+					if !currentPath.Equal(newPath) {
+						fmt.Printf("Path has changed\n")
+						client.ReplacePath(route.Prefix(), currentPath, newPath)
+					}
+				}
+			}
+		}
+	}
+
+	a.exportFilterChain = c
+}
+
+func (a *AdjRIBIn) ReplacePath(pfx net.Prefix, old *route.Path, new *route.Path) {
+
+}
+
 // UpdateNewClient sends current state to a new client
 func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 	a.mu.RLock()
@@ -95,6 +152,11 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	return a.addPath(pfx, p)
+}
+
+// addPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
+func (a *AdjRIBIn) addPath(pfx net.Prefix, p *route.Path) error {
 	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
 	if p.BGPPath.OriginatorID == a.routerID {
 		return nil
@@ -118,8 +180,10 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 
 	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
+		fmt.Printf("Prefix rejected: %s\n", pfx.String())
 		return nil
 	}
+	fmt.Printf("Prefix acceptd: %s\n", pfx.String())
 
 	// Bail out - for all clients for now - if any of our ASNs is within the path
 	if a.ourASNsInPath(p) {
@@ -208,4 +272,9 @@ func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
 			client.RemovePath(r.Prefix(), p)
 		}
 	}
+}
+
+// RefreshRoute is here to fultill an interface
+func (a *AdjRIBIn) RefreshRoute(net.Prefix, []*route.Path) {
+
 }

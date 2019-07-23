@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 
@@ -39,6 +40,8 @@ type BGPServer interface {
 	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
 	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
 	ConnectMockPeer(peer PeerConfig, con net.Conn)
+	ReplaceImportFilterChain(peer bnet.IP, c filter.Chain) error
+	ReplaceExportFilterChain(peer bnet.IP, c filter.Chain) error
 }
 
 // NewBGPServer creates a new instance of bgpServer
@@ -87,6 +90,28 @@ func (b *bgpServer) Start() error {
 		go b.incomingConnectionWorker()
 	}
 
+	return nil
+}
+
+// ReplaceImportFilterChain replaces a peers import filter
+func (b *bgpServer) ReplaceImportFilterChain(peerIP bnet.IP, c filter.Chain) error {
+	p := b.peers.get(peerIP)
+	if p == nil {
+		return fmt.Errorf("Peer %q not found", peerIP.String())
+	}
+
+	p.replaceImportFilterChain(c)
+	return nil
+}
+
+// ReplaceExportFilterChain replaces a peers import filter
+func (b *bgpServer) ReplaceExportFilterChain(peerIP bnet.IP, c filter.Chain) error {
+	p := b.peers.get(peerIP)
+	if p == nil {
+		return fmt.Errorf("Peer %q not found", peerIP.String())
+	}
+
+	p.replaceExportFilterChain(c)
 	return nil
 }
 
