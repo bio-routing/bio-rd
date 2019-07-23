@@ -25,6 +25,7 @@ examples/bmp
 examples/fib/fib
 examples/device/device
 cmd/ris/ris
+benchmarks/learning/learning
 
 # bazel directories
 /bazel-*
