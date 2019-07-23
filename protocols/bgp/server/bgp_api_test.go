@@ -60,8 +60,8 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
-											adjRIBOut: adjRIBOut.New(&routingtable.Neighbor{Type: route.BGPPathType}, filter.NewAcceptAllFilter(), true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, 0, 0, true),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain(), true),
 										},
 									},
 								},
@@ -89,8 +89,8 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilter(), nil, 0, 0, true),
-											adjRIBOut: adjRIBOut.New(&routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true}, filter.NewAcceptAllFilter(), false),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, 0, 0, true),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},
 								},
@@ -146,8 +146,8 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 0, 0, true),
-											adjRIBOut: adjRIBOut.New(&routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true}, filter.NewAcceptAllFilter(), false),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 0, 0, true),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},
 								},

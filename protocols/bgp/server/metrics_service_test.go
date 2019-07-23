@@ -285,7 +285,7 @@ func TestMetrics(t *testing.T) {
 				fsm.establishedTime = establishedTime
 			}
 
-			s := newBgpServer()
+			s := newBGPServer(0, nil)
 			s.peers.add(test.peer)
 
 			actual, err := s.Metrics()

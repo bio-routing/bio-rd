@@ -5,6 +5,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
 type RemovePathParams struct {
@@ -70,3 +71,9 @@ func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
 func (m *RTMockClient) RouteCount() int64 {
 	return m.FakeRouteCount
 }
+
+func (m *RTMockClient) RefreshRoute(net.Prefix, []*route.Path) {}
+
+func (m *RTMockClient) ReplaceFilterChain(filter.Chain) {}
+
+func (m *RTMockClient) ReplacePath(net.Prefix, *route.Path, *route.Path) {}
