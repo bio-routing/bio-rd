@@ -26,7 +26,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		logrus.Fatalf("Unable to start BGP server: %v", err)
 	}
 
-	b.AddPeer(config.Peer{
+	b.AddPeer(server.PeerConfig{
 		AdminEnabled:      true,
 		LocalAS:           65200,
 		PeerAS:            202739,
@@ -37,9 +37,9 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		IPv6: &config.AddressFamilyConfig{
-			ImportFilter: filter.NewAcceptAllFilter(),
-			ExportFilter: filter.NewDrainFilter(),
+		IPv6: &server.AddressFamilyConfig{
+			ImportFilterChain: filter.NewAcceptAllFilterChain(),
+			ExportFilterChain: filter.NewDrainFilterChain(),
 			AddPathSend: routingtable.ClientOptions{
 				BestOnly: true,
 			},
@@ -47,7 +47,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		VRF: v,
 	})
 
-	b.AddPeer(config.Peer{
+	b.AddPeer(server.PeerConfig{
 		AdminEnabled:      true,
 		LocalAS:           65200,
 		PeerAS:            65400,
@@ -58,9 +58,9 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		IPv6: &config.AddressFamilyConfig{
-			ImportFilter: filter.NewDrainFilter(),
-			ExportFilter: filter.NewAcceptAllFilter(),
+		IPv6: &server.AddressFamilyConfig{
+			ImportFilterChain: filter.NewDrainFilterChain(),
+			ExportFilterChain: filter.NewAcceptAllFilterChain(),
 			AddPathSend: routingtable.ClientOptions{
 				BestOnly: true,
 			},

@@ -4,6 +4,7 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
 type Kernel struct {
@@ -61,4 +62,19 @@ func (k *Kernel) Dump() []*route.Route {
 
 func (k *Kernel) Dispose() {
 	k.osKernel.uninit()
+}
+
+// ReplaceFilterChain is here to fulfill an interface
+func (k *Kernel) ReplaceFilterChain(c filter.Chain) {
+
+}
+
+// ReplacePath is here to fulfill an interface
+func (k *Kernel) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+
+}
+
+// RefreshRoute is here to fultill an interface
+func (k *Kernel) RefreshRoute(net.Prefix, []*route.Path) {
+
 }

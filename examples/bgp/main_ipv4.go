@@ -9,7 +9,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"google.golang.org/grpc"
 
-	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -30,18 +29,12 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 	api.RegisterBgpServiceServer(grpcServer, apiSrv)
 	go grpcServer.Serve(lis)
 
-	err = b.Start(&config.Global{
-		Listen: true,
-		LocalAddressList: []net.IP{
-			net.IPv4(169, 254, 100, 1),
-			net.IPv4(169, 254, 200, 0),
-		},
-	})
+	err = b.Start()
 	if err != nil {
 		log.Fatalf("Unable to start BGP server: %v", err)
 	}
 
-	b.AddPeer(config.Peer{
+	b.AddPeer(server.PeerConfig{
 		AdminEnabled:      true,
 		LocalAS:           65200,
 		PeerAS:            65300,
@@ -52,9 +45,9 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		IPv4: &config.AddressFamilyConfig{
-			ImportFilter: filter.NewAcceptAllFilter(),
-			ExportFilter: filter.NewAcceptAllFilter(),
+		IPv4: &server.AddressFamilyConfig{
+			ImportFilterChain: filter.NewAcceptAllFilterChain(),
+			ExportFilterChain: filter.NewAcceptAllFilterChain(),
 			AddPathSend: routingtable.ClientOptions{
 				MaxPaths: 10,
 			},
@@ -63,7 +56,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		VRF:               v,
 	})
 
-	b.AddPeer(config.Peer{
+	b.AddPeer(server.PeerConfig{
 		AdminEnabled:      true,
 		LocalAS:           65200,
 		PeerAS:            65100,
@@ -75,9 +68,9 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 		Passive:           true,
 		RouterID:          b.RouterID(),
 		RouteServerClient: true,
-		IPv4: &config.AddressFamilyConfig{
-			ImportFilter: filter.NewAcceptAllFilter(),
-			ExportFilter: filter.NewAcceptAllFilter(),
+		IPv4: &server.AddressFamilyConfig{
+			ImportFilterChain: filter.NewAcceptAllFilterChain(),
+			ExportFilterChain: filter.NewAcceptAllFilterChain(),
 			AddPathSend: routingtable.ClientOptions{
 				MaxPaths: 10,
 			},

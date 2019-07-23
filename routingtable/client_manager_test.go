@@ -5,6 +5,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,6 +40,18 @@ func (m MockClient) Unregister(RouteTableClient) {
 
 func (m MockClient) RouteCount() int64 {
 	return 0
+}
+
+func (m MockClient) ReplaceFilterChain(c filter.Chain) {
+
+}
+
+func (m MockClient) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+
+}
+
+func (m MockClient) RefreshRoute(net.Prefix, []*route.Path) {
+
 }
 
 func TestClients(t *testing.T) {

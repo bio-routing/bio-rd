@@ -49,7 +49,7 @@ func TestMatches(t *testing.T) {
 			name:   "no prefixes in prefix list, only route filter matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: true,
 		},
@@ -57,8 +57,8 @@ func TestMatches(t *testing.T) {
 			name:   "no prefixes in prefix list, one route filter matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8), Longer()),
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8), NewLongerMatcher()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: true,
 		},
@@ -66,7 +66,7 @@ func TestMatches(t *testing.T) {
 			name:   "no prefixes in prefix list, one of many route filters matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(127, 0, 0, 1), 8),
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
@@ -77,7 +77,7 @@ func TestMatches(t *testing.T) {
 				NewPrefixList(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8)),
 			},
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
@@ -88,7 +88,7 @@ func TestMatches(t *testing.T) {
 				NewPrefixList(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8)),
 			},
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
@@ -99,7 +99,7 @@ func TestMatches(t *testing.T) {
 				NewPrefixList(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8)),
 			},
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
