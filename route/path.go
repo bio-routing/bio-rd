@@ -174,10 +174,10 @@ func (p *Path) Copy() *Path {
 }
 
 // NextHop returns the next hop IP Address
-func (p *Path) NextHop() bnet.IP {
+func (p *Path) NextHop() *bnet.IP {
 	switch p.Type {
 	case BGPPathType:
-		return p.BGPPath.NextHop
+		return p.BGPPath.BGPPathA.NextHop
 	case StaticPathType:
 		return p.StaticPath.NextHop
 	case FIBPathType:

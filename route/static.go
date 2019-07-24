@@ -7,7 +7,7 @@ import (
 
 // StaticPath represents a static path of a route
 type StaticPath struct {
-	NextHop bnet.IP
+	NextHop *bnet.IP
 }
 
 func (r *Route) staticPathSelection() {

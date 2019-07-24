@@ -35,5 +35,5 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (bnet.Prefix, error) 
 		return bnet.Prefix{}, err
 	}
 
-	return bnet.NewPfx(ip, pfxLen), nil
+	return bnet.NewPfx(ip.Dedup(), pfxLen).Dedup(), nil
 }

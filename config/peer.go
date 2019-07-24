@@ -15,8 +15,8 @@ type Peer struct {
 	ReconnectInterval          time.Duration
 	KeepAlive                  time.Duration
 	HoldTime                   time.Duration
-	LocalAddress               bnet.IP
-	PeerAddress                bnet.IP
+	LocalAddress               *bnet.IP
+	PeerAddress                *bnet.IP
 	LocalAS                    uint32
 	PeerAS                     uint32
 	Passive                    bool

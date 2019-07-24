@@ -198,7 +198,7 @@ func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *
 		case packet.MEDAttr:
 			path.BGPPath.MED = pa.Value.(uint32)
 		case packet.NextHopAttr:
-			path.BGPPath.NextHop = pa.Value.(bnet.IP)
+			path.BGPPath.NextHop = pa.Value.(*bnet.IP)
 		case packet.ASPathAttr:
 			path.BGPPath.ASPath = pa.Value.(types.ASPath)
 			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()

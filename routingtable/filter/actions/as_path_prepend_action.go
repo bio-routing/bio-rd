@@ -22,8 +22,7 @@ func (a *ASPathPrependAction) Do(p net.Prefix, pa *route.Path) Result {
 		return Result{Path: pa}
 	}
 
-	modified := pa.Copy()
-	modified.BGPPath.Prepend(a.asn, a.times)
+	pa.BGPPath.Prepend(a.asn, a.times)
 
-	return Result{Path: modified}
+	return Result{Path: pa}
 }

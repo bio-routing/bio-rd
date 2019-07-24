@@ -34,8 +34,8 @@ type BGPServer interface {
 	Start(*config.Global) error
 	AddPeer(config.Peer) error
 	Metrics() (*metrics.BGPMetrics, error)
-	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
-	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
+	GetRIBIn(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
+	GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
 	ConnectMockPeer(peer config.Peer, con net.Conn)
 }
 
@@ -83,7 +83,7 @@ func (b *bgpServer) Start(c *config.Global) error {
 	return nil
 }
 
-func (b *bgpServer) GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn {
+func (b *bgpServer) GetRIBIn(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return nil
@@ -102,7 +102,7 @@ func (b *bgpServer) GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.A
 	return f.adjRIBIn.(*adjRIBIn.AdjRIBIn)
 }
 
-func (b *bgpServer) GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut {
+func (b *bgpServer) GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return nil
@@ -162,6 +162,9 @@ func (b *bgpServer) ConnectMockPeer(peer config.Peer, con net.Conn) {
 }
 
 func (b *bgpServer) AddPeer(c config.Peer) error {
+	c.LocalAddress = c.LocalAddress.Dedup()
+	c.PeerAddress = c.PeerAddress.Dedup()
+
 	peer, err := newPeer(c, b)
 	if err != nil {
 		return err
