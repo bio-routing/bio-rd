@@ -10,7 +10,7 @@ policy_options:
             route_filters:
               - prefix: "198.51.100.0/24"
                 matcher: "orlonger"
-              - prefix: " 203.0.113.0/25"
+              - prefix: "203.0.113.0/25"
                 matcher: "exact"
               - prefix: "203.0.113.128/25"
                 matcher: "exact"
@@ -26,7 +26,7 @@ policy_options:
             route_filters:
               - prefix: "198.51.100.0/32"
                 matcher: "exact"
-              - prefix: "203.0.113.128/24"
+              - prefix: "203.0.113.0/24"
                 matcher: "orlonger"
           then:
             accept: true
