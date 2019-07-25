@@ -38,6 +38,8 @@ type state interface {
 
 // FSM implements the BGP finite state machine (RFC4271)
 type FSM struct {
+	counters fsmCounters
+
 	isBMP       bool
 	peer        *peer
 	eventCh     chan int
@@ -79,7 +81,6 @@ type FSM struct {
 	active     bool
 
 	establishedTime time.Time
-	counters        fsmCounters
 
 	connectionCancelFunc context.CancelFunc
 }
