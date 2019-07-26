@@ -44,7 +44,7 @@ func (p *Path) Select(q *Path) int8 {
 		return p.FIBPath.Select(q.FIBPath)
 	}
 
-	panic("Unknown path type")
+	return 0
 }
 
 // ECMP checks if path p and q are equal enough to be considered for ECMP usage

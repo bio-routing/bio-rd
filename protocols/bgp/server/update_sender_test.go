@@ -882,17 +882,17 @@ func TestSender(t *testing.T) {
 		rib := locRIB.New("inet6.0")
 		if test.afi == packet.IPv6AFI {
 			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
-				rib:          rib,
-				importFilter: filter.NewAcceptAllFilter(),
-				exportFilter: filter.NewAcceptAllFilter(),
+				rib:               rib,
+				importFilterChain: filter.NewAcceptAllFilterChain(),
+				exportFilterChain: filter.NewAcceptAllFilterChain(),
 			}, fsmA)
 			fsmA.ipv6Unicast.multiProtocol = true
 			fsmA.ipv6Unicast.addPathTX = test.addPath
 		} else {
 			fsmA.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &peerAddressFamily{
-				rib:          rib,
-				importFilter: filter.NewAcceptAllFilter(),
-				exportFilter: filter.NewAcceptAllFilter(),
+				rib:               rib,
+				importFilterChain: filter.NewAcceptAllFilterChain(),
+				exportFilterChain: filter.NewAcceptAllFilterChain(),
 			}, fsmA)
 			fsmA.ipv4Unicast.addPathTX = test.addPath
 		}

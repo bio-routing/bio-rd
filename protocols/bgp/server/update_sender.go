@@ -8,10 +8,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -365,4 +367,19 @@ func (a *UpdateSender) RegisterWithOptions(client routingtable.RouteTableClient,
 // Unregister unregisters a client
 func (a *UpdateSender) Unregister(client routingtable.RouteTableClient) {
 	a.clientManager.Unregister(client)
+}
+
+// ReplaceFilterChain is here to fulfill an interface
+func (a *UpdateSender) ReplaceFilterChain(c filter.Chain) {
+
+}
+
+// ReplacePath is here to fulfill an interface
+func (a *UpdateSender) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+
+}
+
+// RefreshRoute is here to fultill an interface
+func (a *UpdateSender) RefreshRoute(net.Prefix, []*route.Path) {
+
 }

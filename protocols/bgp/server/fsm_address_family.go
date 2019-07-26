@@ -24,8 +24,8 @@ type fsmAddressFamily struct {
 	adjRIBOut routingtable.RouteTableClient
 	rib       *locRIB.LocRIB
 
-	importFilter *filter.Filter
-	exportFilter *filter.Filter
+	importFilterChain filter.Chain
+	exportFilterChain filter.Chain
 
 	updateSender *UpdateSender
 
@@ -39,16 +39,34 @@ type fsmAddressFamily struct {
 
 func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm *FSM) *fsmAddressFamily {
 	return &fsmAddressFamily{
-		afi:          afi,
-		safi:         safi,
-		fsm:          fsm,
-		rib:          family.rib,
-		importFilter: family.importFilter,
-		exportFilter: family.exportFilter,
+		afi:               afi,
+		safi:              safi,
+		fsm:               fsm,
+		rib:               family.rib,
+		importFilterChain: family.importFilterChain,
+		exportFilterChain: family.exportFilterChain,
 		addPathTX: routingtable.ClientOptions{
 			BestOnly: true,
 		},
 	}
+}
+
+func (f *fsmAddressFamily) replaceImportFilterChain(c filter.Chain) {
+	if c.Equal(f.importFilterChain) {
+		return
+	}
+
+	f.importFilterChain = c
+	f.adjRIBIn.ReplaceFilterChain(c)
+}
+
+func (f *fsmAddressFamily) replaceExportFilterChain(c filter.Chain) {
+	if c.Equal(f.exportFilterChain) {
+		return
+	}
+
+	f.exportFilterChain = c
+	f.adjRIBOut.ReplaceFilterChain(c)
 }
 
 func (f *fsmAddressFamily) dumpRIBOut() []*route.Route {
@@ -62,12 +80,12 @@ func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
 func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs := f.rib.GetContributingASNs()
 
-	f.adjRIBIn = adjRIBIn.New(f.importFilter, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = adjRIBIn.New(f.importFilterChain, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 	contributingASNs.Add(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, !f.addPathTX.BestOnly)
+	f.adjRIBOut = adjRIBOut.New(f.rib, n, f.exportFilterChain, !f.addPathTX.BestOnly)
 
 	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)
@@ -79,7 +97,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 }
 
 func (f *fsmAddressFamily) bmpInit() {
-	f.adjRIBIn = adjRIBIn.New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = adjRIBIn.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 
 	if f.rib != nil {
 		f.adjRIBIn.Register(f.rib)

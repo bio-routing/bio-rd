@@ -2,11 +2,11 @@ package server
 
 import (
 	"fmt"
-	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"sync"
 	"time"
 
-	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
@@ -17,6 +17,7 @@ import (
 
 type peer struct {
 	server    *bgpServer
+	config    *PeerConfig
 	addr      bnet.IP
 	localAddr bnet.IP
 	passive   bool
@@ -42,11 +43,100 @@ type peer struct {
 	ipv6 *peerAddressFamily
 }
 
+// PeerConfig defines the configuration for a BGP session
+type PeerConfig struct {
+	AdminEnabled               bool
+	ReconnectInterval          time.Duration
+	KeepAlive                  time.Duration
+	HoldTime                   time.Duration
+	LocalAddress               bnet.IP
+	PeerAddress                bnet.IP
+	LocalAS                    uint32
+	PeerAS                     uint32
+	Passive                    bool
+	RouterID                   uint32
+	RouteServerClient          bool
+	RouteReflectorClient       bool
+	RouteReflectorClusterID    uint32
+	AdvertiseIPv4MultiProtocol bool
+	IPv4                       *AddressFamilyConfig
+	IPv6                       *AddressFamilyConfig
+	VRF                        *vrf.VRF
+}
+
+// AddressFamilyConfig represents all configuration parameters specific for an address family
+type AddressFamilyConfig struct {
+	ImportFilterChain filter.Chain
+	ExportFilterChain filter.Chain
+	AddPathSend       routingtable.ClientOptions
+	AddPathRecv       bool
+}
+
+func (pc *PeerConfig) NeedsRestart(x *PeerConfig) bool {
+	if pc.LocalAS != x.LocalAS {
+		return true
+	}
+
+	if pc.PeerAS != x.PeerAS {
+		return true
+	}
+
+	if pc.LocalAddress != x.LocalAddress {
+		return true
+	}
+
+	if pc.HoldTime != x.HoldTime {
+		return true
+	}
+
+	if pc.RouteReflectorClient != x.RouteReflectorClient {
+		return true
+	}
+
+	if pc.RouteServerClient != x.RouteServerClient {
+		return true
+	}
+
+	if pc.VRF != x.VRF {
+		return true
+	}
+
+	if pc.RouterID != x.RouterID {
+		return true
+	}
+
+	if pc.Passive != x.Passive {
+		return true
+	}
+
+	return false
+}
+
+// replaceImportFilterChain replaces a peers import filter chain
+func (p *peer) replaceImportFilterChain(c filter.Chain) {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+
+	for _, fsm := range p.fsms {
+		fsm.replaceImportFilterChain(c)
+	}
+}
+
+// replaceExportFilterChain replaces a peers import filter chain
+func (p *peer) replaceExportFilterChain(c filter.Chain) {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+
+	for _, fsm := range p.fsms {
+		fsm.replaceExportFilterChain(c)
+	}
+}
+
 type peerAddressFamily struct {
 	rib *locRIB.LocRIB
 
-	importFilter *filter.Filter
-	exportFilter *filter.Filter
+	importFilterChain filter.Chain
+	exportFilterChain filter.Chain
 
 	addPathSend    routingtable.ClientOptions
 	addPathReceive bool
@@ -147,13 +237,10 @@ func isEstablishedState(s state) bool {
 
 // NewPeer creates a new peer with the given config. If an connection is established, the adjRIBIN of the peer is connected
 // to the given rib. To actually connect the peer, call Start() on the returned peer.
-func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
-	if c.LocalAS == 0 {
-		c.LocalAS = server.localASN
-	}
-
+func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 	p := &peer{
 		server:               server,
+		config:               &c,
 		addr:                 c.PeerAddress,
 		passive:              c.Passive,
 		peerASN:              c.PeerAS,
@@ -171,11 +258,11 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv4 != nil {
 		p.ipv4 = &peerAddressFamily{
-			rib:            c.VRF.IPv4UnicastRIB(),
-			importFilter:   filterOrDefault(c.IPv4.ImportFilter),
-			exportFilter:   filterOrDefault(c.IPv4.ExportFilter),
-			addPathReceive: c.IPv4.AddPathRecv,
-			addPathSend:    c.IPv4.AddPathSend,
+			rib:               c.VRF.IPv4UnicastRIB(),
+			importFilterChain: filterOrDefault(c.IPv4.ImportFilterChain),
+			exportFilterChain: filterOrDefault(c.IPv4.ExportFilterChain),
+			addPathReceive:    c.IPv4.AddPathRecv,
+			addPathSend:       c.IPv4.AddPathSend,
 		}
 
 		if p.ipv4.rib == nil {
@@ -201,11 +288,11 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 
 	if c.IPv6 != nil {
 		p.ipv6 = &peerAddressFamily{
-			rib:            c.VRF.IPv6UnicastRIB(),
-			importFilter:   filterOrDefault(c.IPv6.ImportFilter),
-			exportFilter:   filterOrDefault(c.IPv6.ExportFilter),
-			addPathReceive: c.IPv6.AddPathRecv,
-			addPathSend:    c.IPv6.AddPathSend,
+			rib:               c.VRF.IPv6UnicastRIB(),
+			importFilterChain: filterOrDefault(c.IPv6.ImportFilterChain),
+			exportFilterChain: filterOrDefault(c.IPv6.ExportFilterChain),
+			addPathReceive:    c.IPv6.AddPathRecv,
+			addPathSend:       c.IPv6.AddPathSend,
 		}
 		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
 
@@ -226,7 +313,7 @@ func newPeer(c config.Peer, server *bgpServer) (*peer, error) {
 	return p, nil
 }
 
-func asn4Capability(c config.Peer) packet.Capability {
+func asn4Capability(c PeerConfig) packet.Capability {
 	return packet.Capability{
 		Code: packet.ASN4CapabilityCode,
 		Value: packet.ASN4Capability{
@@ -245,7 +332,7 @@ func multiProtocolCapability(afi uint16) packet.Capability {
 	}
 }
 
-func addPathCapabilities(c config.Peer) []packet.Capability {
+func addPathCapabilities(c PeerConfig) []packet.Capability {
 	caps := make([]packet.Capability, 0)
 
 	enabled, cap := addPathCapabilityForFamily(c.IPv4, packet.IPv4AFI, packet.UnicastSAFI)
@@ -261,7 +348,7 @@ func addPathCapabilities(c config.Peer) []packet.Capability {
 	return caps
 }
 
-func addPathCapabilityForFamily(f *config.AddressFamilyConfig, afi uint16, safi uint8) (enabled bool, cap packet.Capability) {
+func addPathCapabilityForFamily(f *AddressFamilyConfig, afi uint16, safi uint8) (enabled bool, cap packet.Capability) {
 	if f == nil {
 		return false, packet.Capability{}
 	}
@@ -288,12 +375,12 @@ func addPathCapabilityForFamily(f *config.AddressFamilyConfig, afi uint16, safi 
 	}
 }
 
-func filterOrDefault(f *filter.Filter) *filter.Filter {
-	if f != nil {
-		return f
+func filterOrDefault(c filter.Chain) filter.Chain {
+	if len(c) != 0 {
+		return c
 	}
 
-	return filter.NewDrainFilter()
+	return filter.NewDrainFilterChain()
 }
 
 // GetAddr returns the IP address of the peer
@@ -303,4 +390,14 @@ func (p *peer) GetAddr() bnet.IP {
 
 func (p *peer) Start() {
 	p.fsms[0].start()
+}
+
+// Stop stops a peer BGP session
+func (p *peer) stop() {
+	p.fsmsMu.Lock()
+	defer p.fsmsMu.Unlock()
+
+	for _, fsm := range p.fsms {
+		fsm.eventCh <- ManualStop
+	}
 }

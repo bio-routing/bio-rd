@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/config"
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -24,7 +25,7 @@ const (
 type NetlinkReader struct {
 	clientManager *routingtable.ClientManager
 	options       *config.Netlink
-	filter        *filter.Filter
+	filter        filter.Chain
 
 	mu     sync.RWMutex
 	routes []netlink.Route
@@ -34,7 +35,7 @@ type NetlinkReader struct {
 func NewNetlinkReader(options *config.Netlink) *NetlinkReader {
 	nr := &NetlinkReader{
 		options: options,
-		filter:  options.ImportFilter,
+		filter:  options.ImportFilterChain,
 	}
 
 	nr.clientManager = routingtable.NewClientManager(nr)
@@ -114,7 +115,7 @@ func (nr *NetlinkReader) addPathsToClients(routes []netlink.Route) {
 				var p *route.Path
 				if nr.filter != nil {
 					var reject bool
-					p, reject := nr.filter.ProcessTerms(pfx, path)
+					p, reject := nr.filter.Process(pfx, path)
 					if reject {
 						log.WithError(err).WithFields(log.Fields{
 							"prefix": pfx.String(),
@@ -168,7 +169,7 @@ func (nr *NetlinkReader) removePathsFromClients(routes []netlink.Route) {
 				var p *route.Path
 				if nr.filter != nil {
 					var reject bool
-					p, reject = nr.filter.ProcessTerms(pfx, path)
+					p, reject = nr.filter.Process(pfx, path)
 					if reject {
 						log.WithError(err).WithFields(log.Fields{
 							"prefix": pfx.String(),
@@ -245,4 +246,19 @@ func (nr *NetlinkReader) RouteCount() int64 {
 	defer nr.mu.RUnlock()
 
 	return int64(len(nr.routes))
+}
+
+// ReplaceFilterChain is here to fulfill an interface
+func (nr *NetlinkReader) ReplaceFilterChain(c filter.Chain) {
+
+}
+
+// ReplacePath is here to fulfill an interface
+func (nr *NetlinkReader) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+
+}
+
+// RefreshRoute is here to fultill an interface
+func (nr *NetlinkReader) RefreshRoute(net.Prefix, []*route.Path) {
+
 }

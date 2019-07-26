@@ -817,6 +817,17 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 	last.Next = nextHop
 	last = nextHop
 
+	if p.BGPPath.MED != 0 {
+		med := &PathAttribute{
+			TypeCode: MEDAttr,
+			Value:    p.BGPPath.MED,
+			Optional: true,
+		}
+
+		last.Next = med
+		last = med
+	}
+
 	if p.BGPPath.AtomicAggregate {
 		atomicAggr := &PathAttribute{
 			TypeCode: AtomicAggrAttr,

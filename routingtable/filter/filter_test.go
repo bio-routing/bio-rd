@@ -23,7 +23,7 @@ func TestProcessTerms(t *testing.T) {
 			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Action{
+				then: []actions.Action{
 					&actions.AcceptAction{},
 				},
 			},
@@ -35,7 +35,7 @@ func TestProcessTerms(t *testing.T) {
 			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Action{
+				then: []actions.Action{
 					&actions.RejectAction{},
 				},
 			},
@@ -47,7 +47,7 @@ func TestProcessTerms(t *testing.T) {
 			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Action{
+				then: []actions.Action{
 					&actions.AcceptAction{},
 					&actions.RejectAction{},
 				},
@@ -60,7 +60,7 @@ func TestProcessTerms(t *testing.T) {
 			prefix: net.NewPfx(net.IPv4(0), 0),
 			path:   &route.Path{},
 			term: &Term{
-				then: []Action{
+				then: []actions.Action{
 					&mockAction{},
 					&actions.AcceptAction{},
 				},
@@ -72,13 +72,15 @@ func TestProcessTerms(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f := NewFilter([]*Term{test.term})
-			p, reject := f.ProcessTerms(test.prefix, test.path)
+			f := NewFilter("some Name", []*Term{test.term})
+			res := f.Process(test.prefix, test.path.Copy())
+			p := res.Path
+			reject := res.Reject
 
 			assert.Equal(t, test.expectAccept, !reject)
 
 			if test.expectModified {
-				assert.NotEqual(t, test.path, p)
+				assert.NotEqual(t, test.path, p, test.name)
 			}
 		})
 	}

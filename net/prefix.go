@@ -25,6 +25,29 @@ func NewPrefixFromProtoPrefix(pfx api.Prefix) Prefix {
 	}
 }
 
+// PrefixFromString converts prefix from string representation to Prefix
+func PrefixFromString(s string) (Prefix, error) {
+	parts := strings.Split(s, "/")
+	if len(parts) != 2 {
+		return Prefix{}, fmt.Errorf("Invalid format: %q", s)
+	}
+
+	ip, err := IPFromString(parts[0])
+	if err != nil {
+		return Prefix{}, err
+	}
+
+	l, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return Prefix{}, errors.Wrap(err, "Unable to convert to int")
+	}
+
+	return Prefix{
+		addr:   ip,
+		pfxlen: uint8(l),
+	}, nil
+}
+
 // ToProto converts prefix to proto prefix
 func (pfx Prefix) ToProto() *api.Prefix {
 	return &api.Prefix{

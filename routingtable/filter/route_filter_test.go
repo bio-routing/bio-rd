@@ -74,7 +74,7 @@ func TestInRange(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, InRange(test.begin, test.end))
+			f := NewRouteFilter(test.pattern, NewInRangeMatcher(test.begin, test.end))
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}
@@ -121,7 +121,7 @@ func TestExact(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, Exact())
+			f := NewRouteFilter(test.pattern, NewExactMatcher())
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}
@@ -156,7 +156,7 @@ func TestOrLonger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, OrLonger())
+			f := NewRouteFilter(test.pattern, NewOrLongerMatcher())
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}
@@ -191,7 +191,7 @@ func TestLonger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, Longer())
+			f := NewRouteFilter(test.pattern, NewLongerMatcher())
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}

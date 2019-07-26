@@ -143,7 +143,7 @@ func TestAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), routerID, clusterID, test.addPath)
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), routerID, clusterID, test.addPath)
 		mc := routingtable.NewRTMockClient()
 		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
@@ -160,7 +160,7 @@ func TestAddPath(t *testing.T) {
 				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, removePathParams.Pfx.String(), test.removePfx.String())
 			}
 
-			assert.Equal(t, test.removePath, removePathParams.Path)
+			assert.Equal(t, test.removePath.Equal(removePathParams.Path), true, test.name)
 		}
 		assert.Equal(t, test.expected, adjRIBIn.rt.Dump())
 	}
@@ -289,7 +289,7 @@ func TestRemovePath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 1, 2, test.addPath)
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 1, 2, test.addPath)
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
 		}
@@ -306,7 +306,7 @@ func TestRemovePath(t *testing.T) {
 			if removePathParams.Pfx != test.removePfx {
 				t.Errorf("Test %q failed: Call to RemovePath did not propagate prefix properly: Got: %s Want: %s", test.name, removePathParams.Pfx.String(), test.removePfx.String())
 			}
-			assert.Equal(t, test.removePath, removePathParams.Path)
+			assert.Equal(t, test.removePath.Equal(removePathParams.Path), true)
 		} else {
 			r := mc.Removed()
 			assert.Equalf(t, 0, len(r), "Test %q failed: Call to RemovePath propagated unexpectedly", test.name)
@@ -317,7 +317,7 @@ func TestRemovePath(t *testing.T) {
 }
 
 func TestUnregister(t *testing.T) {
-	adjRIBIn := New(filter.NewAcceptAllFilter(), routingtable.NewContributingASNs(), 0, 0, false)
+	adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 0, 0, false)
 	mc := routingtable.NewRTMockClient()
 	adjRIBIn.Register(mc)
 

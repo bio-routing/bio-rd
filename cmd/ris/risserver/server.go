@@ -8,6 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
@@ -58,9 +59,6 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 
 // LPM provides a longest prefix match service
 func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, error) {
-	if req.Pfx == nil {
-		panic("XXX")
-	}
 	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
 		return nil, err
@@ -266,4 +264,13 @@ func (r *ribClient) ClientCount() uint64 {
 
 func (r *ribClient) Dump() []*route.Route {
 	return nil
+}
+
+func (r *ribClient) RefreshRoute(net.Prefix, []*route.Path) {}
+
+func (r *ribClient) ReplaceFilterChain(filter.Chain) {}
+
+// ReplacePath is here to fulfill an interface
+func (r *ribClient) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+
 }

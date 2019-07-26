@@ -170,6 +170,18 @@ func (r *Route) RemovePath(p *Path) int {
 	return len(r.paths)
 }
 
+// ReplacePath replace path old with new
+func (r *Route) ReplacePath(old *Path, new *Path) error {
+	for i := range r.paths {
+		if r.paths[i].Equal(old) {
+			r.paths[i] = new
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Path not found")
+}
+
 func removePath(paths []*Path, remove *Path) []*Path {
 	i := -1
 	for j := range paths {

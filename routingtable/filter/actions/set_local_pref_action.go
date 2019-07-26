@@ -20,8 +20,17 @@ func (a *SetLocalPrefAction) Do(p net.Prefix, pa *route.Path) Result {
 		return Result{Path: pa}
 	}
 
-	modified := *pa
-	modified.BGPPath.LocalPref = a.pref
+	pa.BGPPath.LocalPref = a.pref
+	return Result{Path: pa}
+}
 
-	return Result{Path: &modified}
+// Equal compares actions
+func (a *SetLocalPrefAction) Equal(b Action) bool {
+	switch b.(type) {
+	case *SetLocalPrefAction:
+	default:
+		return false
+	}
+
+	return true
 }
