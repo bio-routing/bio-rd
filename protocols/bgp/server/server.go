@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 
@@ -115,7 +116,7 @@ func (b *bgpServer) ReplaceExportFilterChain(peerIP bnet.IP, c filter.Chain) err
 	return nil
 }
 
-func (b *bgpServer) GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn {
+func (b *bgpServer) GetRIBIn(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return nil
@@ -134,7 +135,7 @@ func (b *bgpServer) GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.A
 	return f.adjRIBIn.(*adjRIBIn.AdjRIBIn)
 }
 
-func (b *bgpServer) GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut {
+func (b *bgpServer) GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return nil
@@ -193,7 +194,10 @@ func (b *bgpServer) ConnectMockPeer(peer PeerConfig, con net.Conn) {
 	b.acceptCh <- con
 }
 
-func (b *bgpServer) AddPeer(c PeerConfig) error {
+func (b *bgpServer) AddPeer(c config.Peer) error {
+	c.LocalAddress = c.LocalAddress.Dedup()
+	c.PeerAddress = c.PeerAddress.Dedup()
+
 	peer, err := newPeer(c, b)
 	if err != nil {
 		return err

@@ -13,13 +13,18 @@ import (
 
 // Prefix represents an IPv4 prefix
 type Prefix struct {
-	addr   IP
+	addr   *IP
 	pfxlen uint8
 }
 
+// Dedup gets a copy of Prefix from the cache
+func (p *Prefix) Dedup() *Prefix {
+	return pfxc.get(p)
+}
+
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
-func NewPrefixFromProtoPrefix(pfx api.Prefix) Prefix {
-	return Prefix{
+func NewPrefixFromProtoPrefix(pfx api.Prefix) *Prefix {
+	return &Prefix{
 		addr:   IPFromProtoIP(*pfx.Address),
 		pfxlen: uint8(pfx.Pfxlen),
 	}
@@ -49,7 +54,7 @@ func PrefixFromString(s string) (Prefix, error) {
 }
 
 // ToProto converts prefix to proto prefix
-func (pfx Prefix) ToProto() *api.Prefix {
+func (pfx *Prefix) ToProto() *api.Prefix {
 	return &api.Prefix{
 		Address: pfx.addr.ToProto(),
 		Pfxlen:  uint32(pfx.pfxlen),
@@ -57,19 +62,19 @@ func (pfx Prefix) ToProto() *api.Prefix {
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr IP, pfxlen uint8) Prefix {
-	return Prefix{
+func NewPfx(addr *IP, pfxlen uint8) *Prefix {
+	return &Prefix{
 		addr:   addr,
 		pfxlen: pfxlen,
 	}
 }
 
 // NewPfxFromIPNet creates a Prefix object from an gonet.IPNet object
-func NewPfxFromIPNet(ipNet *gonet.IPNet) Prefix {
+func NewPfxFromIPNet(ipNet *gonet.IPNet) *Prefix {
 	ones, _ := ipNet.Mask.Size()
 	ip, _ := IPFromBytes(ipNet.IP)
 
-	return Prefix{
+	return &Prefix{
 		addr:   ip,
 		pfxlen: uint8(ones),
 	}
@@ -100,22 +105,22 @@ func StrToAddr(x string) (uint32, error) {
 }
 
 // Addr returns the address of the prefix
-func (pfx Prefix) Addr() IP {
+func (pfx *Prefix) Addr() *IP {
 	return pfx.addr
 }
 
 // Pfxlen returns the length of the prefix
-func (pfx Prefix) Pfxlen() uint8 {
+func (pfx *Prefix) Pfxlen() uint8 {
 	return pfx.pfxlen
 }
 
 // String returns a string representation of pfx
-func (pfx Prefix) String() string {
+func (pfx *Prefix) String() string {
 	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
 }
 
 // GetIPNet returns the gonet.IP object for a Prefix object
-func (pfx Prefix) GetIPNet() *gonet.IPNet {
+func (pfx *Prefix) GetIPNet() *gonet.IPNet {
 	var dstNetwork gonet.IPNet
 	dstNetwork.IP = pfx.Addr().Bytes()
 
@@ -130,7 +135,7 @@ func (pfx Prefix) GetIPNet() *gonet.IPNet {
 }
 
 // Contains checks if x is a subnet of or equal to pfx
-func (pfx Prefix) Contains(x Prefix) bool {
+func (pfx *Prefix) Contains(x *Prefix) bool {
 	if x.pfxlen <= pfx.pfxlen {
 		return false
 	}
@@ -142,12 +147,12 @@ func (pfx Prefix) Contains(x Prefix) bool {
 	return pfx.containsIPv6(x)
 }
 
-func (pfx Prefix) containsIPv4(x Prefix) bool {
+func (pfx *Prefix) containsIPv4(x *Prefix) bool {
 	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
 	return (pfx.addr.ToUint32() & mask) == (x.addr.ToUint32() & mask)
 }
 
-func (pfx Prefix) containsIPv6(x Prefix) bool {
+func (pfx *Prefix) containsIPv6(x *Prefix) bool {
 	var maskHigh, maskLow uint64
 	if pfx.pfxlen <= 64 {
 		maskHigh = math.MaxUint32 << (64 - pfx.pfxlen)
@@ -162,12 +167,12 @@ func (pfx Prefix) containsIPv6(x Prefix) bool {
 }
 
 // Equal checks if pfx and x are equal
-func (pfx Prefix) Equal(x Prefix) bool {
+func (pfx *Prefix) Equal(x *Prefix) bool {
 	return pfx.addr.Equal(x.addr) && pfx.pfxlen == x.pfxlen
 }
 
 // GetSupernet gets the next common supernet of pfx and x
-func (pfx Prefix) GetSupernet(x Prefix) Prefix {
+func (pfx *Prefix) GetSupernet(x *Prefix) *Prefix {
 	if pfx.addr.isLegacy {
 		return pfx.supernetIPv4(x)
 	}
@@ -175,7 +180,7 @@ func (pfx Prefix) GetSupernet(x Prefix) Prefix {
 	return pfx.supernetIPv6(x)
 }
 
-func (pfx Prefix) supernetIPv4(x Prefix) Prefix {
+func (pfx *Prefix) supernetIPv4(x *Prefix) *Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
 	a := pfx.addr.ToUint32() >> (32 - maxPfxLen)
 	b := x.addr.ToUint32() >> (32 - maxPfxLen)
@@ -186,13 +191,13 @@ func (pfx Prefix) supernetIPv4(x Prefix) Prefix {
 		maxPfxLen--
 	}
 
-	return Prefix{
+	return &Prefix{
 		addr:   IPv4(a << (32 - maxPfxLen)),
 		pfxlen: maxPfxLen,
 	}
 }
 
-func (pfx Prefix) supernetIPv6(x Prefix) Prefix {
+func (pfx *Prefix) supernetIPv6(x *Prefix) *Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen)
 
 	a := pfx.addr.BitAtPosition(1)

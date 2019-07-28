@@ -384,7 +384,7 @@ func filterOrDefault(c filter.Chain) filter.Chain {
 }
 
 // GetAddr returns the IP address of the peer
-func (p *peer) GetAddr() bnet.IP {
+func (p *peer) GetAddr() *bnet.IP {
 	return p.addr
 }
 

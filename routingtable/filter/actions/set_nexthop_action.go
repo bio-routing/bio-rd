@@ -7,12 +7,12 @@ import (
 )
 
 type SetNextHopAction struct {
-	ip bnet.IP
+	ip *bnet.IP
 }
 
-func NewSetNextHopAction(ip bnet.IP) *SetNextHopAction {
+func NewSetNextHopAction(ip *bnet.IP) *SetNextHopAction {
 	return &SetNextHopAction{
-		ip: ip,
+		ip: ip.Dedup(),
 	}
 }
 

@@ -46,7 +46,7 @@ func (pa ASPath) ToProto() []*api.ASPathSegment {
 }
 
 // ASPathFromProtoASPath converts an proto ASPath to ASPath
-func ASPathFromProtoASPath(segments []*api.ASPathSegment) ASPath {
+func ASPathFromProtoASPath(segments []*api.ASPathSegment) *ASPath {
 	asPath := make(ASPath, len(segments))
 
 	for i := range segments {
@@ -66,7 +66,7 @@ func ASPathFromProtoASPath(segments []*api.ASPathSegment) ASPath {
 		asPath[i] = s
 	}
 
-	return asPath
+	return &asPath
 }
 
 // String converts an ASPath to it's human redable representation

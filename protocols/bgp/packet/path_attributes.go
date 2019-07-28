@@ -273,7 +273,7 @@ func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
 		return errors.Wrap(err, "Unable to decode next hop")
 	}
 
-	pa.Value = bnet.IPv4(nextHop)
+	pa.Value = bnet.IPv4(nextHop).Dedup()
 	return nil
 }
 
@@ -535,7 +535,7 @@ func (pa *PathAttribute) serializeNextHop(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(NextHopAttr)
 	length := uint8(4)
 	buf.WriteByte(length)
-	addr := pa.Value.(bnet.IP)
+	addr := pa.Value.(*bnet.IP)
 	buf.Write(addr.Bytes())
 	return 7
 }

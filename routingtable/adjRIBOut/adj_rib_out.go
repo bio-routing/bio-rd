@@ -120,6 +120,8 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		return nil
 	}
 
+	p.BGPPath = p.BGPPath.Dedup()
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
 

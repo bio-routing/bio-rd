@@ -257,11 +257,11 @@ func (u *UpdateSender) nlriForPrefixes(pfxs []bnet.Prefix, pathID uint32) *packe
 	return res
 }
 
-func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop bnet.IP) {
+func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop *bnet.IP) {
 	var curCopy, lastCopy *packet.PathAttribute
 	for cur := pa; cur != nil; cur = cur.Next {
 		if cur.TypeCode == packet.NextHopAttr {
-			nextHop = cur.Value.(bnet.IP)
+			nextHop = cur.Value.(*bnet.IP)
 		} else {
 			curCopy = cur.Copy()
 

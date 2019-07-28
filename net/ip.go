@@ -14,9 +14,14 @@ type IP struct {
 	isLegacy bool
 }
 
+// Dedup gets a copy of IP from the cache
+func (ip *IP) Dedup() *IP {
+	return ipc.get(ip)
+}
+
 // IPFromProtoIP creates an IP address from a proto IP
-func IPFromProtoIP(addr api.IP) IP {
-	return IP{
+func IPFromProtoIP(addr api.IP) *IP {
+	return &IP{
 		higher:   addr.Higher,
 		lower:    addr.Lower,
 		isLegacy: addr.Version == api.IP_IPv4,
@@ -24,7 +29,7 @@ func IPFromProtoIP(addr api.IP) IP {
 }
 
 // ToProto converts an IP to a proto IP
-func (ip IP) ToProto() *api.IP {
+func (ip *IP) ToProto() *api.IP {
 	ver := api.IP_IPv6
 	if ip.isLegacy {
 		ver = api.IP_IPv4
@@ -38,31 +43,31 @@ func (ip IP) ToProto() *api.IP {
 }
 
 // Lower gets the lower half of the IP address
-func (ip IP) Lower() uint64 {
+func (ip *IP) Lower() uint64 {
 	return ip.lower
 }
 
 // Higher gets the higher half of the IP address
-func (ip IP) Higher() uint64 {
+func (ip *IP) Higher() uint64 {
 	return ip.higher
 }
 
 // IPv4 returns a new `IP` representing an IPv4 address
-func IPv4(val uint32) IP {
-	return IP{
+func IPv4(val uint32) *IP {
+	return &IP{
 		lower:    uint64(val),
 		isLegacy: true,
 	}
 }
 
 // IPv4FromOctets returns an IPv4 address for the given 4 octets
-func IPv4FromOctets(o1, o2, o3, o4 uint8) IP {
+func IPv4FromOctets(o1, o2, o3, o4 uint8) *IP {
 	return IPv4(uint32(o1)<<24 + uint32(o2)<<16 + uint32(o3)<<8 + uint32(o4))
 }
 
 // IPv6 returns a new `IP` representing an IPv6 address
-func IPv6(higher, lower uint64) IP {
-	return IP{
+func IPv6(higher, lower uint64) *IP {
+	return &IP{
 		higher:   higher,
 		lower:    lower,
 		isLegacy: false,
@@ -70,14 +75,14 @@ func IPv6(higher, lower uint64) IP {
 }
 
 // IPv6FromBlocks returns an IPv6 address for the given 8 blocks
-func IPv6FromBlocks(b1, b2, b3, b4, b5, b6, b7, b8 uint16) IP {
+func IPv6FromBlocks(b1, b2, b3, b4, b5, b6, b7, b8 uint16) *IP {
 	return IPv6(
 		uint64(uint64(b1)<<48+uint64(b2)<<32+uint64(b3)<<16+uint64(b4)),
 		uint64(uint64(b5)<<48+uint64(b6)<<32+uint64(b7)<<16+uint64(b8)))
 }
 
 // IPFromBytes returns an IP address for a byte slice
-func IPFromBytes(b []byte) (IP, error) {
+func IPFromBytes(b []byte) (*IP, error) {
 	if len(b) == 4 {
 		return IPv4FromOctets(b[0], b[1], b[2], b[3]), nil
 	}
@@ -94,14 +99,14 @@ func IPFromBytes(b []byte) (IP, error) {
 			uint16(b[14])<<8+uint16(b[15])), nil
 	}
 
-	return IP{}, fmt.Errorf("byte slice has an invalid length. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
+	return nil, fmt.Errorf("byte slice has an invalid length. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
 }
 
 // IPFromString returns an IP address for a given string
-func IPFromString(str string) (IP, error) {
+func IPFromString(str string) (*IP, error) {
 	ip := net.ParseIP(str)
 	if ip == nil {
-		return IP{}, fmt.Errorf("%s is not a valid IP address", str)
+		return nil, fmt.Errorf("%s is not a valid IP address", str)
 	}
 
 	ip4 := ip.To4()
@@ -113,12 +118,12 @@ func IPFromString(str string) (IP, error) {
 }
 
 // Equal returns true if ip is equal to other
-func (ip IP) Equal(other IP) bool {
+func (ip *IP) Equal(other *IP) bool {
 	return ip == other
 }
 
 // Compare compares two IP addresses (returns 0 if equal, -1 if `ip` is smaller than `other`, 1 if `ip` is greater than `other`)
-func (ip IP) Compare(other IP) int8 {
+func (ip *IP) Compare(other *IP) int8 {
 	if ip.Equal(other) {
 		return 0
 	}
@@ -138,7 +143,7 @@ func (ip IP) Compare(other IP) int8 {
 	return -1
 }
 
-func (ip IP) String() string {
+func (ip *IP) String() string {
 	if !ip.isLegacy {
 		return ip.stringIPv6()
 	}
@@ -146,7 +151,7 @@ func (ip IP) String() string {
 	return ip.stringIPv4()
 }
 
-func (ip IP) stringIPv6() string {
+func (ip *IP) stringIPv6() string {
 	return fmt.Sprintf("%X:%X:%X:%X:%X:%X:%X:%X",
 		ip.higher&0xFFFF000000000000>>48,
 		ip.higher&0x0000FFFF00000000>>32,
@@ -158,14 +163,14 @@ func (ip IP) stringIPv6() string {
 		ip.lower&0x000000000000FFFF)
 }
 
-func (ip IP) stringIPv4() string {
+func (ip *IP) stringIPv4() string {
 	b := ip.Bytes()
 
 	return fmt.Sprintf("%d.%d.%d.%d", b[0], b[1], b[2], b[3])
 }
 
 // Bytes returns the byte representation of an IP address
-func (ip IP) Bytes() []byte {
+func (ip *IP) Bytes() []byte {
 	if !ip.isLegacy {
 		return ip.bytesIPv6()
 	}
@@ -173,7 +178,7 @@ func (ip IP) Bytes() []byte {
 	return ip.bytesIPv4()
 }
 
-func (ip IP) bytesIPv4() []byte {
+func (ip *IP) bytesIPv4() []byte {
 	u := ip.ToUint32()
 	return []byte{
 		byte(u & 0xFF000000 >> 24),
@@ -184,12 +189,12 @@ func (ip IP) bytesIPv4() []byte {
 }
 
 // IsIPv4 returns if the `IP` is of address family IPv4
-func (ip IP) IsIPv4() bool {
+func (ip *IP) IsIPv4() bool {
 	return ip.isLegacy
 }
 
 // SizeBytes returns the number of bytes required to represent the `IP`
-func (ip IP) SizeBytes() uint8 {
+func (ip *IP) SizeBytes() uint8 {
 	if ip.isLegacy {
 		return 4
 	}
@@ -198,11 +203,11 @@ func (ip IP) SizeBytes() uint8 {
 }
 
 // ToUint32 return the rightmost 32 bits of an 'IP'
-func (ip IP) ToUint32() uint32 {
+func (ip *IP) ToUint32() uint32 {
 	return uint32(^uint64(0) >> 32 & ip.lower)
 }
 
-func (ip IP) bytesIPv6() []byte {
+func (ip *IP) bytesIPv6() []byte {
 	return []byte{
 		byte(ip.higher & 0xFF00000000000000 >> 56),
 		byte(ip.higher & 0x00FF000000000000 >> 48),
@@ -224,12 +229,12 @@ func (ip IP) bytesIPv6() []byte {
 }
 
 // ToNetIP converts the IP address in a `net.IP`
-func (ip IP) ToNetIP() net.IP {
+func (ip *IP) ToNetIP() net.IP {
 	return net.IP(ip.Bytes())
 }
 
 // BitAtPosition returns the bit at position pos
-func (ip IP) BitAtPosition(pos uint8) bool {
+func (ip *IP) BitAtPosition(pos uint8) bool {
 	if ip.isLegacy {
 		return ip.bitAtPositionIPv4(pos)
 	}
@@ -237,7 +242,7 @@ func (ip IP) BitAtPosition(pos uint8) bool {
 	return ip.bitAtPositionIPv6(pos)
 }
 
-func (ip IP) bitAtPositionIPv4(pos uint8) bool {
+func (ip *IP) bitAtPositionIPv4(pos uint8) bool {
 	if pos > 32 {
 		return false
 	}
@@ -245,7 +250,7 @@ func (ip IP) bitAtPositionIPv4(pos uint8) bool {
 	return (ip.ToUint32() & (1 << (32 - pos))) != 0
 }
 
-func (ip IP) bitAtPositionIPv6(pos uint8) bool {
+func (ip *IP) bitAtPositionIPv6(pos uint8) bool {
 	if pos > 128 {
 		return false
 	}
