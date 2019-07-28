@@ -240,7 +240,7 @@ func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *
 		default:
 			unknownAttr := f.processUnknownAttribute(pa)
 			if unknownAttr != nil {
-				*path.BGPPath.UnknownAttributes = append(*path.BGPPath.UnknownAttributes, *unknownAttr)
+				path.BGPPath.UnknownAttributes = append(path.BGPPath.UnknownAttributes, *unknownAttr)
 			}
 		}
 	}

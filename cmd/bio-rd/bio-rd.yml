@@ -72,8 +72,8 @@ protocols:
           - peer_address: 192.0.2.2
             peer_as: 65200
             import: ["ACCEPT_ALL"]
-            export: ["PeerA-Out2"]
+            export: ["ACCEPT_ALL"]
           - peer_address: 192.0.2.3
             peer_as: 65300
-            import: ["PeerB-In"]
+            import: ["ACCEPT_ALL"]
             export: ["ACCEPT_ALL"]

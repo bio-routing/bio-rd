@@ -19,7 +19,7 @@ type BGPPath struct {
 	ClusterList       *[]uint32
 	Communities       *[]uint32
 	LargeCommunities  *[]types.LargeCommunity
-	UnknownAttributes *[]types.UnknownPathAttribute
+	UnknownAttributes []types.UnknownPathAttribute
 	PathIdentifier    uint32
 	ASPathLen         uint16
 }
@@ -65,7 +65,7 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		Source:            b.BGPPathA.Source.ToProto(),
 		Communities:       make([]uint32, len(*b.Communities)),
 		LargeCommunities:  make([]*api.LargeCommunity, len(*b.LargeCommunities)),
-		UnknownAttributes: make([]*api.UnknownPathAttribute, len(*b.UnknownAttributes)),
+		UnknownAttributes: make([]*api.UnknownPathAttribute, len(b.UnknownAttributes)),
 		OriginatorId:      b.BGPPathA.OriginatorID,
 		ClusterList:       make([]uint32, len(*b.ClusterList)),
 	}
@@ -77,8 +77,8 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		a.LargeCommunities[i] = (*b.LargeCommunities)[i].ToProto()
 	}
 
-	for i := range *b.UnknownAttributes {
-		a.UnknownAttributes[i] = (*b.UnknownAttributes)[i].ToProto()
+	for i := range b.UnknownAttributes {
+		a.UnknownAttributes[i] = b.UnknownAttributes[i].ToProto()
 	}
 
 	return a
@@ -110,7 +110,7 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
 	p.LargeCommunities = &largeCommunities
 
 	unknownAttr := make([]types.UnknownPathAttribute, len(pb.UnknownAttributes))
-	p.UnknownAttributes = &unknownAttr
+	p.UnknownAttributes = unknownAttr
 
 	cl := make([]uint32, len(pb.ClusterList))
 	p.ClusterList = &cl
@@ -124,7 +124,7 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
 	}
 
 	for i := range pb.UnknownAttributes {
-		(*p.UnknownAttributes)[i] = types.UnknownPathAttributeFromProtoUnknownPathAttribute(pb.UnknownAttributes[i])
+		p.UnknownAttributes[i] = types.UnknownPathAttributeFromProtoUnknownPathAttribute(pb.UnknownAttributes[i])
 	}
 
 	for i := range pb.ClusterList {
@@ -159,7 +159,7 @@ func (b *BGPPath) Length() uint16 {
 
 	unknownAttributesLen := uint16(0)
 	if b.UnknownAttributes != nil {
-		for _, unknownAttr := range *b.UnknownAttributes {
+		for _, unknownAttr := range b.UnknownAttributes {
 			unknownAttributesLen += unknownAttr.WireLength()
 		}
 	}
