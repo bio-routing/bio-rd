@@ -260,13 +260,15 @@ func (b *BGPPath) Select(c *BGPPath) int8 {
 		return -1
 	}
 
-	// Additionally check for the shorter ClusterList
-	if len(*c.ClusterList) < len(*b.ClusterList) {
-		return 1
-	}
+	if c.ClusterList != nil && b.ClusterList != nil {
+		// Additionally check for the shorter ClusterList
+		if len(*c.ClusterList) < len(*b.ClusterList) {
+			return 1
+		}
 
-	if len(*c.ClusterList) > len(*b.ClusterList) {
-		return -1
+		if len(*c.ClusterList) > len(*b.ClusterList) {
+			return -1
+		}
 	}
 
 	// g)
