@@ -11,7 +11,7 @@ var (
 )
 
 func init() {
-	ipc = newIPCache()
+	pfxc = newPfxCache()
 }
 
 type pfxCache struct {

@@ -235,6 +235,8 @@ func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer, asnLength uint8) error 
 		pa.Value = append(pa.Value.(types.ASPath), segment)
 	}
 
+	ret := pa.Value.(types.ASPath)
+	pa.Value = &ret
 	return nil
 }
 
@@ -508,7 +510,7 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *EncodeOptions) 
 
 	length := uint8(0)
 	segmentsBuf := bytes.NewBuffer(nil)
-	for _, segment := range pa.Value.(types.ASPath) {
+	for _, segment := range *pa.Value.(*types.ASPath) {
 		segmentsBuf.WriteByte(segment.Type)
 		segmentsBuf.WriteByte(uint8(len(segment.ASNs)))
 
@@ -774,7 +776,7 @@ func read4BytesAsUint32(buf *bytes.Buffer) (uint32, error) {
 func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute {
 	current := pa
 
-	if len(*p.BGPPath.Communities) > 0 {
+	if p.BGPPath.Communities != nil && len(*p.BGPPath.Communities) > 0 {
 		communities := &PathAttribute{
 			TypeCode: CommunitiesAttr,
 			Value:    p.BGPPath.Communities,
@@ -783,7 +785,7 @@ func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute
 		current = communities
 	}
 
-	if len(*p.BGPPath.LargeCommunities) > 0 {
+	if p.BGPPath.LargeCommunities != nil && len(*p.BGPPath.LargeCommunities) > 0 {
 		largeCommunities := &PathAttribute{
 			TypeCode: LargeCommunitiesAttr,
 			Value:    p.BGPPath.LargeCommunities,
@@ -873,15 +875,17 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 	optionals := last.AddOptionalPathAttributes(p)
 
 	last = optionals
-	for _, unknownAttr := range *p.BGPPath.UnknownAttributes {
-		last.Next = &PathAttribute{
-			TypeCode:   unknownAttr.TypeCode,
-			Optional:   unknownAttr.Optional,
-			Transitive: unknownAttr.Transitive,
-			Partial:    unknownAttr.Partial,
-			Value:      unknownAttr.Value,
+	if p.BGPPath.UnknownAttributes != nil {
+		for _, unknownAttr := range *p.BGPPath.UnknownAttributes {
+			last.Next = &PathAttribute{
+				TypeCode:   unknownAttr.TypeCode,
+				Optional:   unknownAttr.Optional,
+				Transitive: unknownAttr.Transitive,
+				Partial:    unknownAttr.Partial,
+				Value:      unknownAttr.Value,
+			}
+			last = last.Next
 		}
-		last = last.Next
 	}
 
 	return asPath, nil

@@ -154,7 +154,7 @@ func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 	}
 
 	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
-	if len(*p.BGPPath.ClusterList) > 0 {
+	if p.BGPPath.ClusterList != nil && len(*p.BGPPath.ClusterList) > 0 {
 		for _, cid := range *p.BGPPath.ClusterList {
 			if cid == a.clusterID {
 				return nil

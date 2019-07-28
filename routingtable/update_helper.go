@@ -25,7 +25,11 @@ func isOwnPath(p *route.Path, n *Neighbor) bool {
 }
 
 func isDisallowedByCommunity(p *route.Path, n *Neighbor) bool {
-	if p.BGPPath == nil || len(*p.BGPPath.Communities) == 0 {
+	if p.BGPPath == nil || (p.BGPPath.Communities != nil && len(*p.BGPPath.Communities) == 0) {
+		return false
+	}
+
+	if p.BGPPath.Communities == nil {
 		return false
 	}
 

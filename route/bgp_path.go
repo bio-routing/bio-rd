@@ -143,23 +143,25 @@ func (b *BGPPath) Length() uint16 {
 	}
 
 	communitiesLen := uint16(0)
-	if len(*b.Communities) != 0 {
+	if b.Communities != nil && len(*b.Communities) != 0 {
 		communitiesLen += 3 + uint16(len(*b.Communities)*4)
 	}
 
 	largeCommunitiesLen := uint16(0)
-	if len(*b.LargeCommunities) != 0 {
+	if b.LargeCommunities != nil && len(*b.LargeCommunities) != 0 {
 		largeCommunitiesLen += 3 + uint16(len(*b.LargeCommunities)*12)
 	}
 
 	clusterListLen := uint16(0)
-	if len(*b.ClusterList) != 0 {
+	if b.ClusterList != nil && len(*b.ClusterList) != 0 {
 		clusterListLen += 3 + uint16(len(*b.ClusterList)*4)
 	}
 
 	unknownAttributesLen := uint16(0)
-	for _, unknownAttr := range *b.UnknownAttributes {
-		unknownAttributesLen += unknownAttr.WireLength()
+	if b.UnknownAttributes != nil {
+		for _, unknownAttr := range *b.UnknownAttributes {
+			unknownAttributesLen += unknownAttr.WireLength()
+		}
 	}
 
 	originatorID := uint16(0)
@@ -474,13 +476,17 @@ func (b *BGPPath) Copy() *BGPPath {
 	cp.ASPath = &asPath
 	copy(*cp.ASPath, *b.ASPath)
 
-	communities := make([]uint32, len(*cp.Communities))
-	cp.Communities = &communities
-	copy(*cp.Communities, *b.Communities)
+	if cp.Communities != nil {
+		communities := make([]uint32, len(*cp.Communities))
+		cp.Communities = &communities
+		copy(*cp.Communities, *b.Communities)
+	}
 
-	largeCommunities := make([]types.LargeCommunity, len(*cp.LargeCommunities))
-	cp.LargeCommunities = &largeCommunities
-	copy(*cp.LargeCommunities, *b.LargeCommunities)
+	if cp.LargeCommunities != nil {
+		largeCommunities := make([]types.LargeCommunity, len(*cp.LargeCommunities))
+		cp.LargeCommunities = &largeCommunities
+		copy(*cp.LargeCommunities, *b.LargeCommunities)
+	}
 
 	if b.ClusterList != nil {
 		clusterList := make([]uint32, len(*cp.ClusterList))
