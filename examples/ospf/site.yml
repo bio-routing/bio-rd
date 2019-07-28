@@ -1,0 +1,28 @@
+---
+
+- name: Bootstrap
+  hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Install Python 2
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+
+- name: Setup lab host
+  hosts: all
+  become: yes
+  tasks:
+    - name: Enable backbone interface
+      copy:
+        content: >
+          network:
+            version: 2
+            ethernets:
+              enp0s9:
+                addresses: []
+        dest: "/etc/netplan/99-backbone.yaml"
+      notify:
+      - apply netplan
+  handlers:
+    - name: apply netplan
+      command: netplan apply
