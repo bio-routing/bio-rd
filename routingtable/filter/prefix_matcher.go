@@ -3,7 +3,7 @@ package filter
 import "github.com/bio-routing/bio-rd/net"
 
 type PrefixMatcher interface {
-	Match(pattern, prefix net.Prefix) bool
+	Match(pattern, prefix *net.Prefix) bool
 	equal(PrefixMatcher) bool
 }
 
@@ -19,7 +19,7 @@ func NewInRangeMatcher(min, max uint8) *InRangeMatcher {
 	}
 }
 
-func (i *InRangeMatcher) Match(pattern, prefix net.Prefix) bool {
+func (i *InRangeMatcher) Match(pattern, prefix *net.Prefix) bool {
 	contains := pattern.Equal(prefix) || pattern.Contains(prefix)
 	return contains && prefix.Pfxlen() >= i.min && prefix.Pfxlen() <= i.max
 }
@@ -45,7 +45,7 @@ func NewExactMatcher() *ExactMatcher {
 	return &ExactMatcher{}
 }
 
-func (e *ExactMatcher) Match(pattern, prefix net.Prefix) bool {
+func (e *ExactMatcher) Match(pattern, prefix *net.Prefix) bool {
 	return pattern.Equal(prefix)
 }
 
@@ -65,7 +65,7 @@ func NewOrLongerMatcher() *OrLongerMatcher {
 	return &OrLongerMatcher{}
 }
 
-func (e *OrLongerMatcher) Match(pattern, prefix net.Prefix) bool {
+func (e *OrLongerMatcher) Match(pattern, prefix *net.Prefix) bool {
 	return pattern.Equal(prefix) || pattern.Contains(prefix)
 }
 
@@ -85,7 +85,7 @@ func NewLongerMatcher() *LongerMatcher {
 	return &LongerMatcher{}
 }
 
-func (e *LongerMatcher) Match(pattern, prefix net.Prefix) bool {
+func (e *LongerMatcher) Match(pattern, prefix *net.Prefix) bool {
 	return pattern.Contains(prefix) && prefix.Pfxlen() > pattern.Pfxlen()
 }
 

@@ -60,17 +60,17 @@ func (a *LocRIB) Count() uint64 {
 }
 
 // LPM performs a longest prefix match on the routing table
-func (a *LocRIB) LPM(pfx net.Prefix) (res []*route.Route) {
+func (a *LocRIB) LPM(pfx *net.Prefix) (res []*route.Route) {
 	return a.rt.LPM(pfx)
 }
 
 // Get gets a route
-func (a *LocRIB) Get(pfx net.Prefix) *route.Route {
+func (a *LocRIB) Get(pfx *net.Prefix) *route.Route {
 	return a.rt.Get(pfx)
 }
 
 // GetLonger gets all more specifics
-func (a *LocRIB) GetLonger(pfx net.Prefix) (res []*route.Route) {
+func (a *LocRIB) GetLonger(pfx *net.Prefix) (res []*route.Route) {
 	return a.rt.GetLonger(pfx)
 }
 
@@ -146,7 +146,7 @@ func (a *LocRIB) RouteCount() int64 {
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
-func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
+func (a *LocRIB) AddPath(pfx *net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	log.WithFields(map[string]interface{}{
@@ -180,7 +180,7 @@ func (a *LocRIB) AddPath(pfx net.Prefix, p *route.Path) error {
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (a *LocRIB) RemovePath(pfx *net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -206,7 +206,7 @@ func (a *LocRIB) RemovePath(pfx net.Prefix, p *route.Path) bool {
 	return true
 }
 
-func (a *LocRIB) ReplacePath(pfx net.Prefix, oldPath *route.Path, newPath *route.Path) {
+func (a *LocRIB) ReplacePath(pfx *net.Prefix, oldPath *route.Path, newPath *route.Path) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -268,7 +268,7 @@ func (a *LocRIB) removePathsFromClients(oldRoute *route.Route, newRoute *route.R
 
 // ContainsPfxPath returns true if this prefix and path combination is
 // present in this LocRIB.
-func (a *LocRIB) ContainsPfxPath(pfx net.Prefix, p *route.Path) bool {
+func (a *LocRIB) ContainsPfxPath(pfx *net.Prefix, p *route.Path) bool {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -337,6 +337,6 @@ func (a *LocRIB) ReplaceFilterChain(filter.Chain) {
 }
 
 // RefreshRoute is here to fulfill an interface
-func (a *LocRIB) RefreshRoute(net.Prefix, []*route.Path) {
+func (a *LocRIB) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }

@@ -23,7 +23,7 @@ func (a *AddCommunityAction) Do(p net.Prefix, pa *route.Path) Result {
 	modified := pa.Copy()
 
 	for _, com := range a.communities {
-		modified.BGPPath.Communities = append(modified.BGPPath.Communities, com)
+		*modified.BGPPath.Communities = append(*modified.BGPPath.Communities, com)
 	}
 
 	return Result{Path: modified}

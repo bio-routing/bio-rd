@@ -16,14 +16,15 @@ func NewSetNextHopAction(ip *bnet.IP) *SetNextHopAction {
 	}
 }
 
-func (a *SetNextHopAction) Do(p net.Prefix, pa *route.Path) Result {
+func (a *SetNextHopAction) Do(p *net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil {
 		return Result{Path: pa}
 	}
 
-	pa.BGPPath.NextHop = a.ip
+	modified := pa.Copy()
+	modified.BGPPath.BGPPathA.NextHop = a.ip
 
-	return Result{Path: pa}
+	return Result{Path: modified}
 }
 
 // Equal compares actions

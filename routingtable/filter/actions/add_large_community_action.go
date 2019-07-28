@@ -22,7 +22,7 @@ func (a *AddLargeCommunityAction) Do(p net.Prefix, pa *route.Path) Result {
 	}
 
 	modified := pa.Copy()
-	modified.BGPPath.LargeCommunities = append(modified.BGPPath.LargeCommunities, a.communities...)
+	*modified.BGPPath.LargeCommunities = append(*modified.BGPPath.LargeCommunities, a.communities...)
 
 	return Result{Path: modified}
 }

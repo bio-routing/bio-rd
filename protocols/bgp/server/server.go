@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 
@@ -34,15 +33,15 @@ type BGPServer interface {
 	RouterID() uint32
 	Start() error
 	AddPeer(PeerConfig) error
-	GetPeerConfig(bnet.IP) *PeerConfig
-	DisposePeer(bnet.IP)
-	GetPeers() []bnet.IP
+	GetPeerConfig(*bnet.IP) *PeerConfig
+	DisposePeer(*bnet.IP)
+	GetPeers() []*bnet.IP
 	Metrics() (*metrics.BGPMetrics, error)
-	GetRIBIn(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
-	GetRIBOut(peerIP bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
+	GetRIBIn(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
+	GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
 	ConnectMockPeer(peer PeerConfig, con net.Conn)
-	ReplaceImportFilterChain(peer bnet.IP, c filter.Chain) error
-	ReplaceExportFilterChain(peer bnet.IP, c filter.Chain) error
+	ReplaceImportFilterChain(peer *bnet.IP, c filter.Chain) error
+	ReplaceExportFilterChain(peer *bnet.IP, c filter.Chain) error
 }
 
 // NewBGPServer creates a new instance of bgpServer
@@ -66,8 +65,8 @@ func (b *bgpServer) RouterID() uint32 {
 }
 
 // GetPeers gets a list of all peers
-func (b *bgpServer) GetPeers() []bnet.IP {
-	ret := make([]bnet.IP, 0)
+func (b *bgpServer) GetPeers() []*bnet.IP {
+	ret := make([]*bnet.IP, 0)
 
 	for _, p := range b.peers.list() {
 		ret = append(ret, p.addr)
@@ -95,7 +94,7 @@ func (b *bgpServer) Start() error {
 }
 
 // ReplaceImportFilterChain replaces a peers import filter
-func (b *bgpServer) ReplaceImportFilterChain(peerIP bnet.IP, c filter.Chain) error {
+func (b *bgpServer) ReplaceImportFilterChain(peerIP *bnet.IP, c filter.Chain) error {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return fmt.Errorf("Peer %q not found", peerIP.String())
@@ -106,7 +105,7 @@ func (b *bgpServer) ReplaceImportFilterChain(peerIP bnet.IP, c filter.Chain) err
 }
 
 // ReplaceExportFilterChain replaces a peers import filter
-func (b *bgpServer) ReplaceExportFilterChain(peerIP bnet.IP, c filter.Chain) error {
+func (b *bgpServer) ReplaceExportFilterChain(peerIP *bnet.IP, c filter.Chain) error {
 	p := b.peers.get(peerIP)
 	if p == nil {
 		return fmt.Errorf("Peer %q not found", peerIP.String())
@@ -194,7 +193,7 @@ func (b *bgpServer) ConnectMockPeer(peer PeerConfig, con net.Conn) {
 	b.acceptCh <- con
 }
 
-func (b *bgpServer) AddPeer(c config.Peer) error {
+func (b *bgpServer) AddPeer(c PeerConfig) error {
 	c.LocalAddress = c.LocalAddress.Dedup()
 	c.PeerAddress = c.PeerAddress.Dedup()
 
@@ -220,7 +219,7 @@ func (b *bgpServer) AddPeer(c config.Peer) error {
 }
 
 // GetPeerConfig gets a BGP peer by its address
-func (b *bgpServer) GetPeerConfig(addr bnet.IP) *PeerConfig {
+func (b *bgpServer) GetPeerConfig(addr *bnet.IP) *PeerConfig {
 	p := b.peers.get(addr)
 	if p != nil {
 		return p.config
@@ -229,7 +228,7 @@ func (b *bgpServer) GetPeerConfig(addr bnet.IP) *PeerConfig {
 	return nil
 }
 
-func (b *bgpServer) DisposePeer(addr bnet.IP) {
+func (b *bgpServer) DisposePeer(addr *bnet.IP) {
 	p := b.peers.get(addr)
 	if p == nil {
 		return

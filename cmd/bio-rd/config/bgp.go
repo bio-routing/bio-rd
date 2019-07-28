@@ -27,7 +27,7 @@ func (b *BGP) load(localAS uint32, policyOptions *PolicyOptions) error {
 type BGPGroup struct {
 	Name              string `yaml:"name"`
 	LocalAddress      string `yaml:"local_address"`
-	LocalAddressIP    bnet.IP
+	LocalAddressIP    *bnet.IP
 	AuthenticationKey string         `yaml:"authentication_key"`
 	PeerAS            uint32         `yaml:"peer_as"`
 	LocalAS           uint32         `yaml:"local_as"`
@@ -112,9 +112,9 @@ type Multipath struct {
 
 type BGPNeighbor struct {
 	PeerAddress       string `yaml:"peer_address"`
-	PeerAddressIP     bnet.IP
+	PeerAddressIP     *bnet.IP
 	LocalAddress      string `yaml:"local_address"`
-	LocalAddressIP    bnet.IP
+	LocalAddressIP    *bnet.IP
 	AuthenticationKey string `yaml:"authentication_key"`
 	PeerAS            uint32 `yaml:"peer_as"`
 	LocalAS           uint32 `yaml:"local_as"`
@@ -128,7 +128,7 @@ type BGPNeighbor struct {
 	RouteServerClient *bool  `yaml:"route_server_client"`
 	Passive           *bool  `yaml:"passive"`
 	ClusterID         string `yaml:"cluster_id"`
-	ClusterIDIP       bnet.IP
+	ClusterIDIP       *bnet.IP
 	AFIs              []*AFI `yaml:"afi"`
 }
 

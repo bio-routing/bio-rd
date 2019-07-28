@@ -23,7 +23,7 @@ func NewPrefixListWithMatcher(matcher PrefixMatcher, pfxs ...net.Prefix) *Prefix
 	return l
 }
 
-func (l *PrefixList) Matches(p net.Prefix) bool {
+func (l *PrefixList) Matches(p *net.Prefix) bool {
 	for _, a := range l.allowed {
 		if a.Equal(p) {
 			return true

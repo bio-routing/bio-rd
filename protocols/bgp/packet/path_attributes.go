@@ -774,7 +774,7 @@ func read4BytesAsUint32(buf *bytes.Buffer) (uint32, error) {
 func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute {
 	current := pa
 
-	if len(p.BGPPath.Communities) > 0 {
+	if len(*p.BGPPath.Communities) > 0 {
 		communities := &PathAttribute{
 			TypeCode: CommunitiesAttr,
 			Value:    p.BGPPath.Communities,
@@ -783,7 +783,7 @@ func (pa *PathAttribute) AddOptionalPathAttributes(p *route.Path) *PathAttribute
 		current = communities
 	}
 
-	if len(p.BGPPath.LargeCommunities) > 0 {
+	if len(*p.BGPPath.LargeCommunities) > 0 {
 		largeCommunities := &PathAttribute{
 			TypeCode: LargeCommunitiesAttr,
 			Value:    p.BGPPath.LargeCommunities,
@@ -805,22 +805,22 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 
 	origin := &PathAttribute{
 		TypeCode: OriginAttr,
-		Value:    p.BGPPath.Origin,
+		Value:    p.BGPPath.BGPPathA.Origin,
 	}
 	last.Next = origin
 	last = origin
 
 	nextHop := &PathAttribute{
 		TypeCode: NextHopAttr,
-		Value:    p.BGPPath.NextHop,
+		Value:    p.BGPPath.BGPPathA.NextHop,
 	}
 	last.Next = nextHop
 	last = nextHop
 
-	if p.BGPPath.MED != 0 {
+	if p.BGPPath.BGPPathA.MED != 0 {
 		med := &PathAttribute{
 			TypeCode: MEDAttr,
-			Value:    p.BGPPath.MED,
+			Value:    p.BGPPath.BGPPathA.MED,
 			Optional: true,
 		}
 
@@ -828,7 +828,7 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 		last = med
 	}
 
-	if p.BGPPath.AtomicAggregate {
+	if p.BGPPath.BGPPathA.AtomicAggregate {
 		atomicAggr := &PathAttribute{
 			TypeCode: AtomicAggrAttr,
 		}
@@ -836,10 +836,10 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 		last = atomicAggr
 	}
 
-	if p.BGPPath.Aggregator != nil {
+	if p.BGPPath.BGPPathA.Aggregator != nil {
 		aggregator := &PathAttribute{
 			TypeCode: AggregatorAttr,
-			Value:    *p.BGPPath.Aggregator,
+			Value:    *p.BGPPath.BGPPathA.Aggregator,
 		}
 		last.Next = aggregator
 		last = aggregator
@@ -848,7 +848,7 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 	if iBGP {
 		localPref := &PathAttribute{
 			TypeCode: LocalPrefAttr,
-			Value:    p.BGPPath.LocalPref,
+			Value:    p.BGPPath.BGPPathA.LocalPref,
 		}
 		last.Next = localPref
 		last = localPref
@@ -857,7 +857,7 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 	if rrClient {
 		originatorID := &PathAttribute{
 			TypeCode: OriginatorIDAttr,
-			Value:    p.BGPPath.OriginatorID,
+			Value:    p.BGPPath.BGPPathA.OriginatorID,
 		}
 		last.Next = originatorID
 		last = originatorID
@@ -873,7 +873,7 @@ func PathAttributes(p *route.Path, iBGP bool, rrClient bool) (*PathAttribute, er
 	optionals := last.AddOptionalPathAttributes(p)
 
 	last = optionals
-	for _, unknownAttr := range p.BGPPath.UnknownAttributes {
+	for _, unknownAttr := range *p.BGPPath.UnknownAttributes {
 		last.Next = &PathAttribute{
 			TypeCode:   unknownAttr.TypeCode,
 			Optional:   unknownAttr.Optional,
