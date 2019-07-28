@@ -1,0 +1,25 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANTFILE_API_VERSION = "2"
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.box = "ubuntu/bionic64"
+
+  config.vm.define "ospf" do |ospf|
+    ospf.vm.host_name = "bio-ospf"
+
+    # sync sources
+    config.vm.network "private_network", type: "dhcp"
+    ospf.vm.synced_folder ".", "/src", type: "nfs"
+
+    ospf.vm.network "private_network",
+        auto_config: false,
+        virtualbox__intnet: "backbone"
+
+    ospf.vm.provision "ansible" do |ansible|
+      ansible.playbook = "examples/ospf/site.yml"
+    end
+  end
+
+end

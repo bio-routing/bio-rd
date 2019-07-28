@@ -29,3 +29,6 @@ benchmarks/bgp/learning/learning
 
 # bazel directories
 /bazel-*
+
+# Vagrant
+.vagrant/
