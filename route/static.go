@@ -24,6 +24,11 @@ func (s *StaticPath) Select(t *StaticPath) int8 {
 	return s.NextHop.Compare(t.NextHop)
 }
 
+// Compare checks if paths a and t are the same
+func (s *StaticPath) Compare(t *StaticPath) bool {
+	return s.Equal(t)
+}
+
 // Equal returns true if s and t are euqal
 func (s *StaticPath) Equal(t *StaticPath) bool {
 	return s.NextHop.Compare(t.NextHop) == 0

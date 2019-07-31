@@ -11,7 +11,7 @@ import (
 func TestNewRoute(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      bnet.Prefix
+		pfx      *bnet.Prefix
 		path     *Path
 		expected *Route
 	}{
@@ -52,7 +52,7 @@ func TestPrefix(t *testing.T) {
 	tests := []struct {
 		name     string
 		route    *Route
-		expected bnet.Prefix
+		expected *bnet.Prefix
 	}{
 		{
 			name: "Prefix",
@@ -73,7 +73,7 @@ func TestAddr(t *testing.T) {
 	tests := []struct {
 		name     string
 		route    *Route
-		expected bnet.IP
+		expected *bnet.IP
 	}{
 		{
 			name: "Prefix",
@@ -180,39 +180,51 @@ func TestRouteRemovePath(t *testing.T) {
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 100,
+						BGPPathA: &BGPPathA{
+							LocalPref: 100,
+						},
 					},
 				},
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 200,
+						BGPPathA: &BGPPathA{
+							LocalPref: 200,
+						},
 					},
 				},
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 300,
+						BGPPathA: &BGPPathA{
+							LocalPref: 300,
+						},
 					},
 				},
 			},
 			remove: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					LocalPref: 200,
+					BGPPathA: &BGPPathA{
+						LocalPref: 200,
+					},
 				},
 			},
 			expected: []*Path{
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 100,
+						BGPPathA: &BGPPathA{
+							LocalPref: 100,
+						},
 					},
 				},
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 300,
+						BGPPathA: &BGPPathA{
+							LocalPref: 300,
+						},
 					},
 				},
 			},
@@ -223,33 +235,43 @@ func TestRouteRemovePath(t *testing.T) {
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 10,
+						BGPPathA: &BGPPathA{
+							LocalPref: 10,
+						},
 					},
 				},
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 20,
+						BGPPathA: &BGPPathA{
+							LocalPref: 20,
+						},
 					},
 				},
 			},
 			remove: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					LocalPref: 50,
+					BGPPathA: &BGPPathA{
+						LocalPref: 50,
+					},
 				},
 			},
 			expected: []*Path{
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 10,
+						BGPPathA: &BGPPathA{
+							LocalPref: 10,
+						},
 					},
 				},
 				{
 					Type: BGPPathType,
 					BGPPath: &BGPPath{
-						LocalPref: 20,
+						BGPPathA: &BGPPathA{
+							LocalPref: 20,
+						},
 					},
 				},
 			},
@@ -398,7 +420,7 @@ func TestECMPPaths(t *testing.T) {
 	}
 }
 
-func TestCompare(t *testing.T) {
+func TestRouteEqual(t *testing.T) {
 	tests := []struct {
 		a     *Route
 		b     *Route

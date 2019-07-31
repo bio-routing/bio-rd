@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,14 +13,16 @@ func TestPathNextHop(t *testing.T) {
 	tests := []struct {
 		name     string
 		p        *Path
-		expected bnet.IP
+		expected *bnet.IP
 	}{
 		{
 			name: "BGP Path",
 			p: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					NextHop: bnet.IPv4(123),
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123),
+					},
 				},
 			},
 			expected: bnet.IPv4(123),
@@ -126,36 +129,50 @@ func TestSelect(t *testing.T) {
 		{
 			name: "Static",
 			p: &Path{
-				Type:       StaticPathType,
-				StaticPath: &StaticPath{},
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: net.IPv4(0),
+				},
 			},
 			q: &Path{
-				Type:       StaticPathType,
-				StaticPath: &StaticPath{},
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: net.IPv4(0),
+				},
 			},
 			expected: 0,
 		},
 		{
 			name: "BGP",
 			p: &Path{
-				Type:    BGPPathType,
-				BGPPath: &BGPPath{},
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: NewBGPPathA(),
+				},
 			},
 			q: &Path{
-				Type:    BGPPathType,
-				BGPPath: &BGPPath{},
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: NewBGPPathA(),
+				},
 			},
 			expected: 0,
 		},
 		{
 			name: "Netlink",
 			p: &Path{
-				Type:    FIBPathType,
-				FIBPath: &FIBPath{},
+				Type: FIBPathType,
+				FIBPath: &FIBPath{
+					NextHop: net.IPv4(0),
+					Src:     net.IPv4(0),
+				},
 			},
 			q: &Path{
-				Type:    FIBPathType,
-				FIBPath: &FIBPath{},
+				Type: FIBPathType,
+				FIBPath: &FIBPath{
+					NextHop: net.IPv4(0),
+					Src:     net.IPv4(0),
+				},
 			},
 			expected: 0,
 		},
@@ -334,7 +351,9 @@ func TestNewNlPath(t *testing.T) {
 			source: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					NextHop: bnet.IPv4(123),
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123),
+					},
 				},
 			},
 			expected: &FIBPath{
@@ -371,19 +390,23 @@ func TestECMP(t *testing.T) {
 			left: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					LocalPref: 100,
+					BGPPathA: &BGPPathA{
+						LocalPref: 100,
+						MED:       1,
+						Origin:    123,
+					},
 					ASPathLen: 10,
-					MED:       1,
-					Origin:    123,
 				},
 			},
 			right: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					LocalPref: 100,
+					BGPPathA: &BGPPathA{
+						LocalPref: 100,
+						MED:       1,
+						Origin:    123,
+					},
 					ASPathLen: 10,
-					MED:       1,
-					Origin:    123,
 				},
 			},
 			ecmp: true,
@@ -392,19 +415,23 @@ func TestECMP(t *testing.T) {
 			left: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					LocalPref: 100,
+					BGPPathA: &BGPPathA{
+						LocalPref: 100,
+						MED:       1,
+						Origin:    123,
+					},
 					ASPathLen: 10,
-					MED:       1,
-					Origin:    123,
 				},
 			},
 			right: &Path{
 				Type: BGPPathType,
 				BGPPath: &BGPPath{
-					LocalPref: 100,
+					BGPPathA: &BGPPathA{
+						LocalPref: 100,
+						MED:       1,
+						Origin:    123,
+					},
 					ASPathLen: 5,
-					MED:       1,
-					Origin:    123,
 				},
 			},
 			ecmp: false,

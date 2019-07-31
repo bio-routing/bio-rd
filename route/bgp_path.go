@@ -38,6 +38,14 @@ type BGPPathA struct {
 	Origin          uint8
 }
 
+// NewBGPPathA creates a new BGPPathA
+func NewBGPPathA() *BGPPathA {
+	return &BGPPathA{
+		NextHop: bnet.IPv4(0),
+		Source:  bnet.IPv4(0),
+	}
+}
+
 func (b *BGPPathA) Dedup() *BGPPathA {
 	return bgpC.get(b)
 }
@@ -63,18 +71,29 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		Ebgp:              b.BGPPathA.EBGP,
 		BgpIdentifier:     b.BGPPathA.BGPIdentifier,
 		Source:            b.BGPPathA.Source.ToProto(),
-		Communities:       make([]uint32, len(*b.Communities)),
-		LargeCommunities:  make([]*api.LargeCommunity, len(*b.LargeCommunities)),
 		UnknownAttributes: make([]*api.UnknownPathAttribute, len(b.UnknownAttributes)),
 		OriginatorId:      b.BGPPathA.OriginatorID,
-		ClusterList:       make([]uint32, len(*b.ClusterList)),
 	}
 
-	copy(a.Communities, *b.Communities)
-	copy(a.ClusterList, *b.ClusterList)
+	if a.ClusterList != nil {
+		a.ClusterList = make([]uint32, len(*b.ClusterList))
+		for i := range *b.ClusterList {
+			a.ClusterList[i] = (*b.ClusterList)[i]
+		}
+	}
 
-	for i := range *b.LargeCommunities {
-		a.LargeCommunities[i] = (*b.LargeCommunities)[i].ToProto()
+	if b.Communities != nil {
+		a.Communities = make([]uint32, len(*b.Communities))
+		for i := range *b.Communities {
+			a.Communities[i] = (*b.Communities)[i]
+		}
+	}
+
+	if b.LargeCommunities != nil {
+		a.LargeCommunities = make([]*api.LargeCommunity, len(*b.LargeCommunities))
+		for i := range *b.LargeCommunities {
+			a.LargeCommunities[i] = (*b.LargeCommunities)[i].ToProto()
+		}
 	}
 
 	for i := range b.UnknownAttributes {
@@ -178,6 +197,161 @@ func (b *BGPPath) ECMP(c *BGPPath) bool {
 		b.ASPathLen == c.ASPathLen &&
 		b.BGPPathA.MED == c.BGPPathA.MED &&
 		b.BGPPathA.Origin == c.BGPPathA.Origin
+}
+
+// Compare checks if paths are the same
+func (b *BGPPath) Compare(c *BGPPath) bool {
+	if b.PathIdentifier != c.PathIdentifier {
+		return false
+	}
+
+	if !b.BGPPathA.compare(c.BGPPathA) {
+		return false
+	}
+
+	if !b.ASPath.Compare(c.ASPath) {
+		return false
+	}
+
+	if !b.compareClusterList(c) {
+		return false
+	}
+
+	if !b.compareCommunities(c) {
+		return false
+	}
+
+	if !b.compareLargeCommunities(c) {
+		return false
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareCommunities(c *BGPPath) bool {
+	if b.Communities == nil && c.Communities == nil {
+		return true
+	}
+
+	if b.Communities != nil && c.Communities == nil {
+		return false
+	}
+
+	if b.Communities == nil && c.Communities != nil {
+		return false
+	}
+
+	if len(*b.Communities) != len(*c.Communities) {
+		return false
+	}
+
+	for i := range *b.Communities {
+		if (*b.Communities)[i] != (*c.Communities)[i] {
+			return false
+		}
+	}
+
+	if !b.compareUnknownAttributes(c) {
+		return false
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareClusterList(c *BGPPath) bool {
+	if b.ClusterList == nil && c.ClusterList == nil {
+		return true
+	}
+
+	if b.ClusterList != nil && c.ClusterList == nil {
+		return false
+	}
+
+	if b.ClusterList == nil && c.ClusterList != nil {
+		return false
+	}
+
+	if len(*b.ClusterList) != len(*c.ClusterList) {
+		return false
+	}
+
+	for i := range *b.ClusterList {
+		if (*b.ClusterList)[i] != (*c.ClusterList)[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareLargeCommunities(c *BGPPath) bool {
+	if b.LargeCommunities == nil && c.LargeCommunities == nil {
+		return true
+	}
+
+	if b.LargeCommunities != nil && c.LargeCommunities == nil {
+		return false
+	}
+
+	if b.LargeCommunities == nil && c.LargeCommunities != nil {
+		return false
+	}
+
+	if len(*b.LargeCommunities) != len(*c.LargeCommunities) {
+		return false
+	}
+
+	for i := range *b.LargeCommunities {
+		if (*b.LargeCommunities)[i] != (*c.LargeCommunities)[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareUnknownAttributes(c *BGPPath) bool {
+	if len(b.UnknownAttributes) != len(c.UnknownAttributes) {
+		return false
+	}
+
+	for i := range b.UnknownAttributes {
+		if !b.UnknownAttributes[i].Compare(&c.UnknownAttributes[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *BGPPathA) compare(c *BGPPathA) bool {
+	if b.NextHop.Compare(c.NextHop) != 0 {
+		return false
+	}
+
+	if b.Source.Compare(c.Source) != 0 {
+		return false
+	}
+
+	if b.LocalPref != c.LocalPref || b.MED != c.MED || b.BGPIdentifier != c.BGPIdentifier || b.OriginatorID != c.OriginatorID {
+		return false
+	}
+
+	if b.EBGP != c.EBGP || b.AtomicAggregate != c.AtomicAggregate || b.Origin != c.Origin {
+		return false
+	}
+
+	if b.Aggregator != nil || c.Aggregator != nil {
+		if b.Aggregator != nil && c.Aggregator != nil {
+			if *b.Aggregator != *c.Aggregator {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Equal checks if paths are equal
