@@ -78,7 +78,7 @@ func (s *FIBPath) Select(t *FIBPath) int8 {
 
 // ECMP determines if path s and t are equal in terms of ECMP
 func (s *FIBPath) ECMP(t *FIBPath) bool {
-	return s.Src == t.Src && s.Priority == t.Priority && s.Protocol == t.Protocol && s.Type == t.Type && s.Table == t.Table
+	return s.Src.Compare(t.Src) == 0 && s.Priority == t.Priority && s.Protocol == t.Protocol && s.Type == t.Type && s.Table == t.Table
 }
 
 // Copy duplicates the current object

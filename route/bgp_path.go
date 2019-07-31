@@ -544,8 +544,12 @@ func (b *BGPPath) String() string {
 	fmt.Fprintf(buf, "MED: %d, ", b.BGPPathA.MED)
 	fmt.Fprintf(buf, "Path ID: %d, ", b.PathIdentifier)
 	fmt.Fprintf(buf, "Source: %s, ", b.BGPPathA.Source)
-	fmt.Fprintf(buf, "Communities: %v, ", b.Communities)
-	fmt.Fprintf(buf, "LargeCommunities: %v", b.LargeCommunities)
+	if b.Communities != nil {
+		fmt.Fprintf(buf, "Communities: %v, ", *b.Communities)
+	}
+	if b.LargeCommunities != nil {
+		fmt.Fprintf(buf, "LargeCommunities: %v", *b.LargeCommunities)
+	}
 
 	if b.BGPPathA.OriginatorID != 0 {
 		oid := convert.Uint32Byte(b.BGPPathA.OriginatorID)
@@ -585,8 +589,12 @@ func (b *BGPPath) Print() string {
 	fmt.Fprintf(buf, "\t\tMED: %d\n", b.BGPPathA.MED)
 	fmt.Fprintf(buf, "\t\tPath ID: %d\n", b.PathIdentifier)
 	fmt.Fprintf(buf, "\t\tSource: %s\n", b.BGPPathA.Source)
-	fmt.Fprintf(buf, "\t\tCommunities: %v\n", b.Communities)
-	fmt.Fprintf(buf, "\t\tLargeCommunities: %v\n", b.LargeCommunities)
+	if b.Communities != nil {
+		fmt.Fprintf(buf, "\t\tCommunities: %v\n", *b.Communities)
+	}
+	if b.LargeCommunities != nil {
+		fmt.Fprintf(buf, "\t\tLargeCommunities: %v\n", *b.LargeCommunities)
+	}
 
 	if b.BGPPathA.OriginatorID != 0 {
 		oid := convert.Uint32Byte(b.BGPPathA.OriginatorID)

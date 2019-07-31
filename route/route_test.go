@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
@@ -182,6 +183,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 100,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -190,6 +193,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 200,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -198,6 +203,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 300,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -207,6 +214,8 @@ func TestRouteRemovePath(t *testing.T) {
 				BGPPath: &BGPPath{
 					BGPPathA: &BGPPathA{
 						LocalPref: 200,
+						Source:    net.IPv4(0),
+						NextHop:   net.IPv4(0),
 					},
 				},
 			},
@@ -216,6 +225,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 100,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -224,6 +235,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 300,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -237,6 +250,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 10,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -245,6 +260,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 20,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -254,6 +271,8 @@ func TestRouteRemovePath(t *testing.T) {
 				BGPPath: &BGPPath{
 					BGPPathA: &BGPPathA{
 						LocalPref: 50,
+						Source:    net.IPv4(0),
+						NextHop:   net.IPv4(0),
 					},
 				},
 			},
@@ -263,6 +282,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 10,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -271,6 +292,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 20,
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
 						},
 					},
 				},
@@ -428,6 +451,7 @@ func TestRouteEqual(t *testing.T) {
 	}{
 		{
 			a: &Route{
+				pfx:       net.NewPfx(net.IPv4(0), 0),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -445,6 +469,7 @@ func TestRouteEqual(t *testing.T) {
 				},
 			},
 			b: &Route{
+				pfx:       net.NewPfx(net.IPv4(0), 0),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -464,6 +489,7 @@ func TestRouteEqual(t *testing.T) {
 			equal: true,
 		}, {
 			a: &Route{
+				pfx:       net.NewPfx(net.IPv4(0), 0),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -481,6 +507,7 @@ func TestRouteEqual(t *testing.T) {
 				},
 			},
 			b: &Route{
+				pfx:       net.NewPfx(net.IPv4(0), 0),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -501,6 +528,7 @@ func TestRouteEqual(t *testing.T) {
 		},
 		{
 			a: &Route{
+				pfx:       net.NewPfx(net.IPv4(0), 0),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -518,6 +546,7 @@ func TestRouteEqual(t *testing.T) {
 				},
 			},
 			b: &Route{
+				pfx:       net.NewPfx(net.IPv4(0), 0),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{

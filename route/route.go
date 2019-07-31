@@ -159,7 +159,6 @@ func (r *Route) AddPath(p *Path) {
 
 // RemovePath removes path `p` from route `r`. Returns length of path list after removing path `p`
 func (r *Route) RemovePath(p *Path) int {
-	fmt.Printf("RemovePath\n")
 	if p == nil {
 		return len(r.paths)
 	}
@@ -187,7 +186,6 @@ func removePath(paths []*Path, remove *Path) []*Path {
 	i := -1
 	for j := range paths {
 		if paths[j].Compare(remove) {
-			fmt.Printf("Path found!\n")
 			i = j
 			break
 		}
