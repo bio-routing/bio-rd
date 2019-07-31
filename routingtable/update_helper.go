@@ -18,7 +18,7 @@ func isOwnPath(p *route.Path, n *Neighbor) bool {
 
 	switch p.Type {
 	case route.BGPPathType:
-		return p.BGPPath.BGPPathA.Source == n.Address
+		return p.BGPPath.BGPPathA.Source.Compare(n.Address) == 0
 	}
 
 	return false

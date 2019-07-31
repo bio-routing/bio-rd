@@ -77,8 +77,10 @@ func TestShouldPropagateUpdate(t *testing.T) {
 			pa := &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
-					Communities: comms,
-					Source:      bnet.IPv4FromOctets(192, 168, 1, 1),
+					Communities: &comms,
+					BGPPathA: &route.BGPPathA{
+						Source: bnet.IPv4FromOctets(192, 168, 1, 1),
+					},
 				},
 			}
 

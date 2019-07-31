@@ -28,7 +28,7 @@ func (n *node) removePath(pfx *net.Prefix, p *route.Path) (final bool) {
 		return false
 	}
 
-	if n.route.Prefix() == pfx {
+	if n.route.Prefix().Equal(pfx) {
 		if n.dummy {
 			return
 		}
@@ -55,7 +55,7 @@ func (n *node) lpm(needle *net.Prefix, res *[]*route.Route) {
 	}
 
 	currentPfx := n.route.Prefix()
-	if currentPfx == needle && !n.dummy {
+	if currentPfx.Equal(needle) && !n.dummy {
 		*res = append(*res, n.route)
 		return
 	}
@@ -96,7 +96,7 @@ func (n *node) get(pfx *net.Prefix) *node {
 		return nil
 	}
 
-	if n.route.Prefix() == pfx {
+	if n.route.Prefix().Equal(pfx) {
 		if n.dummy {
 			return nil
 		}
@@ -116,7 +116,7 @@ func (n *node) get(pfx *net.Prefix) *node {
 
 func (n *node) addPath(pfx *net.Prefix, p *route.Path) (*node, bool) {
 	currentPfx := n.route.Prefix()
-	if currentPfx == pfx {
+	if currentPfx.Equal(pfx) {
 		n.route.AddPath(p)
 		// Store previous dummy-ness to check if this node became new
 		dummy := n.dummy
