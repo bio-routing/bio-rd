@@ -119,7 +119,7 @@ func IPFromString(str string) (*IP, error) {
 
 // Equal returns true if ip is equal to other
 func (ip *IP) Equal(other *IP) bool {
-	return ip == other
+	return *ip == *other
 }
 
 // Compare compares two IP addresses (returns 0 if equal, -1 if `ip` is smaller than `other`, 1 if `ip` is greater than `other`)
