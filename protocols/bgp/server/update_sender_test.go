@@ -9,6 +9,7 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -39,6 +40,7 @@ func TestSender(t *testing.T) {
 								LocalPref: 100,
 								NextHop:   bnet.IPv4(0),
 							},
+							ASPath: &types.ASPath{},
 						},
 					},
 					pfxs: []*bnet.Prefix{
@@ -56,6 +58,7 @@ func TestSender(t *testing.T) {
 								LocalPref: 200,
 								NextHop:   bnet.IPv4(0),
 							},
+							ASPath: &types.ASPath{},
 						},
 					},
 					pfxs: []*bnet.Prefix{
@@ -108,6 +111,7 @@ func TestSender(t *testing.T) {
 								LocalPref: 100,
 								NextHop:   bnet.IPv4(0),
 							},
+							ASPath: &types.ASPath{},
 						},
 					},
 					pfxs: []*bnet.Prefix{
@@ -125,6 +129,7 @@ func TestSender(t *testing.T) {
 								LocalPref: 200,
 								NextHop:   bnet.IPv4(0),
 							},
+							ASPath: &types.ASPath{},
 						},
 					},
 					pfxs: []*bnet.Prefix{
@@ -193,6 +198,7 @@ func TestSender(t *testing.T) {
 								LocalPref: 100,
 								NextHop:   bnet.IPv4(0),
 							},
+							ASPath: &types.ASPath{},
 						},
 					},
 				},
@@ -365,6 +371,7 @@ func TestSender(t *testing.T) {
 								LocalPref: 100,
 								NextHop:   bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 2),
 							},
+							ASPath: &types.ASPath{},
 						},
 					},
 				},
