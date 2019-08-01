@@ -35,11 +35,13 @@ func TestSender(t *testing.T) {
 					path: &route.Path{
 						Type: 2,
 						BGPPath: &route.BGPPath{
-							LocalPref: 100,
-							NextHop:   bnet.IPv4(0),
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 100,
+								NextHop:   bnet.IPv4(0),
+							},
 						},
 					},
-					pfxs: []bnet.Prefix{
+					pfxs: []*bnet.Prefix{
 						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0), 8),
@@ -50,11 +52,13 @@ func TestSender(t *testing.T) {
 					path: &route.Path{
 						Type: 2,
 						BGPPath: &route.BGPPath{
-							LocalPref: 200,
-							NextHop:   bnet.IPv4(0),
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 200,
+								NextHop:   bnet.IPv4(0),
+							},
 						},
 					},
-					pfxs: []bnet.Prefix{
+					pfxs: []*bnet.Prefix{
 						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0), 8),
@@ -100,11 +104,13 @@ func TestSender(t *testing.T) {
 					path: &route.Path{
 						Type: 2,
 						BGPPath: &route.BGPPath{
-							LocalPref: 100,
-							NextHop:   bnet.IPv4(0),
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 100,
+								NextHop:   bnet.IPv4(0),
+							},
 						},
 					},
-					pfxs: []bnet.Prefix{
+					pfxs: []*bnet.Prefix{
 						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0), 8),
@@ -115,11 +121,13 @@ func TestSender(t *testing.T) {
 					path: &route.Path{
 						Type: 2,
 						BGPPath: &route.BGPPath{
-							LocalPref: 200,
-							NextHop:   bnet.IPv4(0),
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 200,
+								NextHop:   bnet.IPv4(0),
+							},
 						},
 					},
-					pfxs: []bnet.Prefix{
+					pfxs: []*bnet.Prefix{
 						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0), 8),
 						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0), 8),
@@ -181,8 +189,10 @@ func TestSender(t *testing.T) {
 					path: &route.Path{
 						Type: 2,
 						BGPPath: &route.BGPPath{
-							LocalPref: 100,
-							NextHop:   bnet.IPv4(0),
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 100,
+								NextHop:   bnet.IPv4(0),
+							},
 						},
 					},
 				},
@@ -351,8 +361,10 @@ func TestSender(t *testing.T) {
 					path: &route.Path{
 						Type: 2,
 						BGPPath: &route.BGPPath{
-							LocalPref: 100,
-							NextHop:   bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 2),
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 100,
+								NextHop:   bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 2),
+							},
 						},
 					},
 				},
@@ -913,7 +925,7 @@ func TestSender(t *testing.T) {
 					x := i / 256
 					y := i - x
 
-					var pfx bnet.Prefix
+					var pfx *bnet.Prefix
 					if test.afi == packet.IPv6AFI {
 						pfx = bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0), 48)
 					} else {
@@ -955,7 +967,7 @@ func TestWithdrawPrefix(t *testing.T) {
 		addPathTX     routingtable.ClientOptions
 		afi           uint16
 		multiProtocol bool
-		prefix        bnet.Prefix
+		prefix        *bnet.Prefix
 		path          *route.Path
 		expected      []byte
 		expectedError error
