@@ -456,7 +456,7 @@ func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16
 	case OriginAttr:
 		pathAttrLen = uint16(pa.serializeOrigin(buf))
 	case ASPathAttr:
-		pathAttrLen = uint16(pa.serializeASPath(buf, opt))
+		pathAttrLen = pa.serializeASPath(buf, opt)
 	case NextHopAttr:
 		pathAttrLen = uint16(pa.serializeNextHop(buf))
 	case MEDAttr:
@@ -497,18 +497,16 @@ func (pa *PathAttribute) serializeOrigin(buf *bytes.Buffer) uint8 {
 	return length + 3
 }
 
-func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *EncodeOptions) uint8 {
+func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	attrFlags := uint8(0)
 	attrFlags = setTransitive(attrFlags)
-	buf.WriteByte(attrFlags)
-	buf.WriteByte(ASPathAttr)
 
-	asnLength := uint8(2)
+	asnLength := uint16(2)
 	if opt.Use32BitASN {
 		asnLength = 4
 	}
 
-	length := uint8(0)
+	length := uint16(0)
 	segmentsBuf := bytes.NewBuffer(nil)
 	for _, segment := range *pa.Value.(*types.ASPath) {
 		segmentsBuf.WriteByte(segment.Type)
@@ -521,10 +519,21 @@ func (pa *PathAttribute) serializeASPath(buf *bytes.Buffer, opt *EncodeOptions) 
 				segmentsBuf.Write(convert.Uint16Byte(uint16(asn)))
 			}
 		}
-		length += 2 + uint8(len(segment.ASNs))*asnLength
+		length += 2 + uint16(len(segment.ASNs))*asnLength
 	}
 
-	buf.WriteByte(length)
+	if length > 255 {
+		attrFlags = setExtendedLength(attrFlags)
+	}
+
+	buf.WriteByte(attrFlags)
+	buf.WriteByte(ASPathAttr)
+	if length < 256 {
+		buf.WriteByte(uint8(length))
+	} else {
+		buf.Write(convert.Uint16Byte(length))
+	}
+
 	buf.Write(segmentsBuf.Bytes())
 
 	return length + 3
@@ -591,11 +600,11 @@ func (pa *PathAttribute) serializeAggregator(buf *bytes.Buffer) uint8 {
 }
 
 func (pa *PathAttribute) serializeCommunities(buf *bytes.Buffer) uint16 {
-	coms := pa.Value.(*[]uint32)
-	if coms == nil {
+	if pa.Value == nil {
 		return 0
 	}
 
+	coms := pa.Value.(*[]uint32)
 	if len(*coms) == 0 {
 		return 0
 	}
@@ -627,11 +636,11 @@ func (pa *PathAttribute) serializeCommunities(buf *bytes.Buffer) uint16 {
 }
 
 func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint16 {
-	coms := pa.Value.(*[]types.LargeCommunity)
-	if coms == nil {
+	if pa.Value == nil {
 		return 0
 	}
 
+	coms := pa.Value.(*[]types.LargeCommunity)
 	if len(*coms) == 0 {
 		return 0
 	}
@@ -677,8 +686,12 @@ func (pa *PathAttribute) serializeOriginatorID(buf *bytes.Buffer) uint8 {
 }
 
 func (pa *PathAttribute) serializeClusterList(buf *bytes.Buffer) uint8 {
-	cids := pa.Value.([]uint32)
-	if len(cids) == 0 {
+	if pa.Value == nil {
+		return 0
+	}
+
+	cids := pa.Value.(*[]uint32)
+	if len(*cids) == 0 {
 		return 0
 	}
 
@@ -687,10 +700,10 @@ func (pa *PathAttribute) serializeClusterList(buf *bytes.Buffer) uint8 {
 	buf.WriteByte(attrFlags)
 	buf.WriteByte(ClusterListAttr)
 
-	length := uint8(ClusterIDLen * len(cids))
+	length := uint8(ClusterIDLen * len(*cids))
 	buf.WriteByte(length)
 
-	for _, cid := range cids {
+	for _, cid := range *cids {
 		buf.Write(convert.Uint32Byte(cid))
 	}
 

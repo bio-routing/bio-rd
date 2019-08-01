@@ -512,7 +512,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         6,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -613,7 +613,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -688,7 +688,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -776,7 +776,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -877,7 +877,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -991,7 +991,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -1121,7 +1121,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -1282,7 +1282,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 					ExtendedLength: false,
 					Length:         8,
 					TypeCode:       8,
-					Value:          []uint32{256, 257},
+					Value:          &[]uint32{256, 257},
 					Next: &PathAttribute{
 						Optional:       true,
 						Transitive:     true,
