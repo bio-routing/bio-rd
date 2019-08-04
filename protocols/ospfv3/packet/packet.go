@@ -5,14 +5,29 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/util/checksum"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
 )
 
+const expectedVersion = 3
+
+type OSPFMessageType uint8
+
+// OSPF message types
+const (
+	MsgTypeUnknown OSPFMessageType = iota
+	MsgTypeHello
+	MsgTypeDatabaseDescription
+	MsgTypeLinkStateRequest
+	MsgTypeLinkStateUpdate
+	MsgTypeLinkStateAcknowledgment
+)
+
 type OSPFv3Message struct {
 	Version      uint8
-	Type         uint8
+	Type         OSPFMessageType
 	PacketLength uint16
 	RouterID     ID
 	AreaID       ID
@@ -22,10 +37,14 @@ type OSPFv3Message struct {
 }
 
 const OSPFv3MessageHeaderLength = 16
+const OSPFv3MessagePacketLengthAtByte = 2
+const OSPFv3MessageChecksumAtByte = 12
 
-func (x *OSPFv3Message) Serialize(buf *bytes.Buffer) {
+func (x *OSPFv3Message) Serialize(out *bytes.Buffer) {
+	buf := bytes.NewBuffer(nil)
+
 	buf.WriteByte(x.Version)
-	buf.WriteByte(x.Type)
+	buf.WriteByte(uint8(x.Type))
 	buf.Write(convert.Uint16Byte(x.PacketLength))
 	x.RouterID.Serialize(buf)
 	x.AreaID.Serialize(buf)
@@ -33,10 +52,25 @@ func (x *OSPFv3Message) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(x.InstanceID)
 	buf.WriteByte(0) // 1 byte reserved
 	x.Body.Serialize(buf)
+
+	data := buf.Bytes()
+
+	length := uint16(len(data))
+	putUint16(data, OSPFv3MessagePacketLengthAtByte, length)
+
+	checksum := checksum.IPChecksum(data, OSPFv3MessageChecksumAtByte)
+	putUint16(data, OSPFv3MessageChecksumAtByte, checksum)
+
+	out.Write(data)
+}
+
+func putUint16(b []byte, p int, v uint16) {
+	binary.BigEndian.PutUint16(b[p:p+2], v)
 }
 
 func DeserializeOSPFv3Message(buf *bytes.Buffer) (*OSPFv3Message, int, error) {
 	pdu := &OSPFv3Message{}
+	data := buf.Bytes()
 
 	var readBytes int
 	var err error
@@ -59,6 +93,15 @@ func DeserializeOSPFv3Message(buf *bytes.Buffer) (*OSPFv3Message, int, error) {
 	}
 	readBytes += 16
 
+	if pdu.Version != expectedVersion {
+		return nil, readBytes, fmt.Errorf("Invalid OSPF version: %d", pdu.Version)
+	}
+
+	expectedChecksum := checksum.IPChecksum(data, OSPFv3MessageChecksumAtByte)
+	if pdu.Checksum != expectedChecksum {
+		return nil, readBytes, fmt.Errorf("Checksum mismatch. Expected %#04x, got %#04x", expectedChecksum, pdu.Checksum)
+	}
+
 	n, err := pdu.ReadBody(buf)
 	if err != nil {
 		return nil, readBytes, errors.Wrap(err, "unable to decode message body")
@@ -75,15 +118,15 @@ func (m *OSPFv3Message) ReadBody(buf *bytes.Buffer) (int, error) {
 	var err error
 
 	switch m.Type {
-	case 1:
+	case MsgTypeHello:
 		body, readBytes, err = DeserializeHello(buf, bodyLength)
-	case 2:
+	case MsgTypeDatabaseDescription:
 		body, readBytes, err = DeserializeDatabaseDescription(buf, bodyLength)
-	case 3:
+	case MsgTypeLinkStateRequest:
 		body, readBytes, err = DeserializeLinkStateRequestMsg(buf, bodyLength)
-	case 4:
+	case MsgTypeLinkStateUpdate:
 		body, readBytes, err = DeserializeLinkStateUpdate(buf)
-	case 5:
+	case MsgTypeLinkStateAcknowledgment:
 		body, readBytes, err = DeserializeLinkStateAcknowledgement(buf, bodyLength)
 	default:
 		return 0, fmt.Errorf("unknown message type: %d", m.Type)
@@ -157,10 +200,19 @@ func DeserializeHello(buf *bytes.Buffer, bodyLength uint16) (*Hello, int, error)
 	return pdu, readBytes, nil
 }
 
+type DBFlags uint8
+
+// database description flags
+const (
+	DBFlagInit DBFlags = 1 << iota
+	DBFlagMore
+	DBFlagMS
+)
+
 type DatabaseDescription struct {
 	Options          RouterOptions
 	InterfaceMTU     uint16
-	DBFlags          uint8
+	DBFlags          DBFlags
 	DDSequenceNumber uint32
 	LSAHeaders       []*LSA
 }
@@ -170,7 +222,7 @@ func (x *DatabaseDescription) Serialize(buf *bytes.Buffer) {
 	x.Options.Serialize(buf)
 	buf.Write(convert.Uint16Byte(x.InterfaceMTU))
 	buf.WriteByte(0) // 1 byte reserved
-	buf.WriteByte(x.DBFlags)
+	buf.WriteByte(uint8(x.DBFlags))
 	buf.Write(convert.Uint32Byte(x.DDSequenceNumber))
 	for i := range x.LSAHeaders {
 		x.LSAHeaders[i].Serialize(buf, true)

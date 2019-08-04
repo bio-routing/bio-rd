@@ -332,9 +332,9 @@ func DeserializeInterAreaRouterLSA(buf *bytes.Buffer) (*InterAreaRouterLSA, int,
 
 // Bitmasks for flags used in ASExternalLSA
 const (
-	ASExtLSAFlagE = 4
-	ASExtLSAFlagF = 2
-	ASExtLSAFlagT = 1
+	ASExtLSAFlagT uint8 = 1 << iota
+	ASExtLSAFlagF
+	ASExtLSAFlagE
 )
 
 type ASExternalLSA struct {

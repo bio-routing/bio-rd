@@ -16,6 +16,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
+	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
 	google.golang.org/genproto v0.0.0-20181221175505-bd9b4fb69e2f // indirect
 	google.golang.org/grpc v1.17.0
 	gopkg.in/yaml.v2 v2.2.2

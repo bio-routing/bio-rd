@@ -30,14 +30,27 @@ func (i ID) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint32Byte(uint32(i)))
 }
 
+// bitmasks for flags in RouterOptions
+const (
+	RouterOptV6 uint16 = 1 << iota
+	RouterOptE
+	_
+	RouterOptN
+	RouterOptR
+	RouterOptDC
+	_
+	_
+	RouterOptAF
+)
+
 type RouterOptions struct {
-	_        uint16
-	RawFlags uint8
+	_     uint8
+	Flags uint16
 }
 
 func (r *RouterOptions) Serialize(buf *bytes.Buffer) {
-	buf.Write([]byte{0, 0})
-	buf.WriteByte(r.RawFlags)
+	buf.WriteByte(0)
+	buf.Write(convert.Uint16Byte(uint16(r.Flags)))
 }
 
 type LSType uint16
