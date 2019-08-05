@@ -186,6 +186,10 @@ func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 }
 
 func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
+	if p.BGPPath.ASPath == nil {
+		return false
+	}
+
 	for _, pathSegment := range *p.BGPPath.ASPath {
 		for _, asn := range pathSegment.ASNs {
 			if a.contributingASNs.IsContributingASN(asn) {
