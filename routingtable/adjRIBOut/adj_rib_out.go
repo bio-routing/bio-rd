@@ -99,10 +99,17 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 		 * When an RR reflects a route, it MUST prepend the local CLUSTER_ID to the CLUSTER_LIST.
 		 * If the CLUSTER_LIST is empty, it MUST create a new one.
 		 */
-		cList := make([]uint32, len(*p.BGPPath.ClusterList)+1)
-		copy(cList[1:], *p.BGPPath.ClusterList)
+
+		x := 1
+		if p.BGPPath.ClusterList != nil {
+			x += len(*p.BGPPath.ClusterList)
+		}
+		cList := make(route.ClusterList, x)
+		if p.BGPPath.ClusterList != nil {
+			copy(cList[1:], *p.BGPPath.ClusterList)
+		}
 		cList[0] = a.neighbor.ClusterID
-		*p.BGPPath.ClusterList = cList
+		p.BGPPath.ClusterList = &cList
 	}
 
 	return p, true

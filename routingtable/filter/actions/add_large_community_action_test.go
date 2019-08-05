@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,13 +11,13 @@ import (
 func TestAddingLargeCommunities(t *testing.T) {
 	tests := []struct {
 		name        string
-		current     []types.LargeCommunity
-		communities []types.LargeCommunity
+		current     *route.LargeCommunities
+		communities *route.LargeCommunities
 		expected    string
 	}{
 		{
 			name: "add one to empty",
-			communities: []types.LargeCommunity{
+			communities: &route.LargeCommunities{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
@@ -29,14 +28,14 @@ func TestAddingLargeCommunities(t *testing.T) {
 		},
 		{
 			name: "add one to existing",
-			current: []types.LargeCommunity{
+			current: &route.LargeCommunities{
 				{
 					GlobalAdministrator: 5,
 					DataPart1:           6,
 					DataPart2:           7,
 				},
 			},
-			communities: []types.LargeCommunity{
+			communities: &route.LargeCommunities{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
@@ -47,14 +46,14 @@ func TestAddingLargeCommunities(t *testing.T) {
 		},
 		{
 			name: "add two to existing",
-			current: []types.LargeCommunity{
+			current: &route.LargeCommunities{
 				{
 					GlobalAdministrator: 5,
 					DataPart1:           6,
 					DataPart2:           7,
 				},
 			},
-			communities: []types.LargeCommunity{
+			communities: &route.LargeCommunities{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,

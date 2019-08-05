@@ -120,7 +120,7 @@ func TestAddPath(t *testing.T) {
 							LocalPref:    222,
 							OriginatorID: 23,
 						},
-						ClusterList: &[]uint32{
+						ClusterList: &route.ClusterList{
 							clusterID,
 						},
 					},

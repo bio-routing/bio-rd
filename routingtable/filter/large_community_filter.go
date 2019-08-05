@@ -2,6 +2,7 @@ package filter
 
 import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+	"github.com/bio-routing/bio-rd/route"
 )
 
 // LargeCommunityFilter represents a filter for large communities
@@ -10,7 +11,11 @@ type LargeCommunityFilter struct {
 }
 
 // Matches checks if a community f.community is on the filter list
-func (f *LargeCommunityFilter) Matches(coms *[]types.LargeCommunity) bool {
+func (f *LargeCommunityFilter) Matches(coms *route.LargeCommunities) bool {
+	if coms == nil {
+		return false
+	}
+
 	for _, com := range *coms {
 		if com == f.community {
 			return true

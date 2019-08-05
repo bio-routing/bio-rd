@@ -6,23 +6,26 @@ import (
 )
 
 type AddCommunityAction struct {
-	communities []uint32
+	communities *route.Communities
 }
 
-func NewAddCommunityAction(coms []uint32) *AddCommunityAction {
+func NewAddCommunityAction(coms *route.Communities) *AddCommunityAction {
 	return &AddCommunityAction{
 		communities: coms,
 	}
 }
 
 func (a *AddCommunityAction) Do(p net.Prefix, pa *route.Path) Result {
-	if pa.BGPPath == nil || len(a.communities) == 0 {
+	if pa.BGPPath == nil || len(*a.communities) == 0 {
 		return Result{Path: pa}
 	}
 
 	modified := pa.Copy()
+	for _, com := range *a.communities {
+		if modified.BGPPath.Communities == nil {
+			modified.BGPPath.Communities = &route.Communities{}
+		}
 
-	for _, com := range a.communities {
 		*modified.BGPPath.Communities = append(*modified.BGPPath.Communities, com)
 	}
 

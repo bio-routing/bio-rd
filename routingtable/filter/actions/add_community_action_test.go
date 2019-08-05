@@ -11,33 +11,33 @@ import (
 func TestAddingCommunities(t *testing.T) {
 	tests := []struct {
 		name        string
-		current     []uint32
-		communities []uint32
+		current     *route.Communities
+		communities *route.Communities
 		expected    string
 	}{
 		{
 			name: "add one to empty",
-			communities: []uint32{
+			communities: &route.Communities{
 				65538,
 			},
 			expected: "(1,2)",
 		},
 		{
 			name: "add one to existing",
-			current: []uint32{
+			current: &route.Communities{
 				65538,
 			},
-			communities: []uint32{
+			communities: &route.Communities{
 				196612,
 			},
 			expected: "(1,2) (3,4)",
 		},
 		{
 			name: "add two to existing",
-			current: []uint32{
+			current: &route.Communities{
 				65538,
 			},
-			communities: []uint32{
+			communities: &route.Communities{
 				196612, 327686,
 			},
 			expected: "(1,2) (3,4) (5,6)",

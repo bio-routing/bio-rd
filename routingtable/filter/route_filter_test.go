@@ -10,8 +10,8 @@ import (
 func TestInRange(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		begin    uint8
 		end      uint8
 		expected bool
@@ -83,8 +83,8 @@ func TestInRange(t *testing.T) {
 func TestExact(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		expected bool
 	}{
 		{
@@ -130,8 +130,8 @@ func TestExact(t *testing.T) {
 func TestOrLonger(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		expected bool
 	}{
 		{
@@ -165,8 +165,8 @@ func TestOrLonger(t *testing.T) {
 func TestLonger(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		expected bool
 	}{
 		{
