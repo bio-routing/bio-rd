@@ -14,11 +14,19 @@ import (
 )
 
 func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathAttribute, error) {
+	if tpal == 0 {
+		return nil, nil
+	}
+
 	var ret *PathAttribute
 	var eol *PathAttribute
 	var pa *PathAttribute
 	var err error
 	var consumed uint16
+
+	haveNextHop := false
+	haveOrigin := false
+	haveASPath := false
 
 	p := uint16(0)
 	for p < tpal {
@@ -28,12 +36,29 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathA
 		}
 		p += consumed
 
+		switch pa.TypeCode {
+		case ASPathAttr:
+			haveASPath = true
+		case OriginAttr:
+			haveOrigin = true
+		case NextHopAttr:
+			haveNextHop = true
+		case MultiProtocolReachNLRICode:
+			haveNextHop = true
+		}
+
 		if ret == nil {
 			ret = pa
 			eol = pa
 		} else {
 			eol.Next = pa
 			eol = pa
+		}
+	}
+
+	if haveNextHop || haveOrigin || haveASPath {
+		if !haveNextHop || !haveOrigin || !haveASPath {
+			return nil, fmt.Errorf("A mandatory path attribute is missing")
 		}
 	}
 

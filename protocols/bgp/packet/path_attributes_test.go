@@ -19,10 +19,18 @@ func TestDecodePathAttrs(t *testing.T) {
 		{
 			name: "Valid attribute set",
 			input: []byte{
-				0,              // Attr. Flags
-				1,              // Attr. Type Code
-				1,              // Attr. Length
-				1,              // EGP
+				0, // Attr. Flags
+				1, // Attr. Type Code
+				1, // Attr. Length
+				1, // EGP
+
+				0, // Flags
+				2, // AS Path
+				8, // Length
+				1, // AS_SEQUENCE
+				3, // Path Length
+				0, 100, 0, 222, 0, 240,
+
 				0,              // Attr. Flags
 				3,              // Next Hop
 				4,              // Attr. Length
@@ -34,9 +42,19 @@ func TestDecodePathAttrs(t *testing.T) {
 				Length:   1,
 				Value:    uint8(1),
 				Next: &PathAttribute{
-					TypeCode: 3,
-					Length:   4,
-					Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
+					TypeCode: 2,
+					Length:   8,
+					Value: &types.ASPath{
+						{
+							Type: 1,
+							ASNs: []uint32{100, 222, 240},
+						},
+					},
+					Next: &PathAttribute{
+						TypeCode: 3,
+						Length:   4,
+						Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
+					},
 				},
 			},
 		},
