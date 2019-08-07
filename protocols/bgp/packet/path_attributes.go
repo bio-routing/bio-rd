@@ -715,7 +715,7 @@ func (pa *PathAttribute) serializeClusterList(buf *bytes.Buffer) uint8 {
 		return 0
 	}
 
-	cids := pa.Value.(*[]uint32)
+	cids := pa.Value.(*types.ClusterList)
 	if len(*cids) == 0 {
 		return 0
 	}

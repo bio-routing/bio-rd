@@ -231,7 +231,7 @@ func TestDecodePathAttr(t *testing.T) {
 				TypeCode: ClusterListAttr,
 				Optional: true,
 				Length:   4,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 				},
 			},
@@ -249,7 +249,7 @@ func TestDecodePathAttr(t *testing.T) {
 				TypeCode: ClusterListAttr,
 				Optional: true,
 				Length:   8,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(), bnet.IPv4FromOctets(8, 8, 8, 8).ToUint32(),
 				},
 			},
@@ -727,7 +727,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 24,
-				Value: &[]types.LargeCommunity{
+				Value: &types.LargeCommunities{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -747,7 +747,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  &[]types.LargeCommunity{},
+				Value:  &types.LargeCommunities{},
 			},
 		},
 	}
@@ -795,7 +795,7 @@ func TestDecodeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 8,
-				Value: &[]uint32{
+				Value: &types.Communities{
 					131080, 16778241,
 				},
 			},
@@ -806,7 +806,7 @@ func TestDecodeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  &[]uint32{},
+				Value:  &types.Communities{},
 			},
 		},
 	}
@@ -852,7 +852,7 @@ func TestDecodeClusterList(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  []uint32{},
+				Value:  &types.ClusterList{},
 			},
 		},
 		{
@@ -863,7 +863,7 @@ func TestDecodeClusterList(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 4,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 				},
 			},
@@ -876,7 +876,7 @@ func TestDecodeClusterList(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 8,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(), bnet.IPv4FromOctets(8, 8, 8, 8).ToUint32(),
 				},
 			},
@@ -1755,10 +1755,10 @@ func TestSerializeClusterList(t *testing.T) {
 		expectedLen uint8
 	}{
 		{
-			name: "Empty list of CluserIDs",
+			name: "Empty list of ClusterIDs",
 			input: &PathAttribute{
 				TypeCode: ClusterListAttr,
-				Value:    &[]uint32{},
+				Value:    &types.ClusterList{},
 			},
 			expected:    []byte{},
 			expectedLen: 0,
@@ -1767,7 +1767,7 @@ func TestSerializeClusterList(t *testing.T) {
 			name: "One ClusterID",
 			input: &PathAttribute{
 				TypeCode: ClusterListAttr,
-				Value: &[]uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 				},
 			},
@@ -1783,7 +1783,7 @@ func TestSerializeClusterList(t *testing.T) {
 			name: "Two ClusterIDs",
 			input: &PathAttribute{
 				TypeCode: ClusterListAttr,
-				Value: &[]uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 					bnet.IPv4FromOctets(192, 168, 23, 42).ToUint32(),
 				},
