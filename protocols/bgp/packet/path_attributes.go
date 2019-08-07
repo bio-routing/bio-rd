@@ -412,7 +412,7 @@ func (pa *PathAttribute) decodeClusterList(buf *bytes.Buffer) error {
 	}
 
 	count := pa.Length / ClusterIDLen
-	cids := make([]uint32, count)
+	cids := make(types.ClusterList, count)
 
 	for i := uint16(0); i < count; i++ {
 		v, err := read4BytesAsUint32(buf)
@@ -422,7 +422,7 @@ func (pa *PathAttribute) decodeClusterList(buf *bytes.Buffer) error {
 		cids[i] = v
 	}
 
-	pa.Value = cids
+	pa.Value = &cids
 	return nil
 }
 

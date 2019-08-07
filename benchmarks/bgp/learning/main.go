@@ -29,7 +29,7 @@ import (
 func main() {
 	go http.ListenAndServe("localhost:1337", nil)
 
-	b := server.NewBGPServer(0, nil)
+	b := server.NewBGPServer(100, nil)
 	v, err := vrf.New("master", 0)
 	if err != nil {
 		log.Fatal(err)
