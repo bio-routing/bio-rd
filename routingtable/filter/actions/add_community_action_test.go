@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,33 +12,33 @@ import (
 func TestAddingCommunities(t *testing.T) {
 	tests := []struct {
 		name        string
-		current     *route.Communities
-		communities *route.Communities
+		current     *types.Communities
+		communities *types.Communities
 		expected    string
 	}{
 		{
 			name: "add one to empty",
-			communities: &route.Communities{
+			communities: &types.Communities{
 				65538,
 			},
 			expected: "(1,2)",
 		},
 		{
 			name: "add one to existing",
-			current: &route.Communities{
+			current: &types.Communities{
 				65538,
 			},
-			communities: &route.Communities{
+			communities: &types.Communities{
 				196612,
 			},
 			expected: "(1,2) (3,4)",
 		},
 		{
 			name: "add two to existing",
-			current: &route.Communities{
+			current: &types.Communities{
 				65538,
 			},
-			communities: &route.Communities{
+			communities: &types.Communities{
 				196612, 327686,
 			},
 			expected: "(1,2) (3,4) (5,6)",

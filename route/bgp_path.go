@@ -3,7 +3,6 @@ package route
 import (
 	"crypto/sha256"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/bio-routing/tflow2/convert"
@@ -17,9 +16,9 @@ import (
 type BGPPath struct {
 	BGPPathA          *BGPPathA
 	ASPath            *types.ASPath
-	ClusterList       *ClusterList
-	Communities       *Communities
-	LargeCommunities  *LargeCommunities
+	ClusterList       *types.ClusterList
+	Communities       *types.Communities
+	LargeCommunities  *types.LargeCommunities
 	UnknownAttributes []types.UnknownPathAttribute
 	PathIdentifier    uint32
 	ASPathLen         uint16
@@ -37,51 +36,6 @@ type BGPPathA struct {
 	EBGP            bool
 	AtomicAggregate bool
 	Origin          uint8
-}
-
-type ClusterList []uint32
-
-func (cl *ClusterList) String() string {
-	if cl == nil {
-		return ""
-	}
-
-	ret := ""
-	for _, x := range *cl {
-		ret += strconv.Itoa(int(x)) + " "
-	}
-
-	return ret
-}
-
-type Communities []uint32
-
-func (c *Communities) String() string {
-	if c == nil {
-		return ""
-	}
-
-	ret := ""
-	for _, x := range *c {
-		ret += strconv.Itoa(int(x)) + " "
-	}
-
-	return ret
-}
-
-type LargeCommunities []types.LargeCommunity
-
-func (lc *LargeCommunities) String() string {
-	if lc == nil {
-		return ""
-	}
-
-	ret := ""
-	for _, x := range *lc {
-		ret += x.String() + " "
-	}
-
-	return ret
 }
 
 // NewBGPPathA creates a new BGPPathA
@@ -171,16 +125,16 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
 
 	p = p.Dedup()
 
-	communities := make(Communities, len(pb.Communities))
+	communities := make(types.Communities, len(pb.Communities))
 	p.Communities = &communities
 
-	largeCommunities := make(LargeCommunities, len(pb.LargeCommunities))
+	largeCommunities := make(types.LargeCommunities, len(pb.LargeCommunities))
 	p.LargeCommunities = &largeCommunities
 
 	unknownAttr := make([]types.UnknownPathAttribute, len(pb.UnknownAttributes))
 	p.UnknownAttributes = unknownAttr
 
-	cl := make(ClusterList, len(pb.ClusterList))
+	cl := make(types.ClusterList, len(pb.ClusterList))
 	p.ClusterList = &cl
 
 	for i := range pb.Communities {
@@ -712,19 +666,19 @@ func (b *BGPPath) Copy() *BGPPath {
 	}
 
 	if cp.Communities != nil {
-		communities := make(Communities, len(*cp.Communities))
+		communities := make(types.Communities, len(*cp.Communities))
 		cp.Communities = &communities
 		copy(*cp.Communities, *b.Communities)
 	}
 
 	if cp.LargeCommunities != nil {
-		largeCommunities := make(LargeCommunities, len(*cp.LargeCommunities))
+		largeCommunities := make(types.LargeCommunities, len(*cp.LargeCommunities))
 		cp.LargeCommunities = &largeCommunities
 		copy(*cp.LargeCommunities, *b.LargeCommunities)
 	}
 
 	if b.ClusterList != nil {
-		clusterList := make(ClusterList, len(*cp.ClusterList))
+		clusterList := make(types.ClusterList, len(*cp.ClusterList))
 		cp.ClusterList = &clusterList
 		copy(*cp.ClusterList, *b.ClusterList)
 	}

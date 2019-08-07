@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -120,7 +121,7 @@ func TestAddPath(t *testing.T) {
 							LocalPref:    222,
 							OriginatorID: 23,
 						},
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							clusterID,
 						},
 					},

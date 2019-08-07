@@ -177,8 +177,8 @@ func TestDumpRIBInOut(t *testing.T) {
 								ASNs: []uint32{15169, 3320},
 							},
 						},
-						Communities: &route.Communities{100, 200, 300},
-						LargeCommunities: &route.LargeCommunities{
+						Communities: &types.Communities{100, 200, 300},
+						LargeCommunities: &types.LargeCommunities{
 							{
 								GlobalAdministrator: 1,
 								DataPart1:           2,
@@ -194,7 +194,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								Value:      []byte{0xff, 0xff},
 							},
 						},
-						ClusterList: &route.ClusterList{},
+						ClusterList: &types.ClusterList{},
 					},
 				}),
 			},

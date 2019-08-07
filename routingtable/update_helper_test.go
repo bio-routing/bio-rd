@@ -60,7 +60,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			comms := make(route.Communities, 0)
+			comms := make(types.Communities, 0)
 			for _, s := range strings.Split(test.communities, " ") {
 				if s == "" {
 					continue

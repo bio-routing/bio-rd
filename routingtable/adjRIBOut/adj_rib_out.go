@@ -6,6 +6,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -104,7 +105,7 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 		if p.BGPPath.ClusterList != nil {
 			x += len(*p.BGPPath.ClusterList)
 		}
-		cList := make(route.ClusterList, x)
+		cList := make(types.ClusterList, x)
 		if p.BGPPath.ClusterList != nil {
 			copy(cList[1:], *p.BGPPath.ClusterList)
 		}

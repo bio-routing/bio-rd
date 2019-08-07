@@ -228,13 +228,13 @@ func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *
 		case packet.AtomicAggrAttr:
 			path.BGPPath.BGPPathA.AtomicAggregate = true
 		case packet.CommunitiesAttr:
-			path.BGPPath.Communities = pa.Value.(*route.Communities)
+			path.BGPPath.Communities = pa.Value.(*types.Communities)
 		case packet.LargeCommunitiesAttr:
-			path.BGPPath.LargeCommunities = pa.Value.(*route.LargeCommunities)
+			path.BGPPath.LargeCommunities = pa.Value.(*types.LargeCommunities)
 		case packet.OriginatorIDAttr:
 			path.BGPPath.BGPPathA.OriginatorID = pa.Value.(uint32)
 		case packet.ClusterListAttr:
-			path.BGPPath.ClusterList = pa.Value.(*route.ClusterList)
+			path.BGPPath.ClusterList = pa.Value.(*types.ClusterList)
 		case packet.MultiProtocolReachNLRICode:
 		case packet.MultiProtocolUnreachNLRICode:
 		default:

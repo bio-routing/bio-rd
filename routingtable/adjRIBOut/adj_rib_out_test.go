@@ -97,8 +97,8 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							},
 						},
 						ASPathLen:         1,
-						Communities:       &route.Communities{},
-						LargeCommunities:  &route.LargeCommunities{},
+						Communities:       &types.Communities{},
+						LargeCommunities:  &types.LargeCommunities{},
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 					},
@@ -173,7 +173,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4(0),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
 					},
@@ -191,7 +191,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4(0),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoAdvertise,
 						},
 					},
@@ -265,10 +265,10 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							},
 						},
 						ASPathLen: 1,
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
-						LargeCommunities:  &route.LargeCommunities{},
+						LargeCommunities:  &types.LargeCommunities{},
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 					},
@@ -473,8 +473,8 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 							},
 						},
 						ASPathLen:         1,
-						Communities:       &route.Communities{},
-						LargeCommunities:  &route.LargeCommunities{},
+						Communities:       &types.Communities{},
+						LargeCommunities:  &types.LargeCommunities{},
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 					},
@@ -544,7 +544,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4(0),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
 					},
@@ -562,7 +562,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4(0),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoAdvertise,
 						},
 					},
@@ -639,7 +639,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 							NextHop: net.IPv4(0),
 						},
 						ASPath: &types.ASPath{},
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							neighborBestOnlyRR.ClusterID,
 						},
 					},
@@ -693,7 +693,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						ASPathLen:         1,
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							neighborBestOnlyRR.ClusterID,
 						},
 					},
@@ -724,8 +724,8 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 							},
 						},
 						ASPathLen:         1,
-						Communities:       &route.Communities{},
-						LargeCommunities:  &route.LargeCommunities{},
+						Communities:       &types.Communities{},
+						LargeCommunities:  &types.LargeCommunities{},
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 					},
@@ -754,7 +754,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						ASPathLen:         1,
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							neighborBestOnlyRR.ClusterID,
 						},
 					},
@@ -787,7 +787,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						ASPathLen:         1,
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							neighborBestOnlyRR.ClusterID,
 						},
 					},
@@ -806,7 +806,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4(0),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoAdvertise,
 						},
 					},
@@ -825,7 +825,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4(0),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
 					},
@@ -844,11 +844,11 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 							NextHop:   net.IPv4(0),
 						},
 						ASPathLen: 0,
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
 						PathIdentifier: 0,
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							neighborBestOnlyRR.ClusterID,
 						},
 					},
@@ -871,11 +871,11 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 							NextHop:   net.IPv4(0),
 						},
 						ASPathLen: 0,
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
 						PathIdentifier: 0,
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							neighborBestOnlyRR.ClusterID,
 						},
 					},
@@ -895,7 +895,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 							Source:       net.IPv4(0),
 							NextHop:      net.IPv4(0),
 						},
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							23,
 						},
 					},
@@ -917,7 +917,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						},
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
-						ClusterList: &route.ClusterList{
+						ClusterList: &types.ClusterList{
 							neighborBestOnlyRR.ClusterID,
 							23,
 						},
@@ -1060,8 +1060,8 @@ func TestAddPathIBGP(t *testing.T) {
 							},
 						},
 						ASPathLen:         1,
-						Communities:       &route.Communities{},
-						LargeCommunities:  &route.LargeCommunities{},
+						Communities:       &types.Communities{},
+						LargeCommunities:  &types.LargeCommunities{},
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 					},
@@ -1131,7 +1131,7 @@ func TestAddPathIBGP(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4FromOctets(1, 2, 3, 4),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
 					},
@@ -1150,7 +1150,7 @@ func TestAddPathIBGP(t *testing.T) {
 							Source:  net.IPv4(0),
 							NextHop: net.IPv4FromOctets(1, 2, 3, 4),
 						},
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoAdvertise,
 						},
 					},
@@ -1435,7 +1435,7 @@ func TestAddPathIBGP(t *testing.T) {
 							},
 						},
 						ASPathLen: 1,
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
 						},
 					},
@@ -1511,7 +1511,7 @@ func TestAddPathIBGP(t *testing.T) {
 								},
 							},
 							ASPathLen: 1,
-							Communities: &route.Communities{
+							Communities: &types.Communities{
 								types.WellKnownCommunityNoExport,
 							},
 							UnknownAttributes: nil,
@@ -1542,7 +1542,7 @@ func TestAddPathIBGP(t *testing.T) {
 							},
 						},
 						ASPathLen: 1,
-						Communities: &route.Communities{
+						Communities: &types.Communities{
 							types.WellKnownCommunityNoAdvertise,
 						},
 					},

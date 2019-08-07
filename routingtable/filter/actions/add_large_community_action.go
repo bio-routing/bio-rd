@@ -2,14 +2,15 @@ package actions
 
 import (
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 )
 
 type AddLargeCommunityAction struct {
-	communities *route.LargeCommunities
+	communities *types.LargeCommunities
 }
 
-func NewAddLargeCommunityAction(coms *route.LargeCommunities) *AddLargeCommunityAction {
+func NewAddLargeCommunityAction(coms *types.LargeCommunities) *AddLargeCommunityAction {
 	return &AddLargeCommunityAction{
 		communities: coms,
 	}
@@ -22,7 +23,7 @@ func (a *AddLargeCommunityAction) Do(p net.Prefix, pa *route.Path) Result {
 
 	modified := pa.Copy()
 	if modified.BGPPath.LargeCommunities == nil {
-		modified.BGPPath.LargeCommunities = &route.LargeCommunities{}
+		modified.BGPPath.LargeCommunities = &types.LargeCommunities{}
 	}
 
 	*modified.BGPPath.LargeCommunities = append(*modified.BGPPath.LargeCommunities, *a.communities...)
