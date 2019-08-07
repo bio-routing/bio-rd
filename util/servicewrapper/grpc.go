@@ -76,7 +76,7 @@ func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerIn
 	streamInterceptors = append(streamInterceptors,
 		grpc_prometheus.StreamServerInterceptor,
 		grpc_ctxtags.StreamServerInterceptor(),
-		grpc_recovery.StreamServerInterceptor(),
+		//grpc_recovery.StreamServerInterceptor(),
 		grpc_logrus.StreamServerInterceptor(logrusEntry, levelOpt),
 	)
 	unaryOpts := grpc_middleware.WithUnaryServerChain(unaryInterceptors...)

@@ -13,6 +13,25 @@ type UnknownPathAttribute struct {
 	Value      []byte
 }
 
+// Compare compares unknown attributes
+func (u *UnknownPathAttribute) Compare(s *UnknownPathAttribute) bool {
+	if u.Optional != s.Optional || u.Transitive != s.Transitive || u.Partial != s.Partial || u.TypeCode != s.TypeCode {
+		return false
+	}
+
+	if len(u.Value) != len(s.Value) {
+		return false
+	}
+
+	for i := range u.Value {
+		if u.Value[i] != s.Value[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 // WireLength returns the number of bytes the attribute need on the wire
 func (u *UnknownPathAttribute) WireLength() uint16 {
 	length := uint16(len(u.Value))

@@ -75,8 +75,8 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 			},
 		},
 
-		Communities: &[]uint32{100, 200, 300},
-		LargeCommunities: &[]types.LargeCommunity{
+		Communities: &Communities{100, 200, 300},
+		LargeCommunities: &LargeCommunities{
 			{
 				GlobalAdministrator: 222,
 				DataPart1:           500,
@@ -97,7 +97,7 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 				Value:      []byte{200, 222},
 			},
 		},
-		ClusterList: &[]uint32{999, 199},
+		ClusterList: &ClusterList{999, 199},
 	}
 
 	result := BGPPathFromProtoBGPPath(input)
@@ -302,12 +302,12 @@ func TestBGPSelect(t *testing.T) {
 func TestCommunitiesString(t *testing.T) {
 	tests := []struct {
 		name     string
-		comms    []uint32
+		comms    Communities
 		expected string
 	}{
 		{
 			name:     "two attributes",
-			comms:    []uint32{131080, 16778241},
+			comms:    Communities{131080, 16778241},
 			expected: "(2,8) (256,1025)",
 		},
 	}
@@ -326,12 +326,12 @@ func TestCommunitiesString(t *testing.T) {
 func TestLargeCommunitiesString(t *testing.T) {
 	tests := []struct {
 		name     string
-		comms    []types.LargeCommunity
+		comms    LargeCommunities
 		expected string
 	}{
 		{
 			name: "two attributes",
-			comms: []types.LargeCommunity{
+			comms: LargeCommunities{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
@@ -446,8 +446,8 @@ func TestLength(t *testing.T) {
 						ASNs: []uint32{15169, 199714},
 					},
 				},
-				LargeCommunities: &[]types.LargeCommunity{},
-				Communities:      &[]uint32{},
+				LargeCommunities: &LargeCommunities{},
+				Communities:      &Communities{},
 			},
 			expected: 44,
 		},
@@ -461,8 +461,8 @@ func TestLength(t *testing.T) {
 						ASNs: []uint32{15169, 199714},
 					},
 				},
-				LargeCommunities: &[]types.LargeCommunity{},
-				Communities:      &[]uint32{10, 20, 30},
+				LargeCommunities: &LargeCommunities{},
+				Communities:      &Communities{10, 20, 30},
 			},
 			expected: 59,
 		},
@@ -476,7 +476,7 @@ func TestLength(t *testing.T) {
 						ASNs: []uint32{15169, 199714},
 					},
 				},
-				LargeCommunities: &[]types.LargeCommunity{
+				LargeCommunities: &LargeCommunities{
 					{
 						GlobalAdministrator: 199714,
 						DataPart1:           100,
@@ -500,7 +500,7 @@ func TestLength(t *testing.T) {
 						ASNs: []uint32{15169, 199714},
 					},
 				},
-				ClusterList: &[]uint32{10, 20, 30},
+				ClusterList: &ClusterList{10, 20, 30},
 				UnknownAttributes: []types.UnknownPathAttribute{
 					{
 						TypeCode: 100,
@@ -537,9 +537,9 @@ func TestBGPPathString(t *testing.T) {
 					Source:       net.IPv6(0, 0),
 				},
 				ASPath:           &types.ASPath{},
-				ClusterList:      &[]uint32{10, 20},
-				Communities:      &[]uint32{},
-				LargeCommunities: &[]types.LargeCommunity{},
+				ClusterList:      &ClusterList{10, 20},
+				Communities:      &Communities{},
+				LargeCommunities: &LargeCommunities{},
 			},
 			expectedString: "Local Pref: 0, Origin: Incomplete, AS Path: , BGP type: external, NEXT HOP: 0:0:0:0:0:0:0:0, MED: 0, Path ID: 0, Source: 0:0:0:0:0:0:0:0, Communities: [], LargeCommunities: [], OriginatorID: 0.0.0.23, ClusterList 0.0.0.10 0.0.0.20",
 			expectedPrint: `		Local Pref: 0

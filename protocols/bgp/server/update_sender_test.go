@@ -39,6 +39,7 @@ func TestSender(t *testing.T) {
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 100,
 								NextHop:   bnet.IPv4(0),
+								Source:    bnet.IPv4(0),
 							},
 							ASPath: &types.ASPath{},
 						},
@@ -57,6 +58,7 @@ func TestSender(t *testing.T) {
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 200,
 								NextHop:   bnet.IPv4(0),
+								Source:    bnet.IPv4(0),
 							},
 							ASPath: &types.ASPath{},
 						},
@@ -110,6 +112,7 @@ func TestSender(t *testing.T) {
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 100,
 								NextHop:   bnet.IPv4(0),
+								Source:    bnet.IPv4(0),
 							},
 							ASPath: &types.ASPath{},
 						},
@@ -128,6 +131,7 @@ func TestSender(t *testing.T) {
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 200,
 								NextHop:   bnet.IPv4(0),
+								Source:    bnet.IPv4(0),
 							},
 							ASPath: &types.ASPath{},
 						},
@@ -197,6 +201,7 @@ func TestSender(t *testing.T) {
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 100,
 								NextHop:   bnet.IPv4(0),
+								Source:    bnet.IPv4(0),
 							},
 							ASPath: &types.ASPath{},
 						},
@@ -370,6 +375,7 @@ func TestSender(t *testing.T) {
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 100,
 								NextHop:   bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 2),
+								Source:    bnet.IPv6(0, 0),
 							},
 							ASPath: &types.ASPath{},
 						},

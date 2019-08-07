@@ -21,10 +21,52 @@ const (
 // ASPath represents an AS Path (RFC4271)
 type ASPath []ASPathSegment
 
+// Compare compares two AS Paths
+func (a *ASPath) Compare(b *ASPath) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	if len(*a) != len(*b) {
+		return false
+	}
+
+	for i := range *a {
+		if !(*a)[i].Compare((*b)[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // ASPathSegment represents an AS Path Segment (RFC4271)
 type ASPathSegment struct {
 	Type uint8
 	ASNs []uint32
+}
+
+// Compare checks if ASPathSegments are the same
+func (s ASPathSegment) Compare(t ASPathSegment) bool {
+	if s.Type != t.Type {
+		return false
+	}
+
+	if len(s.ASNs) != len(t.ASNs) {
+		return false
+	}
+
+	for i := range s.ASNs {
+		if s.ASNs[i] != t.ASNs[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ToProto converts ASPath to proto ASPath
@@ -70,8 +112,11 @@ func ASPathFromProtoASPath(segments []*api.ASPathSegment) *ASPath {
 }
 
 // String converts an ASPath to it's human redable representation
-func (pa ASPath) String() (ret string) {
-	for _, p := range pa {
+func (pa *ASPath) String() (ret string) {
+	if pa == nil {
+		return ""
+	}
+	for _, p := range *pa {
 		if p.Type == ASSet {
 			ret += " ("
 		}

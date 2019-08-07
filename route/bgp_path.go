@@ -3,6 +3,7 @@ package route
 import (
 	"crypto/sha256"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/bio-routing/tflow2/convert"
@@ -16,9 +17,9 @@ import (
 type BGPPath struct {
 	BGPPathA          *BGPPathA
 	ASPath            *types.ASPath
-	ClusterList       *[]uint32
-	Communities       *[]uint32
-	LargeCommunities  *[]types.LargeCommunity
+	ClusterList       *ClusterList
+	Communities       *Communities
+	LargeCommunities  *LargeCommunities
 	UnknownAttributes []types.UnknownPathAttribute
 	PathIdentifier    uint32
 	ASPathLen         uint16
@@ -36,6 +37,51 @@ type BGPPathA struct {
 	EBGP            bool
 	AtomicAggregate bool
 	Origin          uint8
+}
+
+type ClusterList []uint32
+
+func (cl *ClusterList) String() string {
+	if cl == nil {
+		return ""
+	}
+
+	ret := ""
+	for _, x := range *cl {
+		ret += strconv.Itoa(int(x)) + " "
+	}
+
+	return ret
+}
+
+type Communities []uint32
+
+func (c *Communities) String() string {
+	if c == nil {
+		return ""
+	}
+
+	ret := ""
+	for _, x := range *c {
+		ret += strconv.Itoa(int(x)) + " "
+	}
+
+	return ret
+}
+
+type LargeCommunities []types.LargeCommunity
+
+func (lc *LargeCommunities) String() string {
+	if lc == nil {
+		return ""
+	}
+
+	ret := ""
+	for _, x := range *lc {
+		ret += x.String() + " "
+	}
+
+	return ret
 }
 
 // NewBGPPathA creates a new BGPPathA
@@ -65,7 +111,6 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		PathIdentifier:    b.PathIdentifier,
 		NextHop:           b.BGPPathA.NextHop.ToProto(),
 		LocalPref:         b.BGPPathA.LocalPref,
-		AsPath:            b.ASPath.ToProto(),
 		Origin:            uint32(b.BGPPathA.Origin),
 		Med:               b.BGPPathA.MED,
 		Ebgp:              b.BGPPathA.EBGP,
@@ -73,6 +118,10 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		Source:            b.BGPPathA.Source.ToProto(),
 		UnknownAttributes: make([]*api.UnknownPathAttribute, len(b.UnknownAttributes)),
 		OriginatorId:      b.BGPPathA.OriginatorID,
+	}
+
+	if b.ASPath != nil {
+		a.AsPath = b.ASPath.ToProto()
 	}
 
 	if a.ClusterList != nil {
@@ -122,16 +171,16 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
 
 	p = p.Dedup()
 
-	communities := make([]uint32, len(pb.Communities))
+	communities := make(Communities, len(pb.Communities))
 	p.Communities = &communities
 
-	largeCommunities := make([]types.LargeCommunity, len(pb.LargeCommunities))
+	largeCommunities := make(LargeCommunities, len(pb.LargeCommunities))
 	p.LargeCommunities = &largeCommunities
 
 	unknownAttr := make([]types.UnknownPathAttribute, len(pb.UnknownAttributes))
 	p.UnknownAttributes = unknownAttr
 
-	cl := make([]uint32, len(pb.ClusterList))
+	cl := make(ClusterList, len(pb.ClusterList))
 	p.ClusterList = &cl
 
 	for i := range pb.Communities {
@@ -656,24 +705,26 @@ func (b *BGPPath) Copy() *BGPPath {
 
 	cp := *b
 
-	asPath := make(types.ASPath, len(*cp.ASPath))
-	cp.ASPath = &asPath
-	copy(*cp.ASPath, *b.ASPath)
+	if cp.ASPath != nil {
+		asPath := make(types.ASPath, len(*cp.ASPath))
+		cp.ASPath = &asPath
+		copy(*cp.ASPath, *b.ASPath)
+	}
 
 	if cp.Communities != nil {
-		communities := make([]uint32, len(*cp.Communities))
+		communities := make(Communities, len(*cp.Communities))
 		cp.Communities = &communities
 		copy(*cp.Communities, *b.Communities)
 	}
 
 	if cp.LargeCommunities != nil {
-		largeCommunities := make([]types.LargeCommunity, len(*cp.LargeCommunities))
+		largeCommunities := make(LargeCommunities, len(*cp.LargeCommunities))
 		cp.LargeCommunities = &largeCommunities
 		copy(*cp.LargeCommunities, *b.LargeCommunities)
 	}
 
 	if b.ClusterList != nil {
-		clusterList := make([]uint32, len(*cp.ClusterList))
+		clusterList := make(ClusterList, len(*cp.ClusterList))
 		cp.ClusterList = &clusterList
 		copy(*cp.ClusterList, *b.ClusterList)
 	}
@@ -683,20 +734,39 @@ func (b *BGPPath) Copy() *BGPPath {
 
 // ComputeHash computes an hash over all attributes of the path
 func (b *BGPPath) ComputeHash() string {
-	s := fmt.Sprintf("%s\t%d\t%v\t%d\t%d\t%v\t%d\t%s\t%v\t%v\t%d\t%d\t%v",
-		b.BGPPathA.NextHop,
+	s := fmt.Sprintf("%s\t%d\t%s\t%d\t%d\t%v\t%d\t%s\t%s\t%s\t%d\t%s",
+		b.BGPPathA.NextHop.String(),
 		b.BGPPathA.LocalPref,
-		*b.ASPath,
+		b.ASPath.String(),
 		b.BGPPathA.Origin,
 		b.BGPPathA.MED,
 		b.BGPPathA.EBGP,
 		b.BGPPathA.BGPIdentifier,
-		b.BGPPathA.Source,
-		b.Communities,
-		b.LargeCommunities,
+		b.BGPPathA.Source.String(),
+		b.Communities.String(),
+		b.LargeCommunities.String(),
+		b.BGPPathA.OriginatorID,
+		b.ClusterList.String())
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
+}
+
+// ComputeHash computes an hash over all attributes of the path
+func (b *BGPPath) ComputeHashWithPathID() string {
+	s := fmt.Sprintf("%s\t%d\t%s\t%d\t%d\t%v\t%d\t%s\t%s\t%s\t%d\t%d\t%s",
+		b.BGPPathA.NextHop.String(),
+		b.BGPPathA.LocalPref,
+		b.ASPath.String(),
+		b.BGPPathA.Origin,
+		b.BGPPathA.MED,
+		b.BGPPathA.EBGP,
+		b.BGPPathA.BGPIdentifier,
+		b.BGPPathA.Source.String(),
+		b.Communities.String(),
+		b.LargeCommunities.String(),
 		b.PathIdentifier,
 		b.BGPPathA.OriginatorID,
-		b.ClusterList)
+		b.ClusterList.String())
 
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 }

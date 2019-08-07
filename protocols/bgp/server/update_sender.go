@@ -74,14 +74,14 @@ func (u *UpdateSender) Destroy() {
 func (u *UpdateSender) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 	u.toSendMu.Lock()
 
-	hash := p.BGPPath.ComputeHash()
+	hash := p.BGPPath.ComputeHashWithPathID()
 	if _, exists := u.toSend[hash]; exists {
 		u.toSend[hash].pfxs = append(u.toSend[hash].pfxs, pfx)
 		u.toSendMu.Unlock()
 		return nil
 	}
 
-	u.toSend[p.BGPPath.ComputeHash()] = &pathPfxs{
+	u.toSend[p.BGPPath.ComputeHashWithPathID()] = &pathPfxs{
 		path: p,
 		pfxs: []*bnet.Prefix{
 			pfx,
