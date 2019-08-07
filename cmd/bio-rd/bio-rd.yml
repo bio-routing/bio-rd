@@ -71,9 +71,9 @@ protocols:
         neighbors:
           - peer_address: 192.0.2.2
             peer_as: 65200
-            import: ["REJECT_ALL"]
-            export: ["REJECT_ALL"]
+            import: ["ACCEPT_ALL"]
+            export: ["PeerA-Out2"]
           - peer_address: 192.0.2.3
             peer_as: 65300
-            import: ["REJECT_ALL"]
-            export: ["REJECT_ALL"]
+            import: ["PeerB-In"]
+            export: ["ACCEPT_ALL"]
