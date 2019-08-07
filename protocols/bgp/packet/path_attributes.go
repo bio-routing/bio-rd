@@ -331,7 +331,7 @@ func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 	}
 
 	count := pa.Length / CommunityLen
-	coms := make([]uint32, count)
+	coms := make(types.Communities, count)
 
 	for i := uint16(0); i < count; i++ {
 		v, err := read4BytesAsUint32(buf)
@@ -351,7 +351,7 @@ func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 	}
 
 	count := pa.Length / LargeCommunityLen
-	coms := make([]types.LargeCommunity, count)
+	coms := make(types.LargeCommunities, count)
 
 	for i := uint16(0); i < count; i++ {
 		com := types.LargeCommunity{}
