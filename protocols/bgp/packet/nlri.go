@@ -65,7 +65,18 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 
 		consumed += pathIdentifierLen
 	}
+	pfx, c, err := DecodePrefixFromNLRI(buf, afi)
+	consumed += c
+	if err != nil {
+		return nil, consumed, err
+	}
+	nlri.Prefix = pfx
 
+	return nlri, consumed, nil
+}
+
+func DecodePrefixFromNLRI(buf *bytes.Buffer, afi uint16) (*bnet.Prefix, uint8, error) {
+	var consumed uint8 = 0
 	pfxLen, err := buf.ReadByte()
 	if err != nil {
 		return nil, consumed, err
@@ -82,12 +93,8 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 	}
 
 	pfx, err := deserializePrefix(bytes, pfxLen, afi)
-	if err != nil {
-		return nil, consumed, err
-	}
-	nlri.Prefix = pfx
+	return pfx, consumed, err
 
-	return nlri, consumed, nil
 }
 
 func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool) uint8 {
