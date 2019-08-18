@@ -315,8 +315,8 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 		return fmt.Errorf("Unable to get inet RIB")
 	}
 	fsm.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &peerAddressFamily{
-		rib:          rib4,
-		importFilter: filter.NewAcceptAllFilter(),
+		rib:               rib4,
+		importFilterChain: filter.NewAcceptAllFilterChain(),
 	}, fsm)
 	fsm.ipv4Unicast.bmpInit()
 
@@ -326,8 +326,8 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	}
 
 	fsm.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
-		rib:          rib6,
-		importFilter: filter.NewAcceptAllFilter(),
+		rib:               rib6,
+		importFilterChain: filter.NewAcceptAllFilterChain(),
 	}, fsm)
 	fsm.ipv6Unicast.bmpInit()
 

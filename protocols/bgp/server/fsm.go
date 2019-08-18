@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -37,6 +38,8 @@ type state interface {
 
 // FSM implements the BGP finite state machine (RFC4271)
 type FSM struct {
+	counters fsmCounters
+
 	isBMP       bool
 	peer        *peer
 	eventCh     chan int
@@ -78,7 +81,6 @@ type FSM struct {
 	active     bool
 
 	establishedTime time.Time
-	counters        fsmCounters
 
 	connectionCancelFunc context.CancelFunc
 }
@@ -122,6 +124,26 @@ func newFSM(peer *peer) *FSM {
 	}
 
 	return f
+}
+
+func (fsm *FSM) replaceImportFilterChain(c filter.Chain) {
+	if fsm.ipv4Unicast != nil {
+		fsm.ipv4Unicast.replaceImportFilterChain(c)
+	}
+
+	if fsm.ipv6Unicast != nil {
+		fsm.ipv6Unicast.replaceImportFilterChain(c)
+	}
+}
+
+func (fsm *FSM) replaceExportFilterChain(c filter.Chain) {
+	if fsm.ipv4Unicast != nil {
+		fsm.ipv4Unicast.replaceExportFilterChain(c)
+	}
+
+	if fsm.ipv6Unicast != nil {
+		fsm.ipv6Unicast.replaceExportFilterChain(c)
+	}
 }
 
 func (fsm *FSM) updateLastUpdateOrKeepalive() {

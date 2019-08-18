@@ -12,8 +12,8 @@ const (
 
 // FIBPath represents a path learned via Netlink of a route
 type FIBPath struct {
-	Src      bnet.IP
-	NextHop  bnet.IP // GW
+	Src      *bnet.IP
+	NextHop  *bnet.IP // GW
 	Priority int
 	Protocol int
 	Type     int
@@ -24,8 +24,8 @@ type FIBPath struct {
 // NewNlPathFromBgpPath creates a new FIBPath object from a BGPPath object
 func NewNlPathFromBgpPath(p *BGPPath) *FIBPath {
 	return &FIBPath{
-		Src:      p.Source,
-		NextHop:  p.NextHop,
+		Src:      p.BGPPathA.Source,
+		NextHop:  p.BGPPathA.NextHop,
 		Protocol: ProtoBio,
 		Kernel:   false,
 	}
@@ -78,7 +78,7 @@ func (s *FIBPath) Select(t *FIBPath) int8 {
 
 // ECMP determines if path s and t are equal in terms of ECMP
 func (s *FIBPath) ECMP(t *FIBPath) bool {
-	return s.Src == t.Src && s.Priority == t.Priority && s.Protocol == t.Protocol && s.Type == t.Type && s.Table == t.Table
+	return s.Src.Compare(t.Src) == 0 && s.Priority == t.Priority && s.Protocol == t.Protocol && s.Type == t.Type && s.Table == t.Table
 }
 
 // Copy duplicates the current object

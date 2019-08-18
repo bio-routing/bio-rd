@@ -99,7 +99,7 @@ func (v *VRF) RD() uint64 {
 
 // Unregister removes this VRF from the global registry.
 func (v *VRF) Unregister() {
-	globalRegistry.unregisterVRF(v)
+	globalRegistry.UnregisterVRF(v)
 }
 
 func (v *VRF) ribForAddressFamily(family addressFamily) *locRIB.LocRIB {
@@ -125,4 +125,15 @@ func (v *VRF) nameForRIB(rib *locRIB.LocRIB) string {
 	}
 
 	return ""
+}
+
+// Dispose drops all referenes to all RIBs within a VRF
+func (v *VRF) Dispose() {
+	for afi := range v.ribs {
+		delete(v.ribs, afi)
+	}
+
+	for ribName := range v.ribNames {
+		delete(v.ribNames, ribName)
+	}
 }

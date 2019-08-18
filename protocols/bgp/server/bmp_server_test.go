@@ -219,8 +219,8 @@ func TestBMPServer(t *testing.T) {
 	}
 
 	updateA1 := []byte{
-		3,           // Version
-		0, 0, 0, 93, // Length
+		3,            // Version
+		0, 0, 0, 100, // Length
 		0, // Msg Type (route monitoring)
 
 		0,                        // Peer Type (global instance peer)
@@ -233,11 +233,16 @@ func TestBMPServer(t *testing.T) {
 		0, 0, 0, 0, // Timestamp microseconds
 
 		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, // Marker
-		0, 45, // Length
+		0, 52, // Length
 		2, // Type (UPDATE)
 
 		0, 0, // Withdraw length
-		0, 20, // Total Path Attribute Length
+		0, 27, // Total Path Attribute Length
+
+		0, // Attribute flags
+		3, // Attribute Type code (Next Hop)
+		4, // Length
+		10, 0, 0, 0,
 
 		255,  // Attribute flags
 		1,    // Attribute Type code (ORIGIN)
@@ -305,8 +310,8 @@ func TestBMPServer(t *testing.T) {
 	}
 
 	updateB1 := []byte{
-		3,           // Version
-		0, 0, 0, 93, // Length
+		3,            // Version
+		0, 0, 0, 100, // Length
 		0, // Msg Type (route monitoring)
 
 		0,                        // Peer Type (global instance peer)
@@ -319,11 +324,16 @@ func TestBMPServer(t *testing.T) {
 		0, 0, 0, 0, // Timestamp microseconds
 
 		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, // Marker
-		0, 45, // Length
+		0, 52, // Length
 		2, // Type (UPDATE)
 
 		0, 0, // Withdraw length
-		0, 20, // Total Path Attribute Length
+		0, 27, // Total Path Attribute Length
+
+		0, // Attribute flags
+		3, // Attribute Type code (Next Hop)
+		4, // Length
+		10, 0, 0, 0,
 
 		255,  // Attribute flags
 		1,    // Attribute Type code (ORIGIN)

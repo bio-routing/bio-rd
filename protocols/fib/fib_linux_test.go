@@ -157,7 +157,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 	tests := []struct {
 		name          string
 		source        netlink.Route
-		expectedPfx   bnet.Prefix
+		expectedPfx   *bnet.Prefix
 		expectedPaths []*route.Path
 		expectError   bool
 	}{
@@ -307,7 +307,7 @@ func TestNewPathsFromNetlinkRoute(t *testing.T) {
 				Table:    254,
 				Type:     1,
 			},
-			expectedPfx:   bnet.Prefix{},
+			expectedPfx:   nil,
 			expectedPaths: []*route.Path{},
 			expectError:   true,
 		},

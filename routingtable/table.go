@@ -26,14 +26,14 @@ func (rt *RoutingTable) GetRouteCount() int64 {
 }
 
 // AddPath adds a path to the routing table
-func (rt *RoutingTable) AddPath(pfx net.Prefix, p *route.Path) error {
+func (rt *RoutingTable) AddPath(pfx *net.Prefix, p *route.Path) error {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
 	return rt.addPath(pfx, p)
 }
 
-func (rt *RoutingTable) addPath(pfx net.Prefix, p *route.Path) error {
+func (rt *RoutingTable) addPath(pfx *net.Prefix, p *route.Path) error {
 	if rt.root == nil {
 		rt.root = newNode(pfx, p, pfx.Pfxlen(), false)
 		atomic.AddInt64(&rt.routeCount, 1)
@@ -49,7 +49,7 @@ func (rt *RoutingTable) addPath(pfx net.Prefix, p *route.Path) error {
 }
 
 // ReplacePath replaces all paths for prefix `pfx` with path `p`
-func (rt *RoutingTable) ReplacePath(pfx net.Prefix, p *route.Path) []*route.Path {
+func (rt *RoutingTable) ReplacePath(pfx *net.Prefix, p *route.Path) []*route.Path {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
@@ -67,27 +67,27 @@ func (rt *RoutingTable) ReplacePath(pfx net.Prefix, p *route.Path) []*route.Path
 }
 
 // RemovePath removes a path from the trie
-func (rt *RoutingTable) RemovePath(pfx net.Prefix, p *route.Path) {
+func (rt *RoutingTable) RemovePath(pfx *net.Prefix, p *route.Path) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
 	rt.removePath(pfx, p)
 }
 
-func (rt *RoutingTable) removePath(pfx net.Prefix, p *route.Path) {
+func (rt *RoutingTable) removePath(pfx *net.Prefix, p *route.Path) {
 	if rt.root.removePath(pfx, p) {
 		atomic.AddInt64(&rt.routeCount, -1)
 	}
 }
 
-func (rt *RoutingTable) removePaths(pfx net.Prefix, paths []*route.Path) {
+func (rt *RoutingTable) removePaths(pfx *net.Prefix, paths []*route.Path) {
 	for _, p := range paths {
 		rt.removePath(pfx, p)
 	}
 }
 
 // RemovePfx removes all paths for prefix `pfx`
-func (rt *RoutingTable) RemovePfx(pfx net.Prefix) []*route.Path {
+func (rt *RoutingTable) RemovePfx(pfx *net.Prefix) []*route.Path {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
@@ -102,7 +102,7 @@ func (rt *RoutingTable) RemovePfx(pfx net.Prefix) []*route.Path {
 }
 
 // LPM performs a longest prefix match for pfx on lpm
-func (rt *RoutingTable) LPM(pfx net.Prefix) (res []*route.Route) {
+func (rt *RoutingTable) LPM(pfx *net.Prefix) (res []*route.Route) {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
@@ -115,14 +115,14 @@ func (rt *RoutingTable) LPM(pfx net.Prefix) (res []*route.Route) {
 }
 
 // Get gets the route for pfx from the LPM
-func (rt *RoutingTable) Get(pfx net.Prefix) *route.Route {
+func (rt *RoutingTable) Get(pfx *net.Prefix) *route.Route {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
 	return rt.get(pfx)
 }
 
-func (rt *RoutingTable) get(pfx net.Prefix) *route.Route {
+func (rt *RoutingTable) get(pfx *net.Prefix) *route.Route {
 	if rt.root == nil {
 		return nil
 	}
@@ -135,7 +135,7 @@ func (rt *RoutingTable) get(pfx net.Prefix) *route.Route {
 }
 
 // GetLonger gets prefix pfx and all it's more specifics from the LPM
-func (rt *RoutingTable) GetLonger(pfx net.Prefix) (res []*route.Route) {
+func (rt *RoutingTable) GetLonger(pfx *net.Prefix) (res []*route.Route) {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 

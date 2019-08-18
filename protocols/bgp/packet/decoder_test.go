@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/tflow2/convert"
@@ -548,17 +549,30 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			},
 		},
 		{
-			// 2 withdraws with one path attribute (ORIGIN), valid update
+			// 2 withdraws with mandatory attributes, valid update
 			testNum: 2,
 			input: []byte{
 				0, 5, // Withdrawn Routes Length
 				8, 10, // 10.0.0.0/8
 				16, 192, 168, // 192.168.0.0/16
-				0, 5, // Total Path Attribute Length
+				0, 23, // Total Path Attribute Length
+
 				255,  // Attribute flags
 				1,    // Attribute Type code
 				0, 1, // Length
 				2, // INCOMPLETE
+
+				0, // Flags
+				2, // AS Path
+				8, // Length
+				1, // AS_SEQUENCE
+				3, // Path Length
+				0, 100, 0, 222, 0, 240,
+
+				0,              // Attr. Flags
+				3,              // Next Hop
+				4,              // Attr. Length
+				10, 20, 30, 40, // IP-Address
 			},
 			wantFail: false,
 			expected: &BGPUpdate{
@@ -569,47 +583,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
 					},
 				},
-				TotalPathAttrLen: 5,
-				PathAttributes: &PathAttribute{
-					Optional:       true,
-					Transitive:     true,
-					Partial:        true,
-					ExtendedLength: true,
-					Length:         1,
-					TypeCode:       1,
-					Value:          uint8(2),
-				},
-			},
-		},
-		{
-			// 2 withdraws with two path attributes (ORIGIN + ASPath), valid update
-			testNum: 3,
-			input: []byte{0, 5, 8, 10, 16, 192, 168,
-				0, 14, // Total Path Attribute Length
-
-				255,  // Attribute flags
-				1,    // Attribute Type code (ORIGIN)
-				0, 1, // Length
-				2, // INCOMPLETE
-
-				0,      // Attribute flags
-				2,      // Attribute Type code (AS Path)
-				6,      // Length
-				2,      // Type = AS_SEQUENCE
-				2,      // Path Segment Length
-				59, 65, // AS15169
-				12, 248, // AS3320
-			},
-			wantFail: false,
-			expected: &BGPUpdate{
-				WithdrawnRoutesLen: 5,
-				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
-					},
-				},
-				TotalPathAttrLen: 14,
+				TotalPathAttrLen: 23,
 				PathAttributes: &PathAttribute{
 					Optional:       true,
 					Transitive:     true,
@@ -623,16 +597,22 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						Transitive:     false,
 						Partial:        false,
 						ExtendedLength: false,
-						Length:         6,
+						Length:         8,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
-								Type: 2,
-								ASNs: []uint32{
-									15169,
-									3320,
-								},
+								Type: 1,
+								ASNs: []uint32{100, 222, 240},
 							},
+						},
+						Next: &PathAttribute{
+							Optional:       false,
+							Transitive:     false,
+							Partial:        false,
+							ExtendedLength: false,
+							Length:         4,
+							TypeCode:       3,
+							Value:          net.IPv4FromOctets(10, 20, 30, 40),
 						},
 					},
 				},
@@ -677,74 +657,6 @@ func TestDecodeUpdateMsg(t *testing.T) {
 				12, 248, // AS3320
 			},
 			wantFail: true,
-		},
-		{
-			// 2 withdraws with two path attributes (ORIGIN + ASPath), valid update
-			testNum: 6,
-			input: []byte{0, 5, 8, 10, 16, 192, 168,
-				0, 20, // Total Path Attribute Length
-
-				255,  // Attribute flags
-				1,    // Attribute Type code (ORIGIN)
-				0, 1, // Length
-				2, // INCOMPLETE
-
-				0,      // Attribute flags
-				2,      // Attribute Type code (AS Path)
-				12,     // Length
-				2,      // Type = AS_SEQUENCE
-				2,      // Path Segment Length
-				59, 65, // AS15169
-				12, 248, // AS3320
-				1,      // Type = AS_SET
-				2,      // Path Segment Length
-				59, 65, // AS15169
-				12, 248, // AS3320
-			},
-			wantFail: false,
-			expected: &BGPUpdate{
-				WithdrawnRoutesLen: 5,
-				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
-					},
-				},
-				TotalPathAttrLen: 20,
-				PathAttributes: &PathAttribute{
-					Optional:       true,
-					Transitive:     true,
-					Partial:        true,
-					ExtendedLength: true,
-					Length:         1,
-					TypeCode:       1,
-					Value:          uint8(2),
-					Next: &PathAttribute{
-						Optional:       false,
-						Transitive:     false,
-						Partial:        false,
-						ExtendedLength: false,
-						Length:         12,
-						TypeCode:       2,
-						Value: types.ASPath{
-							{
-								Type: 2,
-								ASNs: []uint32{
-									15169,
-									3320,
-								},
-							},
-							{
-								Type: 1,
-								ASNs: []uint32{
-									15169,
-									3320,
-								},
-							},
-						},
-					},
-				},
-			},
 		},
 		{
 			// 2 withdraws with 3 path attributes (ORIGIN + ASPath, NH), valid update
@@ -801,7 +713,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -889,7 +801,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -990,7 +902,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -1104,7 +1016,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -1234,7 +1146,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 						ExtendedLength: false,
 						Length:         12,
 						TypeCode:       2,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{
@@ -1357,54 +1269,6 @@ func TestDecodeUpdateMsg(t *testing.T) {
 					Transitive: true,
 					TypeCode:   111,
 					Value:      []byte{1, 1, 1, 1},
-				},
-			},
-		},
-		{
-			// 2 withdraws with two path attributes (Communities + Origin), valid update
-			testNum: 17,
-			input: []byte{0, 5, 8, 10, 16, 192, 168,
-				0, 16, // Total Path Attribute Length
-
-				0,          // Attribute flags
-				8,          // Attribute Type code (Community)
-				8,          // Length
-				0, 0, 1, 0, // Arbitrary Community
-				0, 0, 1, 1, // Arbitrary Community
-
-				255,  // Attribute flags
-				1,    // Attribute Type code (ORIGIN)
-				0, 1, // Length
-				2, // INCOMPLETE
-
-			},
-			wantFail: false,
-			expected: &BGPUpdate{
-				WithdrawnRoutesLen: 5,
-				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
-					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
-					},
-				},
-				TotalPathAttrLen: 16,
-				PathAttributes: &PathAttribute{
-					Optional:       false,
-					Transitive:     false,
-					Partial:        false,
-					ExtendedLength: false,
-					Length:         8,
-					TypeCode:       8,
-					Value:          []uint32{256, 257},
-					Next: &PathAttribute{
-						Optional:       true,
-						Transitive:     true,
-						Partial:        true,
-						ExtendedLength: true,
-						Length:         1,
-						TypeCode:       1,
-						Value:          uint8(2),
-					},
 				},
 			},
 		},

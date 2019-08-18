@@ -25,24 +25,24 @@ type Device struct {
 	HardwareAddr net.HardwareAddr
 	Flags        net.Flags
 	OperState    uint8
-	Addrs        []bnet.Prefix
+	Addrs        []*bnet.Prefix
 	l            sync.RWMutex
 }
 
 func newDevice() *Device {
 	return &Device{
-		Addrs: make([]bnet.Prefix, 0),
+		Addrs: make([]*bnet.Prefix, 0),
 	}
 }
 
-func (d *Device) addAddr(pfx bnet.Prefix) {
+func (d *Device) addAddr(pfx *bnet.Prefix) {
 	d.l.Lock()
 	defer d.l.Unlock()
 
 	d.Addrs = append(d.Addrs, pfx)
 }
 
-func (d *Device) delAddr(del bnet.Prefix) {
+func (d *Device) delAddr(del *bnet.Prefix) {
 	d.l.Lock()
 	defer d.l.Unlock()
 
@@ -65,7 +65,7 @@ func (d *Device) copy() *Device {
 		MTU:       d.MTU,
 		Flags:     d.Flags,
 		OperState: d.OperState,
-		Addrs:     make([]bnet.Prefix, len(d.Addrs)),
+		Addrs:     make([]*bnet.Prefix, len(d.Addrs)),
 	}
 
 	copy(n.HardwareAddr, d.HardwareAddr)

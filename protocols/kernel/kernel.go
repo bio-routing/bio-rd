@@ -4,6 +4,7 @@ import (
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
 type Kernel struct {
@@ -11,8 +12,8 @@ type Kernel struct {
 }
 
 type osKernel interface {
-	AddPath(pfx net.Prefix, path *route.Path) error
-	RemovePath(pfx net.Prefix, path *route.Path) bool
+	AddPath(pfx *net.Prefix, path *route.Path) error
+	RemovePath(pfx *net.Prefix, path *route.Path) bool
 	uninit() error
 }
 
@@ -26,11 +27,11 @@ func New() (*Kernel, error) {
 	return k, nil
 }
 
-func (k *Kernel) AddPath(pfx net.Prefix, path *route.Path) error {
+func (k *Kernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 	return k.osKernel.AddPath(pfx, path)
 }
 
-func (k *Kernel) RemovePath(pfx net.Prefix, path *route.Path) bool {
+func (k *Kernel) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 	return k.osKernel.RemovePath(pfx, path)
 }
 
@@ -61,4 +62,19 @@ func (k *Kernel) Dump() []*route.Route {
 
 func (k *Kernel) Dispose() {
 	k.osKernel.uninit()
+}
+
+// ReplaceFilterChain is here to fulfill an interface
+func (k *Kernel) ReplaceFilterChain(c filter.Chain) {
+
+}
+
+// ReplacePath is here to fulfill an interface
+func (k *Kernel) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
+
+}
+
+// RefreshRoute is here to fultill an interface
+func (k *Kernel) RefreshRoute(*net.Prefix, []*route.Path) {
+
 }

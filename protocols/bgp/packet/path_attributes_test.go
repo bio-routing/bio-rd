@@ -19,10 +19,18 @@ func TestDecodePathAttrs(t *testing.T) {
 		{
 			name: "Valid attribute set",
 			input: []byte{
-				0,              // Attr. Flags
-				1,              // Attr. Type Code
-				1,              // Attr. Length
-				1,              // EGP
+				0, // Attr. Flags
+				1, // Attr. Type Code
+				1, // Attr. Length
+				1, // EGP
+
+				0, // Flags
+				2, // AS Path
+				8, // Length
+				1, // AS_SEQUENCE
+				3, // Path Length
+				0, 100, 0, 222, 0, 240,
+
 				0,              // Attr. Flags
 				3,              // Next Hop
 				4,              // Attr. Length
@@ -34,9 +42,19 @@ func TestDecodePathAttrs(t *testing.T) {
 				Length:   1,
 				Value:    uint8(1),
 				Next: &PathAttribute{
-					TypeCode: 3,
-					Length:   4,
-					Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
+					TypeCode: 2,
+					Length:   8,
+					Value: &types.ASPath{
+						{
+							Type: 1,
+							ASNs: []uint32{100, 222, 240},
+						},
+					},
+					Next: &PathAttribute{
+						TypeCode: 3,
+						Length:   4,
+						Value:    bnet.IPv4FromOctets(10, 20, 30, 40),
+					},
 				},
 			},
 		},
@@ -213,7 +231,7 @@ func TestDecodePathAttr(t *testing.T) {
 				TypeCode: ClusterListAttr,
 				Optional: true,
 				Length:   4,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 				},
 			},
@@ -231,7 +249,7 @@ func TestDecodePathAttr(t *testing.T) {
 				TypeCode: ClusterListAttr,
 				Optional: true,
 				Length:   8,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(), bnet.IPv4FromOctets(8, 8, 8, 8).ToUint32(),
 				},
 			},
@@ -353,7 +371,7 @@ func TestDecodeASPath(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 10,
-				Value: types.ASPath{
+				Value: &types.ASPath{
 					types.ASPathSegment{
 						Type: 2,
 						ASNs: []uint32{
@@ -373,7 +391,7 @@ func TestDecodeASPath(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 8,
-				Value: types.ASPath{
+				Value: &types.ASPath{
 					types.ASPathSegment{
 						Type: 1,
 						ASNs: []uint32{
@@ -394,7 +412,7 @@ func TestDecodeASPath(t *testing.T) {
 			use4OctetASNs: true,
 			expected: &PathAttribute{
 				Length: 14,
-				Value: types.ASPath{
+				Value: &types.ASPath{
 					types.ASPathSegment{
 						Type: 1,
 						ASNs: []uint32{
@@ -709,7 +727,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 24,
-				Value: []types.LargeCommunity{
+				Value: &types.LargeCommunities{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -729,7 +747,7 @@ func TestDecodeLargeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  []types.LargeCommunity{},
+				Value:  &types.LargeCommunities{},
 			},
 		},
 	}
@@ -777,7 +795,7 @@ func TestDecodeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 8,
-				Value: []uint32{
+				Value: &types.Communities{
 					131080, 16778241,
 				},
 			},
@@ -788,7 +806,7 @@ func TestDecodeCommunity(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  []uint32{},
+				Value:  &types.Communities{},
 			},
 		},
 	}
@@ -834,7 +852,7 @@ func TestDecodeClusterList(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 0,
-				Value:  []uint32{},
+				Value:  &types.ClusterList{},
 			},
 		},
 		{
@@ -845,7 +863,7 @@ func TestDecodeClusterList(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 4,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 				},
 			},
@@ -858,7 +876,7 @@ func TestDecodeClusterList(t *testing.T) {
 			wantFail: false,
 			expected: &PathAttribute{
 				Length: 8,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(), bnet.IPv4FromOctets(8, 8, 8, 8).ToUint32(),
 				},
 			},
@@ -1519,14 +1537,14 @@ func TestSerializeASPath(t *testing.T) {
 		name        string
 		input       *PathAttribute
 		expected    []byte
-		expectedLen uint8
+		expectedLen uint16
 		use32BitASN bool
 	}{
 		{
 			name: "Test #1",
 			input: &PathAttribute{
 				TypeCode: ASPathAttr,
-				Value: types.ASPath{
+				Value: &types.ASPath{
 					{
 						Type: 2, // Sequence
 						ASNs: []uint32{
@@ -1545,13 +1563,13 @@ func TestSerializeASPath(t *testing.T) {
 				0, 200, // ASN 200
 				0, 210, // ASN 210
 			},
-			expectedLen: 10,
+			expectedLen: 11,
 		},
 		{
 			name: "32bit ASN",
 			input: &PathAttribute{
 				TypeCode: ASPathAttr,
-				Value: types.ASPath{
+				Value: &types.ASPath{
 					{
 						Type: 2, // Sequence
 						ASNs: []uint32{
@@ -1570,7 +1588,7 @@ func TestSerializeASPath(t *testing.T) {
 				0, 0, 0, 200, // ASN 200
 				0, 0, 0, 210, // ASN 210
 			},
-			expectedLen: 16,
+			expectedLen: 17,
 			use32BitASN: true,
 		},
 	}
@@ -1598,13 +1616,13 @@ func TestSerializeLargeCommunities(t *testing.T) {
 		name        string
 		input       *PathAttribute
 		expected    []byte
-		expectedLen uint8
+		expectedLen uint16
 	}{
 		{
 			name: "2 large communities",
 			input: &PathAttribute{
 				TypeCode: LargeCommunitiesAttr,
-				Value: []types.LargeCommunity{
+				Value: &[]types.LargeCommunity{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -1623,13 +1641,13 @@ func TestSerializeLargeCommunities(t *testing.T) {
 				24,                                                                     // Length
 				0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 6, // Communities (1, 2, 3), (4, 5, 6)
 			},
-			expectedLen: 24,
+			expectedLen: 27,
 		},
 		{
 			name: "empty list of communities",
 			input: &PathAttribute{
 				TypeCode: LargeCommunitiesAttr,
-				Value:    []types.LargeCommunity{},
+				Value:    nil,
 			},
 			expected:    []byte{},
 			expectedLen: 0,
@@ -1654,13 +1672,13 @@ func TestSerializeCommunities(t *testing.T) {
 		name        string
 		input       *PathAttribute
 		expected    []byte
-		expectedLen uint8
+		expectedLen uint16
 	}{
 		{
 			name: "2 communities",
 			input: &PathAttribute{
 				TypeCode: CommunitiesAttr,
-				Value: []uint32{
+				Value: &[]uint32{
 					131080, 16778241,
 				},
 			},
@@ -1670,13 +1688,13 @@ func TestSerializeCommunities(t *testing.T) {
 				8,                      // Length
 				0, 2, 0, 8, 1, 0, 4, 1, // Communities (2,8), (256,1025)
 			},
-			expectedLen: 8,
+			expectedLen: 11,
 		},
 		{
 			name: "empty list of communities",
 			input: &PathAttribute{
 				TypeCode: CommunitiesAttr,
-				Value:    []uint32{},
+				Value:    &[]uint32{},
 			},
 			expected:    []byte{},
 			expectedLen: 0,
@@ -1740,10 +1758,10 @@ func TestSerializeClusterList(t *testing.T) {
 		expectedLen uint8
 	}{
 		{
-			name: "Empty list of CluserIDs",
+			name: "Empty list of ClusterIDs",
 			input: &PathAttribute{
 				TypeCode: ClusterListAttr,
-				Value:    []uint32{},
+				Value:    &types.ClusterList{},
 			},
 			expected:    []byte{},
 			expectedLen: 0,
@@ -1752,7 +1770,7 @@ func TestSerializeClusterList(t *testing.T) {
 			name: "One ClusterID",
 			input: &PathAttribute{
 				TypeCode: ClusterListAttr,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 				},
 			},
@@ -1762,13 +1780,13 @@ func TestSerializeClusterList(t *testing.T) {
 				4,                     // Length
 				1, 1, 1, 1,            // ClusterID (1.1.1.1)
 			},
-			expectedLen: 4,
+			expectedLen: 7,
 		},
 		{
 			name: "Two ClusterIDs",
 			input: &PathAttribute{
 				TypeCode: ClusterListAttr,
-				Value: []uint32{
+				Value: &types.ClusterList{
 					bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 					bnet.IPv4FromOctets(192, 168, 23, 42).ToUint32(),
 				},
@@ -1779,7 +1797,7 @@ func TestSerializeClusterList(t *testing.T) {
 				8,                            // Length
 				1, 1, 1, 1, 192, 168, 23, 42, // ClusterID (1.1.1.1)
 			},
-			expectedLen: 8,
+			expectedLen: 11,
 		},
 	}
 
@@ -1816,7 +1834,7 @@ func TestSerializeUnknownAttribute(t *testing.T) {
 				4,          // Length
 				1, 2, 3, 4, // Payload
 			},
-			expectedLen: 6,
+			expectedLen: 7,
 		},
 		{
 			name: "Extended length",
@@ -1846,7 +1864,7 @@ func TestSerializeUnknownAttribute(t *testing.T) {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // Payload
 			},
-			expectedLen: 258,
+			expectedLen: 259,
 		},
 	}
 
@@ -1855,7 +1873,7 @@ func TestSerializeUnknownAttribute(t *testing.T) {
 			buf := bytes.NewBuffer(nil)
 			n := test.input.serializeUnknownAttribute(buf)
 
-			assert.Equal(t, test.expectedLen, n)
+			assert.Equal(t, test.expectedLen, n, test.name)
 			assert.Equal(t, test.expected, buf.Bytes())
 		})
 	}
@@ -1936,7 +1954,7 @@ func TestSerialize(t *testing.T) {
 					Value:    uint8(0),
 					Next: &PathAttribute{
 						TypeCode: ASPathAttr,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{100, 155, 200},
@@ -2033,45 +2051,6 @@ func TestSerialize(t *testing.T) {
 				// NLRI
 				24, 8, 8, 8, // 8.8.8.0/24
 				22, 185, 65, 240, // 185.65.240.0/22
-			},
-		},
-		{
-			name: "Reflected NLRI",
-			msg: &BGPUpdate{
-				NLRI: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 128, 0), 17),
-				},
-				PathAttributes: &PathAttribute{
-					TypeCode: OriginatorIDAttr,
-					Value:    bnet.IPv4FromOctets(9, 8, 7, 6).ToUint32(),
-					Next: &PathAttribute{
-						TypeCode: ClusterListAttr,
-						Value: []uint32{
-							bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(),
-						},
-					},
-				},
-			},
-			expected: []byte{
-				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0, 41, // Length
-				2,    // Msg Type
-				0, 0, // Withdrawn Routes Length
-
-				0, 14, // Total Path Attribute Length
-				// OriginatorID
-				128,        // Attr. Flags (Opt.)
-				9,          // Attr. Type Code
-				4,          // Attr Length
-				9, 8, 7, 6, // 9.8.7.6
-
-				// ClusterList
-				128, // Attr Flags (Opt.)
-				10,  // Attr. Type Code
-				4,
-				1, 2, 3, 4,
-
-				17, 100, 110, 128, // NLRI
 			},
 		},
 	}
@@ -2175,7 +2154,7 @@ func TestSerializeAddPath(t *testing.T) {
 					Value:    uint8(0),
 					Next: &PathAttribute{
 						TypeCode: ASPathAttr,
-						Value: types.ASPath{
+						Value: &types.ASPath{
 							{
 								Type: 2,
 								ASNs: []uint32{100, 155, 200},

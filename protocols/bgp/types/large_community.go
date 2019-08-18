@@ -8,6 +8,21 @@ import (
 	"github.com/bio-routing/bio-rd/route/api"
 )
 
+type LargeCommunities []LargeCommunity
+
+func (lc *LargeCommunities) String() string {
+	if lc == nil {
+		return ""
+	}
+
+	ret := ""
+	for _, x := range *lc {
+		ret += x.String() + " "
+	}
+
+	return ret
+}
+
 // LargeCommunity represents a large community (RFC8195)
 type LargeCommunity struct {
 	GlobalAdministrator uint32

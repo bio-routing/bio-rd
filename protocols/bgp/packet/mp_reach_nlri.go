@@ -14,7 +14,7 @@ import (
 type MultiProtocolReachNLRI struct {
 	AFI     uint16
 	SAFI    uint8
-	NextHop bnet.IP
+	NextHop *bnet.IP
 	NLRI    *NLRI
 }
 
@@ -68,6 +68,7 @@ func deserializeMultiProtocolReachNLRI(b []byte, opt *DecodeOptions) (MultiProto
 	if err != nil {
 		return MultiProtocolReachNLRI{}, errors.Wrap(err, "Failed to decode next hop IP")
 	}
+	n.NextHop = n.NextHop.Dedup()
 	budget -= int(nextHopLength)
 
 	if budget == 0 {

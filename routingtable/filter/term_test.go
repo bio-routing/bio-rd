@@ -12,20 +12,23 @@ import (
 type mockAction struct {
 }
 
-func (*mockAction) Do(p net.Prefix, pa *route.Path) actions.Result {
-	cp := *pa
-	cp.Type = route.OSPFPathType
+func (m *mockAction) Equal(x actions.Action) bool {
+	return false
+}
 
-	return actions.Result{Path: &cp}
+func (*mockAction) Do(p *net.Prefix, pa *route.Path) actions.Result {
+	pa.Type = route.StaticPathType
+
+	return actions.Result{Path: pa}
 }
 
 func TestProcess(t *testing.T) {
 	tests := []struct {
 		name           string
-		prefix         net.Prefix
+		prefix         *net.Prefix
 		path           *route.Path
 		from           []*TermCondition
-		then           []Action
+		then           []actions.Action
 		expectReject   bool
 		expectModified bool
 	}{
@@ -34,7 +37,7 @@ func TestProcess(t *testing.T) {
 			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
 			path:   &route.Path{},
 			from:   []*TermCondition{},
-			then: []Action{
+			then: []actions.Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -48,7 +51,7 @@ func TestProcess(t *testing.T) {
 				NewTermConditionWithPrefixLists(
 					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8))),
 			},
-			then: []Action{
+			then: []actions.Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -62,7 +65,7 @@ func TestProcess(t *testing.T) {
 				NewTermConditionWithPrefixLists(
 					NewPrefixList(net.NewPfx(net.IPv4(0), 32))),
 			},
-			then: []Action{
+			then: []actions.Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -76,7 +79,7 @@ func TestProcess(t *testing.T) {
 				NewTermConditionWithPrefixLists(
 					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8))),
 			},
-			then: []Action{
+			then: []actions.Action{
 				&mockAction{},
 			},
 			expectReject:   false,
@@ -88,9 +91,9 @@ func TestProcess(t *testing.T) {
 			path:   &route.Path{},
 			from: []*TermCondition{
 				NewTermConditionWithRouteFilters(
-					NewRouteFilter(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8), Exact())),
+					NewRouteFilter(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8), NewExactMatcher())),
 			},
-			then: []Action{
+			then: []actions.Action{
 				&mockAction{},
 				&actions.AcceptAction{},
 			},
@@ -104,12 +107,12 @@ func TestProcess(t *testing.T) {
 			from: []*TermCondition{
 				{
 					prefixLists: []*PrefixList{
-						NewPrefixListWithMatcher(Exact(), net.NewPfx(net.IPv4(0), 32)),
+						NewPrefixListWithMatcher(NewExactMatcher(), net.NewPfx(net.IPv4(0), 32)),
 						NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8)),
 					},
 				},
 			},
-			then: []Action{
+			then: []actions.Action{
 				&actions.AcceptAction{},
 			},
 			expectReject:   false,
@@ -119,12 +122,12 @@ func TestProcess(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			term := NewTerm(test.from, test.then)
+			term := NewTerm("some name", test.from, test.then)
 
-			res := term.Process(test.prefix, test.path)
+			res := term.Process(test.prefix, test.path.Copy())
 			assert.Equal(t, test.expectReject, res.Reject, "reject")
 
-			if res.Path != test.path && !test.expectModified {
+			if !res.Path.Equal(test.path) && !test.expectModified {
 				t.Fatal("expected path to be not modified but was")
 			}
 

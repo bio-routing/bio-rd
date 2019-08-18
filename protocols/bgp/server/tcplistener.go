@@ -2,7 +2,6 @@ package server
 
 import (
 	"net"
-	"strconv"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -16,18 +15,13 @@ type TCPListener struct {
 	closeCh chan struct{}
 }
 
-func NewTCPListener(address net.IP, port uint16, ch chan net.Conn) (*TCPListener, error) {
-	proto := "tcp4"
-	if address.To4() == nil {
-		proto = "tcp6"
-	}
-
-	addr, err := net.ResolveTCPAddr(proto, net.JoinHostPort(address.String(), strconv.Itoa(int(port))))
+func NewTCPListener(addr string, ch chan net.Conn) (*TCPListener, error) {
+	tcpaddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := net.ListenTCP(proto, addr)
+	l, err := net.ListenTCP("tcp", tcpaddr)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +32,7 @@ func NewTCPListener(address net.IP, port uint16, ch chan net.Conn) (*TCPListener
 		log.WithFields(log.Fields{
 			"Topic": "Peer",
 			"Key":   addr,
-		}).Warnf("cannot set TTL(=%d) for TCPLisnter: %s", 255, err)
+		}).Warnf("cannot set TTL(=%d) for TCPListener: %s", 255, err)
 	}
 
 	tl := &TCPListener{

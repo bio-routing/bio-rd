@@ -24,8 +24,8 @@ type fsmAddressFamily struct {
 	adjRIBOut routingtable.RouteTableClient
 	rib       *locRIB.LocRIB
 
-	importFilter *filter.Filter
-	exportFilter *filter.Filter
+	importFilterChain filter.Chain
+	exportFilterChain filter.Chain
 
 	updateSender *UpdateSender
 
@@ -39,16 +39,34 @@ type fsmAddressFamily struct {
 
 func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm *FSM) *fsmAddressFamily {
 	return &fsmAddressFamily{
-		afi:          afi,
-		safi:         safi,
-		fsm:          fsm,
-		rib:          family.rib,
-		importFilter: family.importFilter,
-		exportFilter: family.exportFilter,
+		afi:               afi,
+		safi:              safi,
+		fsm:               fsm,
+		rib:               family.rib,
+		importFilterChain: family.importFilterChain,
+		exportFilterChain: family.exportFilterChain,
 		addPathTX: routingtable.ClientOptions{
 			BestOnly: true,
 		},
 	}
+}
+
+func (f *fsmAddressFamily) replaceImportFilterChain(c filter.Chain) {
+	if c.Equal(f.importFilterChain) {
+		return
+	}
+
+	f.importFilterChain = c
+	f.adjRIBIn.ReplaceFilterChain(c)
+}
+
+func (f *fsmAddressFamily) replaceExportFilterChain(c filter.Chain) {
+	if c.Equal(f.exportFilterChain) {
+		return
+	}
+
+	f.exportFilterChain = c
+	f.adjRIBOut.ReplaceFilterChain(c)
 }
 
 func (f *fsmAddressFamily) dumpRIBOut() []*route.Route {
@@ -62,12 +80,12 @@ func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
 func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs := f.rib.GetContributingASNs()
 
-	f.adjRIBIn = adjRIBIn.New(f.importFilter, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = adjRIBIn.New(f.importFilterChain, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 	contributingASNs.Add(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(n, f.exportFilter, !f.addPathTX.BestOnly)
+	f.adjRIBOut = adjRIBOut.New(f.rib, n, f.exportFilterChain, !f.addPathTX.BestOnly)
 
 	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)
@@ -79,11 +97,13 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 }
 
 func (f *fsmAddressFamily) bmpInit() {
-	f.adjRIBIn = adjRIBIn.New(filter.NewAcceptAllFilter(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = adjRIBIn.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 
 	if f.rib != nil {
 		f.adjRIBIn.Register(f.rib)
 	}
+
+	f.initialized = true
 }
 
 func (f *fsmAddressFamily) bmpDispose() {
@@ -158,8 +178,10 @@ func (f *fsmAddressFamily) newRoutePath() *route.Path {
 	return &route.Path{
 		Type: route.BGPPathType,
 		BGPPath: &route.BGPPath{
-			Source: f.fsm.peer.addr,
-			EBGP:   f.fsm.peer.localASN != f.fsm.peer.peerASN,
+			BGPPathA: &route.BGPPathA{
+				Source: f.fsm.peer.addr,
+				EBGP:   f.fsm.peer.localASN != f.fsm.peer.peerASN,
+			},
 		},
 	}
 }
@@ -169,7 +191,7 @@ func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.Mul
 		return
 	}
 
-	path.BGPPath.NextHop = nlri.NextHop
+	path.BGPPath.BGPPathA.NextHop = nlri.NextHop
 
 	for n := nlri.NLRI; n != nil; n = n.Next {
 		f.adjRIBIn.AddPath(n.Prefix, path)
@@ -190,29 +212,29 @@ func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *
 	for pa := attrs; pa != nil; pa = pa.Next {
 		switch pa.TypeCode {
 		case packet.OriginAttr:
-			path.BGPPath.Origin = pa.Value.(uint8)
+			path.BGPPath.BGPPathA.Origin = pa.Value.(uint8)
 		case packet.LocalPrefAttr:
-			path.BGPPath.LocalPref = pa.Value.(uint32)
+			path.BGPPath.BGPPathA.LocalPref = pa.Value.(uint32)
 		case packet.MEDAttr:
-			path.BGPPath.MED = pa.Value.(uint32)
+			path.BGPPath.BGPPathA.MED = pa.Value.(uint32)
 		case packet.NextHopAttr:
-			path.BGPPath.NextHop = pa.Value.(bnet.IP)
+			path.BGPPath.BGPPathA.NextHop = pa.Value.(*bnet.IP)
 		case packet.ASPathAttr:
-			path.BGPPath.ASPath = pa.Value.(types.ASPath)
+			path.BGPPath.ASPath = pa.Value.(*types.ASPath)
 			path.BGPPath.ASPathLen = path.BGPPath.ASPath.Length()
 		case packet.AggregatorAttr:
 			aggr := pa.Value.(types.Aggregator)
-			path.BGPPath.Aggregator = &aggr
+			path.BGPPath.BGPPathA.Aggregator = &aggr
 		case packet.AtomicAggrAttr:
-			path.BGPPath.AtomicAggregate = true
+			path.BGPPath.BGPPathA.AtomicAggregate = true
 		case packet.CommunitiesAttr:
-			path.BGPPath.Communities = pa.Value.([]uint32)
+			path.BGPPath.Communities = pa.Value.(*types.Communities)
 		case packet.LargeCommunitiesAttr:
-			path.BGPPath.LargeCommunities = pa.Value.([]types.LargeCommunity)
+			path.BGPPath.LargeCommunities = pa.Value.(*types.LargeCommunities)
 		case packet.OriginatorIDAttr:
-			path.BGPPath.OriginatorID = pa.Value.(uint32)
+			path.BGPPath.BGPPathA.OriginatorID = pa.Value.(uint32)
 		case packet.ClusterListAttr:
-			path.BGPPath.ClusterList = pa.Value.([]uint32)
+			path.BGPPath.ClusterList = pa.Value.(*types.ClusterList)
 		case packet.MultiProtocolReachNLRICode:
 		case packet.MultiProtocolUnreachNLRICode:
 		default:

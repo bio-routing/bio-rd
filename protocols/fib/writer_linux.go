@@ -17,7 +17,7 @@ import (
 // NetlinkWriter is a locRIB subscriber which serializes routes from the locRIB to the Linux Kernel routing stack
 type NetlinkWriter struct {
 	options *config.Netlink
-	filter  *filter.Filter
+	filter  filter.Chain
 
 	// Routingtable for buffering, to ensure no double writes (a.k.a rtnetlink: file exists)
 	mu        sync.RWMutex
@@ -28,7 +28,7 @@ type NetlinkWriter struct {
 func NewNetlinkWriter(options *config.Netlink) *NetlinkWriter {
 	return &NetlinkWriter{
 		options:   options,
-		filter:    options.ExportFilter,
+		filter:    options.ExportFilterChain,
 		pathTable: make(map[bnet.Prefix][]*route.Path),
 	}
 }
