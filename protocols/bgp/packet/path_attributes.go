@@ -57,8 +57,16 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathA
 	}
 
 	if haveNextHop || haveOrigin || haveASPath {
-		if !haveNextHop || !haveOrigin || !haveASPath {
-			return nil, fmt.Errorf("A mandatory path attribute is missing")
+		if !haveNextHop {
+			return nil, fmt.Errorf("next-hop attribute missing")
+		}
+
+		if !haveOrigin {
+			return nil, fmt.Errorf("origin attribute missing")
+		}
+
+		if !haveASPath {
+			return nil, fmt.Errorf("AS path attribute missing")
 		}
 	}
 
