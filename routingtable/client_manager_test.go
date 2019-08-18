@@ -21,10 +21,10 @@ func (m MockClient) Dump() []*route.Route {
 	return nil
 }
 
-func (m MockClient) AddPath(net.Prefix, *route.Path) error {
+func (m MockClient) AddPath(*net.Prefix, *route.Path) error {
 	return nil
 }
-func (m MockClient) RemovePath(net.Prefix, *route.Path) bool {
+func (m MockClient) RemovePath(*net.Prefix, *route.Path) bool {
 	return false
 }
 func (m MockClient) UpdateNewClient(RouteTableClient) error {
@@ -46,11 +46,11 @@ func (m MockClient) ReplaceFilterChain(c filter.Chain) {
 
 }
 
-func (m MockClient) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+func (m MockClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
 
 }
 
-func (m MockClient) RefreshRoute(net.Prefix, []*route.Path) {
+func (m MockClient) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }
 

@@ -12,7 +12,7 @@ import (
 func TestProcessTerms(t *testing.T) {
 	tests := []struct {
 		name           string
-		prefix         net.Prefix
+		prefix         *net.Prefix
 		path           *route.Path
 		term           *Term
 		expectAccept   bool

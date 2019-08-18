@@ -18,15 +18,15 @@ func NewSetMEDAction(med uint32) *SetMEDAction {
 }
 
 // Do applies the action
-func (a *SetMEDAction) Do(p net.Prefix, pa *route.Path) Result {
+func (a *SetMEDAction) Do(p *net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil {
 		return Result{Path: pa}
 	}
 
-	modified := *pa
-	modified.BGPPath.MED = a.med
+	modified := pa.Copy()
+	modified.BGPPath.BGPPathA.MED = a.med
 
-	return Result{Path: &modified}
+	return Result{Path: modified}
 }
 
 // Equal compares actions

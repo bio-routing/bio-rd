@@ -17,13 +17,13 @@ func TestDeviceCopy(t *testing.T) {
 			name: "Test #1",
 			dev: &Device{
 				Name: "Foo",
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(100), 8),
 				},
 			},
 			expected: &Device{
 				Name: "Foo",
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(100), 8),
 				},
 			},
@@ -41,13 +41,13 @@ func TestDeviceDelAddr(t *testing.T) {
 	tests := []struct {
 		name     string
 		dev      *Device
-		delete   bnet.Prefix
+		delete   *bnet.Prefix
 		expected *Device
 	}{
 		{
 			name: "Test #1",
 			dev: &Device{
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(100), 8),
 					bnet.NewPfx(bnet.IPv4(200), 8),
 					bnet.NewPfx(bnet.IPv4(300), 8),
@@ -55,7 +55,7 @@ func TestDeviceDelAddr(t *testing.T) {
 			},
 			delete: bnet.NewPfx(bnet.IPv4(200), 8),
 			expected: &Device{
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(100), 8),
 					bnet.NewPfx(bnet.IPv4(300), 8),
 				},
@@ -64,7 +64,7 @@ func TestDeviceDelAddr(t *testing.T) {
 		{
 			name: "Test #2",
 			dev: &Device{
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(100), 8),
 					bnet.NewPfx(bnet.IPv4(200), 8),
 					bnet.NewPfx(bnet.IPv4(300), 8),
@@ -72,7 +72,7 @@ func TestDeviceDelAddr(t *testing.T) {
 			},
 			delete: bnet.NewPfx(bnet.IPv4(100), 8),
 			expected: &Device{
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(200), 8),
 					bnet.NewPfx(bnet.IPv4(300), 8),
 				},
@@ -90,19 +90,19 @@ func TestDeviceAddAddr(t *testing.T) {
 	tests := []struct {
 		name     string
 		dev      *Device
-		input    bnet.Prefix
+		input    *bnet.Prefix
 		expected *Device
 	}{
 		{
 			name: "Test #1",
 			dev: &Device{
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(100), 8),
 				},
 			},
 			input: bnet.NewPfx(bnet.IPv4(200), 8),
 			expected: &Device{
-				Addrs: []bnet.Prefix{
+				Addrs: []*bnet.Prefix{
 					bnet.NewPfx(bnet.IPv4(100), 8),
 					bnet.NewPfx(bnet.IPv4(200), 8),
 				},

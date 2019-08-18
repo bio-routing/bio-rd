@@ -8,15 +8,20 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
+	bgpapi "github.com/bio-routing/bio-rd/protocols/bgp/api"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/bio-routing/bio-rd/util/servicewrapper"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 var (
 	configFilePath = flag.String("config.file", "bio-rd.yml", "bio-rd config file")
+	apiPort        = flag.Uint("api_port", 5566, "API server port")
+	metricsPort    = flag.Uint("metrics_port", 55667, "Metrics HTTP server port")
 	sigHUP         = make(chan os.Signal)
 	vrfReg         = vrf.NewVRFRegistry()
 	bgpSrv         bgpserver.BGPServer
@@ -50,6 +55,25 @@ func main() {
 	go configReloader()
 	sigHUP <- syscall.SIGHUP
 	installSignalHandler()
+
+	s := bgpserver.NewBGPAPIServer(bgpSrv)
+	unaryInterceptors := []grpc.UnaryServerInterceptor{}
+	streamInterceptors := []grpc.StreamServerInterceptor{}
+	srv, err := servicewrapper.New(
+		uint16(*apiPort),
+		servicewrapper.HTTP(uint16(*metricsPort)),
+		unaryInterceptors,
+		streamInterceptors,
+	)
+	if err != nil {
+		log.Errorf("failed to listen: %v", err)
+		os.Exit(1)
+	}
+
+	bgpapi.RegisterBgpServiceServer(srv.GRPC(), s)
+	if err := srv.Serve(); err != nil {
+		log.Fatalf("failed to start server: %v", err)
+	}
 
 	select {}
 }

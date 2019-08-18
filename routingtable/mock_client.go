@@ -9,7 +9,7 @@ import (
 )
 
 type RemovePathParams struct {
-	Pfx  net.Prefix
+	Pfx  *net.Prefix
 	Path *route.Path
 }
 
@@ -37,7 +37,7 @@ func (m *RTMockClient) Dump() []*route.Route {
 	return nil
 }
 
-func (m *RTMockClient) AddPath(pfx net.Prefix, p *route.Path) error {
+func (m *RTMockClient) AddPath(pfx *net.Prefix, p *route.Path) error {
 	return nil
 }
 
@@ -58,7 +58,7 @@ func (m *RTMockClient) Unregister(RouteTableClient) {
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (m *RTMockClient) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (m *RTMockClient) RemovePath(pfx *net.Prefix, p *route.Path) bool {
 	params := &RemovePathParams{
 		Path: p,
 		Pfx:  pfx,
@@ -72,8 +72,8 @@ func (m *RTMockClient) RouteCount() int64 {
 	return m.FakeRouteCount
 }
 
-func (m *RTMockClient) RefreshRoute(net.Prefix, []*route.Path) {}
+func (m *RTMockClient) RefreshRoute(*net.Prefix, []*route.Path) {}
 
 func (m *RTMockClient) ReplaceFilterChain(filter.Chain) {}
 
-func (m *RTMockClient) ReplacePath(net.Prefix, *route.Path, *route.Path) {}
+func (m *RTMockClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}

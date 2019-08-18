@@ -69,12 +69,12 @@ func netlinkRouteEquals(a, b *netlink.Route) bool {
 }
 
 // NewNlPathFromRoute creates a new route.FIBPath object from a netlink.Route object
-func NewPathsFromNlRoute(r netlink.Route, kernel bool) (bnet.Prefix, []*route.Path, error) {
-	var src bnet.IP
-	var dst bnet.Prefix
+func NewPathsFromNlRoute(r netlink.Route, kernel bool) (*bnet.Prefix, []*route.Path, error) {
+	var src *bnet.IP
+	var dst *bnet.Prefix
 
 	if r.Src == nil && r.Dst == nil {
-		return bnet.Prefix{}, nil, fmt.Errorf("Cannot create NlPath, since source and destination are both nil")
+		return nil, nil, fmt.Errorf("Cannot create NlPath, since source and destination are both nil")
 	}
 
 	if r.Src == nil && r.Dst != nil {

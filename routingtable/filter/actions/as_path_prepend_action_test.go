@@ -25,7 +25,7 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 0",
 			times: 0,
 			bgpPath: &route.BGPPath{
-				ASPath: types.ASPath{
+				ASPath: &types.ASPath{
 					types.ASPathSegment{
 						Type: types.ASSequence,
 						ASNs: []uint32{12345, 12345},
@@ -40,7 +40,7 @@ func TestAppendPath(t *testing.T) {
 			name:  "append 3",
 			times: 3,
 			bgpPath: &route.BGPPath{
-				ASPath: types.ASPath{
+				ASPath: &types.ASPath{
 					types.ASPathSegment{
 						Type: types.ASSequence,
 						ASNs: []uint32{12345, 15169},

@@ -19,7 +19,7 @@ const (
 // BGPPeerMetrics provides metrics for one BGP session
 type BGPPeerMetrics struct {
 	// IP is the remote IP of the peer
-	IP bnet.IP
+	IP *bnet.IP
 
 	// ASN is the ASN of the peer
 	ASN uint32

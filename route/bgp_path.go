@@ -14,23 +14,45 @@ import (
 
 // BGPPath represents a set of BGP path attributes
 type BGPPath struct {
-	PathIdentifier    uint32
-	NextHop           bnet.IP
-	LocalPref         uint32
-	ASPath            types.ASPath
-	ASPathLen         uint16
-	Origin            uint8
-	MED               uint32
-	EBGP              bool
-	AtomicAggregate   bool
-	Aggregator        *types.Aggregator
-	BGPIdentifier     uint32
-	Source            bnet.IP
-	Communities       []uint32
-	LargeCommunities  []types.LargeCommunity
+	BGPPathA          *BGPPathA
+	ASPath            *types.ASPath
+	ClusterList       *types.ClusterList
+	Communities       *types.Communities
+	LargeCommunities  *types.LargeCommunities
 	UnknownAttributes []types.UnknownPathAttribute
-	OriginatorID      uint32
-	ClusterList       []uint32
+	PathIdentifier    uint32
+	ASPathLen         uint16
+}
+
+// BGPPathA represents cachable BGP path attributes
+type BGPPathA struct {
+	NextHop         *bnet.IP
+	Source          *bnet.IP
+	LocalPref       uint32
+	MED             uint32
+	BGPIdentifier   uint32
+	OriginatorID    uint32
+	Aggregator      *types.Aggregator
+	EBGP            bool
+	AtomicAggregate bool
+	Origin          uint8
+}
+
+// NewBGPPathA creates a new BGPPathA
+func NewBGPPathA() *BGPPathA {
+	return &BGPPathA{
+		NextHop: bnet.IPv4(0),
+		Source:  bnet.IPv4(0),
+	}
+}
+
+func (b *BGPPathA) Dedup() *BGPPathA {
+	return bgpC.get(b)
+}
+
+func (b *BGPPath) Dedup() *BGPPath {
+	b.BGPPathA = b.BGPPathA.Dedup()
+	return b
 }
 
 // ToProto converts BGPPath to proto BGPPath
@@ -41,26 +63,40 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 
 	a := &api.BGPPath{
 		PathIdentifier:    b.PathIdentifier,
-		NextHop:           b.NextHop.ToProto(),
-		LocalPref:         b.LocalPref,
-		AsPath:            b.ASPath.ToProto(),
-		Origin:            uint32(b.Origin),
-		Med:               b.MED,
-		Ebgp:              b.EBGP,
-		BgpIdentifier:     b.BGPIdentifier,
-		Source:            b.Source.ToProto(),
-		Communities:       make([]uint32, len(b.Communities)),
-		LargeCommunities:  make([]*api.LargeCommunity, len(b.LargeCommunities)),
+		NextHop:           b.BGPPathA.NextHop.ToProto(),
+		LocalPref:         b.BGPPathA.LocalPref,
+		Origin:            uint32(b.BGPPathA.Origin),
+		Med:               b.BGPPathA.MED,
+		Ebgp:              b.BGPPathA.EBGP,
+		BgpIdentifier:     b.BGPPathA.BGPIdentifier,
+		Source:            b.BGPPathA.Source.ToProto(),
 		UnknownAttributes: make([]*api.UnknownPathAttribute, len(b.UnknownAttributes)),
-		OriginatorId:      b.OriginatorID,
-		ClusterList:       make([]uint32, len(b.ClusterList)),
+		OriginatorId:      b.BGPPathA.OriginatorID,
 	}
 
-	copy(a.Communities, b.Communities)
-	copy(a.ClusterList, b.ClusterList)
+	if b.ASPath != nil {
+		a.AsPath = b.ASPath.ToProto()
+	}
 
-	for i := range b.LargeCommunities {
-		a.LargeCommunities[i] = b.LargeCommunities[i].ToProto()
+	if a.ClusterList != nil {
+		a.ClusterList = make([]uint32, len(*b.ClusterList))
+		for i := range *b.ClusterList {
+			a.ClusterList[i] = (*b.ClusterList)[i]
+		}
+	}
+
+	if b.Communities != nil {
+		a.Communities = make([]uint32, len(*b.Communities))
+		for i := range *b.Communities {
+			a.Communities[i] = (*b.Communities)[i]
+		}
+	}
+
+	if b.LargeCommunities != nil {
+		a.LargeCommunities = make([]*api.LargeCommunity, len(*b.LargeCommunities))
+		for i := range *b.LargeCommunities {
+			a.LargeCommunities[i] = (*b.LargeCommunities)[i].ToProto()
+		}
 	}
 
 	for i := range b.UnknownAttributes {
@@ -73,28 +109,40 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 // BGPPathFromProtoBGPPath converts a proto BGPPath to BGPPath
 func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
 	p := &BGPPath{
-		PathIdentifier:    pb.PathIdentifier,
-		NextHop:           bnet.IPFromProtoIP(*pb.NextHop),
-		LocalPref:         pb.LocalPref,
-		ASPath:            types.ASPathFromProtoASPath(pb.AsPath),
-		Origin:            uint8(pb.Origin),
-		MED:               pb.Med,
-		EBGP:              pb.Ebgp,
-		BGPIdentifier:     pb.BgpIdentifier,
-		Source:            bnet.IPFromProtoIP(*pb.Source),
-		Communities:       make([]uint32, len(pb.Communities)),
-		LargeCommunities:  make([]types.LargeCommunity, len(pb.LargeCommunities)),
-		UnknownAttributes: make([]types.UnknownPathAttribute, len(pb.UnknownAttributes)),
-		OriginatorID:      pb.OriginatorId,
-		ClusterList:       make([]uint32, len(pb.ClusterList)),
+		BGPPathA: &BGPPathA{
+			NextHop:       bnet.IPFromProtoIP(*pb.NextHop),
+			LocalPref:     pb.LocalPref,
+			OriginatorID:  pb.OriginatorId,
+			Origin:        uint8(pb.Origin),
+			MED:           pb.Med,
+			EBGP:          pb.Ebgp,
+			BGPIdentifier: pb.BgpIdentifier,
+			Source:        bnet.IPFromProtoIP(*pb.Source),
+		},
+		PathIdentifier: pb.PathIdentifier,
+		ASPath:         types.ASPathFromProtoASPath(pb.AsPath),
 	}
 
+	p = p.Dedup()
+
+	communities := make(types.Communities, len(pb.Communities))
+	p.Communities = &communities
+
+	largeCommunities := make(types.LargeCommunities, len(pb.LargeCommunities))
+	p.LargeCommunities = &largeCommunities
+
+	unknownAttr := make([]types.UnknownPathAttribute, len(pb.UnknownAttributes))
+	p.UnknownAttributes = unknownAttr
+
+	cl := make(types.ClusterList, len(pb.ClusterList))
+	p.ClusterList = &cl
+
 	for i := range pb.Communities {
-		p.Communities[i] = pb.Communities[i]
+		(*p.Communities)[i] = pb.Communities[i]
 	}
 
 	for i := range pb.LargeCommunities {
-		p.LargeCommunities[i] = types.LargeCommunityFromProtoCommunity(pb.LargeCommunities[i])
+		(*p.LargeCommunities)[i] = types.LargeCommunityFromProtoCommunity(pb.LargeCommunities[i])
 	}
 
 	for i := range pb.UnknownAttributes {
@@ -102,7 +150,7 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
 	}
 
 	for i := range pb.ClusterList {
-		p.ClusterList[i] = pb.ClusterList[i]
+		(*p.ClusterList)[i] = pb.ClusterList[i]
 	}
 
 	return p
@@ -111,33 +159,35 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
 // Length get's the length of serialized path
 func (b *BGPPath) Length() uint16 {
 	asPathLen := uint16(3)
-	for _, segment := range b.ASPath {
+	for _, segment := range *b.ASPath {
 		asPathLen++
 		asPathLen += uint16(4 * len(segment.ASNs))
 	}
 
 	communitiesLen := uint16(0)
-	if len(b.Communities) != 0 {
-		communitiesLen += 3 + uint16(len(b.Communities)*4)
+	if b.Communities != nil && len(*b.Communities) != 0 {
+		communitiesLen += 3 + uint16(len(*b.Communities)*4)
 	}
 
 	largeCommunitiesLen := uint16(0)
-	if len(b.LargeCommunities) != 0 {
-		largeCommunitiesLen += 3 + uint16(len(b.LargeCommunities)*12)
+	if b.LargeCommunities != nil && len(*b.LargeCommunities) != 0 {
+		largeCommunitiesLen += 3 + uint16(len(*b.LargeCommunities)*12)
 	}
 
 	clusterListLen := uint16(0)
-	if len(b.ClusterList) != 0 {
-		clusterListLen += 3 + uint16(len(b.ClusterList)*4)
+	if b.ClusterList != nil && len(*b.ClusterList) != 0 {
+		clusterListLen += 3 + uint16(len(*b.ClusterList)*4)
 	}
 
 	unknownAttributesLen := uint16(0)
-	for _, unknownAttr := range b.UnknownAttributes {
-		unknownAttributesLen += unknownAttr.WireLength()
+	if b.UnknownAttributes != nil {
+		for _, unknownAttr := range b.UnknownAttributes {
+			unknownAttributesLen += unknownAttr.WireLength()
+		}
 	}
 
 	originatorID := uint16(0)
-	if b.OriginatorID != 0 {
+	if b.BGPPathA.OriginatorID != 0 {
 		originatorID = 4
 	}
 
@@ -146,7 +196,165 @@ func (b *BGPPath) Length() uint16 {
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
 func (b *BGPPath) ECMP(c *BGPPath) bool {
-	return b.LocalPref == c.LocalPref && b.ASPathLen == c.ASPathLen && b.MED == c.MED && b.Origin == c.Origin
+	return b.BGPPathA.LocalPref == c.BGPPathA.LocalPref &&
+		b.ASPathLen == c.ASPathLen &&
+		b.BGPPathA.MED == c.BGPPathA.MED &&
+		b.BGPPathA.Origin == c.BGPPathA.Origin
+}
+
+// Compare checks if paths are the same
+func (b *BGPPath) Compare(c *BGPPath) bool {
+	if b.PathIdentifier != c.PathIdentifier {
+		return false
+	}
+
+	if !b.BGPPathA.compare(c.BGPPathA) {
+		return false
+	}
+
+	if !b.ASPath.Compare(c.ASPath) {
+		return false
+	}
+
+	if !b.compareClusterList(c) {
+		return false
+	}
+
+	if !b.compareCommunities(c) {
+		return false
+	}
+
+	if !b.compareLargeCommunities(c) {
+		return false
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareCommunities(c *BGPPath) bool {
+	if b.Communities == nil && c.Communities == nil {
+		return true
+	}
+
+	if b.Communities != nil && c.Communities == nil {
+		return false
+	}
+
+	if b.Communities == nil && c.Communities != nil {
+		return false
+	}
+
+	if len(*b.Communities) != len(*c.Communities) {
+		return false
+	}
+
+	for i := range *b.Communities {
+		if (*b.Communities)[i] != (*c.Communities)[i] {
+			return false
+		}
+	}
+
+	if !b.compareUnknownAttributes(c) {
+		return false
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareClusterList(c *BGPPath) bool {
+	if b.ClusterList == nil && c.ClusterList == nil {
+		return true
+	}
+
+	if b.ClusterList != nil && c.ClusterList == nil {
+		return false
+	}
+
+	if b.ClusterList == nil && c.ClusterList != nil {
+		return false
+	}
+
+	if len(*b.ClusterList) != len(*c.ClusterList) {
+		return false
+	}
+
+	for i := range *b.ClusterList {
+		if (*b.ClusterList)[i] != (*c.ClusterList)[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareLargeCommunities(c *BGPPath) bool {
+	if b.LargeCommunities == nil && c.LargeCommunities == nil {
+		return true
+	}
+
+	if b.LargeCommunities != nil && c.LargeCommunities == nil {
+		return false
+	}
+
+	if b.LargeCommunities == nil && c.LargeCommunities != nil {
+		return false
+	}
+
+	if len(*b.LargeCommunities) != len(*c.LargeCommunities) {
+		return false
+	}
+
+	for i := range *b.LargeCommunities {
+		if (*b.LargeCommunities)[i] != (*c.LargeCommunities)[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *BGPPath) compareUnknownAttributes(c *BGPPath) bool {
+	if len(b.UnknownAttributes) != len(c.UnknownAttributes) {
+		return false
+	}
+
+	for i := range b.UnknownAttributes {
+		if !b.UnknownAttributes[i].Compare(&c.UnknownAttributes[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *BGPPathA) compare(c *BGPPathA) bool {
+	if b.NextHop.Compare(c.NextHop) != 0 {
+		return false
+	}
+
+	if b.Source.Compare(c.Source) != 0 {
+		return false
+	}
+
+	if b.LocalPref != c.LocalPref || b.MED != c.MED || b.BGPIdentifier != c.BGPIdentifier || b.OriginatorID != c.OriginatorID {
+		return false
+	}
+
+	if b.EBGP != c.EBGP || b.AtomicAggregate != c.AtomicAggregate || b.Origin != c.Origin {
+		return false
+	}
+
+	if b.Aggregator != nil || c.Aggregator != nil {
+		if b.Aggregator != nil && c.Aggregator != nil {
+			if *b.Aggregator != *c.Aggregator {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Equal checks if paths are equal
@@ -160,11 +368,11 @@ func (b *BGPPath) Equal(c *BGPPath) bool {
 
 // Select returns negative if b < c, 0 if paths are equal, positive if b > c
 func (b *BGPPath) Select(c *BGPPath) int8 {
-	if c.LocalPref < b.LocalPref {
+	if c.BGPPathA.LocalPref < b.BGPPathA.LocalPref {
 		return 1
 	}
 
-	if c.LocalPref > b.LocalPref {
+	if c.BGPPathA.LocalPref > b.BGPPathA.LocalPref {
 		return -1
 	}
 
@@ -180,45 +388,45 @@ func (b *BGPPath) Select(c *BGPPath) int8 {
 	}
 
 	// b)
-	if c.Origin > b.Origin {
+	if c.BGPPathA.Origin > b.BGPPathA.Origin {
 		return 1
 	}
 
-	if c.Origin < b.Origin {
+	if c.BGPPathA.Origin < b.BGPPathA.Origin {
 		return -1
 	}
 
 	// c)
-	if c.MED > b.MED {
+	if c.BGPPathA.MED > b.BGPPathA.MED {
 		return 1
 	}
 
-	if c.MED < b.MED {
+	if c.BGPPathA.MED < b.BGPPathA.MED {
 		return -1
 	}
 
 	// d)
-	if c.EBGP && !b.EBGP {
+	if c.BGPPathA.EBGP && !b.BGPPathA.EBGP {
 		return -1
 	}
 
-	if !c.EBGP && b.EBGP {
+	if !c.BGPPathA.EBGP && b.BGPPathA.EBGP {
 		return 1
 	}
 
 	// e) TODO: interior cost (hello IS-IS and OSPF)
 
 	// f) + RFC4456 9. (Route Reflection)
-	bgpIdentifierC := c.BGPIdentifier
-	bgpIdentifierB := b.BGPIdentifier
+	bgpIdentifierC := c.BGPPathA.BGPIdentifier
+	bgpIdentifierB := b.BGPPathA.BGPIdentifier
 
 	// IF an OriginatorID (set by an RR) is present, use this instead of Originator
-	if c.OriginatorID != 0 {
-		bgpIdentifierC = c.OriginatorID
+	if c.BGPPathA.OriginatorID != 0 {
+		bgpIdentifierC = c.BGPPathA.OriginatorID
 	}
 
-	if b.OriginatorID != 0 {
-		bgpIdentifierB = b.OriginatorID
+	if b.BGPPathA.OriginatorID != 0 {
+		bgpIdentifierB = b.BGPPathA.OriginatorID
 	}
 
 	if bgpIdentifierC < bgpIdentifierB {
@@ -229,29 +437,31 @@ func (b *BGPPath) Select(c *BGPPath) int8 {
 		return -1
 	}
 
-	// Additionally check for the shorter ClusterList
-	if len(c.ClusterList) < len(b.ClusterList) {
-		return 1
-	}
+	if c.ClusterList != nil && b.ClusterList != nil {
+		// Additionally check for the shorter ClusterList
+		if len(*c.ClusterList) < len(*b.ClusterList) {
+			return 1
+		}
 
-	if len(c.ClusterList) > len(b.ClusterList) {
-		return -1
+		if len(*c.ClusterList) > len(*b.ClusterList) {
+			return -1
+		}
 	}
 
 	// g)
-	if c.Source.Compare(b.Source) == -1 {
+	if c.BGPPathA.Source.Compare(b.BGPPathA.Source) == -1 {
 		return 1
 	}
 
-	if c.Source.Compare(b.Source) == 1 {
+	if c.BGPPathA.Source.Compare(b.BGPPathA.Source) == 1 {
 		return -1
 	}
 
-	if c.NextHop.Compare(b.NextHop) == -1 {
+	if c.BGPPathA.NextHop.Compare(b.BGPPathA.NextHop) == -1 {
 		return 1
 	}
 
-	if c.NextHop.Compare(b.NextHop) == 1 {
+	if c.BGPPathA.NextHop.Compare(b.BGPPathA.NextHop) == 1 {
 		return -1
 	}
 
@@ -259,11 +469,11 @@ func (b *BGPPath) Select(c *BGPPath) int8 {
 }
 
 func (b *BGPPath) betterECMP(c *BGPPath) bool {
-	if c.LocalPref < b.LocalPref {
+	if c.BGPPathA.LocalPref < b.BGPPathA.LocalPref {
 		return false
 	}
 
-	if c.LocalPref > b.LocalPref {
+	if c.BGPPathA.LocalPref > b.BGPPathA.LocalPref {
 		return true
 	}
 
@@ -275,19 +485,19 @@ func (b *BGPPath) betterECMP(c *BGPPath) bool {
 		return true
 	}
 
-	if c.Origin > b.Origin {
+	if c.BGPPathA.Origin > b.BGPPathA.Origin {
 		return false
 	}
 
-	if c.Origin < b.Origin {
+	if c.BGPPathA.Origin < b.BGPPathA.Origin {
 		return true
 	}
 
-	if c.MED > b.MED {
+	if c.BGPPathA.MED > b.BGPPathA.MED {
 		return false
 	}
 
-	if c.MED < b.MED {
+	if c.BGPPathA.MED < b.BGPPathA.MED {
 		return true
 	}
 
@@ -299,11 +509,11 @@ func (b *BGPPath) better(c *BGPPath) bool {
 		return true
 	}
 
-	if c.BGPIdentifier < b.BGPIdentifier {
+	if c.BGPPathA.BGPIdentifier < b.BGPPathA.BGPIdentifier {
 		return true
 	}
 
-	if c.Source.Compare(b.Source) == -1 {
+	if c.BGPPathA.Source.Compare(b.BGPPathA.Source) == -1 {
 		return true
 	}
 
@@ -315,7 +525,7 @@ func (b *BGPPath) String() string {
 	buf := &strings.Builder{}
 
 	origin := ""
-	switch b.Origin {
+	switch b.BGPPathA.Origin {
 	case 0:
 		origin = "Incomplete"
 	case 1:
@@ -325,23 +535,27 @@ func (b *BGPPath) String() string {
 	}
 
 	bgpType := "internal"
-	if b.EBGP {
+	if b.BGPPathA.EBGP {
 		bgpType = "external"
 	}
 
-	fmt.Fprintf(buf, "Local Pref: %d, ", b.LocalPref)
+	fmt.Fprintf(buf, "Local Pref: %d, ", b.BGPPathA.LocalPref)
 	fmt.Fprintf(buf, "Origin: %s, ", origin)
 	fmt.Fprintf(buf, "AS Path: %v, ", b.ASPath)
 	fmt.Fprintf(buf, "BGP type: %s, ", bgpType)
-	fmt.Fprintf(buf, "NEXT HOP: %s, ", b.NextHop)
-	fmt.Fprintf(buf, "MED: %d, ", b.MED)
+	fmt.Fprintf(buf, "NEXT HOP: %s, ", b.BGPPathA.NextHop)
+	fmt.Fprintf(buf, "MED: %d, ", b.BGPPathA.MED)
 	fmt.Fprintf(buf, "Path ID: %d, ", b.PathIdentifier)
-	fmt.Fprintf(buf, "Source: %s, ", b.Source)
-	fmt.Fprintf(buf, "Communities: %v, ", b.Communities)
-	fmt.Fprintf(buf, "LargeCommunities: %v", b.LargeCommunities)
+	fmt.Fprintf(buf, "Source: %s, ", b.BGPPathA.Source)
+	if b.Communities != nil {
+		fmt.Fprintf(buf, "Communities: %v, ", *b.Communities)
+	}
+	if b.LargeCommunities != nil {
+		fmt.Fprintf(buf, "LargeCommunities: %v", *b.LargeCommunities)
+	}
 
-	if b.OriginatorID != 0 {
-		oid := convert.Uint32Byte(b.OriginatorID)
+	if b.BGPPathA.OriginatorID != 0 {
+		oid := convert.Uint32Byte(b.BGPPathA.OriginatorID)
 		fmt.Fprintf(buf, ", OriginatorID: %d.%d.%d.%d", oid[0], oid[1], oid[2], oid[3])
 	}
 	if b.ClusterList != nil {
@@ -356,7 +570,7 @@ func (b *BGPPath) Print() string {
 	buf := &strings.Builder{}
 
 	origin := ""
-	switch b.Origin {
+	switch b.BGPPathA.Origin {
 	case 0:
 		origin = "Incomplete"
 	case 1:
@@ -366,23 +580,27 @@ func (b *BGPPath) Print() string {
 	}
 
 	bgpType := "internal"
-	if b.EBGP {
+	if b.BGPPathA.EBGP {
 		bgpType = "external"
 	}
 
-	fmt.Fprintf(buf, "\t\tLocal Pref: %d\n", b.LocalPref)
+	fmt.Fprintf(buf, "\t\tLocal Pref: %d\n", b.BGPPathA.LocalPref)
 	fmt.Fprintf(buf, "\t\tOrigin: %s\n", origin)
 	fmt.Fprintf(buf, "\t\tAS Path: %v\n", b.ASPath)
 	fmt.Fprintf(buf, "\t\tBGP type: %s\n", bgpType)
-	fmt.Fprintf(buf, "\t\tNEXT HOP: %s\n", b.NextHop)
-	fmt.Fprintf(buf, "\t\tMED: %d\n", b.MED)
+	fmt.Fprintf(buf, "\t\tNEXT HOP: %s\n", b.BGPPathA.NextHop)
+	fmt.Fprintf(buf, "\t\tMED: %d\n", b.BGPPathA.MED)
 	fmt.Fprintf(buf, "\t\tPath ID: %d\n", b.PathIdentifier)
-	fmt.Fprintf(buf, "\t\tSource: %s\n", b.Source)
-	fmt.Fprintf(buf, "\t\tCommunities: %v\n", b.Communities)
-	fmt.Fprintf(buf, "\t\tLargeCommunities: %v\n", b.LargeCommunities)
+	fmt.Fprintf(buf, "\t\tSource: %s\n", b.BGPPathA.Source)
+	if b.Communities != nil {
+		fmt.Fprintf(buf, "\t\tCommunities: %v\n", *b.Communities)
+	}
+	if b.LargeCommunities != nil {
+		fmt.Fprintf(buf, "\t\tLargeCommunities: %v\n", *b.LargeCommunities)
+	}
 
-	if b.OriginatorID != 0 {
-		oid := convert.Uint32Byte(b.OriginatorID)
+	if b.BGPPathA.OriginatorID != 0 {
+		oid := convert.Uint32Byte(b.BGPPathA.OriginatorID)
 		fmt.Fprintf(buf, "\t\tOriginatorID: %d.%d.%d.%d\n", oid[0], oid[1], oid[2], oid[3])
 	}
 	if b.ClusterList != nil {
@@ -398,39 +616,39 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 		return
 	}
 
-	if len(b.ASPath) == 0 {
+	if len(*b.ASPath) == 0 {
 		b.insertNewASSequence()
 	}
 
-	first := b.ASPath[0]
+	first := (*b.ASPath)[0]
 	if first.Type == types.ASSet {
 		b.insertNewASSequence()
 	}
 
 	for i := 0; i < int(times); i++ {
-		if len(b.ASPath) == types.MaxASNsSegment {
+		if len(*b.ASPath) == types.MaxASNsSegment {
 			b.insertNewASSequence()
 		}
 
-		old := b.ASPath[0].ASNs
+		old := (*b.ASPath)[0].ASNs
 		asns := make([]uint32, len(old)+1)
 		copy(asns[1:], old)
 		asns[0] = asn
-		b.ASPath[0].ASNs = asns
+		(*b.ASPath)[0].ASNs = asns
 	}
 
 	b.ASPathLen = b.ASPath.Length()
 }
 
 func (b *BGPPath) insertNewASSequence() {
-	pa := make(types.ASPath, len(b.ASPath)+1)
-	copy(pa[1:], b.ASPath)
+	pa := make(types.ASPath, len(*b.ASPath)+1)
+	copy(pa[1:], (*b.ASPath))
 	pa[0] = types.ASPathSegment{
 		ASNs: make([]uint32, 0),
 		Type: types.ASSequence,
 	}
 
-	b.ASPath = pa
+	b.ASPath = &pa
 }
 
 // Copy creates a deep copy of a BGPPath
@@ -441,18 +659,28 @@ func (b *BGPPath) Copy() *BGPPath {
 
 	cp := *b
 
-	cp.ASPath = make(types.ASPath, len(cp.ASPath))
-	copy(cp.ASPath, b.ASPath)
+	if cp.ASPath != nil {
+		asPath := make(types.ASPath, len(*cp.ASPath))
+		cp.ASPath = &asPath
+		copy(*cp.ASPath, *b.ASPath)
+	}
 
-	cp.Communities = make([]uint32, len(cp.Communities))
-	copy(cp.Communities, b.Communities)
+	if cp.Communities != nil {
+		communities := make(types.Communities, len(*cp.Communities))
+		cp.Communities = &communities
+		copy(*cp.Communities, *b.Communities)
+	}
 
-	cp.LargeCommunities = make([]types.LargeCommunity, len(cp.LargeCommunities))
-	copy(cp.LargeCommunities, b.LargeCommunities)
+	if cp.LargeCommunities != nil {
+		largeCommunities := make(types.LargeCommunities, len(*cp.LargeCommunities))
+		cp.LargeCommunities = &largeCommunities
+		copy(*cp.LargeCommunities, *b.LargeCommunities)
+	}
 
 	if b.ClusterList != nil {
-		cp.ClusterList = make([]uint32, len(cp.ClusterList))
-		copy(cp.ClusterList, b.ClusterList)
+		clusterList := make(types.ClusterList, len(*cp.ClusterList))
+		cp.ClusterList = &clusterList
+		copy(*cp.ClusterList, *b.ClusterList)
 	}
 
 	return &cp
@@ -460,20 +688,39 @@ func (b *BGPPath) Copy() *BGPPath {
 
 // ComputeHash computes an hash over all attributes of the path
 func (b *BGPPath) ComputeHash() string {
-	s := fmt.Sprintf("%s\t%d\t%v\t%d\t%d\t%v\t%d\t%s\t%v\t%v\t%d\t%d\t%v",
-		b.NextHop,
-		b.LocalPref,
-		b.ASPath,
-		b.Origin,
-		b.MED,
-		b.EBGP,
-		b.BGPIdentifier,
-		b.Source,
-		b.Communities,
-		b.LargeCommunities,
+	s := fmt.Sprintf("%s\t%d\t%s\t%d\t%d\t%v\t%d\t%s\t%s\t%s\t%d\t%s",
+		b.BGPPathA.NextHop.String(),
+		b.BGPPathA.LocalPref,
+		b.ASPath.String(),
+		b.BGPPathA.Origin,
+		b.BGPPathA.MED,
+		b.BGPPathA.EBGP,
+		b.BGPPathA.BGPIdentifier,
+		b.BGPPathA.Source.String(),
+		b.Communities.String(),
+		b.LargeCommunities.String(),
+		b.BGPPathA.OriginatorID,
+		b.ClusterList.String())
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
+}
+
+// ComputeHash computes an hash over all attributes of the path
+func (b *BGPPath) ComputeHashWithPathID() string {
+	s := fmt.Sprintf("%s\t%d\t%s\t%d\t%d\t%v\t%d\t%s\t%s\t%s\t%d\t%d\t%s",
+		b.BGPPathA.NextHop.String(),
+		b.BGPPathA.LocalPref,
+		b.ASPath.String(),
+		b.BGPPathA.Origin,
+		b.BGPPathA.MED,
+		b.BGPPathA.EBGP,
+		b.BGPPathA.BGPIdentifier,
+		b.BGPPathA.Source.String(),
+		b.Communities.String(),
+		b.LargeCommunities.String(),
 		b.PathIdentifier,
-		b.OriginatorID,
-		b.ClusterList)
+		b.BGPPathA.OriginatorID,
+		b.ClusterList.String())
 
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 }
@@ -482,7 +729,7 @@ func (b *BGPPath) ComputeHash() string {
 func (b *BGPPath) CommunitiesString() string {
 	str := &strings.Builder{}
 
-	for i, com := range b.Communities {
+	for i, com := range *b.Communities {
 		if i > 0 {
 			str.WriteByte(' ')
 		}
@@ -496,7 +743,7 @@ func (b *BGPPath) CommunitiesString() string {
 func (b *BGPPath) ClusterListString() string {
 	str := &strings.Builder{}
 
-	for i, cid := range b.ClusterList {
+	for i, cid := range *b.ClusterList {
 		if i > 0 {
 			str.WriteByte(' ')
 		}
@@ -512,7 +759,7 @@ func (b *BGPPath) ClusterListString() string {
 func (b *BGPPath) LargeCommunitiesString() string {
 	str := &strings.Builder{}
 
-	for i, com := range b.LargeCommunities {
+	for i, com := range *b.LargeCommunities {
 		if i > 0 {
 			str.WriteByte(' ')
 		}

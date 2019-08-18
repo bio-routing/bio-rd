@@ -78,6 +78,26 @@ func (p *Path) ToProto() *api.Path {
 	return a
 }
 
+// Compare checks if paths p and q are the same
+func (p *Path) Compare(q *Path) bool {
+	if p == nil || q == nil {
+		return false
+	}
+
+	if p.Type != q.Type {
+		return false
+	}
+
+	switch p.Type {
+	case BGPPathType:
+		return p.BGPPath.Compare(q.BGPPath)
+	case StaticPathType:
+		return p.StaticPath.Compare(q.StaticPath)
+	}
+
+	return false
+}
+
 // Equal checks if paths p and q are equal
 func (p *Path) Equal(q *Path) bool {
 	if p == nil || q == nil {
@@ -174,10 +194,10 @@ func (p *Path) Copy() *Path {
 }
 
 // NextHop returns the next hop IP Address
-func (p *Path) NextHop() bnet.IP {
+func (p *Path) NextHop() *bnet.IP {
 	switch p.Type {
 	case BGPPathType:
-		return p.BGPPath.NextHop
+		return p.BGPPath.BGPPathA.NextHop
 	case StaticPathType:
 		return p.StaticPath.NextHop
 	case FIBPathType:

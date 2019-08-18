@@ -44,3 +44,18 @@ func ParseCommunityString(s string) (uint32, error) {
 
 	return e1<<16 + e2, nil
 }
+
+type Communities []uint32
+
+func (c *Communities) String() string {
+	if c == nil {
+		return ""
+	}
+
+	ret := ""
+	for _, x := range *c {
+		ret += strconv.Itoa(int(x)) + " "
+	}
+
+	return ret
+}
