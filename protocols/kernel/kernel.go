@@ -30,7 +30,7 @@ func New() (*Kernel, error) {
 func (k *Kernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 	return k.osKernel.AddPath(pfx, path)
 }
-  
+
 func (k *Kernel) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 
 	return k.osKernel.RemovePath(pfx, path)
