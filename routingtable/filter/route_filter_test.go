@@ -10,8 +10,8 @@ import (
 func TestInRange(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		begin    uint8
 		end      uint8
 		expected bool
@@ -74,7 +74,7 @@ func TestInRange(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, InRange(test.begin, test.end))
+			f := NewRouteFilter(test.pattern, NewInRangeMatcher(test.begin, test.end))
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}
@@ -83,8 +83,8 @@ func TestInRange(t *testing.T) {
 func TestExact(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		expected bool
 	}{
 		{
@@ -121,7 +121,7 @@ func TestExact(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, Exact())
+			f := NewRouteFilter(test.pattern, NewExactMatcher())
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}
@@ -130,8 +130,8 @@ func TestExact(t *testing.T) {
 func TestOrLonger(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		expected bool
 	}{
 		{
@@ -156,7 +156,7 @@ func TestOrLonger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, OrLonger())
+			f := NewRouteFilter(test.pattern, NewOrLongerMatcher())
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}
@@ -165,8 +165,8 @@ func TestOrLonger(t *testing.T) {
 func TestLonger(t *testing.T) {
 	tests := []struct {
 		name     string
-		prefix   net.Prefix
-		pattern  net.Prefix
+		prefix   *net.Prefix
+		pattern  *net.Prefix
 		expected bool
 	}{
 		{
@@ -191,7 +191,7 @@ func TestLonger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(te *testing.T) {
-			f := NewRouteFilter(test.pattern, Longer())
+			f := NewRouteFilter(test.pattern, NewLongerMatcher())
 			assert.Equal(te, test.expected, f.Matches(test.prefix))
 		})
 	}

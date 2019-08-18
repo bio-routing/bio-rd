@@ -1,12 +1,12 @@
 package server
 
 import (
-	"fmt"
 	"net"
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,6 +20,8 @@ type router struct {
 	reconnectTimer   *time.Timer
 	rib4             *locRIB.LocRIB
 	rib6             *locRIB.LocRIB
+	vrfs             []*vrf.VRF
+	msgCounter       uint64
 }
 
 func (r *router) serve() {
@@ -29,6 +31,7 @@ func (r *router) serve() {
 			log.Errorf("Unable to get message: %v", err)
 			return
 		}
+		r.msgCounter++
 
 		bmpMsg, err := packet.Decode(msg)
 		if err != nil {
@@ -36,8 +39,24 @@ func (r *router) serve() {
 			return
 		}
 
-		// TODO: Finish implementation
-		fmt.Printf("%v\n", bmpMsg)
+		if r.msgCounter == 1 {
+			if bmpMsg.MsgType() != packet.InitiationMessageType {
+				log.Errorf("Invalid message type of first message (%d) for neighbor %s", bmpMsg.MsgType(), r.address.String())
+				return
+			}
+		}
+
+		switch bmpMsg.MsgType() {
+		case packet.TerminationMessageType:
+			log.Infof("BMP neighbor %s has sent a termination message", r.address.String())
+			return
+		case packet.RouteMonitoringType:
+			r.processRouteMonitoringMsg(bmpMsg.(*packet.RouteMonitoringMsg))
+			return
+		}
 	}
+}
+
+func (r *router) processRouteMonitoringMsg(m *packet.RouteMonitoringMsg) {
 
 }

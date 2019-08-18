@@ -18,9 +18,9 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 		addr:     bnet.IPv4FromOctets(169, 254, 100, 100),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 		ipv4: &peerAddressFamily{
-			rib:          locRIB.New("inet.0"),
-			importFilter: filter.NewAcceptAllFilter(),
-			exportFilter: filter.NewAcceptAllFilter(),
+			rib:               locRIB.New("inet.0"),
+			importFilterChain: filter.NewAcceptAllFilterChain(),
+			exportFilterChain: filter.NewAcceptAllFilterChain(),
 		},
 	})
 
@@ -62,10 +62,10 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 
 		update := []byte{
 			255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-			0, 54,
+			0, 61,
 			2,
 			0, 0,
-			0, 26,
+			0, 33,
 			64, // Attribute flags
 			1,  // Attribute Type code (ORIGIN)
 			1,  // Length
@@ -82,6 +82,11 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 			2,      // Path Segment Length
 			59, 65, // AS15169
 			12, 248, // AS3320
+
+			64,
+			3, // Next Hop
+			4, // Length
+			8, 8, 8, 8,
 
 			0,              // Attribute flags
 			3,              // Attribute Type code (Next Hop)
@@ -132,9 +137,9 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 		addr:     bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0xffff, 0, 0, 0, 1),
 		routerID: bnet.IPv4FromOctets(1, 1, 1, 1).ToUint32(),
 		ipv6: &peerAddressFamily{
-			rib:          locRIB.New("inet6.0"),
-			importFilter: filter.NewAcceptAllFilter(),
-			exportFilter: filter.NewAcceptAllFilter(),
+			rib:               locRIB.New("inet6.0"),
+			importFilterChain: filter.NewAcceptAllFilterChain(),
+			exportFilterChain: filter.NewAcceptAllFilterChain(),
 		},
 	})
 

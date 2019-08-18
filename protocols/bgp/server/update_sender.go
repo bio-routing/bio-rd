@@ -8,10 +8,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,7 +33,7 @@ type UpdateSender struct {
 
 type pathPfxs struct {
 	path *route.Path
-	pfxs []bnet.Prefix
+	pfxs []*bnet.Prefix
 }
 
 func newUpdateSender(f *fsmAddressFamily) *UpdateSender {
@@ -69,19 +71,19 @@ func (u *UpdateSender) Destroy() {
 }
 
 // AddPath adds path p for pfx to toSend queue
-func (u *UpdateSender) AddPath(pfx bnet.Prefix, p *route.Path) error {
+func (u *UpdateSender) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 	u.toSendMu.Lock()
 
-	hash := p.BGPPath.ComputeHash()
+	hash := p.BGPPath.ComputeHashWithPathID()
 	if _, exists := u.toSend[hash]; exists {
 		u.toSend[hash].pfxs = append(u.toSend[hash].pfxs, pfx)
 		u.toSendMu.Unlock()
 		return nil
 	}
 
-	u.toSend[p.BGPPath.ComputeHash()] = &pathPfxs{
+	u.toSend[p.BGPPath.ComputeHashWithPathID()] = &pathPfxs{
 		path: p,
-		pfxs: []bnet.Prefix{
+		pfxs: []*bnet.Prefix{
 			pfx,
 		},
 	}
@@ -123,8 +125,8 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 				continue
 			}
 
-			updatesPrefixes := make([][]bnet.Prefix, 0, 1)
-			prefixes := make([]bnet.Prefix, 0, 1)
+			updatesPrefixes := make([][]*bnet.Prefix, 0, 1)
+			prefixes := make([]*bnet.Prefix, 0, 1)
 			for _, pfx := range pathNLRIs.pfxs {
 				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
 
@@ -134,7 +136,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 
 				if budget < 0 {
 					updatesPrefixes = append(updatesPrefixes, prefixes)
-					prefixes = make([]bnet.Prefix, 0, 1)
+					prefixes = make([]*bnet.Prefix, 0, 1)
 					budget = packet.MaxLen - int(pathNLRIs.path.BGPPath.Length()) - overhead
 				}
 
@@ -168,7 +170,7 @@ func (u *UpdateSender) updateOverhead() int {
 	return packet.AFILen + packet.SAFILen + 1 + addrLen - packet.IPv4Len + 1
 }
 
-func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefixes [][]bnet.Prefix, pathID uint32) {
+func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefixes [][]*bnet.Prefix, pathID uint32) {
 	var err error
 	for _, prefixes := range updatePrefixes {
 		update := u.updateMessageForPrefixes(prefixes, pathAttrs, pathID)
@@ -185,7 +187,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 	}
 }
 
-func (u *UpdateSender) updateMessageForPrefixes(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
+func (u *UpdateSender) updateMessageForPrefixes(pfxs []*bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
 	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
 		return u.bgpUpdate(pfxs, pa, pathID)
 	}
@@ -197,7 +199,7 @@ func (u *UpdateSender) updateMessageForPrefixes(pfxs []bnet.Prefix, pa *packet.P
 	return nil
 }
 
-func (u *UpdateSender) bgpUpdate(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
+func (u *UpdateSender) bgpUpdate(pfxs []*bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
 	update := &packet.BGPUpdate{
 		PathAttributes: pa,
 	}
@@ -215,7 +217,7 @@ func (u *UpdateSender) bgpUpdate(pfxs []bnet.Prefix, pa *packet.PathAttribute, p
 	return update
 }
 
-func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
+func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []*bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
 	pa, nextHop := u.copyAttributesWithoutNextHop(pa)
 
 	attrs := &packet.PathAttribute{
@@ -234,7 +236,7 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []bnet.Prefix, pa *packet.Pat
 	}
 }
 
-func (u *UpdateSender) nlriForPrefixes(pfxs []bnet.Prefix, pathID uint32) *packet.NLRI {
+func (u *UpdateSender) nlriForPrefixes(pfxs []*bnet.Prefix, pathID uint32) *packet.NLRI {
 	var prev, res *packet.NLRI
 	for _, pfx := range pfxs {
 		cur := &packet.NLRI{
@@ -255,11 +257,11 @@ func (u *UpdateSender) nlriForPrefixes(pfxs []bnet.Prefix, pathID uint32) *packe
 	return res
 }
 
-func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop bnet.IP) {
+func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (attrs *packet.PathAttribute, nextHop *bnet.IP) {
 	var curCopy, lastCopy *packet.PathAttribute
 	for cur := pa; cur != nil; cur = cur.Next {
 		if cur.TypeCode == packet.NextHopAttr {
-			nextHop = cur.Value.(bnet.IP)
+			nextHop = cur.Value.(*bnet.IP)
 		} else {
 			curCopy = cur.Copy()
 
@@ -276,7 +278,7 @@ func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (a
 }
 
 // RemovePath withdraws prefix `pfx` from a peer
-func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
+func (u *UpdateSender) RemovePath(pfx *bnet.Prefix, p *route.Path) bool {
 	err := u.withdrawPrefix(u.fsm.con, pfx, p)
 	if err != nil {
 		log.Errorf("Unable to withdraw prefix: %v", err)
@@ -286,7 +288,7 @@ func (u *UpdateSender) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	return true
 }
 
-func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
 	if p.Type != route.BGPPathType {
 		return errors.New("wrong path type, expected BGPPathType")
 	}
@@ -306,7 +308,7 @@ func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx bnet.Prefix, p *route.P
 	return u.withdrawPrefixMultiProtocol(out, pfx, p)
 }
 
-func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
 	update := &packet.BGPUpdate{
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
@@ -317,7 +319,7 @@ func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx bnet.Prefix, p *rou
 	return serializeAndSendUpdate(out, update, u.options)
 }
 
-func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx bnet.Prefix, p *route.Path) error {
+func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
 	pathID := uint32(0)
 	if p.BGPPath != nil {
 		pathID = p.BGPPath.PathIdentifier
@@ -365,4 +367,19 @@ func (a *UpdateSender) RegisterWithOptions(client routingtable.RouteTableClient,
 // Unregister unregisters a client
 func (a *UpdateSender) Unregister(client routingtable.RouteTableClient) {
 	a.clientManager.Unregister(client)
+}
+
+// ReplaceFilterChain is here to fulfill an interface
+func (a *UpdateSender) ReplaceFilterChain(c filter.Chain) {
+
+}
+
+// ReplacePath is here to fulfill an interface
+func (a *UpdateSender) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
+
+}
+
+// RefreshRoute is here to fultill an interface
+func (a *UpdateSender) RefreshRoute(*net.Prefix, []*route.Path) {
+
 }

@@ -1,0 +1,79 @@
+routing_options:
+  autonomous_system: 65100
+  router_id: 192.0.2.1
+policy_options:
+  policy_statements:
+    - name: "PeerA-In"
+      terms:
+        - name: "Reject_certain_stuff"
+          from:
+            route_filters:
+              - prefix: "198.51.100.0/24"
+                matcher: "orlonger"
+              - prefix: "203.0.113.0/25"
+                matcher: "exact"
+              - prefix: "203.0.113.128/25"
+                matcher: "exact"
+          then:
+            reject: true
+        - name: "Accept_all_other"
+          then:
+            accept: true
+    - name: "PeerB-In"
+      terms:
+        - name: "ACCEPT-SOME"
+          from:
+            route_filters:
+              - prefix: "198.51.100.0/32"
+                matcher: "exact"
+              - prefix: "203.0.113.0/24"
+                matcher: "orlonger"
+          then:
+            accept: true
+        - name: "REJECT"
+          then:
+            reject: true
+    - name: "ACCEPT_ALL"
+      terms:
+        - name: "ACCEPT_ALL"
+          then:
+            accept: true
+    - name: "REJECT_ALL"
+      terms:
+        - name: "REJECT_ALL"
+          then:
+            reject: true
+    - name: "PeerA-Out"
+      terms:
+        - name: "SET-MED and prepend"
+          then:
+            med: 1337
+            as_path_prepend:
+              asn: 51324
+              count: 20
+            accept: true
+    - name: "PeerA-Out2"
+      terms:
+        - name: "SET-MED and next-hop"
+          then:
+            med: 31337
+            next_hop:
+              address: "127.0.0.1"
+            accept: true
+
+protocols:
+  bgp:
+    groups:
+      - name: "IXP RS Clients"
+        local_address: 192.0.2.1
+        route_server_client: true
+        passive: true
+        neighbors:
+          - peer_address: 192.0.2.2
+            peer_as: 65200
+            import: ["ACCEPT_ALL"]
+            export: ["PeerA-Out2"]
+          - peer_address: 192.0.2.3
+            peer_as: 65300
+            import: ["PeerB-In"]
+            export: ["ACCEPT_ALL"]

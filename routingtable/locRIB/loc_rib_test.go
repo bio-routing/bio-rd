@@ -9,21 +9,21 @@ import (
 )
 
 type pfxPath struct {
-	pfx  bnet.Prefix
+	pfx  *bnet.Prefix
 	path *route.Path
 }
 
 type containsPfxPathTestcase struct {
-	in       []pfxPath
-	check    pfxPath
+	in       []*pfxPath
+	check    *pfxPath
 	expected bool
 }
 
 func TestContainsPfxPath(t *testing.T) {
 	testCases := []containsPfxPathTestcase{
 		{
-			in: []pfxPath{},
-			check: pfxPath{
+			in: []*pfxPath{},
+			check: &pfxPath{
 				pfx:  bnet.NewPfx(bnet.IPv4(1), 32),
 				path: nil,
 			},
@@ -31,7 +31,7 @@ func TestContainsPfxPath(t *testing.T) {
 		},
 		// Not equal path
 		{
-			in: []pfxPath{
+			in: []*pfxPath{
 				{
 					pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 					path: &route.Path{
@@ -42,7 +42,7 @@ func TestContainsPfxPath(t *testing.T) {
 					},
 				},
 			},
-			check: pfxPath{
+			check: &pfxPath{
 				pfx:  bnet.NewPfx(bnet.IPv4(1), 32),
 				path: nil,
 			},
@@ -50,7 +50,7 @@ func TestContainsPfxPath(t *testing.T) {
 		},
 		// Equal
 		{
-			in: []pfxPath{
+			in: []*pfxPath{
 				{
 					pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 					path: &route.Path{
@@ -61,7 +61,7 @@ func TestContainsPfxPath(t *testing.T) {
 					},
 				},
 			},
-			check: pfxPath{
+			check: &pfxPath{
 				pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 				path: &route.Path{
 					Type: route.StaticPathType,

@@ -14,7 +14,7 @@ func TestSetNextHopTest(t *testing.T) {
 	tests := []struct {
 		name     string
 		bgpPath  *route.BGPPath
-		expected net.IP
+		expected *net.IP
 	}{
 		{
 			name: "BGPPath is nil",
@@ -22,7 +22,9 @@ func TestSetNextHopTest(t *testing.T) {
 		{
 			name: "modify path",
 			bgpPath: &route.BGPPath{
-				NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+				BGPPathA: &route.BGPPathA{
+					NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+				},
 			},
 			expected: bnet.IPv4FromOctets(100, 64, 2, 1),
 		},
@@ -36,7 +38,7 @@ func TestSetNextHopTest(t *testing.T) {
 			})
 
 			if test.bgpPath != nil {
-				assert.Equal(t, test.expected, res.Path.BGPPath.NextHop)
+				assert.Equal(t, test.expected, res.Path.BGPPath.BGPPathA.NextHop)
 			}
 		})
 	}

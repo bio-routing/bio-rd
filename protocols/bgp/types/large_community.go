@@ -8,6 +8,21 @@ import (
 	"github.com/bio-routing/bio-rd/route/api"
 )
 
+type LargeCommunities []LargeCommunity
+
+func (lc *LargeCommunities) String() string {
+	if lc == nil {
+		return ""
+	}
+
+	ret := ""
+	for _, x := range *lc {
+		ret += x.String() + " "
+	}
+
+	return ret
+}
+
 // LargeCommunity represents a large community (RFC8195)
 type LargeCommunity struct {
 	GlobalAdministrator uint32
@@ -21,6 +36,15 @@ func (c *LargeCommunity) ToProto() *api.LargeCommunity {
 		GlobalAdministrator: c.GlobalAdministrator,
 		DataPart1:           c.DataPart1,
 		DataPart2:           c.DataPart2,
+	}
+}
+
+// LargeCommunityFromProtoCommunity converts a proto LargeCommunity to LargeCommunity
+func LargeCommunityFromProtoCommunity(alc *api.LargeCommunity) LargeCommunity {
+	return LargeCommunity{
+		GlobalAdministrator: alc.GlobalAdministrator,
+		DataPart1:           alc.DataPart1,
+		DataPart2:           alc.DataPart2,
 	}
 }
 

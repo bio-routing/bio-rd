@@ -3,6 +3,7 @@ package adjRIBOut
 import (
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +34,13 @@ X:
 		maxUint32 = test.maxIDs
 		m := newPathIDManager()
 		for i := 0; i < test.count; i++ {
-			_, err := m.addPath(&route.Path{BGPPath: &route.BGPPath{LocalPref: uint32(i)}})
+			_, err := m.addPath(&route.Path{BGPPath: &route.BGPPath{
+				BGPPathA: &route.BGPPathA{
+					NextHop:   net.IPv4(0),
+					Source:    net.IPv4(0),
+					LocalPref: uint32(i),
+				},
+			}})
 			if err != nil {
 				if test.wantFail {
 					continue X
@@ -65,32 +72,56 @@ func TestReleasePath(t *testing.T) {
 			adds: []*route.Path{
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 0,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 0,
+						},
 					},
 				},
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 1,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 1,
+						},
 					},
 				},
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 2,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 2,
+						},
 					},
 				},
 			},
 			release: &route.Path{BGPPath: &route.BGPPath{
-				LocalPref: 2,
+				BGPPathA: &route.BGPPathA{
+					Source:    net.IPv4(0),
+					NextHop:   net.IPv4(0),
+					LocalPref: 2,
+				},
 			}},
 			expected: []*route.Path{
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 0,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 0,
+						},
 					},
 				},
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 1,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 1,
+						},
 					},
 				},
 			},
@@ -100,37 +131,65 @@ func TestReleasePath(t *testing.T) {
 			adds: []*route.Path{
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 0,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 0,
+						},
 					},
 				},
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 1,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 1,
+						},
 					},
 				},
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 2,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 2,
+						},
 					},
 				},
 			},
 			release: &route.Path{BGPPath: &route.BGPPath{
-				LocalPref: 5,
+				BGPPathA: &route.BGPPathA{
+					Source:    net.IPv4(0),
+					NextHop:   net.IPv4(0),
+					LocalPref: 5,
+				},
 			}},
 			expected: []*route.Path{
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 0,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 0,
+						},
 					},
 				},
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 1,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 1,
+						},
 					},
 				},
 				{
 					BGPPath: &route.BGPPath{
-						LocalPref: 2,
+						BGPPathA: &route.BGPPathA{
+							Source:    net.IPv4(0),
+							NextHop:   net.IPv4(0),
+							LocalPref: 2,
+						},
 					},
 				},
 			},

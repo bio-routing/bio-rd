@@ -4,33 +4,39 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 // AdjRIBOut represents an Adjacency RIB Out with BGP add path
 type AdjRIBOut struct {
-	clientManager *routingtable.ClientManager
-	rt            *routingtable.RoutingTable
-	neighbor      *routingtable.Neighbor
-	addPathTX     bool
-	pathIDManager *pathIDManager
-	exportFilter  *filter.Filter
-	mu            sync.RWMutex
+	clientManager            *routingtable.ClientManager
+	rib                      *locRIB.LocRIB
+	rt                       *routingtable.RoutingTable
+	neighbor                 *routingtable.Neighbor
+	addPathTX                bool
+	pathIDManager            *pathIDManager
+	exportFilterChain        filter.Chain
+	exportFilterChainPending filter.Chain
+	mu                       sync.RWMutex
 }
 
 // New creates a new Adjacency RIB Out with BGP add path
-func New(neighbor *routingtable.Neighbor, exportFilter *filter.Filter, addPathTX bool) *AdjRIBOut {
+func New(rib *locRIB.LocRIB, neighbor *routingtable.Neighbor, exportFilterChain filter.Chain, addPathTX bool) *AdjRIBOut {
 	a := &AdjRIBOut{
-		rt:            routingtable.NewRoutingTable(),
-		neighbor:      neighbor,
-		pathIDManager: newPathIDManager(),
-		exportFilter:  exportFilter,
-		addPathTX:     addPathTX,
+		rib:               rib,
+		rt:                routingtable.NewRoutingTable(),
+		neighbor:          neighbor,
+		pathIDManager:     newPathIDManager(),
+		exportFilterChain: exportFilterChain,
+		addPathTX:         addPathTX,
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 	return a
@@ -59,25 +65,24 @@ func (a *AdjRIBOut) RouteCount() int64 {
 	return a.rt.GetRouteCount()
 }
 
-// AddPath adds path p to prefix `pfx`
-func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
+func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
 		if a.addPathTX {
 			a.removePathsForPrefix(pfx)
 		}
-		return nil
+		return nil, false
 	}
 
 	// Don't export routes learned via iBGP to an iBGP neighbor which is NOT a route reflection client
-	if !p.BGPPath.EBGP && a.neighbor.IBGP && !a.neighbor.RouteReflectorClient {
-		return nil
+	if !p.BGPPath.BGPPathA.EBGP && a.neighbor.IBGP && !a.neighbor.RouteReflectorClient {
+		return nil, false
 	}
 
 	// If the neighbor is an eBGP peer and not a Route Server client modify ASPath and Next Hop
 	p = p.Copy()
 	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
 		p.BGPPath.Prepend(a.neighbor.LocalASN, 1)
-		p.BGPPath.NextHop = a.neighbor.LocalAddress
+		p.BGPPath.BGPPathA.NextHop = a.neighbor.LocalAddress
 	}
 
 	// If the iBGP neighbor is a route reflection client...
@@ -87,28 +92,51 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 		 * This attribute will carry the BGP Identifier of the originator of the route in the local AS.
 		 * A BGP speaker SHOULD NOT create an ORIGINATOR_ID attribute if one already exists.
 		 */
-		if p.BGPPath.OriginatorID == 0 {
-			p.BGPPath.OriginatorID = p.BGPPath.Source.ToUint32()
+		if p.BGPPath.BGPPathA.OriginatorID == 0 {
+			p.BGPPath.BGPPathA.OriginatorID = p.BGPPath.BGPPathA.Source.ToUint32()
 		}
 
 		/*
 		 * When an RR reflects a route, it MUST prepend the local CLUSTER_ID to the CLUSTER_LIST.
 		 * If the CLUSTER_LIST is empty, it MUST create a new one.
 		 */
-		cList := make([]uint32, len(p.BGPPath.ClusterList)+1)
-		copy(cList[1:], p.BGPPath.ClusterList)
+
+		x := 1
+		if p.BGPPath.ClusterList != nil {
+			x += len(*p.BGPPath.ClusterList)
+		}
+		cList := make(types.ClusterList, x)
+		if p.BGPPath.ClusterList != nil {
+			copy(cList[1:], *p.BGPPath.ClusterList)
+		}
 		cList[0] = a.neighbor.ClusterID
-		p.BGPPath.ClusterList = cList
+		p.BGPPath.ClusterList = &cList
 	}
 
-	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	return p, true
+}
+
+// AddPath adds path p to prefix `pfx`
+func (a *AdjRIBOut) AddPath(pfx *bnet.Prefix, p *route.Path) error {
+	p, propagate := a.bgpChecks(pfx, p)
+	if !propagate {
+		return nil
+	}
+
+	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
 		return nil
 	}
 
+	p.BGPPath = p.BGPPath.Dedup()
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	return a.addPath(pfx, p)
+}
+
+func (a *AdjRIBOut) addPath(pfx *bnet.Prefix, p *route.Path) error {
 	if a.addPathTX {
 		pathID, err := a.pathIDManager.addPath(p)
 		if err != nil {
@@ -133,18 +161,22 @@ func (a *AdjRIBOut) AddPath(pfx bnet.Prefix, p *route.Path) error {
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
+func (a *AdjRIBOut) RemovePath(pfx *bnet.Prefix, p *route.Path) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	return a.removePath(pfx, p)
+}
+
+func (a *AdjRIBOut) removePath(pfx *bnet.Prefix, p *route.Path) bool {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
 		return false
 	}
 
-	p, reject := a.exportFilter.ProcessTerms(pfx, p)
+	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
 		return false
 	}
-
-	a.mu.Lock()
-	defer a.mu.Unlock()
 
 	r := a.rt.Get(pfx)
 	if r == nil {
@@ -178,7 +210,7 @@ func (a *AdjRIBOut) RemovePath(pfx bnet.Prefix, p *route.Path) bool {
 	return true
 }
 
-func (a *AdjRIBOut) removePathsForPrefix(pfx bnet.Prefix) bool {
+func (a *AdjRIBOut) removePathsForPrefix(pfx *bnet.Prefix) bool {
 	// We were called before a.AddPath() had a lock, so we need to lock here and release it
 	// after the get to prevent a dead lock as RemovePath() will acquire a lock itself!
 	a.mu.Lock()
@@ -204,19 +236,19 @@ func (a *AdjRIBOut) isOwnPath(p *route.Path) bool {
 
 	switch p.Type {
 	case route.BGPPathType:
-		return p.BGPPath.Source == a.neighbor.Address
+		return p.BGPPath.BGPPathA.Source == a.neighbor.Address
 	}
 
 	return false
 }
 
-func (a *AdjRIBOut) removePathsFromClients(pfx bnet.Prefix, paths []*route.Path) {
+func (a *AdjRIBOut) removePathsFromClients(pfx *bnet.Prefix, paths []*route.Path) {
 	for _, p := range paths {
 		a.removePathFromClients(pfx, p)
 	}
 }
 
-func (a *AdjRIBOut) removePathFromClients(pfx bnet.Prefix, path *route.Path) {
+func (a *AdjRIBOut) removePathFromClients(pfx *bnet.Prefix, path *route.Path) {
 	for _, client := range a.clientManager.Clients() {
 		client.RemovePath(pfx, path)
 	}
@@ -244,4 +276,55 @@ func (a *AdjRIBOut) Register(client routingtable.RouteTableClient) {
 // Unregister unregisters a client
 func (a *AdjRIBOut) Unregister(client routingtable.RouteTableClient) {
 	a.clientManager.Unregister(client)
+}
+
+// ReplaceFilterChain replaces the export filter chain
+func (a *AdjRIBOut) ReplaceFilterChain(c filter.Chain) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	a.exportFilterChainPending = c
+	a.rib.RefreshClient(a)
+	a.exportFilterChain = c
+}
+
+// ReplacePath is here to fulfill an interface
+func (a *AdjRIBOut) ReplacePath(pfx *net.Prefix, old *route.Path, new *route.Path) {
+
+}
+
+// RefreshRoute refreshes a route
+func (a *AdjRIBOut) RefreshRoute(pfx *net.Prefix, ribPaths []*route.Path) {
+	for _, p := range ribPaths {
+		p, propagate := a.bgpChecks(pfx, p)
+		if !propagate {
+			continue
+		}
+
+		currentPath, currentReject := a.exportFilterChain.Process(pfx, p)
+		newPath, newReject := a.exportFilterChainPending.Process(pfx, p)
+
+		if currentReject && newReject {
+			continue
+		}
+
+		if !currentReject && newReject {
+			a.removePath(pfx, currentPath)
+			continue
+		}
+
+		if currentReject && !newReject {
+			a.addPath(pfx, newPath)
+			continue
+		}
+
+		if !currentReject && !newReject {
+			if !currentPath.Equal(newPath) {
+				a.removePath(pfx, currentPath)
+				a.addPath(pfx, newPath)
+			}
+			continue
+		}
+
+	}
 }

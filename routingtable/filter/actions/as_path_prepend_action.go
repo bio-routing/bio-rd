@@ -17,13 +17,30 @@ func NewASPathPrependAction(asn uint32, times uint16) *ASPathPrependAction {
 	}
 }
 
-func (a *ASPathPrependAction) Do(p net.Prefix, pa *route.Path) Result {
+func (a *ASPathPrependAction) Do(p *net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil {
 		return Result{Path: pa}
 	}
 
-	modified := pa.Copy()
-	modified.BGPPath.Prepend(a.asn, a.times)
+	pa.BGPPath.Prepend(a.asn, a.times)
+	return Result{Path: pa}
+}
 
-	return Result{Path: modified}
+// Equal compares actions
+func (a *ASPathPrependAction) Equal(b Action) bool {
+	switch b.(type) {
+	case *ASPathPrependAction:
+	default:
+		return false
+	}
+
+	if a.asn != b.(*ASPathPrependAction).asn {
+		return false
+	}
+
+	if a.times != b.(*ASPathPrependAction).times {
+		return false
+	}
+
+	return true
 }

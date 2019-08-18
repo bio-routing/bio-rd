@@ -14,7 +14,7 @@ import (
 )
 
 func TestMetrics(t *testing.T) {
-	vrf, _ := vrf.New("inet.0")
+	vrf, _ := vrf.New("inet.0", 0)
 	establishedTime := time.Now()
 
 	tests := []struct {
@@ -285,7 +285,7 @@ func TestMetrics(t *testing.T) {
 				fsm.establishedTime = establishedTime
 			}
 
-			s := newBgpServer()
+			s := newBGPServer(0, nil)
 			s.peers.add(test.peer)
 
 			actual, err := s.Metrics()

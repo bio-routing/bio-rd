@@ -11,7 +11,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/bio-routing/bio-rd/config"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -30,8 +29,8 @@ import (
 func main() {
 	go http.ListenAndServe("localhost:1337", nil)
 
-	b := server.NewBgpServer()
-	v, err := vrf.New("master")
+	b := server.NewBGPServer(100, nil)
+	v, err := vrf.New("master", 0)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,10 +43,7 @@ func main() {
 	fmt.Printf("Learning %d routes\n", kEnd*iEnd*jEnd)
 	v.IPv4UnicastRIB().SetCountTarget(uint64(kEnd*iEnd*jEnd), ch)
 
-	err = b.Start(&config.Global{
-		Listen:   false,
-		RouterID: 1000,
-	})
+	err = b.Start()
 	if err != nil {
 		logrus.Fatalf("Unable to start BGP server: %v", err)
 	}
@@ -149,7 +145,7 @@ func main() {
 		panic(err)
 	}
 
-	peerCfg := config.Peer{
+	peerCfg := server.PeerConfig{
 		AdminEnabled:      true,
 		LocalAS:           65200,
 		PeerAS:            200,
@@ -160,9 +156,9 @@ func main() {
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		IPv4: &config.AddressFamilyConfig{
-			ImportFilter: filter.NewAcceptAllFilter(),
-			ExportFilter: filter.NewAcceptAllFilter(),
+		IPv4: &server.AddressFamilyConfig{
+			ImportFilterChain: filter.NewAcceptAllFilterChain(),
+			ExportFilterChain: filter.NewAcceptAllFilterChain(),
 			AddPathSend: routingtable.ClientOptions{
 				MaxPaths: 10,
 			},
@@ -184,4 +180,9 @@ func main() {
 	fmt.Printf("Learning routes took %d ms\n", d/1000000)
 
 	ioutil.WriteFile("profile.pprof", buf.Bytes(), 0644)
+
+	x := bytes.NewBuffer(nil)
+	pprof.WriteHeapProfile(x)
+
+	ioutil.WriteFile("heap.pprof", x.Bytes(), 0644)
 }

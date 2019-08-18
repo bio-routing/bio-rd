@@ -5,10 +5,10 @@ import bnet "github.com/bio-routing/bio-rd/net"
 // Neighbor represents the attributes identifying a neighbor relationship
 type Neighbor struct {
 	// Address is the IPv4 address of the neighbor as integer representation
-	Address bnet.IP
+	Address *bnet.IP
 
 	// Local address is the local address of the BGP TCP connection
-	LocalAddress bnet.IP
+	LocalAddress *bnet.IP
 
 	// Type is the type / protocol used for routing inforation communitation
 	Type uint8

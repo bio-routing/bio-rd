@@ -21,10 +21,52 @@ const (
 // ASPath represents an AS Path (RFC4271)
 type ASPath []ASPathSegment
 
+// Compare compares two AS Paths
+func (a *ASPath) Compare(b *ASPath) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	if len(*a) != len(*b) {
+		return false
+	}
+
+	for i := range *a {
+		if !(*a)[i].Compare((*b)[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // ASPathSegment represents an AS Path Segment (RFC4271)
 type ASPathSegment struct {
 	Type uint8
 	ASNs []uint32
+}
+
+// Compare checks if ASPathSegments are the same
+func (s ASPathSegment) Compare(t ASPathSegment) bool {
+	if s.Type != t.Type {
+		return false
+	}
+
+	if len(s.ASNs) != len(t.ASNs) {
+		return false
+	}
+
+	for i := range s.ASNs {
+		if s.ASNs[i] != t.ASNs[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ToProto converts ASPath to proto ASPath
@@ -32,22 +74,49 @@ func (pa ASPath) ToProto() []*api.ASPathSegment {
 	ret := make([]*api.ASPathSegment, len(pa))
 	for i := range pa {
 		ret[i] = &api.ASPathSegment{
-			ASNs: make([]uint32, len(pa[i].ASNs)),
+			Asns: make([]uint32, len(pa[i].ASNs)),
 		}
 
 		if pa[i].Type == ASSequence {
-			ret[i].ASSequence = true
+			ret[i].AsSequence = true
 		}
 
-		copy(ret[i].ASNs, pa[i].ASNs)
+		copy(ret[i].Asns, pa[i].ASNs)
 	}
 
 	return ret
 }
 
+// ASPathFromProtoASPath converts an proto ASPath to ASPath
+func ASPathFromProtoASPath(segments []*api.ASPathSegment) *ASPath {
+	asPath := make(ASPath, len(segments))
+
+	for i := range segments {
+		s := ASPathSegment{
+			Type: ASSet,
+			ASNs: make([]uint32, len(segments[i].Asns)),
+		}
+
+		if segments[i].AsSequence {
+			s.Type = ASSequence
+		}
+
+		for j := range segments[i].Asns {
+			s.ASNs[j] = segments[i].Asns[j]
+		}
+
+		asPath[i] = s
+	}
+
+	return &asPath
+}
+
 // String converts an ASPath to it's human redable representation
-func (pa ASPath) String() (ret string) {
-	for _, p := range pa {
+func (pa *ASPath) String() (ret string) {
+	if pa == nil {
+		return ""
+	}
+	for _, p := range *pa {
 		if p.Type == ASSet {
 			ret += " ("
 		}

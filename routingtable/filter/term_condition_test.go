@@ -12,7 +12,7 @@ import (
 func TestMatches(t *testing.T) {
 	tests := []struct {
 		name                  string
-		prefix                net.Prefix
+		prefix                *net.Prefix
 		bgpPath               *route.BGPPath
 		prefixLists           []*PrefixList
 		routeFilters          []*RouteFilter
@@ -49,7 +49,7 @@ func TestMatches(t *testing.T) {
 			name:   "no prefixes in prefix list, only route filter matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: true,
 		},
@@ -57,8 +57,8 @@ func TestMatches(t *testing.T) {
 			name:   "no prefixes in prefix list, one route filter matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8), Longer()),
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8), NewLongerMatcher()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: true,
 		},
@@ -66,7 +66,7 @@ func TestMatches(t *testing.T) {
 			name:   "no prefixes in prefix list, one of many route filters matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(127, 0, 0, 1), 8),
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
@@ -77,7 +77,7 @@ func TestMatches(t *testing.T) {
 				NewPrefixList(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8)),
 			},
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
@@ -88,7 +88,7 @@ func TestMatches(t *testing.T) {
 				NewPrefixList(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8)),
 			},
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
@@ -99,7 +99,7 @@ func TestMatches(t *testing.T) {
 				NewPrefixList(net.NewPfx(net.IPv4FromOctets(8, 0, 0, 0), 8)),
 			},
 			routeFilters: []*RouteFilter{
-				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), Longer()),
+				NewRouteFilter(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), NewLongerMatcher()),
 			},
 			expected: false,
 		},
@@ -107,7 +107,7 @@ func TestMatches(t *testing.T) {
 			name:   "community matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			bgpPath: &route.BGPPath{
-				Communities: []uint32{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
+				Communities: &types.Communities{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
 			},
 			communityFilters: []*CommunityFilter{
 				{196612}, // (3,4)
@@ -118,7 +118,7 @@ func TestMatches(t *testing.T) {
 			name:   "community does not match",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			bgpPath: &route.BGPPath{
-				Communities: []uint32{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
+				Communities: &types.Communities{65538, 196612, 327686}, // (1,2) (3,4) (5,6)
 			},
 			communityFilters: []*CommunityFilter{
 				{196608}, // (3,0)
@@ -137,7 +137,7 @@ func TestMatches(t *testing.T) {
 			name:   "large community matches",
 			prefix: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 24),
 			bgpPath: &route.BGPPath{
-				LargeCommunities: []types.LargeCommunity{
+				LargeCommunities: &types.LargeCommunities{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,

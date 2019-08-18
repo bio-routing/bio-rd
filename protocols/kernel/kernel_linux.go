@@ -33,7 +33,7 @@ func (k *Kernel) uninit() error {
 
 type linuxKernel struct {
 	h      *netlink.Handle
-	routes map[bnet.Prefix]struct{}
+	routes map[*bnet.Prefix]struct{}
 }
 
 func newLinuxKernel() (*linuxKernel, error) {
@@ -44,7 +44,7 @@ func newLinuxKernel() (*linuxKernel, error) {
 
 	return &linuxKernel{
 		h:      h,
-		routes: make(map[bnet.Prefix]struct{}),
+		routes: make(map[*bnet.Prefix]struct{}),
 	}, nil
 }
 
@@ -81,7 +81,8 @@ func (lk *linuxKernel) cleanup() error {
 	return nil
 }
 
-func (lk *linuxKernel) AddPath(pfx net.Prefix, path *route.Path) error {
+// AddPath adds a path to the kernel
+func (lk *linuxKernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 	r := &netlink.Route{
 		Protocol: protoBio,
 		Dst:      pfx.GetIPNet(),
@@ -106,7 +107,8 @@ func (lk *linuxKernel) AddPath(pfx net.Prefix, path *route.Path) error {
 	return nil
 }
 
-func (lk *linuxKernel) RemovePath(pfx net.Prefix, path *route.Path) bool {
+// RemovePath removes a path from the kernel
+func (lk *linuxKernel) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 	if _, found := lk.routes[pfx]; !found {
 		return false
 	}
