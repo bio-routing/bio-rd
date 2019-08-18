@@ -8,29 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/*func TestAddPathFullTable(t *testing.T) {
-	f, err := ioutil.ReadFile("/home/takt/prefixes.txt")
-	if err != nil {
-		panic(err)
-	}
-
-	rt := NewRoutingTable()
-	for _, p := range strings.Split(string(f), "\n") {
-		if p == "" {
-			continue
-		}
-		pfx, err := net.PrefixFromString(p)
-		if err != nil {
-			t.Errorf("Unable to render prefix (%q): %v", p, err)
-			return
-		}
-		err = rt.AddPath(pfx, nil)
-		if err != nil {
-			panic(err)
-		}
-	}
-}*/
-
 func TestAddPath(t *testing.T) {
 	tests := []struct {
 		name          string
