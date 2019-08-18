@@ -11,7 +11,7 @@ func TestBIONetIPFromAddr(t *testing.T) {
 	tests := []struct {
 		name     string
 		hostPort string
-		expected bnet.IP
+		expected *bnet.IP
 		wantFail bool
 	}{
 		{

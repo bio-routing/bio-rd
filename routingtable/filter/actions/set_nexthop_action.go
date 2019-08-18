@@ -7,23 +7,24 @@ import (
 )
 
 type SetNextHopAction struct {
-	ip bnet.IP
+	ip *bnet.IP
 }
 
-func NewSetNextHopAction(ip bnet.IP) *SetNextHopAction {
+func NewSetNextHopAction(ip *bnet.IP) *SetNextHopAction {
 	return &SetNextHopAction{
-		ip: ip,
+		ip: ip.Dedup(),
 	}
 }
 
-func (a *SetNextHopAction) Do(p net.Prefix, pa *route.Path) Result {
+func (a *SetNextHopAction) Do(p *net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil {
 		return Result{Path: pa}
 	}
 
-	pa.BGPPath.NextHop = a.ip
+	modified := pa.Copy()
+	modified.BGPPath.BGPPathA.NextHop = a.ip
 
-	return Result{Path: pa}
+	return Result{Path: modified}
 }
 
 // Equal compares actions

@@ -20,7 +20,9 @@ func TestSetLocalPref(t *testing.T) {
 		{
 			name: "modify path",
 			bgpPath: &route.BGPPath{
-				LocalPref: 100,
+				BGPPathA: &route.BGPPathA{
+					LocalPref: 100,
+				},
 			},
 			expectedLocalPref: 150,
 		},
@@ -34,7 +36,7 @@ func TestSetLocalPref(t *testing.T) {
 			})
 
 			if test.expectedLocalPref > 0 {
-				assert.Equal(t, test.expectedLocalPref, res.Path.BGPPath.LocalPref)
+				assert.Equal(t, test.expectedLocalPref, res.Path.BGPPath.BGPPathA.LocalPref)
 			}
 		})
 	}

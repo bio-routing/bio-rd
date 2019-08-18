@@ -91,7 +91,7 @@ func TestProcessAttributes(t *testing.T) {
 	asPath := &packet.PathAttribute{
 		Transitive: true,
 		TypeCode:   packet.ASPathAttr,
-		Value: types.ASPath{
+		Value: &types.ASPath{
 			types.ASPathSegment{
 				Type: types.ASSequence,
 				ASNs: []uint32{},

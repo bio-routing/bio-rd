@@ -7,7 +7,7 @@ import (
 
 // StaticPath represents a static path of a route
 type StaticPath struct {
-	NextHop bnet.IP
+	NextHop *bnet.IP
 }
 
 func (r *Route) staticPathSelection() {
@@ -22,6 +22,11 @@ func (r *Route) staticPathSelection() {
 // Select returns negative if s < t, 0 if paths are equal, positive if s > t
 func (s *StaticPath) Select(t *StaticPath) int8 {
 	return s.NextHop.Compare(t.NextHop)
+}
+
+// Compare checks if paths a and t are the same
+func (s *StaticPath) Compare(t *StaticPath) bool {
+	return s.Equal(t)
 }
 
 // Equal returns true if s and t are euqal

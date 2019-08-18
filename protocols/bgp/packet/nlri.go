@@ -18,7 +18,7 @@ const (
 // NLRI represents a Network Layer Reachability Information
 type NLRI struct {
 	PathIdentifier uint32
-	Prefix         bnet.Prefix
+	Prefix         *bnet.Prefix
 	Next           *NLRI
 }
 

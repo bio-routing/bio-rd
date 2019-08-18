@@ -17,7 +17,7 @@ func NewASPathPrependAction(asn uint32, times uint16) *ASPathPrependAction {
 	}
 }
 
-func (a *ASPathPrependAction) Do(p net.Prefix, pa *route.Path) Result {
+func (a *ASPathPrependAction) Do(p *net.Prefix, pa *route.Path) Result {
 	if pa.BGPPath == nil {
 		return Result{Path: pa}
 	}

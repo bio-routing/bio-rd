@@ -31,7 +31,7 @@ func (f *Filter) Name() string {
 }
 
 // Process processes a filter
-func (f *Filter) Process(p net.Prefix, pa *route.Path) FilterResult {
+func (f *Filter) Process(p *net.Prefix, pa *route.Path) FilterResult {
 	for _, t := range f.terms {
 		res := t.Process(p, pa)
 		if res.Terminate {

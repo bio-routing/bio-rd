@@ -60,7 +60,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			comms := make([]uint32, 0)
+			comms := make(types.Communities, 0)
 			for _, s := range strings.Split(test.communities, " ") {
 				if s == "" {
 					continue
@@ -77,8 +77,10 @@ func TestShouldPropagateUpdate(t *testing.T) {
 			pa := &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
-					Communities: comms,
-					Source:      bnet.IPv4FromOctets(192, 168, 1, 1),
+					Communities: &comms,
+					BGPPathA: &route.BGPPathA{
+						Source: bnet.IPv4FromOctets(192, 168, 1, 1),
+					},
 				},
 			}
 

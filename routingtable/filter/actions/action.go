@@ -7,7 +7,7 @@ import (
 
 // Action performs actions on a `route.Path`
 type Action interface {
-	Do(p net.Prefix, pa *route.Path) Result
+	Do(p *net.Prefix, pa *route.Path) Result
 	Equal(x Action) bool
 }
 

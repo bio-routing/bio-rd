@@ -106,7 +106,7 @@ func (a *AdjRIBIn) ReplaceFilterChain(c filter.Chain) {
 	a.exportFilterChain = c
 }
 
-func (a *AdjRIBIn) ReplacePath(pfx net.Prefix, old *route.Path, new *route.Path) {
+func (a *AdjRIBIn) ReplacePath(pfx *net.Prefix, old *route.Path, new *route.Path) {
 
 }
 
@@ -139,7 +139,7 @@ func (a *AdjRIBIn) RouteCount() int64 {
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
-func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
+func (a *AdjRIBIn) AddPath(pfx *net.Prefix, p *route.Path) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -147,15 +147,15 @@ func (a *AdjRIBIn) AddPath(pfx net.Prefix, p *route.Path) error {
 }
 
 // addPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
-func (a *AdjRIBIn) addPath(pfx net.Prefix, p *route.Path) error {
+func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
-	if p.BGPPath.OriginatorID == a.routerID {
+	if p.BGPPath.BGPPathA.OriginatorID == a.routerID {
 		return nil
 	}
 
 	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
-	if len(p.BGPPath.ClusterList) > 0 {
-		for _, cid := range p.BGPPath.ClusterList {
+	if p.BGPPath.ClusterList != nil && len(*p.BGPPath.ClusterList) > 0 {
+		for _, cid := range *p.BGPPath.ClusterList {
 			if cid == a.clusterID {
 				return nil
 			}
@@ -186,7 +186,11 @@ func (a *AdjRIBIn) addPath(pfx net.Prefix, p *route.Path) error {
 }
 
 func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
-	for _, pathSegment := range p.BGPPath.ASPath {
+	if p.BGPPath.ASPath == nil {
+		return false
+	}
+
+	for _, pathSegment := range *p.BGPPath.ASPath {
 		for _, asn := range pathSegment.ASNs {
 			if a.contributingASNs.IsContributingASN(asn) {
 				return true
@@ -198,7 +202,7 @@ func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
 }
 
 // RemovePath removes the path for prefix `pfx`
-func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
+func (a *AdjRIBIn) RemovePath(pfx *net.Prefix, p *route.Path) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -206,7 +210,7 @@ func (a *AdjRIBIn) RemovePath(pfx net.Prefix, p *route.Path) bool {
 }
 
 // removePath removes the path for prefix `pfx`
-func (a *AdjRIBIn) removePath(pfx net.Prefix, p *route.Path) bool {
+func (a *AdjRIBIn) removePath(pfx *net.Prefix, p *route.Path) bool {
 	r := a.rt.Get(pfx)
 	if r == nil {
 		return false
@@ -229,7 +233,7 @@ func (a *AdjRIBIn) removePath(pfx net.Prefix, p *route.Path) bool {
 	return true
 }
 
-func (a *AdjRIBIn) removePathsFromClients(pfx net.Prefix, paths []*route.Path) {
+func (a *AdjRIBIn) removePathsFromClients(pfx *net.Prefix, paths []*route.Path) {
 	for _, path := range paths {
 		path, reject := a.exportFilterChain.Process(pfx, path)
 		if reject {
@@ -264,6 +268,6 @@ func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
 }
 
 // RefreshRoute is here to fultill an interface
-func (a *AdjRIBIn) RefreshRoute(net.Prefix, []*route.Path) {
+func (a *AdjRIBIn) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }

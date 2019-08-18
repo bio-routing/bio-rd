@@ -13,7 +13,7 @@ func NewRejectAction() *RejectAction {
 	return &RejectAction{}
 }
 
-func (*RejectAction) Do(p net.Prefix, pa *route.Path) Result {
+func (*RejectAction) Do(p *net.Prefix, pa *route.Path) Result {
 	return Result{
 		Path:      pa,
 		Reject:    true,

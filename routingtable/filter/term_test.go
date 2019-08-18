@@ -16,7 +16,7 @@ func (m *mockAction) Equal(x actions.Action) bool {
 	return false
 }
 
-func (*mockAction) Do(p net.Prefix, pa *route.Path) actions.Result {
+func (*mockAction) Do(p *net.Prefix, pa *route.Path) actions.Result {
 	pa.Type = route.StaticPathType
 
 	return actions.Result{Path: pa}
@@ -25,7 +25,7 @@ func (*mockAction) Do(p net.Prefix, pa *route.Path) actions.Result {
 func TestProcess(t *testing.T) {
 	tests := []struct {
 		name           string
-		prefix         net.Prefix
+		prefix         *net.Prefix
 		path           *route.Path
 		from           []*TermCondition
 		then           []actions.Action

@@ -62,10 +62,10 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 
 		update := []byte{
 			255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-			0, 54,
+			0, 61,
 			2,
 			0, 0,
-			0, 26,
+			0, 33,
 			64, // Attribute flags
 			1,  // Attribute Type code (ORIGIN)
 			1,  // Length
@@ -82,6 +82,11 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 			2,      // Path Segment Length
 			59, 65, // AS15169
 			12, 248, // AS3320
+
+			64,
+			3, // Next Hop
+			4, // Length
+			8, 8, 8, 8,
 
 			0,              // Attribute flags
 			3,              // Attribute Type code (Next Hop)

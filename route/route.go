@@ -30,14 +30,14 @@ const (
 
 // Route links a prefix to paths
 type Route struct {
-	pfx       net.Prefix
+	pfx       *net.Prefix
 	mu        sync.Mutex
 	paths     []*Path
 	ecmpPaths uint
 }
 
 // NewRoute generates a new route with path p
-func NewRoute(pfx net.Prefix, p *Path) *Route {
+func NewRoute(pfx *net.Prefix, p *Path) *Route {
 	r := &Route{
 		pfx: pfx,
 	}
@@ -52,7 +52,7 @@ func NewRoute(pfx net.Prefix, p *Path) *Route {
 }
 
 // NewRouteAddPath generates a new route with paths p
-func NewRouteAddPath(pfx net.Prefix, p []*Path) *Route {
+func NewRouteAddPath(pfx *net.Prefix, p []*Path) *Route {
 	r := &Route{
 		pfx: pfx,
 	}
@@ -83,12 +83,12 @@ func (r *Route) Copy() *Route {
 }
 
 // Prefix gets the prefix of route `r`
-func (r *Route) Prefix() net.Prefix {
+func (r *Route) Prefix() *net.Prefix {
 	return r.pfx
 }
 
 // Addr gets a routes address
-func (r *Route) Addr() net.IP {
+func (r *Route) Addr() *net.IP {
 	return r.pfx.Addr()
 }
 
@@ -185,7 +185,7 @@ func (r *Route) ReplacePath(old *Path, new *Path) error {
 func removePath(paths []*Path, remove *Path) []*Path {
 	i := -1
 	for j := range paths {
-		if paths[j].Equal(remove) {
+		if paths[j].Compare(remove) {
 			i = j
 			break
 		}

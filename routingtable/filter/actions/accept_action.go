@@ -15,7 +15,7 @@ func NewAcceptAction() *AcceptAction {
 }
 
 // Do applies the action
-func (*AcceptAction) Do(p net.Prefix, pa *route.Path) Result {
+func (*AcceptAction) Do(p *net.Prefix, pa *route.Path) Result {
 	return Result{
 		Path:      pa,
 		Terminate: true,

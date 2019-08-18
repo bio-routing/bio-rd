@@ -218,12 +218,12 @@ func routeLogFields(route netlink.Route) log.Fields {
 }
 
 // AddPath is Not supported
-func (nr *NetlinkReader) AddPath(bnet.Prefix, *route.Path) error {
+func (nr *NetlinkReader) AddPath(*bnet.Prefix, *route.Path) error {
 	return fmt.Errorf("Not supported")
 }
 
 // RemovePath is Not supported
-func (nr *NetlinkReader) RemovePath(bnet.Prefix, *route.Path) bool {
+func (nr *NetlinkReader) RemovePath(*bnet.Prefix, *route.Path) bool {
 	return false
 }
 
@@ -254,11 +254,11 @@ func (nr *NetlinkReader) ReplaceFilterChain(c filter.Chain) {
 }
 
 // ReplacePath is here to fulfill an interface
-func (nr *NetlinkReader) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+func (nr *NetlinkReader) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
 
 }
 
 // RefreshRoute is here to fultill an interface
-func (nr *NetlinkReader) RefreshRoute(net.Prefix, []*route.Path) {
+func (nr *NetlinkReader) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }

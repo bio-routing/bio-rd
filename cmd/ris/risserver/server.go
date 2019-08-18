@@ -213,7 +213,7 @@ func newRIBClient(fifo *updateFIFO) *ribClient {
 	}
 }
 
-func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
+func (r *ribClient) AddPath(pfx *net.Prefix, path *route.Path) error {
 	r.fifo.queue(&pb.RIBUpdate{
 		Advertisement: true,
 		Route: &routeapi.Route{
@@ -227,7 +227,7 @@ func (r *ribClient) AddPath(pfx net.Prefix, path *route.Path) error {
 	return nil
 }
 
-func (r *ribClient) RemovePath(pfx net.Prefix, path *route.Path) bool {
+func (r *ribClient) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 	r.fifo.queue(&pb.RIBUpdate{
 		Advertisement: false,
 		Route: &routeapi.Route{
@@ -266,11 +266,11 @@ func (r *ribClient) Dump() []*route.Route {
 	return nil
 }
 
-func (r *ribClient) RefreshRoute(net.Prefix, []*route.Path) {}
+func (r *ribClient) RefreshRoute(*net.Prefix, []*route.Path) {}
 
 func (r *ribClient) ReplaceFilterChain(filter.Chain) {}
 
 // ReplacePath is here to fulfill an interface
-func (r *ribClient) ReplacePath(net.Prefix, *route.Path, *route.Path) {
+func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
 
 }

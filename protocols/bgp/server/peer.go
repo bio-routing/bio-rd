@@ -18,8 +18,8 @@ import (
 type peer struct {
 	server    *bgpServer
 	config    *PeerConfig
-	addr      bnet.IP
-	localAddr bnet.IP
+	addr      *bnet.IP
+	localAddr *bnet.IP
 	passive   bool
 	peerASN   uint32
 	localASN  uint32
@@ -49,8 +49,8 @@ type PeerConfig struct {
 	ReconnectInterval          time.Duration
 	KeepAlive                  time.Duration
 	HoldTime                   time.Duration
-	LocalAddress               bnet.IP
-	PeerAddress                bnet.IP
+	LocalAddress               *bnet.IP
+	PeerAddress                *bnet.IP
 	LocalAS                    uint32
 	PeerAS                     uint32
 	Passive                    bool
@@ -384,7 +384,7 @@ func filterOrDefault(c filter.Chain) filter.Chain {
 }
 
 // GetAddr returns the IP address of the peer
-func (p *peer) GetAddr() bnet.IP {
+func (p *peer) GetAddr() *bnet.IP {
 	return p.addr
 }
 

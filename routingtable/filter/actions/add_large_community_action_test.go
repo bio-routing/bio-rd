@@ -12,13 +12,13 @@ import (
 func TestAddingLargeCommunities(t *testing.T) {
 	tests := []struct {
 		name        string
-		current     []types.LargeCommunity
-		communities []types.LargeCommunity
+		current     *types.LargeCommunities
+		communities *types.LargeCommunities
 		expected    string
 	}{
 		{
 			name: "add one to empty",
-			communities: []types.LargeCommunity{
+			communities: &types.LargeCommunities{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
@@ -29,14 +29,14 @@ func TestAddingLargeCommunities(t *testing.T) {
 		},
 		{
 			name: "add one to existing",
-			current: []types.LargeCommunity{
+			current: &types.LargeCommunities{
 				{
 					GlobalAdministrator: 5,
 					DataPart1:           6,
 					DataPart2:           7,
 				},
 			},
-			communities: []types.LargeCommunity{
+			communities: &types.LargeCommunities{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
@@ -47,14 +47,14 @@ func TestAddingLargeCommunities(t *testing.T) {
 		},
 		{
 			name: "add two to existing",
-			current: []types.LargeCommunity{
+			current: &types.LargeCommunities{
 				{
 					GlobalAdministrator: 5,
 					DataPart1:           6,
 					DataPart2:           7,
 				},
 			},
-			communities: []types.LargeCommunity{
+			communities: &types.LargeCommunities{
 				{
 					GlobalAdministrator: 1,
 					DataPart1:           2,
