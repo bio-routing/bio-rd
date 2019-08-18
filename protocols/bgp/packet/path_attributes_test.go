@@ -2050,45 +2050,6 @@ func TestSerialize(t *testing.T) {
 				22, 185, 65, 240, // 185.65.240.0/22
 			},
 		},
-		/*{
-			name: "Reflected NLRI",
-			msg: &BGPUpdate{
-				NLRI: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 128, 0), 17),
-				},
-				PathAttributes: &PathAttribute{
-					TypeCode: OriginatorIDAttr,
-					Value:    bnet.IPv4FromOctets(9, 8, 7, 6).ToUint32(),
-					Next: &PathAttribute{
-						TypeCode: ClusterListAttr,
-						Value: &[]uint32{
-							bnet.IPv4FromOctets(1, 2, 3, 4).ToUint32(),
-						},
-					},
-				},
-			},
-			expected: []byte{
-				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0, 41, // Length
-				2,    // Msg Type
-				0, 0, // Withdrawn Routes Length
-
-				0, 14, // Total Path Attribute Length
-				// OriginatorID
-				128,        // Attr. Flags (Opt.)
-				9,          // Attr. Type Code
-				4,          // Attr Length
-				9, 8, 7, 6, // 9.8.7.6
-
-				// ClusterList
-				128, // Attr Flags (Opt.)
-				10,  // Attr. Type Code
-				4,
-				1, 2, 3, 4,
-
-				17, 100, 110, 128, // NLRI
-			},
-		},*/
 	}
 
 	for _, test := range tests {
