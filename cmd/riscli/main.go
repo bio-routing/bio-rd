@@ -1,35 +1,41 @@
 package main
 
 import (
-	"flag"
 	"os"
 
-	"github.com/prometheus/common/log"
-	"google.golang.org/grpc"
-
-	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
-)
-
-var (
-	risAddress = flag.String("ris", "10.11.2.7:4321", "RIS GRPC address")
-	routerName = flag.String("router", "", "Router name")
-	vrfID      = flag.Uint64("vrf_id", 0, "VRF ID")
+	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 func main() {
-	flag.Parse()
-
-	conn, err := grpc.Dial(*risAddress, grpc.WithInsecure())
-	if err != nil {
-		log.Errorf("GRPC dial failed: %v", err)
-		os.Exit(1)
+	app := cli.NewApp()
+	app.Name = "riscli"
+	app.Usage = "RIS CLI"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "ris",
+			Usage: "RIS GRPC address",
+			Value: "",
+		},
+		cli.StringFlag{
+			Name:  "router",
+			Usage: "Router Name",
+			Value: "",
+		},
+		cli.Uint64Flag{
+			Name:  "vrf_id",
+			Usage: "VRF ID",
+			Value: 0,
+		},
 	}
-	defer conn.Close()
 
-	c := pb.NewRoutingInformationServiceClient(conn)
-	err = dumpRIB(c, *routerName, *vrfID)
+	app.Commands = []cli.Command{
+		NewDumpLocRIBCommand(),
+	}
+
+	err := app.Run(os.Args)
 	if err != nil {
-		log.Errorf("DumpRIB failed: %v", err)
+		log.Error(err)
 		os.Exit(1)
 	}
 }

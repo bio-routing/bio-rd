@@ -9,6 +9,5 @@ import (
 
 func printRoute(ar *api.Route) {
 	r := route.RouteFromProtoRoute(ar)
-	fmt.Println(r.Prefix().String())
 	fmt.Println(r.Print())
 }
