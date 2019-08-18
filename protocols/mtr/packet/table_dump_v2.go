@@ -55,7 +55,7 @@ func (p *PeerIndexTableEntry) Decode(data *bytes.Buffer) error {
 	} else {
 		p.IPSizeBytes = 4
 	}
-	if (flags>>1)&1 == 1 { // 6th bit is set
+	if flags&2 == 2 { // 6th bit is set
 		p.ASSizeBytes = 2
 	} else {
 		p.ASSizeBytes = 4
