@@ -34,6 +34,7 @@ func Decode(input io.Reader, target func(MTRRecord)) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to decode header")
 		}
+		payload.Reset()
 		_, err = io.CopyN(payload, input, int64(record.Length))
 		if err != nil {
 			return errors.Wrap(err, "failed to copy expected message length from input stream")
