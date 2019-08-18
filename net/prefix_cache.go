@@ -28,8 +28,7 @@ func newPfxCache() *pfxCache {
 func (pfxc *pfxCache) get(pfx *Prefix) *Prefix {
 	pfxc.cacheMu.Lock()
 
-	if _, ok := pfxc.cache[*pfx]; ok {
-		x := pfxc.cache[*pfx]
+	if x, ok := pfxc.cache[*pfx]; ok {
 		pfxc.cacheMu.Unlock()
 		return x
 	}

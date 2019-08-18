@@ -28,8 +28,7 @@ func newIPCache() *ipCache {
 func (ipc *ipCache) get(addr *IP) *IP {
 	ipc.cacheMu.Lock()
 
-	if _, ok := ipc.cache[*addr]; ok {
-		x := ipc.cache[*addr]
+	if x, ok := ipc.cache[*addr]; ok {
 		ipc.cacheMu.Unlock()
 		return x
 	}
