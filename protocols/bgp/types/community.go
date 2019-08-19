@@ -52,10 +52,10 @@ func (c *Communities) String() string {
 		return ""
 	}
 
-	ret := ""
+	var b strings.Builder
 	for _, x := range *c {
-		ret += strconv.Itoa(int(x)) + " "
+		fmt.Fprintf(&b, "%d ", x)
 	}
 
-	return ret
+	return b.String()
 }

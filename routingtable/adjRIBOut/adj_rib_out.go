@@ -2,6 +2,7 @@ package adjRIBOut
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -256,16 +257,18 @@ func (a *AdjRIBOut) removePathFromClients(pfx *bnet.Prefix, path *route.Path) {
 
 // Print dumps all prefixes in the Adj-RIB
 func (a *AdjRIBOut) Print() string {
+	var b strings.Builder
+
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	ret := fmt.Sprintf("DUMPING ADJ-RIB-OUT:\n")
+	b.WriteString("DUMPING ADJ-RIB-OUT:\n")
 	routes := a.rt.Dump()
 	for _, r := range routes {
-		ret += fmt.Sprintf("%s\n", r.Prefix().String())
+		fmt.Fprintf(&b, "%s\n", r.Prefix().String())
 	}
 
-	return ret
+	return b.String()
 }
 
 // Register registers a client for updates

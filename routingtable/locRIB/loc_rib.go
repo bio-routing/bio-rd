@@ -2,6 +2,7 @@ package locRIB
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -287,33 +288,35 @@ func (a *LocRIB) ContainsPfxPath(pfx *net.Prefix, p *route.Path) bool {
 }
 
 func (a *LocRIB) String() string {
+	var b strings.Builder
+
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	ret := ""
 	routes := a.rt.Dump()
 	for idx, r := range routes {
 		if idx < len(routes)-1 {
-			ret += fmt.Sprintf("%s, ", r.Prefix().String())
+			fmt.Fprintf(&b, "%s, ", r.Prefix().String())
 		} else {
-			ret += fmt.Sprintf("%s", r.Prefix().String())
+			fmt.Fprintf(&b, "%s", r.Prefix().String())
 		}
 	}
 
-	return ret
+	return b.String()
 }
 
 func (a *LocRIB) Print() string {
+	var b strings.Builder
+	b.WriteString("Loc-RIB DUMP:\n")
+
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	ret := "Loc-RIB DUMP:\n"
-	routes := a.rt.Dump()
-	for _, r := range routes {
-		ret += fmt.Sprintf("%s\n", r.Prefix().String())
+	for _, r := range a.rt.Dump() {
+		fmt.Fprintf(&b, "%s\n", r.Prefix().String())
 	}
 
-	return ret
+	return b.String()
 }
 
 // Register registers a client for updates

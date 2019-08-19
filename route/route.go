@@ -3,6 +3,7 @@ package route
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
@@ -317,11 +318,12 @@ func getBestProtocol(paths []*Path) uint8 {
 
 // Print returns a printable representation of route `r`
 func (r *Route) Print() string {
-	ret := fmt.Sprintf("%s:\n", r.pfx.String())
-	ret += fmt.Sprintf("All Paths:\n")
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "%s:\nAll Paths:\n", r.pfx.String())
 	for _, p := range r.paths {
-		ret += p.Print()
+		b.WriteString(p.Print())
 	}
 
-	return ret
+	return b.String()
 }

@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"strings"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
@@ -93,22 +94,26 @@ func (s *FIBPath) Copy() *FIBPath {
 
 // Print all known information about a route in logfile friendly format
 func (s *FIBPath) String() string {
-	ret := fmt.Sprintf("Source: %s, ", s.Src.String())
-	ret += fmt.Sprintf("NextHop: %s, ", s.NextHop.String())
-	ret += fmt.Sprintf("Priority: %d, ", s.Priority)
-	ret += fmt.Sprintf("Type: %d, ", s.Type)
-	ret += fmt.Sprintf("Table: %d", s.Table)
+	var b strings.Builder
 
-	return ret
+	fmt.Fprintf(&b, "Source: %s, ", s.Src.String())
+	fmt.Fprintf(&b, "NextHop: %s, ", s.NextHop.String())
+	fmt.Fprintf(&b, "Priority: %d, ", s.Priority)
+	fmt.Fprintf(&b, "Type: %d, ", s.Type)
+	fmt.Fprintf(&b, "Table: %d", s.Table)
+
+	return b.String()
 }
 
 // Print all known information about a route in human readable form
 func (s *FIBPath) Print() string {
-	ret := fmt.Sprintf("\t\tSource: %s\n", s.Src.String())
-	ret += fmt.Sprintf("\t\tNextHop: %s\n", s.NextHop.String())
-	ret += fmt.Sprintf("\t\tPriority: %d\n", s.Priority)
-	ret += fmt.Sprintf("\t\tType: %d\n", s.Type)
-	ret += fmt.Sprintf("\t\tTable: %d\n", s.Table)
+	var b strings.Builder
 
-	return ret
+	fmt.Fprintf(&b, "\t\tSource: %s\n", s.Src.String())
+	fmt.Fprintf(&b, "\t\tNextHop: %s\n", s.NextHop.String())
+	fmt.Fprintf(&b, "\t\tPriority: %d\n", s.Priority)
+	fmt.Fprintf(&b, "\t\tType: %d\n", s.Type)
+	fmt.Fprintf(&b, "\t\tTable: %d\n", s.Table)
+
+	return b.String()
 }

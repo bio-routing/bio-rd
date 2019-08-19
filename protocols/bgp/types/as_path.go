@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bio-routing/bio-rd/route/api"
 )
@@ -112,28 +113,32 @@ func ASPathFromProtoASPath(segments []*api.ASPathSegment) *ASPath {
 }
 
 // String converts an ASPath to it's human redable representation
-func (pa *ASPath) String() (ret string) {
+func (pa *ASPath) String() string {
 	if pa == nil {
 		return ""
 	}
+
+	var b strings.Builder
+
 	for _, p := range *pa {
 		if p.Type == ASSet {
-			ret += " ("
+			b.WriteString(" (")
 		}
 		n := len(p.ASNs)
 		for i, asn := range p.ASNs {
 			if i < n-1 {
-				ret += fmt.Sprintf("%d ", asn)
+				fmt.Fprintf(&b, "%d ", asn)
 				continue
 			}
-			ret += fmt.Sprintf("%d", asn)
+
+			fmt.Fprintf(&b, "%d", asn)
 		}
 		if p.Type == ASSet {
-			ret += ")"
+			b.WriteString(" )")
 		}
 	}
 
-	return
+	return b.String()
 }
 
 // Length returns the AS path length as used by path selection

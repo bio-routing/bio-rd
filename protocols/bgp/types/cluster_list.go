@@ -1,6 +1,9 @@
 package types
 
-import "strconv"
+import (
+	"fmt"
+	"strings"
+)
 
 type ClusterList []uint32
 
@@ -9,10 +12,10 @@ func (cl *ClusterList) String() string {
 		return ""
 	}
 
-	ret := ""
+	var b strings.Builder
 	for _, x := range *cl {
-		ret += strconv.Itoa(int(x)) + " "
+		fmt.Fprintf(&b, "%d ", x)
 	}
 
-	return ret
+	return b.String()
 }
