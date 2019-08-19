@@ -15,13 +15,11 @@ type FIB struct {
 
 // NewFIB creates a new Netlink object and returns the pointer to it
 func NewFIB(options *config.Netlink, locRib *locRIB.LocRIB) *FIB {
-
-	n := &FIB{
+	return &FIB{
 		locRib: locRib,
 		//writer: NewNetlinkWriter(options),
 		//reader: NewNetlinkReader(options),
 	}
-	return n
 }
 
 // Start the Netlink module

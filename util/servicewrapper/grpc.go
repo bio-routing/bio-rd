@@ -94,14 +94,12 @@ func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerIn
 
 // HTTP creates an HTTP server instance
 func HTTP(port uint16) *http.Server {
-	h := &http.Server{
+	return &http.Server{
 		Addr:           fmt.Sprintf(":%d", port),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-
-	return h
 }
 
 // Serve starts GRPC and HTTP serving

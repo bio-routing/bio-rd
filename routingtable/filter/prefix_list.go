@@ -16,11 +16,10 @@ func NewPrefixList(pfxs ...*net.Prefix) *PrefixList {
 }
 
 func NewPrefixListWithMatcher(matcher PrefixMatcher, pfxs ...*net.Prefix) *PrefixList {
-	l := &PrefixList{
+	return &PrefixList{
 		allowed: pfxs,
 		matcher: matcher,
 	}
-	return l
 }
 
 func (l *PrefixList) Matches(p *net.Prefix) bool {

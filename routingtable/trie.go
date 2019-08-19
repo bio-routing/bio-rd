@@ -15,12 +15,11 @@ type node struct {
 }
 
 func newNode(pfx *net.Prefix, path *route.Path, skip uint8, dummy bool) *node {
-	n := &node{
+	return &node{
 		route: route.NewRoute(pfx, path),
 		skip:  skip,
 		dummy: dummy,
 	}
-	return n
 }
 
 func (n *node) removePath(pfx *net.Prefix, p *route.Path) (final bool) {
