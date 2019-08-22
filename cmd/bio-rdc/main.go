@@ -48,7 +48,7 @@ func main() {
 }
 
 func show(parts []string) {
-	if parts[0] == "route" {
+	if parts[0] == "routes" {
 		if len(parts) == 1 {
 			return
 		}

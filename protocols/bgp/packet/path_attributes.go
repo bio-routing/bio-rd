@@ -637,7 +637,7 @@ func (pa *PathAttribute) serializeCommunities(buf *bytes.Buffer) uint16 {
 		return 0
 	}
 
-	coms := pa.Value.(*[]uint32)
+	coms := pa.Value.(*types.Communities)
 	if len(*coms) == 0 {
 		return 0
 	}
@@ -673,7 +673,7 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint16 {
 		return 0
 	}
 
-	coms := pa.Value.(*[]types.LargeCommunity)
+	coms := pa.Value.(*types.LargeCommunities)
 	if len(*coms) == 0 {
 		return 0
 	}
