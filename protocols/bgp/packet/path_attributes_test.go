@@ -1619,7 +1619,7 @@ func TestSerializeLargeCommunities(t *testing.T) {
 			name: "2 large communities",
 			input: &PathAttribute{
 				TypeCode: LargeCommunitiesAttr,
-				Value: &[]types.LargeCommunity{
+				Value: &types.LargeCommunities{
 					{
 						GlobalAdministrator: 1,
 						DataPart1:           2,
@@ -1675,7 +1675,7 @@ func TestSerializeCommunities(t *testing.T) {
 			name: "2 communities",
 			input: &PathAttribute{
 				TypeCode: CommunitiesAttr,
-				Value: &[]uint32{
+				Value: &types.Communities{
 					131080, 16778241,
 				},
 			},
@@ -1691,7 +1691,7 @@ func TestSerializeCommunities(t *testing.T) {
 			name: "empty list of communities",
 			input: &PathAttribute{
 				TypeCode: CommunitiesAttr,
-				Value:    &[]uint32{},
+				Value:    &types.Communities{},
 			},
 			expected:    []byte{},
 			expectedLen: 0,
