@@ -137,7 +137,6 @@ func (s *openSentState) openMsgReceived(openMsg *packet.BGPOpen) (state, string)
 
 func (s *openSentState) handleOpenMessage(openMsg *packet.BGPOpen) (state, string) {
 	s.fsm.holdTime = time.Duration(math.Min(float64(s.fsm.peer.holdTime), float64(time.Duration(openMsg.HoldTime)*time.Second)))
-	fmt.Printf("s.fsm.holdTime: %d\n", s.fsm.holdTime)
 	if s.fsm.holdTime != 0 {
 		s.fsm.updateLastUpdateOrKeepalive()
 		s.fsm.keepaliveTime = s.fsm.holdTime / 3
