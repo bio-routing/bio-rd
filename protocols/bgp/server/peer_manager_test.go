@@ -9,7 +9,7 @@ import (
 )
 
 func TestAdd(t *testing.T) {
-	ip := bnet.IPv4FromOctets(192, 168, 0, 1)
+	ip := bnet.IPv4FromOctets(192, 168, 0, 1).Ptr()
 	p := &peer{
 		addr: ip,
 	}
@@ -22,7 +22,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	ip := bnet.IPv4FromOctets(192, 168, 0, 1)
+	ip := bnet.IPv4FromOctets(192, 168, 0, 1).Ptr()
 	p := &peer{
 		addr: ip,
 	}
@@ -36,7 +36,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	ip := bnet.IPv4FromOctets(192, 168, 0, 1)
+	ip := bnet.IPv4FromOctets(192, 168, 0, 1).Ptr()
 	p := &peer{
 		addr: ip,
 	}
@@ -50,10 +50,10 @@ func TestGet(t *testing.T) {
 
 func TestList(t *testing.T) {
 	p1 := &peer{
-		addr: bnet.IPv4FromOctets(192, 168, 0, 1),
+		addr: bnet.IPv4FromOctets(192, 168, 0, 1).Ptr(),
 	}
 	p2 := &peer{
-		addr: bnet.IPv4FromOctets(192, 168, 0, 2),
+		addr: bnet.IPv4FromOctets(192, 168, 0, 2).Ptr(),
 	}
 
 	m := newPeerManager()

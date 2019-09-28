@@ -55,12 +55,12 @@ func TestIPVersion(t *testing.T) {
 	}{
 		{
 			name:     "Test",
-			ip:       IPv4(0),
+			ip:       IPv4(0).Ptr(),
 			expected: true,
 		},
 		{
 			name:     "Test",
-			ip:       IPv6(0, 0),
+			ip:       IPv6(0, 0).Ptr(),
 			expected: false,
 		},
 	}
@@ -229,27 +229,27 @@ func TestIPString(t *testing.T) {
 		expected string
 	}{
 		{
-			ip:       IPv4FromOctets(192, 168, 0, 1),
+			ip:       IPv4FromOctets(192, 168, 0, 1).Ptr(),
 			expected: "192.168.0.1",
 		},
 		{
-			ip:       IPv4FromOctets(0, 0, 0, 0),
+			ip:       IPv4FromOctets(0, 0, 0, 0).Ptr(),
 			expected: "0.0.0.0",
 		},
 		{
-			ip:       IPv4FromOctets(255, 255, 255, 255),
+			ip:       IPv4FromOctets(255, 255, 255, 255).Ptr(),
 			expected: "255.255.255.255",
 		},
 		{
-			ip:       IPv6(0, 0),
+			ip:       IPv6(0, 0).Ptr(),
 			expected: "0:0:0:0:0:0:0:0",
 		},
 		{
-			ip:       IPv6(2306131596687708724, 6230974922281175806),
+			ip:       IPv6(2306131596687708724, 6230974922281175806).Ptr(),
 			expected: "2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
 		},
 		{
-			ip:       IPv6(^uint64(0), ^uint64(0)),
+			ip:       IPv6(^uint64(0), ^uint64(0)).Ptr(),
 			expected: "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF",
 		},
 	}
@@ -267,12 +267,12 @@ func TestBytes(t *testing.T) {
 	}{
 		{
 			name:     "IPv4 172.217.16.195",
-			ip:       IPv4(2899906755),
+			ip:       IPv4(2899906755).Ptr(),
 			expected: []byte{172, 217, 16, 195},
 		},
 		{
 			name:     "IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
-			ip:       IPv6(2306131596687708724, 6230974922281175806),
+			ip:       IPv6(2306131596687708724, 6230974922281175806).Ptr(),
 			expected: []byte{32, 1, 6, 120, 1, 224, 18, 52, 86, 120, 222, 173, 190, 239, 202, 254},
 		},
 	}
@@ -321,7 +321,7 @@ func TestIPv4FromOctets(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, IPv4FromOctets(test.octets[0], test.octets[1], test.octets[2], test.octets[3]))
+			assert.Equal(t, test.expected, IPv4FromOctets(test.octets[0], test.octets[1], test.octets[2], test.octets[3]).Ptr())
 		})
 	}
 }
@@ -361,7 +361,7 @@ func TestIPv6FromBlocks(t *testing.T) {
 				test.blocks[4],
 				test.blocks[5],
 				test.blocks[6],
-				test.blocks[7]))
+				test.blocks[7]).Ptr())
 		})
 	}
 }
@@ -404,7 +404,14 @@ func TestIPFromBytes(t *testing.T) {
 				t.Fatalf("Expected test to fail, but did not")
 			}
 
-			assert.Equal(t, test.expected, ip)
+			if test.wantFail {
+				if err == nil {
+					t.Fatalf("Unexpected success")
+				}
+				return
+			}
+
+			assert.Equal(t, test.expected, ip.Ptr())
 		})
 	}
 }
@@ -417,7 +424,7 @@ func TestToNetIP(t *testing.T) {
 	}{
 		{
 			name:     "IPv4",
-			ip:       IPv4FromOctets(192, 168, 1, 1),
+			ip:       IPv4FromOctets(192, 168, 1, 1).Ptr(),
 			expected: net.IP{192, 168, 1, 1},
 		},
 		{
@@ -430,7 +437,7 @@ func TestToNetIP(t *testing.T) {
 				0x5678,
 				0xdead,
 				0xbeef,
-				0xcafe),
+				0xcafe).Ptr(),
 			expected: net.IP{32, 1, 6, 120, 1, 224, 18, 52, 86, 120, 222, 173, 190, 239, 202, 254},
 		},
 	}
@@ -451,61 +458,61 @@ func TestBitAtPosition(t *testing.T) {
 	}{
 		{
 			name:     "IPv4: all ones -> 0",
-			input:    IPv4FromOctets(255, 255, 255, 255),
+			input:    IPv4FromOctets(255, 255, 255, 255).Ptr(),
 			position: 1,
 			expected: true,
 		},
 		{
 			name:     "IPv4: Bit 8 from 1.0.0.0 -> 0",
-			input:    IPv4FromOctets(10, 0, 0, 0),
+			input:    IPv4FromOctets(10, 0, 0, 0).Ptr(),
 			position: 8,
 			expected: false,
 		},
 		{
 			name:     "IPv4: Bit 8 from 11.0.0.0 -> 1",
-			input:    IPv4FromOctets(11, 0, 0, 0),
+			input:    IPv4FromOctets(11, 0, 0, 0).Ptr(),
 			position: 8,
 			expected: true,
 		},
 		{
 			name:     "IPv6: Bit 16 from 2001:678:1e0:: -> 1",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(),
 			position: 16,
 			expected: true,
 		},
 		{
 			name:     "IPv6: Bit 17 from 2001:678:1e0:: -> 0",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(),
 			position: 17,
 			expected: false,
 		},
 		{
 			name:     "IPv6: Bit 113 from 2001:678:1e0::cafe -> 1",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
 			position: 113,
 			expected: true,
 		},
 		{
 			name:     "IPv6: Bit 115 from 2001:678:1e0::cafe -> 0",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
 			position: 115,
 			expected: false,
 		},
 		{
 			name:     "IPv6: all ones -> 1",
-			input:    IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF),
+			input:    IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF).Ptr(),
 			position: 1,
 			expected: true,
 		},
 		{
 			name:     "IPv4: invalid position",
-			input:    IPv4(0),
+			input:    IPv4(0).Ptr(),
 			position: 33,
 			expected: false,
 		},
 		{
 			name:     "IPv6: invalid position",
-			input:    IPv6(0, 0),
+			input:    IPv6(0, 0).Ptr(),
 			position: 129,
 			expected: false,
 		},
@@ -527,12 +534,12 @@ func TestIPFromString(t *testing.T) {
 		{
 			name:     "ipv4",
 			input:    "192.168.1.234",
-			expected: IPv4FromOctets(192, 168, 1, 234),
+			expected: IPv4FromOctets(192, 168, 1, 234).Ptr(),
 		},
 		{
 			name:     "ipv6",
 			input:    "2001:678:1e0::cafe",
-			expected: IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
+			expected: IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
 		},
 		{
 			name:     "invalid",
@@ -555,7 +562,7 @@ func TestIPFromString(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			assert.Equal(t, test.expected, ip)
+			assert.Equal(t, test.expected, ip.Ptr())
 		})
 	}
 }
@@ -568,12 +575,12 @@ func TestSizeBytes(t *testing.T) {
 	}{
 		{
 			name:     "IPv4",
-			input:    IPv4(0),
+			input:    IPv4(0).Ptr(),
 			expected: 4,
 		},
 		{
 			name:     "IPv6",
-			input:    IPv6(0, 0),
+			input:    IPv6(0, 0).Ptr(),
 			expected: 16,
 		},
 	}

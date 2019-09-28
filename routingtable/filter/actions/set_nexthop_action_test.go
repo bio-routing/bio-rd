@@ -23,17 +23,17 @@ func TestSetNextHopTest(t *testing.T) {
 			name: "modify path",
 			bgpPath: &route.BGPPath{
 				BGPPathA: &route.BGPPathA{
-					NextHop: bnet.IPv4FromOctets(192, 168, 1, 1),
+					NextHop: bnet.IPv4FromOctets(192, 168, 1, 1).Ptr(),
 				},
 			},
-			expected: bnet.IPv4FromOctets(100, 64, 2, 1),
+			expected: bnet.IPv4FromOctets(100, 64, 2, 1).Ptr(),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			a := NewSetNextHopAction(bnet.IPv4FromOctets(100, 64, 2, 1))
-			res := a.Do(net.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+			a := NewSetNextHopAction(bnet.IPv4FromOctets(100, 64, 2, 1).Ptr())
+			res := a.Do(net.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 

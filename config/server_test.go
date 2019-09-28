@@ -105,16 +105,16 @@ func TestAddrIsGreater(t *testing.T) {
 		{
 			name: "::7d2:0:0:0:1c8 higher than ::7d1:0:0:0:1c8",
 			args: args{
-				a: bnet.IPv6(2002, 456).Bytes(),
-				b: bnet.IPv6(2001, 456).Bytes(),
+				a: bnet.IPv6(2002, 456).Ptr().Bytes(),
+				b: bnet.IPv6(2001, 456).Ptr().Bytes(),
 			},
 			want: true,
 		},
 		{
 			name: "::7d1:0:0:0:1c8 higher than ::7d2:0:0:0:1c8",
 			args: args{
-				a: bnet.IPv6(2001, 456).Bytes(),
-				b: bnet.IPv6(2002, 456).Bytes(),
+				a: bnet.IPv6(2001, 456).Ptr().Bytes(),
+				b: bnet.IPv6(2002, 456).Ptr().Bytes(),
 			},
 			want: false,
 		},

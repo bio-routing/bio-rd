@@ -70,7 +70,7 @@ func netlinkRouteEquals(a, b *netlink.Route) bool {
 
 // NewNlPathFromRoute creates a new route.FIBPath object from a netlink.Route object
 func NewPathsFromNlRoute(r netlink.Route, kernel bool) (*bnet.Prefix, []*route.Path, error) {
-	var src *bnet.IP
+	var src bnet.IP
 	var dst *bnet.Prefix
 
 	if r.Src == nil && r.Dst == nil {
@@ -89,9 +89,9 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (*bnet.Prefix, []*route.P
 	if r.Src != nil && r.Dst == nil {
 		src, _ = bnet.IPFromBytes(r.Src)
 		if src.IsIPv4() {
-			dst = bnet.NewPfx(bnet.IPv4(0), 0)
+			dst = bnet.NewPfx(bnet.IPv4(0).Ptr(), 0).Ptr()
 		} else {
-			dst = bnet.NewPfx(bnet.IPv6(0, 0), 0)
+			dst = bnet.NewPfx(bnet.IPv6(0, 0).Ptr(), 0).Ptr()
 		}
 	}
 
@@ -108,8 +108,8 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (*bnet.Prefix, []*route.P
 			paths = append(paths, &route.Path{
 				Type: route.FIBPathType,
 				FIBPath: &route.FIBPath{
-					Src:      src,
-					NextHop:  nextHop,
+					Src:      src.Ptr(),
+					NextHop:  nextHop.Ptr(),
 					Priority: r.Priority,
 					Protocol: r.Protocol,
 					Type:     r.Type,
@@ -123,8 +123,8 @@ func NewPathsFromNlRoute(r netlink.Route, kernel bool) (*bnet.Prefix, []*route.P
 		paths = append(paths, &route.Path{
 			Type: route.FIBPathType,
 			FIBPath: &route.FIBPath{
-				Src:      src,
-				NextHop:  nextHop,
+				Src:      src.Ptr(),
+				NextHop:  nextHop.Ptr(),
 				Priority: r.Priority,
 				Protocol: r.Protocol,
 				Type:     r.Type,

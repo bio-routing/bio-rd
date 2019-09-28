@@ -67,10 +67,10 @@ func PrefixFromString(s string) (*Prefix, error) {
 }
 
 // ToProto converts prefix to proto prefix
-func (pfx *Prefix) ToProto() *api.Prefix {
+func (p Prefix) ToProto() *api.Prefix {
 	return &api.Prefix{
-		Address: pfx.addr.ToProto(),
-		Pfxlen:  uint32(pfx.pfxlen),
+		Address: p.addr.ToProto(),
+		Pfxlen:  uint32(p.pfxlen),
 	}
 }
 

@@ -15,13 +15,13 @@ import (
 func TestMetrics(t *testing.T) {
 	r := NewVRFRegistry()
 	green := r.CreateVRFIfNotExists("green", 0)
-	green.IPv4UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 0, 0, 0), 8), &route.Path{})
-	green.IPv4UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 0, 0, 0), 16), &route.Path{})
-	green.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0), 48), &route.Path{})
+	green.IPv4UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{})
+	green.IPv4UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 0, 0, 0).Ptr(), 16).Ptr(), &route.Path{})
+	green.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(), 48).Ptr(), &route.Path{})
 
 	red := r.CreateVRFIfNotExists("red", 1)
-	red.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0), 64), &route.Path{})
-	red.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0), 64), &route.Path{})
+	red.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0).Ptr(), 64).Ptr(), &route.Path{})
+	red.IPv6UnicastRIB().AddPath(bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0).Ptr(), 64).Ptr(), &route.Path{})
 
 	expected := []*metrics.VRFMetrics{
 		{

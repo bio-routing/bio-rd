@@ -48,9 +48,9 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 			testUpdate: &packet.BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &packet.NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(),
 					Next: &packet.NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(), 16).Ptr(),
 					},
 				},
 			},
@@ -76,9 +76,9 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 			testUpdate: &packet.BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &packet.NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(),
 					Next: &packet.NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(), 16).Ptr(),
 					},
 				},
 			},
