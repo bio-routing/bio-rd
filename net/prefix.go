@@ -18,8 +18,21 @@ type Prefix struct {
 }
 
 // Dedup gets a copy of Prefix from the cache
-func (p *Prefix) Dedup() *Prefix {
+func (p Prefix) Dedup() *Prefix {
 	return pfxc.get(p)
+}
+
+// Ptr returns a pointer to p
+func (p Prefix) Ptr() *Prefix {
+	return &p
+}
+
+// Copy creates a copy of the prefix
+func (p Prefix) Copy() *Prefix {
+	return &Prefix{
+		addr:   p.addr,
+		pfxlen: p.pfxlen,
+	}
 }
 
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
@@ -48,7 +61,7 @@ func PrefixFromString(s string) (*Prefix, error) {
 	}
 
 	return &Prefix{
-		addr:   ip,
+		addr:   ip.Dedup(),
 		pfxlen: uint8(l),
 	}, nil
 }
@@ -62,8 +75,8 @@ func (pfx *Prefix) ToProto() *api.Prefix {
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr *IP, pfxlen uint8) *Prefix {
-	return &Prefix{
+func NewPfx(addr *IP, pfxlen uint8) Prefix {
+	return Prefix{
 		addr:   addr,
 		pfxlen: pfxlen,
 	}
@@ -75,7 +88,7 @@ func NewPfxFromIPNet(ipNet *gonet.IPNet) *Prefix {
 	ip, _ := IPFromBytes(ipNet.IP)
 
 	return &Prefix{
-		addr:   ip,
+		addr:   ip.Dedup(),
 		pfxlen: uint8(ones),
 	}
 }
@@ -172,7 +185,7 @@ func (pfx *Prefix) Equal(x *Prefix) bool {
 }
 
 // GetSupernet gets the next common supernet of pfx and x
-func (pfx *Prefix) GetSupernet(x *Prefix) *Prefix {
+func (pfx *Prefix) GetSupernet(x *Prefix) Prefix {
 	if pfx.addr.isLegacy {
 		return pfx.supernetIPv4(x)
 	}
@@ -180,7 +193,7 @@ func (pfx *Prefix) GetSupernet(x *Prefix) *Prefix {
 	return pfx.supernetIPv6(x)
 }
 
-func (pfx *Prefix) supernetIPv4(x *Prefix) *Prefix {
+func (pfx *Prefix) supernetIPv4(x *Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
 	a := pfx.addr.ToUint32() >> (32 - maxPfxLen)
 	b := x.addr.ToUint32() >> (32 - maxPfxLen)
@@ -191,13 +204,13 @@ func (pfx *Prefix) supernetIPv4(x *Prefix) *Prefix {
 		maxPfxLen--
 	}
 
-	return &Prefix{
-		addr:   IPv4(a << (32 - maxPfxLen)),
+	return Prefix{
+		addr:   IPv4(a << (32 - maxPfxLen)).Dedup(),
 		pfxlen: maxPfxLen,
 	}
 }
 
-func (pfx *Prefix) supernetIPv6(x *Prefix) *Prefix {
+func (pfx *Prefix) supernetIPv6(x *Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen)
 
 	a := pfx.addr.BitAtPosition(1)
@@ -218,14 +231,14 @@ func (pfx *Prefix) supernetIPv6(x *Prefix) *Prefix {
 	}
 
 	if pfxLen == 0 {
-		return NewPfx(IPv6(0, 0), pfxLen)
+		return NewPfx(IPv6(0, 0).Dedup(), pfxLen)
 	}
 
 	if pfxLen > 64 {
-		return NewPfx(IPv6(pfx.addr.higher, pfx.addr.lower&mask), pfxLen)
+		return NewPfx(IPv6(pfx.addr.higher, pfx.addr.lower&mask).Dedup(), pfxLen)
 	}
 
-	return NewPfx(IPv6(pfx.addr.higher&mask, 0), pfxLen)
+	return NewPfx(IPv6(pfx.addr.higher&mask, 0).Dedup(), pfxLen)
 }
 
 func min(a uint8, b uint8) uint8 {

@@ -25,16 +25,17 @@ func newPfxCache() *pfxCache {
 	}
 }
 
-func (pfxc *pfxCache) get(pfx *Prefix) *Prefix {
+func (pfxc *pfxCache) get(pfx Prefix) *Prefix {
 	pfxc.cacheMu.Lock()
 
-	if x, ok := pfxc.cache[*pfx]; ok {
+	if x, ok := pfxc.cache[pfx]; ok {
 		pfxc.cacheMu.Unlock()
 		return x
 	}
 
-	pfxc.cache[*pfx] = pfx
+	c := pfx.Copy()
+	pfxc.cache[pfx] = c
 	pfxc.cacheMu.Unlock()
 
-	return pfx
+	return c
 }

@@ -40,9 +40,10 @@ type BGPPathA struct {
 
 // NewBGPPathA creates a new BGPPathA
 func NewBGPPathA() *BGPPathA {
+	defaultAddr := bnet.IPv4(0)
 	return &BGPPathA{
-		NextHop: bnet.IPv4(0),
-		Source:  bnet.IPv4(0),
+		NextHop: &defaultAddr,
+		Source:  &defaultAddr,
 	}
 }
 

@@ -1,6 +1,8 @@
 package net
 
-import "sync"
+import (
+	"sync"
+)
 
 const (
 	ipCacheInitialSize = 1000000
@@ -25,16 +27,17 @@ func newIPCache() *ipCache {
 	}
 }
 
-func (ipc *ipCache) get(addr *IP) *IP {
+func (ipc *ipCache) get(addr IP) *IP {
 	ipc.cacheMu.Lock()
 
-	if x, ok := ipc.cache[*addr]; ok {
+	if x, ok := ipc.cache[addr]; ok {
 		ipc.cacheMu.Unlock()
 		return x
 	}
 
-	ipc.cache[*addr] = addr
+	newAddr := addr.Copy()
+	ipc.cache[addr] = newAddr
 	ipc.cacheMu.Unlock()
 
-	return addr
+	return newAddr
 }
