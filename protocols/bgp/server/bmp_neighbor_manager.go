@@ -75,8 +75,8 @@ func (nm *neighborManager) disposeAll() {
 	nm.neighborsMu.Lock()
 	defer nm.neighborsMu.Unlock()
 
-	for i := range nm.neighbors {
-		nm._neighborDown(nm.neighbors[i].vrfID, nm.neighbors[i].peerAddress)
+	for len(nm.neighbors) > 0 {
+		nm._neighborDown(nm.neighbors[0].vrfID, nm.neighbors[0].peerAddress)
 	}
 }
 
