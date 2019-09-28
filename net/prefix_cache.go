@@ -1,9 +1,13 @@
 package net
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/google/btree"
+)
 
 const (
-	prefixCacheInitialSize = 1000000
+	prefixCacheBTreeGrade = 3500
 )
 
 var (
@@ -15,25 +19,26 @@ func init() {
 }
 
 type pfxCache struct {
-	cache   map[Prefix]*Prefix
 	cacheMu sync.Mutex
+	tree    *btree.BTree
 }
 
 func newPfxCache() *pfxCache {
 	return &pfxCache{
-		cache: make(map[Prefix]*Prefix, prefixCacheInitialSize),
+		tree: btree.New(3500),
 	}
 }
 
 func (pfxc *pfxCache) get(pfx *Prefix) *Prefix {
 	pfxc.cacheMu.Lock()
 
-	if x, ok := pfxc.cache[*pfx]; ok {
+	item := pfxc.tree.Get(pfx)
+	if item != nil {
 		pfxc.cacheMu.Unlock()
-		return x
+		return item.(*Prefix)
 	}
 
-	pfxc.cache[*pfx] = pfx
+	pfxc.tree.ReplaceOrInsert(pfx)
 	pfxc.cacheMu.Unlock()
 
 	return pfx
