@@ -82,7 +82,7 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 	}
 	consumed++
 
-	err = decode.Decode(buf, []interface{}{&pa.TypeCode})
+	err = decode.DecodeUint8(buf, &pa.TypeCode)
 	if err != nil {
 		return nil, consumed, err
 	}
@@ -222,7 +222,7 @@ func (pa *PathAttribute) decodeOrigin(buf *bytes.Buffer) error {
 	origin := uint8(0)
 
 	p := uint16(0)
-	err := decode.Decode(buf, []interface{}{&origin})
+	err := decode.DecodeUint8(buf, &origin)
 	if err != nil {
 		return errors.Wrap(err, "Unable to decode")
 	}
@@ -234,16 +234,22 @@ func (pa *PathAttribute) decodeOrigin(buf *bytes.Buffer) error {
 }
 
 func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer, asnLength uint8) error {
-	pa.Value = make(types.ASPath, 0)
+	pa.Value = make(types.ASPath, 0, 1)
 	p := uint16(0)
 	for p < pa.Length {
 		segment := types.ASPathSegment{}
 		count := uint8(0)
 
-		err := decode.Decode(buf, []interface{}{&segment.Type, &count})
+		err := decode.DecodeUint8(buf, &segment.Type)
 		if err != nil {
 			return err
 		}
+
+		err = decode.DecodeUint8(buf, &count)
+		if err != nil {
+			return err
+		}
+
 		p += 2
 
 		if segment.Type != types.ASSet && segment.Type != types.ASSequence {
@@ -283,7 +289,7 @@ func (pa *PathAttribute) decodeASN(buf *bytes.Buffer, asnSize uint8) (asn uint32
 
 func (pa *PathAttribute) decode4ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
 	asn4 := uint32(0)
-	err = decode.Decode(buf, []interface{}{&asn4})
+	err = decode.DecodeUint32(buf, &asn4)
 	if err != nil {
 		return 0, err
 	}
@@ -292,13 +298,13 @@ func (pa *PathAttribute) decode4ByteASN(buf *bytes.Buffer) (asn uint32, err erro
 }
 
 func (pa *PathAttribute) decode2ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
-	asn4 := uint16(0)
-	err = decode.Decode(buf, []interface{}{&asn4})
+	asn2 := uint16(0)
+	err = decode.DecodeUint16(buf, &asn2)
 	if err != nil {
 		return 0, err
 	}
 
-	return uint32(asn4), nil
+	return uint32(asn2), nil
 }
 
 func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
@@ -313,11 +319,25 @@ func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
 }
 
 func (pa *PathAttribute) decodeMED(buf *bytes.Buffer) error {
-	return pa.decodeUint32(buf, "MED")
+	med := uint32(0)
+	err := decode.DecodeUint32(buf, &med)
+	if err != nil {
+		return err
+	}
+
+	pa.Value = med
+	return nil
 }
 
 func (pa *PathAttribute) decodeLocalPref(buf *bytes.Buffer) error {
-	return pa.decodeUint32(buf, "local pref")
+	lp := uint32(0)
+	err := decode.DecodeUint32(buf, &lp)
+	if err != nil {
+		return err
+	}
+
+	pa.Value = lp
+	return nil
 }
 
 func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
@@ -437,17 +457,19 @@ func (pa *PathAttribute) decodeClusterList(buf *bytes.Buffer) error {
 func (pa *PathAttribute) setLength(buf *bytes.Buffer) (int, error) {
 	bytesRead := 0
 	if pa.ExtendedLength {
-		err := decode.Decode(buf, []interface{}{&pa.Length})
+		err := decode.DecodeUint16(buf, &pa.Length)
 		if err != nil {
 			return 0, err
 		}
+
 		bytesRead = 2
 	} else {
 		x := uint8(0)
-		err := decode.Decode(buf, []interface{}{&x})
+		err := decode.DecodeUint8(buf, &x)
 		if err != nil {
 			return 0, err
 		}
+
 		pa.Length = uint16(x)
 		bytesRead = 1
 	}
@@ -473,11 +495,14 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 	if n <= 0 {
 		return nil
 	}
-	dump := make([]byte, n)
-	err := decode.Decode(buf, []interface{}{&dump})
-	if err != nil {
-		return err
+
+	for i := uint16(0); i < n; i++ {
+		_, err := buf.ReadByte()
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 

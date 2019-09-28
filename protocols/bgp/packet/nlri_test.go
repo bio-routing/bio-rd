@@ -24,11 +24,11 @@ func TestDecodeNLRIs(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0).Dedup(), 24).Dedup(),
 				Next: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Dedup(), 8).Dedup(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(172, 16, 0, 0), 17),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(172, 16, 0, 0).Dedup(), 17).Dedup(),
 					},
 				},
 			},
@@ -75,7 +75,7 @@ func TestDecodeNLRIv6(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0), 0),
+				Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0).Dedup(), 0).Dedup(),
 			},
 		},
 	}
@@ -111,7 +111,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0).Dedup(), 24).Dedup(),
 			},
 		},
 		{
@@ -121,7 +121,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128), 25),
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128).Dedup(), 25).Dedup(),
 			},
 		},
 		{
@@ -148,7 +148,7 @@ func TestDecodeNLRI(t *testing.T) {
 			wantFail: false,
 			expected: &NLRI{
 				PathIdentifier: 10,
-				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 24),
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0).Dedup(), 24).Dedup(),
 			},
 		},
 		{
@@ -160,7 +160,7 @@ func TestDecodeNLRI(t *testing.T) {
 			wantFail: false,
 			expected: &NLRI{
 				PathIdentifier: 256,
-				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128), 25),
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 128).Dedup(), 25).Dedup(),
 			},
 		},
 		{
@@ -262,21 +262,21 @@ func TestNLRISerialize(t *testing.T) {
 		{
 			name: "Test #1",
 			nlri: &NLRI{
-				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25),
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0).Dedup(), 25).Dedup(),
 			},
 			expected: []byte{25, 1, 2, 3, 0},
 		},
 		{
 			name: "Test #2",
 			nlri: &NLRI{
-				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24),
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0).Dedup(), 24).Dedup(),
 			},
 			expected: []byte{24, 1, 2, 3},
 		},
 		{
 			name: "Test #3",
 			nlri: &NLRI{
-				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17),
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0).Dedup(), 17).Dedup(),
 			},
 			expected: []byte{17, 100, 200, 128},
 		},
@@ -284,7 +284,7 @@ func TestNLRISerialize(t *testing.T) {
 			name: "with add-path #1",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25),
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0).Dedup(), 25).Dedup(),
 			},
 			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 25, 1, 2, 3, 0},
@@ -293,7 +293,7 @@ func TestNLRISerialize(t *testing.T) {
 			name: "with add-path #2",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24),
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0).Dedup(), 24).Dedup(),
 			},
 			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 24, 1, 2, 3},
@@ -302,7 +302,7 @@ func TestNLRISerialize(t *testing.T) {
 			name: "with add-path #3",
 			nlri: &NLRI{
 				PathIdentifier: 100,
-				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17),
+				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0).Dedup(), 17).Dedup(),
 			},
 			addPath:  true,
 			expected: []byte{0, 0, 0, 100, 17, 100, 200, 128},
