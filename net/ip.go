@@ -120,8 +120,7 @@ func IPFromString(str string) (*IP, error) {
 
 // Equal returns true if ip is equal to other
 func (ip *IP) Equal(other *IP) bool {
-	//return *ip == *other
-	return ip.higher == other.higher && ip.lower == other.lower && ip.isLegacy == other.isLegacy
+	return *ip == *other
 }
 
 // Less compares ips for use in btree.Btree
