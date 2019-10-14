@@ -31,6 +31,11 @@ func (p *Prefix) Less(other btree.Item) bool {
 	}
 
 	return p.pfxlen < other.(*Prefix).pfxlen
+
+// DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
+func (p *Prefix) DedupWithIP() *Prefix {
+	p.addr = p.addr.Dedup()
+	return pfxc.get(p)
 }
 
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
@@ -65,10 +70,10 @@ func PrefixFromString(s string) (*Prefix, error) {
 }
 
 // ToProto converts prefix to proto prefix
-func (pfx *Prefix) ToProto() *api.Prefix {
+func (p *Prefix) ToProto() *api.Prefix {
 	return &api.Prefix{
-		Address: pfx.addr.ToProto(),
-		Pfxlen:  uint32(pfx.pfxlen),
+		Address: p.addr.ToProto(),
+		Pfxlen:  uint32(p.pfxlen),
 	}
 }
 
