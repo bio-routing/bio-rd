@@ -25,7 +25,7 @@ type pfxCache struct {
 
 func newPfxCache() *pfxCache {
 	return &pfxCache{
-		tree: btree.New(3500),
+		tree: btree.New(prefixCacheBTreeGrade),
 	}
 }
 
