@@ -6,8 +6,10 @@ import (
 	gonet "net"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/bio-routing/bio-rd/net/api"
+	"github.com/google/btree"
 	"github.com/pkg/errors"
 )
 
@@ -20,6 +22,15 @@ type Prefix struct {
 // Dedup gets a copy of Prefix from the cache
 func (p *Prefix) Dedup() *Prefix {
 	return pfxc.get(p)
+}
+
+// Less compares prefixes for use in btree.Btree
+func (p *Prefix) Less(other btree.Item) bool {
+	if uintptr(unsafe.Pointer(p)) < uintptr(unsafe.Pointer(other.(*Prefix))) {
+		return true
+	}
+
+	return p.pfxlen < other.(*Prefix).pfxlen
 }
 
 // DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
