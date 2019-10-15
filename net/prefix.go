@@ -31,6 +31,7 @@ func (p *Prefix) Less(other btree.Item) bool {
 	}
 
 	return p.pfxlen < other.(*Prefix).pfxlen
+}
 
 // DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
 func (p *Prefix) DedupWithIP() *Prefix {
