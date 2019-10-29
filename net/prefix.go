@@ -26,7 +26,7 @@ func (p *Prefix) Dedup() *Prefix {
 
 // Less compares prefixes for use in btree.Btree
 func (p *Prefix) Less(other btree.Item) bool {
-	if uintptr(unsafe.Pointer(p)) < uintptr(unsafe.Pointer(other.(*Prefix))) {
+	if uintptr(unsafe.Pointer(p.addr)) < uintptr(unsafe.Pointer(other.(*Prefix).addr)) {
 		return true
 	}
 
