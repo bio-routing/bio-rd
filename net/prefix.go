@@ -6,7 +6,6 @@ import (
 	gonet "net"
 	"strconv"
 	"strings"
-	"unsafe"
 
 	"github.com/bio-routing/bio-rd/net/api"
 	"github.com/google/btree"
@@ -26,11 +25,16 @@ func (p *Prefix) Dedup() *Prefix {
 
 // Less compares prefixes for use in btree.Btree
 func (p *Prefix) Less(other btree.Item) bool {
-	if uintptr(unsafe.Pointer(p.addr)) < uintptr(unsafe.Pointer(other.(*Prefix).addr)) {
+	switch p.addr.Compare(other.(*Prefix).addr) {
+	case 0:
+		return p.pfxlen < other.(*Prefix).pfxlen
+	case -1:
 		return true
+	case 1:
+		return false
 	}
 
-	return p.pfxlen < other.(*Prefix).pfxlen
+	return false
 }
 
 // DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
