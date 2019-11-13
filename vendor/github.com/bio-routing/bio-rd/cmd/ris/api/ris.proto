@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package bio.ris;
+
+import "github.com/bio-routing/bio-rd/net/api/net.proto";
+import "github.com/bio-routing/bio-rd/route/api/route.proto";
+option go_package = "github.com/bio-routing/bio-rd/cmd/ris/api";
+
+service RoutingInformationService {
+    rpc LPM(LPMRequest) returns (LPMResponse) {}
+    rpc Get(GetRequest) returns (GetResponse) {}
+    rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {}
+    rpc ObserveRIB(ObserveRIBRequest) returns (stream RIBUpdate);
+    rpc DumpRIB(DumpRIBRequest) returns (stream DumpRIBReply);
+}
+
+message LPMRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    bio.net.Prefix pfx = 3;
+}
+
+message LPMResponse {
+    repeated bio.route.Route routes = 1;
+}
+
+message GetRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    bio.net.Prefix pfx = 3;
+}
+
+message GetResponse {
+    repeated bio.route.Route routes = 1;
+}
+
+message GetLongerRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    bio.net.Prefix pfx = 3;
+}
+
+message GetLongerResponse {
+    repeated bio.route.Route routes = 1;
+}
+
+message ObserveRIBRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    enum AFISAFI {
+        IPv4Unicast = 0;
+        IPv6Unicast = 1;
+    }
+    AFISAFI afisafi = 3;
+}
+
+message RIBUpdate {
+    bool advertisement = 1;
+    bio.route.Route route = 2;
+}
+
+
+message DumpRIBRequest {
+    string router = 1;
+    uint64 vrf_id = 2;
+    enum AFISAFI {
+        IPv4Unicast = 0;
+        IPv6Unicast = 1;
+    }
+    AFISAFI afisafi = 3;
+}
+
+message DumpRIBReply {
+    bio.route.Route route = 1;
+}

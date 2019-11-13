@@ -2,12 +2,20 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
+	"github.com/bio-routing/bio-rd/protocols/kernel"
+	"github.com/bio-routing/bio-rd/route"
+
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
+	bnet "github.com/bio-routing/bio-rd/net"
 	bgpapi "github.com/bio-routing/bio-rd/protocols/bgp/api"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -19,13 +27,13 @@ import (
 )
 
 var (
+	// change the value from bio-rd.yml to wanted (e.g. bio-rd-A.yml or bio-rd-B.yml)
 	configFilePath = flag.String("config.file", "bio-rd.yml", "bio-rd config file")
 	apiPort        = flag.Uint("api_port", 5566, "API server port")
 	metricsPort    = flag.Uint("metrics_port", 55667, "Metrics HTTP server port")
 	sigHUP         = make(chan os.Signal)
 	vrfReg         = vrf.NewVRFRegistry()
 	bgpSrv         bgpserver.BGPServer
-	runCfg         *config.Config
 )
 
 func main() {
@@ -55,6 +63,16 @@ func main() {
 	go configReloader()
 	sigHUP <- syscall.SIGHUP
 	installSignalHandler()
+
+	rib, _ := vrfReg.GetVRFByName("master").RIBByName("inet.0")
+	k, err := kernel.New()
+	if err != nil {
+		log.Errorf("Unable to create protocol kernel: %v", err)
+		os.Exit(1)
+	}
+	defer k.Dispose()
+
+	rib.Register(k)
 
 	s := bgpserver.NewBGPAPIServer(bgpSrv)
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
@@ -103,6 +121,8 @@ func configReloader() {
 }
 
 func loadConfig(cfg *config.Config) error {
+
+	go configureRoutingOptions(cfg.RoutingOptions)
 
 	for _, ri := range cfg.RoutingInstances {
 		err := configureRoutingInstance(ri)
@@ -206,6 +226,84 @@ func BGPPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig {
 	}
 
 	return r
+}
+
+func createBGPPath(bgpConf *bgpserver.PeerConfig) *route.Path {
+	return &route.Path{
+		Type: route.BGPPathType,
+		BGPPath: &route.BGPPath{
+			BGPPathA: &route.BGPPathA{
+				NextHop: bgpConf.PeerAddress,
+				Source:  bgpConf.LocalAddress,
+			},
+			ASPath: &types.ASPath{
+				types.ASPathSegment{
+					Type: types.ASSequence,
+					ASNs: []uint32{bgpConf.LocalAS, bgpConf.PeerAS},
+				},
+			},
+		},
+	}
+}
+
+func configureRoutingOptions(ro *config.RoutingOptions) {
+	rib, _ := vrfReg.GetVRFByName("master").RIBByName("inet.0")
+	var paths []*route.Path
+	addressPrefixPairs := make(map[string]string)
+	var err error
+
+	ticker := time.NewTicker(15 * time.Second)
+	for range ticker.C {
+		for _, p := range bgpSrv.GetPeers() {
+			bgpConf := bgpSrv.GetPeerConfig(p)
+			paths = append(paths, createBGPPath(bgpConf))
+		}
+
+		for _, sr := range ro.StaticRoutes {
+			addressPrefix := strings.Split(sr.Prefix, "/")
+			addressPrefixPairs[addressPrefix[0]] = addressPrefix[1]
+		}
+
+		for _, path := range paths {
+			for a, p := range addressPrefixPairs {
+
+				var address *bnet.IP
+				address, err = bnet.IPFromString(a)
+				if err != nil {
+					log.Errorf("error getting IP from a string", err)
+				}
+				var pref uint64
+				pref, err = strconv.ParseUint(p, 10, 8)
+				if err != nil {
+					log.Errorf("error parsing prefix string to uint", err)
+				}
+
+				prefix := bnet.NewPfx(address, uint8(pref))
+				if !rib.ContainsPfxPath(prefix, path) {
+					err = rib.AddPath(prefix, path)
+					if err != nil {
+						log.Errorf("error adding path to the rib", err)
+					}
+				}
+			}
+
+			in := bgpSrv.GetRIBIn(path.NextHop(), 1, 1)
+			if in == nil {
+				fmt.Println("RIB-In is nil, continuing")
+				continue
+			}
+
+			routes := in.Dump()
+			for _, r := range routes {
+				if !rib.ContainsPfxPath(r.Prefix(), path) {
+					err = rib.AddPath(r.Prefix(), path)
+					if err != nil {
+						log.Errorf("error adding path to the rib", err)
+					}
+				}
+			}
+		}
+	}
 }
 
 func configureRoutingInstance(ri *config.RoutingInstance) error {

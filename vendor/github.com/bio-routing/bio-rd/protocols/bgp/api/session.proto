@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package bio.bgp;
+
+import "github.com/bio-routing/bio-rd/net/api/net.proto";
+option go_package = "github.com/bio-routing/bio-rd/protocols/bgp/api";
+
+message Session {
+    bio.net.IP local_address = 1;
+    bio.net.IP neighbor_address = 2;
+    uint32 local_asn = 3;
+    uint32 peer_asn = 4;
+    enum State {
+        Disabled = 0;
+        Idle = 1;
+        Connect = 2;
+        Active = 3;
+        OpenSent = 4;
+        OpenConfirmed = 5;
+        Established = 6;
+    }
+    State status = 5;
+    SessionStats stats = 6;
+    uint64 established_since = 7;
+}
+
+message SessionStats {
+    uint64 messages_in = 1;
+    uint64 messages_out = 2;
+    uint64 flaps = 3;
+    uint64 routes_received = 4;
+    uint64 routes_imported = 5;
+    uint64 routes_exported = 6;
+}

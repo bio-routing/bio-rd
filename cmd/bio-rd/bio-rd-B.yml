@@ -1,0 +1,40 @@
+routing_options:
+  autonomous_system: 200
+  router_id: 10.0.3.200
+  static_routes:
+    - prefix: 200.200.1.0/24
+policy_options:
+  policy_statements:
+    - name: "ACCEPT_ALL"
+      terms:
+        - name: "ACCEPT_ALL"
+          then:
+            accept: true
+    - name: "PeerA-In"
+      terms:
+        - name: "ACCEPT_SOME"
+          from:
+            route_filters:
+              - prefix: "200.200.1.0/24"
+                matcher: "exact"
+          then:
+            accept: true
+    - name: "PeerA-Out"
+      terms:
+        - name: "Set NEXT_HOP"
+          then:
+            next_hop:
+              address: 10.0.3.200
+            accept: true
+protocols:
+  bgp:
+    groups:
+      - name: "Sartura clients"
+        local_address: 10.0.3.200
+        route_server_client: true
+        passive: true
+        neighbors:
+          - peer_address: 10.0.3.100
+            peer_as: 100
+            import: ["PeerA-In"]
+            export: ["ACCEPT_ALL"]
