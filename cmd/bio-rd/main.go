@@ -28,13 +28,24 @@ import (
 
 var (
 	// change the value from bio-rd.yml to wanted (e.g. bio-rd-A.yml or bio-rd-B.yml)
-	configFilePath = flag.String("config.file", "bio-rd.yml", "bio-rd config file")
+	configFilePath *string
 	apiPort        = flag.Uint("api_port", 5566, "API server port")
 	metricsPort    = flag.Uint("metrics_port", 55667, "Metrics HTTP server port")
-	sigHUP         = make(chan os.Signal)
+	sigCh		   = make(chan os.Signal, 1)
 	vrfReg         = vrf.NewVRFRegistry()
 	bgpSrv         bgpserver.BGPServer
 )
+
+func init() {
+	hostname, _ := os.Hostname()
+	if hostname == "A" {
+		configFilePath = flag.String("config.file", "bio-rd-A.yml", "bio-rd config file")
+	} else if hostname == "B" {
+		configFilePath = flag.String("config.file", "bio-rd-B.yml", "bio-rd config file")
+	} else {
+		configFilePath = flag.String("config.file", "bio-rd.yml", "bio-rd config file")
+	}
+}
 
 func main() {
 	flag.Parse()
@@ -60,8 +71,9 @@ func main() {
 
 	vrfReg.CreateVRFIfNotExists("master", 0)
 
-	go configReloader()
-	sigHUP <- syscall.SIGHUP
+	//go configReloader()
+	go signalChecker()
+	sigCh <- syscall.SIGHUP
 	installSignalHandler()
 
 	rib, _ := vrfReg.GetVRFByName("master").RIBByName("inet.0")
@@ -75,6 +87,7 @@ func main() {
 	rib.Register(k)
 
 	s := bgpserver.NewBGPAPIServer(bgpSrv)
+	bgpSrv.DisposePeer()
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
 	streamInterceptors := []grpc.StreamServerInterceptor{}
 	srv, err := servicewrapper.New(
@@ -97,12 +110,18 @@ func main() {
 }
 
 func installSignalHandler() {
-	signal.Notify(sigHUP, syscall.SIGHUP)
+	signal.Notify(sigCh, syscall.SIGHUP)
+	signal.Notify(sigCh, syscall.SIGINT)
 }
 
-func configReloader() {
-	for {
-		<-sigHUP
+func signalChecker() {
+	for sig := range sigCh {
+		if sig != syscall.SIGHUP {
+			log.Infof("Received signal to STOP")
+			// send grpc message to the peer to shut it down
+			os.Exit(1)
+		}
+
 		log.Infof("Reloading configuration")
 		newCfg, err := config.GetConfig(*configFilePath)
 		if err != nil {
