@@ -5,6 +5,7 @@ import (
 	"net"
 
 	api "github.com/bio-routing/bio-rd/net/api"
+	"github.com/google/btree"
 )
 
 // IP represents an IPv4 or IPv6 address
@@ -154,12 +155,13 @@ func (ip *IP) Equal(other *IP) bool {
 	return *ip == *other
 }
 
+// Less compares ips for use in btree.Btree
+func (ip *IP) Less(other btree.Item) bool {
+	return ip.Compare(other.(*IP)) == -1
+}
+
 // Compare compares two IP addresses (returns 0 if equal, -1 if `ip` is smaller than `other`, 1 if `ip` is greater than `other`)
 func (ip *IP) Compare(other *IP) int8 {
-	if ip.Equal(other) {
-		return 0
-	}
-
 	if ip.higher > other.higher {
 		return 1
 	}
@@ -172,9 +174,14 @@ func (ip *IP) Compare(other *IP) int8 {
 		return 1
 	}
 
-	return -1
+	if ip.lower < other.lower {
+		return -1
+	}
+
+	return 0
 }
 
+// String returns string representation of an IP address
 func (ip *IP) String() string {
 	if !ip.isLegacy {
 		return ip.stringIPv6()
