@@ -37,9 +37,9 @@ func (pfxc *pfxCache) get(pfx Prefix) *Prefix {
 		pfxc.cacheMu.Unlock()
 		return item.(*Prefix)
 	}
-	
-	pfxc.tree.ReplaceOrInsert(pfx)
+
+	ret := pfxc.tree.ReplaceOrInsert(pfx)
 	pfxc.cacheMu.Unlock()
 
-	return c
+	return ret.(*Prefix)
 }

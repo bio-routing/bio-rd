@@ -16,7 +16,6 @@ func main() {
 		for j := 0; j < 255; j++ {
 			for k := 0; k < 11; k++ {
 				addr := bnet.IPv4FromOctets(uint8(k)+1, uint8(i), uint8(j), 0)
-				addr.Dedup()
 
 				pfxs = append(pfxs, bnet.NewPfx(addr, 24).Dedup())
 			}

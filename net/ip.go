@@ -156,7 +156,7 @@ func (ip *IP) Equal(other *IP) bool {
 }
 
 // Less compares ips for use in btree.Btree
-func (ip *IP) Less(other btree.Item) bool {
+func (ip IP) Less(other btree.Item) bool {
 	return ip.Compare(other.(*IP)) == -1
 }
 

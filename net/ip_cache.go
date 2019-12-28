@@ -2,6 +2,7 @@ package net
 
 import (
 	"sync"
+
 	"github.com/google/btree"
 )
 
@@ -38,8 +39,8 @@ func (ipc *ipCache) get(addr IP) *IP {
 		return item.(*IP)
 	}
 
-	ipc.tree.ReplaceOrInsert(addr)
+	newAddr := ipc.tree.ReplaceOrInsert(addr)
 	ipc.cacheMu.Unlock()
 
-	return newAddr
+	return newAddr.(*IP)
 }

@@ -28,7 +28,7 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (*bnet.Prefix, error)
 	}
 
 	if afi == IPv4AFI {
-		return bnet.NewPfx(bnet.IPv4FromBytes(b).Dedup(), pfxLen).Dedup(), nil
+		return bnet.NewPfx(bnet.IPv4FromBytes(b), pfxLen).Dedup(), nil
 	}
 
 	ipBytes := make([]byte, afiAddrLenBytes[afi])
@@ -39,5 +39,5 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (*bnet.Prefix, error)
 		return nil, err
 	}
 
-	return bnet.NewPfx(ip.Dedup(), pfxLen).Dedup(), nil
+	return bnet.NewPfx(ip, pfxLen).Dedup(), nil
 }

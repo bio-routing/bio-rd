@@ -34,9 +34,10 @@ func (p Prefix) Copy() *Prefix {
 		addr:   p.addr,
 		pfxlen: p.pfxlen,
 	}
+}
 
 // Less compares prefixes for use in btree.Btree
-func (p *Prefix) Less(other btree.Item) bool {
+func (p Prefix) Less(other btree.Item) bool {
 	switch p.addr.Compare(other.(*Prefix).addr) {
 	case 0:
 		return p.pfxlen < other.(*Prefix).pfxlen
@@ -50,7 +51,7 @@ func (p *Prefix) Less(other btree.Item) bool {
 }
 
 // DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
-func (p *Prefix) DedupWithIP() *Prefix {
+func (p Prefix) DedupWithIP() *Prefix {
 	p.addr = p.addr.Dedup()
 	return pfxc.get(p)
 }
@@ -87,7 +88,7 @@ func PrefixFromString(s string) (*Prefix, error) {
 }
 
 // ToProto converts prefix to proto prefix
-func (p *Prefix) ToProto() *api.Prefix {
+func (p Prefix) ToProto() *api.Prefix {
 	return &api.Prefix{
 		Address: p.addr.ToProto(),
 		Pfxlen:  uint32(p.pfxlen),
@@ -95,9 +96,9 @@ func (p *Prefix) ToProto() *api.Prefix {
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr *IP, pfxlen uint8) Prefix {
+func NewPfx(addr IP, pfxlen uint8) Prefix {
 	return Prefix{
-		addr:   addr,
+		addr:   addr.Dedup(),
 		pfxlen: pfxlen,
 	}
 }
@@ -251,14 +252,14 @@ func (pfx *Prefix) supernetIPv6(x *Prefix) Prefix {
 	}
 
 	if pfxLen == 0 {
-		return NewPfx(IPv6(0, 0).Dedup(), pfxLen)
+		return NewPfx(IPv6(0, 0), pfxLen)
 	}
 
 	if pfxLen > 64 {
-		return NewPfx(IPv6(pfx.addr.higher, pfx.addr.lower&mask).Dedup(), pfxLen)
+		return NewPfx(IPv6(pfx.addr.higher, pfx.addr.lower&mask), pfxLen)
 	}
 
-	return NewPfx(IPv6(pfx.addr.higher&mask, 0).Dedup(), pfxLen)
+	return NewPfx(IPv6(pfx.addr.higher&mask, 0), pfxLen)
 }
 
 func min(a uint8, b uint8) uint8 {
