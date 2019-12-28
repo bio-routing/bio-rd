@@ -32,15 +32,15 @@ func newIPCache() *ipCache {
 func (ipc *ipCache) get(addr IP) *IP {
 	ipc.cacheMu.Lock()
 
-	item := ipc.tree.Get(addr)
+	item := ipc.tree.Get(&addr)
 	if item != nil {
 		ipc.cacheMu.Unlock()
 
 		return item.(*IP)
 	}
 
-	newAddr := ipc.tree.ReplaceOrInsert(addr)
+	ipc.tree.ReplaceOrInsert(&addr)
 	ipc.cacheMu.Unlock()
 
-	return newAddr.(*IP)
+	return &addr
 }

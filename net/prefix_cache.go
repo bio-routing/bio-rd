@@ -32,14 +32,14 @@ func newPfxCache() *pfxCache {
 func (pfxc *pfxCache) get(pfx Prefix) *Prefix {
 	pfxc.cacheMu.Lock()
 
-	item := pfxc.tree.Get(pfx)
+	item := pfxc.tree.Get(&pfx)
 	if item != nil {
 		pfxc.cacheMu.Unlock()
 		return item.(*Prefix)
 	}
 
-	ret := pfxc.tree.ReplaceOrInsert(pfx)
+	pfxc.tree.ReplaceOrInsert(&pfx)
 	pfxc.cacheMu.Unlock()
 
-	return ret.(*Prefix)
+	return &pfx
 }
