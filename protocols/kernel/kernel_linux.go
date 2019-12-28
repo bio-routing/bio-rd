@@ -27,10 +27,6 @@ func (k *Kernel) init() error {
 	return nil
 }
 
-func (k *Kernel) uninit() error {
-	return k.osKernel.uninit()
-}
-
 type linuxKernel struct {
 	h      *netlink.Handle
 	routes map[*bnet.Prefix]struct{}
