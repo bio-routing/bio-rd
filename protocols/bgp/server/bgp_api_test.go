@@ -101,7 +101,7 @@ func TestDumpRIBInOut(t *testing.T) {
 				},
 			},
 			addRoutes: []*route.Route{
-				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0).Ptr(), 16).Ptr(), &route.Path{
+				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -119,7 +119,7 @@ func TestDumpRIBInOut(t *testing.T) {
 			},
 			expected: []*routeapi.Route{
 				{
-					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0).Ptr(), 16).ToProto(),
+					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).ToProto(),
 					Paths: []*routeapi.Path{
 						{
 							Type: routeapi.Path_BGP,
@@ -161,7 +161,7 @@ func TestDumpRIBInOut(t *testing.T) {
 				},
 			},
 			addRoutes: []*route.Route{
-				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0).Ptr(), 16).Ptr(), &route.Path{
+				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -205,7 +205,7 @@ func TestDumpRIBInOut(t *testing.T) {
 			},
 			expected: []*routeapi.Route{
 				{
-					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0).Ptr(), 16).ToProto(),
+					Pfx: bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).ToProto(),
 					Paths: []*routeapi.Path{
 						{
 							Type: routeapi.Path_BGP,

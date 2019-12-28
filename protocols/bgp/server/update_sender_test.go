@@ -45,10 +45,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []*bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(13, 0, 0, 0).Ptr(), 32).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(13, 0, 0, 0), 32).Ptr(),
 					},
 				},
 				{
@@ -64,10 +64,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []*bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(23, 0, 0, 0).Ptr(), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(23, 0, 0, 0), 8).Ptr(),
 					},
 				},
 			},
@@ -118,10 +118,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []*bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(13, 0, 0, 0).Ptr(), 32).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(13, 0, 0, 0), 32).Ptr(),
 					},
 				},
 				{
@@ -137,10 +137,10 @@ func TestSender(t *testing.T) {
 						},
 					},
 					pfxs: []*bnet.Prefix{
-						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0).Ptr(), 8).Ptr(),
-						bnet.NewPfx(bnet.IPv4FromOctets(23, 0, 0, 0).Ptr(), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(23, 0, 0, 0), 8).Ptr(),
 					},
 				},
 			},
@@ -940,9 +940,9 @@ func TestSender(t *testing.T) {
 
 					var pfx *bnet.Prefix
 					if test.afi == packet.IPv6AFI {
-						pfx = bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(), 48).Ptr()
+						pfx = bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0), 48).Ptr()
 					} else {
-						pfx = bnet.NewPfx(bnet.IPv4FromOctets(10, 0, uint8(x), uint8(y)).Ptr(), 32).Ptr()
+						pfx = bnet.NewPfx(bnet.IPv4FromOctets(10, 0, uint8(x), uint8(y)), 32).Ptr()
 					}
 
 					updateSender.AddPath(pfx, pathPfx.path)
@@ -990,7 +990,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
-			prefix:        bnet.NewPfx(bnet.IPv4(1413010532).Ptr(), 24).Ptr(),
+			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
 			path: &route.Path{
 				Type: route.StaticPathType,
 			},
@@ -1002,7 +1002,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
-			prefix:        bnet.NewPfx(bnet.IPv4(1413010532).Ptr(), 24).Ptr(),
+			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
 			path: &route.Path{
 				Type: route.BGPPathType,
 			},
@@ -1014,7 +1014,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
-			prefix:        bnet.NewPfx(bnet.IPv4(1413010532).Ptr(), 24).Ptr(),
+			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
 			path: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -1038,7 +1038,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			afi:           packet.IPv4AFI,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{BestOnly: true},
-			prefix:        bnet.NewPfx(bnet.IPv4(1413010532).Ptr(), 24).Ptr(),
+			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
 			path: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -1061,7 +1061,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			afi:           packet.IPv6AFI,
 			multiProtocol: true,
 			addPathTX:     routingtable.ClientOptions{BestOnly: true},
-			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0).Ptr(), 32).Ptr(),
+			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32).Ptr(),
 			path: &route.Path{
 				Type:    route.BGPPathType,
 				BGPPath: &route.BGPPath{},
@@ -1085,7 +1085,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			afi:           packet.IPv6AFI,
 			multiProtocol: true,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
-			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0).Ptr(), 32).Ptr(),
+			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32).Ptr(),
 			path: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
@@ -1112,7 +1112,7 @@ func TestWithdrawPrefix(t *testing.T) {
 			afi:           packet.IPv6AFI,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{BestOnly: true},
-			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0).Ptr(), 32).Ptr(),
+			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32).Ptr(),
 			path: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{

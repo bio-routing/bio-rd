@@ -35,7 +35,7 @@ func main() {
 						}
 
 						fmt.Printf("looking up 185.65.240.100\n")
-						for _, r := range rib4.LPM(bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 100).Ptr(), 32).Ptr()) {
+						for _, r := range rib4.LPM(bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 100), 32).Ptr()) {
 							fmt.Printf("Pfx: %s\n", r.Prefix().String())
 							for _, p := range r.Paths() {
 								fmt.Printf("   %s\n", p.String())
@@ -43,7 +43,7 @@ func main() {
 						}
 
 						fmt.Printf("is 8.8.8.8 in closednet?\n")
-						x := rib4.LPM(bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 8).Ptr(), 32).Ptr())
+						x := rib4.LPM(bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 8), 32).Ptr())
 						if len(x) == 0 {
 							fmt.Printf("Nope\n")
 						} else {
@@ -51,7 +51,7 @@ func main() {
 						}
 
 						fmt.Printf("is 185.65.240.100 in closednet?\n")
-						x = rib4.LPM(bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 0).Ptr(), 32).Ptr())
+						x = rib4.LPM(bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 0), 32).Ptr())
 						if len(x) == 0 {
 							fmt.Printf("Nope\n")
 						} else {

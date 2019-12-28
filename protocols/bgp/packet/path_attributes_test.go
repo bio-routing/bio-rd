@@ -948,7 +948,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 					SAFI:    UnicastSAFI,
 					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Ptr(),
 					NLRI: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0).Ptr(), 48).Ptr(),
+						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Ptr(),
 					},
 				},
 			},
@@ -1056,7 +1056,7 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 					AFI:  IPv6AFI,
 					SAFI: UnicastSAFI,
 					NLRI: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0).Ptr(), 44).Ptr(),
+						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44).Ptr(),
 					},
 				},
 			},
@@ -1887,7 +1887,7 @@ func TestSerialize(t *testing.T) {
 			name: "Withdraw only",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 120, 0).Ptr(), 24).Ptr(),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 120, 0), 24).Ptr(),
 				},
 			},
 			expected: []byte{
@@ -1903,7 +1903,7 @@ func TestSerialize(t *testing.T) {
 			name: "NLRI only",
 			msg: &BGPUpdate{
 				NLRI: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 128, 0).Ptr(), 17).Ptr(),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 128, 0), 17).Ptr(),
 				},
 			},
 			expected: []byte{
@@ -1941,9 +1941,9 @@ func TestSerialize(t *testing.T) {
 			name: "Full test",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(), 16).Ptr(),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				PathAttributes: &PathAttribute{
@@ -1986,9 +1986,9 @@ func TestSerialize(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 0).Ptr(), 24).Ptr(),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 0), 24).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 0).Ptr(), 22).Ptr(),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 0), 22).Ptr(),
 					},
 				},
 			},
@@ -2084,7 +2084,7 @@ func TestSerializeAddPath(t *testing.T) {
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
 					PathIdentifier: 257,
-					Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 120, 0).Ptr(), 24).Ptr(),
+					Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 120, 0), 24).Ptr(),
 				},
 			},
 			expected: []byte{
@@ -2102,7 +2102,7 @@ func TestSerializeAddPath(t *testing.T) {
 			msg: &BGPUpdate{
 				NLRI: &NLRI{
 					PathIdentifier: 257,
-					Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 128, 0).Ptr(), 17).Ptr(),
+					Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 110, 128, 0), 17).Ptr(),
 				},
 			},
 			expected: []byte{
@@ -2141,9 +2141,9 @@ func TestSerializeAddPath(t *testing.T) {
 			name: "Full test",
 			msg: &BGPUpdate{
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(), 16).Ptr(),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				PathAttributes: &PathAttribute{
@@ -2186,9 +2186,9 @@ func TestSerializeAddPath(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 0).Ptr(), 24).Ptr(),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 0), 24).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 0).Ptr(), 22).Ptr(),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(185, 65, 240, 0), 22).Ptr(),
 					},
 				},
 			},
