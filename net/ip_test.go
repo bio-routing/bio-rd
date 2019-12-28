@@ -50,17 +50,17 @@ func TestHigher(t *testing.T) {
 func TestIPVersion(t *testing.T) {
 	tests := []struct {
 		name     string
-		ip       *IP
+		ip       IP
 		expected bool
 	}{
 		{
 			name:     "Test",
-			ip:       IPv4(0).Ptr(),
+			ip:       IPv4(0),
 			expected: true,
 		},
 		{
 			name:     "Test",
-			ip:       IPv6(0, 0).Ptr(),
+			ip:       IPv6(0, 0),
 			expected: false,
 		},
 	}
@@ -225,31 +225,31 @@ func TestCompare(t *testing.T) {
 
 func TestIPString(t *testing.T) {
 	tests := []struct {
-		ip       *IP
+		ip       IP
 		expected string
 	}{
 		{
-			ip:       IPv4FromOctets(192, 168, 0, 1).Ptr(),
+			ip:       IPv4FromOctets(192, 168, 0, 1),
 			expected: "192.168.0.1",
 		},
 		{
-			ip:       IPv4FromOctets(0, 0, 0, 0).Ptr(),
+			ip:       IPv4FromOctets(0, 0, 0, 0),
 			expected: "0.0.0.0",
 		},
 		{
-			ip:       IPv4FromOctets(255, 255, 255, 255).Ptr(),
+			ip:       IPv4FromOctets(255, 255, 255, 255),
 			expected: "255.255.255.255",
 		},
 		{
-			ip:       IPv6(0, 0).Ptr(),
+			ip:       IPv6(0, 0),
 			expected: "0:0:0:0:0:0:0:0",
 		},
 		{
-			ip:       IPv6(2306131596687708724, 6230974922281175806).Ptr(),
+			ip:       IPv6(2306131596687708724, 6230974922281175806),
 			expected: "2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
 		},
 		{
-			ip:       IPv6(^uint64(0), ^uint64(0)).Ptr(),
+			ip:       IPv6(^uint64(0), ^uint64(0)),
 			expected: "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF",
 		},
 	}
@@ -262,17 +262,17 @@ func TestIPString(t *testing.T) {
 func TestBytes(t *testing.T) {
 	tests := []struct {
 		name     string
-		ip       *IP
+		ip       IP
 		expected []byte
 	}{
 		{
 			name:     "IPv4 172.217.16.195",
-			ip:       IPv4(2899906755).Ptr(),
+			ip:       IPv4(2899906755),
 			expected: []byte{172, 217, 16, 195},
 		},
 		{
 			name:     "IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
-			ip:       IPv6(2306131596687708724, 6230974922281175806).Ptr(),
+			ip:       IPv6(2306131596687708724, 6230974922281175806),
 			expected: []byte{32, 1, 6, 120, 1, 224, 18, 52, 86, 120, 222, 173, 190, 239, 202, 254},
 		},
 	}
@@ -288,12 +288,12 @@ func TestIPv4FromOctets(t *testing.T) {
 	tests := []struct {
 		name     string
 		octets   []uint8
-		expected *IP
+		expected IP
 	}{
 		{
 			name:   "172.217.16.195",
 			octets: []uint8{172, 217, 16, 195},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    2899906755,
 				isLegacy: true,
@@ -302,7 +302,7 @@ func TestIPv4FromOctets(t *testing.T) {
 		{
 			name:   "0.0.0.0",
 			octets: []uint8{0, 0, 0, 0},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    0,
 				isLegacy: true,
@@ -311,7 +311,7 @@ func TestIPv4FromOctets(t *testing.T) {
 		{
 			name:   "255.255.255.255",
 			octets: []uint8{255, 255, 255, 255},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    math.MaxUint32,
 				isLegacy: true,
@@ -321,7 +321,7 @@ func TestIPv4FromOctets(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, IPv4FromOctets(test.octets[0], test.octets[1], test.octets[2], test.octets[3]).Ptr())
+			assert.Equal(t, test.expected, IPv4FromOctets(test.octets[0], test.octets[1], test.octets[2], test.octets[3]))
 		})
 	}
 }
@@ -330,7 +330,7 @@ func TestIPv6FromBlocks(t *testing.T) {
 	tests := []struct {
 		name     string
 		blocks   []uint16
-		expected *IP
+		expected IP
 	}{
 		{
 			name: "IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
@@ -344,7 +344,7 @@ func TestIPv6FromBlocks(t *testing.T) {
 				0xbeef,
 				0xcafe,
 			},
-			expected: &IP{
+			expected: IP{
 				higher: 2306131596687708724,
 				lower:  6230974922281175806,
 			},
@@ -361,7 +361,7 @@ func TestIPv6FromBlocks(t *testing.T) {
 				test.blocks[4],
 				test.blocks[5],
 				test.blocks[6],
-				test.blocks[7]).Ptr())
+				test.blocks[7]))
 		})
 	}
 }
@@ -370,13 +370,13 @@ func TestIPFromBytes(t *testing.T) {
 	tests := []struct {
 		name     string
 		bytes    []byte
-		expected *IP
+		expected IP
 		wantFail bool
 	}{
 		{
 			name:  "IPV4: 172.217.16.195",
 			bytes: []byte{172, 217, 16, 195},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    2899906755,
 				isLegacy: true,
@@ -385,7 +385,7 @@ func TestIPFromBytes(t *testing.T) {
 		{
 			name:  "IPV6: IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
 			bytes: []byte{0x20, 0x01, 0x06, 0x78, 0x01, 0xE0, 0x12, 0x34, 0x56, 0x78, 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE},
-			expected: &IP{
+			expected: IP{
 				higher: 2306131596687708724,
 				lower:  6230974922281175806,
 			},
@@ -411,7 +411,7 @@ func TestIPFromBytes(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, test.expected, ip.Ptr())
+			assert.Equal(t, test.expected, ip)
 		})
 	}
 }
@@ -419,12 +419,12 @@ func TestIPFromBytes(t *testing.T) {
 func TestToNetIP(t *testing.T) {
 	tests := []struct {
 		name     string
-		ip       *IP
+		ip       IP
 		expected net.IP
 	}{
 		{
 			name:     "IPv4",
-			ip:       IPv4FromOctets(192, 168, 1, 1).Ptr(),
+			ip:       IPv4FromOctets(192, 168, 1, 1),
 			expected: net.IP{192, 168, 1, 1},
 		},
 		{
@@ -437,7 +437,7 @@ func TestToNetIP(t *testing.T) {
 				0x5678,
 				0xdead,
 				0xbeef,
-				0xcafe).Ptr(),
+				0xcafe),
 			expected: net.IP{32, 1, 6, 120, 1, 224, 18, 52, 86, 120, 222, 173, 190, 239, 202, 254},
 		},
 	}
@@ -452,67 +452,67 @@ func TestToNetIP(t *testing.T) {
 func TestBitAtPosition(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *IP
+		input    IP
 		position uint8
 		expected bool
 	}{
 		{
 			name:     "IPv4: all ones -> 0",
-			input:    IPv4FromOctets(255, 255, 255, 255).Ptr(),
+			input:    IPv4FromOctets(255, 255, 255, 255),
 			position: 1,
 			expected: true,
 		},
 		{
 			name:     "IPv4: Bit 8 from 1.0.0.0 -> 0",
-			input:    IPv4FromOctets(10, 0, 0, 0).Ptr(),
+			input:    IPv4FromOctets(10, 0, 0, 0),
 			position: 8,
 			expected: false,
 		},
 		{
 			name:     "IPv4: Bit 8 from 11.0.0.0 -> 1",
-			input:    IPv4FromOctets(11, 0, 0, 0).Ptr(),
+			input:    IPv4FromOctets(11, 0, 0, 0),
 			position: 8,
 			expected: true,
 		},
 		{
 			name:     "IPv6: Bit 16 from 2001:678:1e0:: -> 1",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
 			position: 16,
 			expected: true,
 		},
 		{
 			name:     "IPv6: Bit 17 from 2001:678:1e0:: -> 0",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
 			position: 17,
 			expected: false,
 		},
 		{
 			name:     "IPv6: Bit 113 from 2001:678:1e0::cafe -> 1",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
 			position: 113,
 			expected: true,
 		},
 		{
 			name:     "IPv6: Bit 115 from 2001:678:1e0::cafe -> 0",
-			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
+			input:    IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
 			position: 115,
 			expected: false,
 		},
 		{
 			name:     "IPv6: all ones -> 1",
-			input:    IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF).Ptr(),
+			input:    IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF),
 			position: 1,
 			expected: true,
 		},
 		{
 			name:     "IPv4: invalid position",
-			input:    IPv4(0).Ptr(),
+			input:    IPv4(0),
 			position: 33,
 			expected: false,
 		},
 		{
 			name:     "IPv6: invalid position",
-			input:    IPv6(0, 0).Ptr(),
+			input:    IPv6(0, 0),
 			position: 129,
 			expected: false,
 		},
@@ -528,18 +528,18 @@ func TestIPFromString(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		expected *IP
+		expected IP
 		wantFail bool
 	}{
 		{
 			name:     "ipv4",
 			input:    "192.168.1.234",
-			expected: IPv4FromOctets(192, 168, 1, 234).Ptr(),
+			expected: IPv4FromOctets(192, 168, 1, 234),
 		},
 		{
 			name:     "ipv6",
 			input:    "2001:678:1e0::cafe",
-			expected: IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
+			expected: IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe),
 		},
 		{
 			name:     "invalid",
@@ -562,7 +562,7 @@ func TestIPFromString(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			assert.Equal(t, test.expected, ip.Ptr())
+			assert.Equal(t, test.expected, ip)
 		})
 	}
 }
@@ -570,17 +570,17 @@ func TestIPFromString(t *testing.T) {
 func TestSizeBytes(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *IP
+		input    IP
 		expected uint8
 	}{
 		{
 			name:     "IPv4",
-			input:    IPv4(0).Ptr(),
+			input:    IPv4(0),
 			expected: 4,
 		},
 		{
 			name:     "IPv6",
-			input:    IPv6(0, 0).Ptr(),
+			input:    IPv6(0, 0),
 			expected: 16,
 		},
 	}
