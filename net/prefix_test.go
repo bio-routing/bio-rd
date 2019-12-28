@@ -11,12 +11,12 @@ import (
 func TestGetIPNet(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
+		pfx      Prefix
 		expected *gonet.IPNet
 	}{
 		{
 			name: "Some prefix IPv4",
-			pfx:  NewPfx(IPv4FromOctets(127, 0, 0, 0).Ptr(), 8).Ptr(),
+			pfx:  NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
 			expected: &gonet.IPNet{
 				IP:   gonet.IP{127, 0, 0, 0},
 				Mask: gonet.IPMask{255, 0, 0, 0},
@@ -24,7 +24,7 @@ func TestGetIPNet(t *testing.T) {
 		},
 		{
 			name: "Some prefix IPv6",
-			pfx:  NewPfx(IPv6FromBlocks(0xffff, 0xffff, 0xffff, 0xffff, 0x0, 0x0, 0x0, 0x0).Ptr(), 64).Ptr(),
+			pfx:  NewPfx(IPv6FromBlocks(0xffff, 0xffff, 0xffff, 0xffff, 0x0, 0x0, 0x0, 0x0), 64),
 			expected: &gonet.IPNet{
 				IP:   gonet.IP{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				Mask: gonet.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -40,7 +40,7 @@ func TestNewPfxFromIPNet(t *testing.T) {
 	tests := []struct {
 		name     string
 		ipNet    *gonet.IPNet
-		expected *Prefix
+		expected Prefix
 	}{
 		{
 			name: "Some Prefix",
@@ -48,24 +48,24 @@ func TestNewPfxFromIPNet(t *testing.T) {
 				IP:   gonet.IP{127, 0, 0, 0},
 				Mask: gonet.IPMask{255, 0, 0, 0},
 			},
-			expected: NewPfx(IPv4FromOctets(127, 0, 0, 0).Ptr(), 8).Ptr(),
+			expected: NewPfx(IPv4FromOctets(127, 0, 0, 0), 8),
 		},
 	}
 	for _, test := range tests {
 		res := NewPfxFromIPNet(test.ipNet)
-		assert.Equal(t, test.expected, res, test.name)
+		assert.Equal(t, test.expected, *res, test.name)
 	}
 }
 
 func TestPrefixToProto(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
+		pfx      Prefix
 		expected *api.Prefix
 	}{
 		{
 			name: "IPv4",
-			pfx: &Prefix{
+			pfx: Prefix{
 				addr: &IP{
 					lower:    200,
 					isLegacy: true,
@@ -82,7 +82,7 @@ func TestPrefixToProto(t *testing.T) {
 		},
 		{
 			name: "IPv6",
-			pfx: &Prefix{
+			pfx: Prefix{
 				addr: &IP{
 					higher:   100,
 					lower:    200,
@@ -111,7 +111,7 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 	tests := []struct {
 		name     string
 		proto    api.Prefix
-		expected *Prefix
+		expected Prefix
 	}{
 		{
 			name: "IPv4",
@@ -123,7 +123,7 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 				},
 				Pfxlen: 24,
 			},
-			expected: &Prefix{
+			expected: Prefix{
 				addr: &IP{
 					higher:   0,
 					lower:    2000,
@@ -142,7 +142,7 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 				},
 				Pfxlen: 64,
 			},
-			expected: &Prefix{
+			expected: Prefix{
 				addr: &IP{
 					higher:   1000,
 					lower:    2000,
@@ -155,13 +155,13 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 
 	for _, test := range tests {
 		res := NewPrefixFromProtoPrefix(test.proto)
-		assert.Equal(t, test.expected, res, test.name)
+		assert.Equal(t, test.expected, *res, test.name)
 	}
 }
 
 func TestNewPfx(t *testing.T) {
-	p := NewPfx(IPv4(123).Ptr(), 11).Ptr()
-	if *p.addr != *IPv4(123).Ptr() || p.pfxlen != 11 {
+	p := NewPfx(IPv4(123), 11)
+	if *p.addr != IPv4(123) || p.pfxlen != 11 {
 		t.Errorf("NewPfx() failed: Unexpected values")
 	}
 }
@@ -169,31 +169,31 @@ func TestNewPfx(t *testing.T) {
 func TestAddr(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
-		expected *IP
+		pfx      Prefix
+		expected IP
 	}{
 		{
 			name:     "Test 1",
-			pfx:      NewPfx(IPv4(100).Ptr(), 5).Ptr(),
-			expected: IPv4(100).Ptr(),
+			pfx:      NewPfx(IPv4(100), 5),
+			expected: IPv4(100),
 		},
 	}
 
 	for _, test := range tests {
 		res := test.pfx.Addr()
-		assert.Equal(t, res, test.expected, "Unexpected result for test %s", test.name)
+		assert.Equal(t, *res, test.expected, "Unexpected result for test %s", test.name)
 	}
 }
 
 func TestPfxlen(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
+		pfx      Prefix
 		expected uint8
 	}{
 		{
 			name:     "Test 1",
-			pfx:      NewPfx(IPv4(100).Ptr(), 5).Ptr(),
+			pfx:      NewPfx(IPv4(100), 5),
 			expected: 5,
 		},
 	}
@@ -222,7 +222,7 @@ func TestGetSupernet(t *testing.T) {
 				pfxlen: 24,
 			},
 			expected: &Prefix{
-				addr:   IPv4FromOctets(10, 0, 0, 0).Ptr(),
+				addr:   IPv4FromOctets(10, 0, 0, 0).Dedup(),
 				pfxlen: 7,
 			},
 		},
@@ -237,7 +237,7 @@ func TestGetSupernet(t *testing.T) {
 				pfxlen: 24,
 			},
 			expected: &Prefix{
-				addr:   IPv4(0).Ptr(),
+				addr:   IPv4(0).Dedup(),
 				pfxlen: 0,
 			},
 		},
@@ -252,7 +252,7 @@ func TestGetSupernet(t *testing.T) {
 				pfxlen: 64,
 			},
 			expected: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0).Dedup(),
 				pfxlen: 56,
 			},
 		},
@@ -267,7 +267,7 @@ func TestGetSupernet(t *testing.T) {
 				pfxlen: 128,
 			},
 			expected: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Dedup(),
 				pfxlen: 127,
 			},
 		},
@@ -282,7 +282,7 @@ func TestGetSupernet(t *testing.T) {
 				pfxlen: 128,
 			},
 			expected: &Prefix{
-				addr:   IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0).Dedup(),
 				pfxlen: 0,
 			},
 		},
@@ -293,7 +293,7 @@ func TestGetSupernet(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			s := test.a.GetSupernet(test.b)
-			assert.Equal(t, test.expected, s.Ptr())
+			assert.Equal(t, *test.expected, s)
 		})
 	}
 }
@@ -486,14 +486,14 @@ func TestEqual(t *testing.T) {
 	}{
 		{
 			name:     "Equal PFXs",
-			a:        NewPfx(IPv4(100).Ptr(), 8).Ptr(),
-			b:        NewPfx(IPv4(100).Ptr(), 8).Ptr(),
+			a:        NewPfx(IPv4(100), 8).Ptr(),
+			b:        NewPfx(IPv4(100), 8).Ptr(),
 			expected: true,
 		},
 		{
 			name:     "Unequal PFXs",
-			a:        NewPfx(IPv4(100).Ptr(), 8).Ptr(),
-			b:        NewPfx(IPv4(200).Ptr(), 8).Ptr(),
+			a:        NewPfx(IPv4(100), 8).Ptr(),
+			b:        NewPfx(IPv4(200), 8).Ptr(),
 			expected: false,
 		},
 	}
@@ -507,17 +507,17 @@ func TestEqual(t *testing.T) {
 func TestString(t *testing.T) {
 	tests := []struct {
 		name     string
-		pfx      *Prefix
+		pfx      Prefix
 		expected string
 	}{
 		{
 			name:     "Test 1",
-			pfx:      NewPfx(IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(),
+			pfx:      NewPfx(IPv4FromOctets(10, 0, 0, 0), 8),
 			expected: "10.0.0.0/8",
 		},
 		{
 			name:     "Test 2",
-			pfx:      NewPfx(IPv4FromOctets(10, 0, 0, 0).Ptr(), 16).Ptr(),
+			pfx:      NewPfx(IPv4FromOctets(10, 0, 0, 0), 16),
 			expected: "10.0.0.0/16",
 		},
 	}
@@ -588,8 +588,8 @@ func TestStrToAddr(t *testing.T) {
 }
 
 func TestEqualOperator(t *testing.T) {
-	p1 := NewPfx(IPv4(100).Ptr(), 4)
-	p2 := NewPfx(IPv4(100).Ptr(), 4)
+	p1 := NewPfx(IPv4(100), 4)
+	p2 := NewPfx(IPv4(100), 4)
 
 	assert.Equal(t, p1, p2, "p1 != p2 (even if attributes are equal)")
 }
