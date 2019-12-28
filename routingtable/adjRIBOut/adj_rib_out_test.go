@@ -36,7 +36,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Add a valid route",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -47,7 +47,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -77,7 +77,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Try to remove unpresent route",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -105,7 +105,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -135,7 +135,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Remove route added in first step",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -166,7 +166,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Try to add route with NO_EXPORT community set",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -184,7 +184,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Try to add route with NO_ADVERTISE community set",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -203,7 +203,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Re-add valid route again",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -215,7 +215,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -245,7 +245,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Try to remove route with NO_EXPORT community set",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -275,7 +275,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -305,7 +305,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		{
 			name: "Try to remove non-existent prefix",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 23, 42, 0).Ptr(), 24).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 23, 42, 0), 24).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -316,7 +316,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -386,7 +386,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		{
 			name: "Add an iBGP route (without success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -402,7 +402,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		{
 			name: "Add an eBGP route (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -423,7 +423,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -453,7 +453,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		{
 			name: "Try to remove slightly different route",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -481,7 +481,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -511,7 +511,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		{
 			name: "Remove route added in 2nd step",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -537,7 +537,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		{
 			name: "Try to add route with NO_EXPORT community set (without success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -555,7 +555,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		{
 			name: "Try to add route with NO_ADVERTISE community set (without success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -619,7 +619,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Add an iBGP route (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -631,7 +631,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -650,7 +650,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Add an eBGP route (replacing previous iBGP route)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -671,7 +671,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -704,7 +704,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Try to remove slightly different route",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -732,7 +732,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -765,7 +765,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Remove route added in 2nd step",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -799,7 +799,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Try to add route with NO_ADVERTISE community set (without success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -818,7 +818,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Try to add route with NO_EXPORT community set (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -832,7 +832,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -859,7 +859,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Remove NO_EXPORT route added before",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -887,7 +887,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		{
 			name: "Add route with one entry in ClusterList and OriginatorID set (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -902,7 +902,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						ASPathLen: 0,
@@ -973,7 +973,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Add an iBGP route (without success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -989,7 +989,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Add an eBGP route (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1010,7 +1010,7 @@ func TestAddPathIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1040,7 +1040,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Try to remove slightly different route",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1068,7 +1068,7 @@ func TestAddPathIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1098,7 +1098,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Remove route added in 2nd step",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1124,7 +1124,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Try to add route with NO_EXPORT community set (without success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1143,7 +1143,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Try to add route with NO_EXPORT community set (without success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1164,7 +1164,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Readd an eBGP route (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1185,7 +1185,7 @@ func TestAddPathIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1215,7 +1215,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Add 2nd path to existing one with different NH (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1236,7 +1236,7 @@ func TestAddPathIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), []*route.Path{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), []*route.Path{
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
@@ -1291,7 +1291,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Remove 2nd path added above",
 			routesRemove: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1312,7 +1312,7 @@ func TestAddPathIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1342,7 +1342,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Re-add 2nd path to existing one with different NH (with success)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1363,7 +1363,7 @@ func TestAddPathIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), []*route.Path{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), []*route.Path{
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
@@ -1418,7 +1418,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Add 3rd path to existing ones, containing NO_EXPORT community (successful)",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -1442,7 +1442,7 @@ func TestAddPathIBGP(t *testing.T) {
 				}),
 			},
 			expected: []*route.Route{
-				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), []*route.Path{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), []*route.Path{
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
@@ -1525,7 +1525,7 @@ func TestAddPathIBGP(t *testing.T) {
 		{
 			name: "Add 4th path to existing ones, containing NO_ADVERTISE community",
 			routesAdd: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{

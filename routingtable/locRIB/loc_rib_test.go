@@ -24,7 +24,7 @@ func TestContainsPfxPath(t *testing.T) {
 		{
 			in: []*pfxPath{},
 			check: &pfxPath{
-				pfx:  bnet.NewPfx(bnet.IPv4(1).Ptr(), 32),
+				pfx:  bnet.NewPfx(bnet.IPv4(1), 32),
 				path: nil,
 			},
 			expected: false,
@@ -33,7 +33,7 @@ func TestContainsPfxPath(t *testing.T) {
 		{
 			in: []*pfxPath{
 				{
-					pfx: bnet.NewPfx(bnet.IPv4(1).Ptr(), 32),
+					pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
@@ -43,7 +43,7 @@ func TestContainsPfxPath(t *testing.T) {
 				},
 			},
 			check: &pfxPath{
-				pfx:  bnet.NewPfx(bnet.IPv4(1).Ptr(), 32),
+				pfx:  bnet.NewPfx(bnet.IPv4(1), 32),
 				path: nil,
 			},
 			expected: false,
@@ -52,7 +52,7 @@ func TestContainsPfxPath(t *testing.T) {
 		{
 			in: []*pfxPath{
 				{
-					pfx: bnet.NewPfx(bnet.IPv4(1).Ptr(), 32),
+					pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
@@ -62,7 +62,7 @@ func TestContainsPfxPath(t *testing.T) {
 				},
 			},
 			check: &pfxPath{
-				pfx: bnet.NewPfx(bnet.IPv4(1).Ptr(), 32),
+				pfx: bnet.NewPfx(bnet.IPv4(1), 32),
 				path: &route.Path{
 					Type: route.StaticPathType,
 					StaticPath: &route.StaticPath{
@@ -89,7 +89,7 @@ func TestLocRIB_RemovePathUnknown(t *testing.T) {
 	assert.True(
 		t,
 		rib.RemovePath(
-			bnet.NewPfx(bnet.IPv4(1).Ptr(), 32).Ptr(),
+			bnet.NewPfx(bnet.IPv4(1), 32).Ptr(),
 			&route.Path{
 				Type: route.StaticPathType,
 				StaticPath: &route.StaticPath{

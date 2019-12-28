@@ -56,7 +56,7 @@ func TestAppendPath(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			a := NewASPathPrependAction(12345, test.times)
-			res := a.Do(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(), 8).Ptr(), &route.Path{
+			res := a.Do(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 				BGPPath: test.bgpPath,
 			})
 
