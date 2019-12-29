@@ -17,7 +17,8 @@ type Prefix struct {
 	pfxlen uint8
 }
 
-// Dedup gets a copy of Prefix from the cache
+// Dedup gets a copy of Prefix from the cache.
+// If Prefix is not in the cache it gets added.
 func (p Prefix) Dedup() *Prefix {
 	return pfxc.get(p)
 }
@@ -25,12 +26,6 @@ func (p Prefix) Dedup() *Prefix {
 // Ptr returns a pointer to p
 func (p Prefix) Ptr() *Prefix {
 	return &p
-}
-
-// DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
-func (p Prefix) DedupWithIP() *Prefix {
-	p.addr = p.addr.Dedup()
-	return pfxc.get(p)
 }
 
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
