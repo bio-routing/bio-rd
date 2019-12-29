@@ -25,15 +25,6 @@ func (ip IP) Ptr() *IP {
 	return &ip
 }
 
-// Copy creates a copy
-func (ip IP) Copy() *IP {
-	return &IP{
-		higher:   ip.higher,
-		lower:    ip.lower,
-		isLegacy: ip.isLegacy,
-	}
-}
-
 // IPFromProtoIP creates an IP address from a proto IP
 func IPFromProtoIP(addr api.IP) *IP {
 	return &IP{
