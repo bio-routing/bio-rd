@@ -5,7 +5,6 @@ import (
 	"net"
 
 	api "github.com/bio-routing/bio-rd/net/api"
-	"github.com/google/btree"
 )
 
 // IP represents an IPv4 or IPv6 address
@@ -16,8 +15,13 @@ type IP struct {
 }
 
 // Dedup gets a copy of IP from the cache
-func (ip *IP) Dedup() *IP {
+func (ip IP) Dedup() *IP {
 	return ipc.get(ip)
+}
+
+// Ptr returns a pointer to ip
+func (ip IP) Ptr() *IP {
+	return &ip
 }
 
 // IPFromProtoIP creates an IP address from a proto IP
@@ -30,7 +34,7 @@ func IPFromProtoIP(addr api.IP) *IP {
 }
 
 // ToProto converts an IP to a proto IP
-func (ip *IP) ToProto() *api.IP {
+func (ip IP) ToProto() *api.IP {
 	ver := api.IP_IPv6
 	if ip.isLegacy {
 		ver = api.IP_IPv4
@@ -54,21 +58,21 @@ func (ip *IP) Higher() uint64 {
 }
 
 // IPv4 returns a new `IP` representing an IPv4 address
-func IPv4(val uint32) *IP {
-	return &IP{
+func IPv4(val uint32) IP {
+	return IP{
 		lower:    uint64(val),
 		isLegacy: true,
 	}
 }
 
 // IPv4FromOctets returns an IPv4 address for the given 4 octets
-func IPv4FromOctets(o1, o2, o3, o4 uint8) *IP {
+func IPv4FromOctets(o1, o2, o3, o4 uint8) IP {
 	return IPv4(uint32(o1)<<24 + uint32(o2)<<16 + uint32(o3)<<8 + uint32(o4))
 }
 
 // IPv6 returns a new `IP` representing an IPv6 address
-func IPv6(higher, lower uint64) *IP {
-	return &IP{
+func IPv6(higher, lower uint64) IP {
+	return IP{
 		higher:   higher,
 		lower:    lower,
 		isLegacy: false,
@@ -76,14 +80,32 @@ func IPv6(higher, lower uint64) *IP {
 }
 
 // IPv6FromBlocks returns an IPv6 address for the given 8 blocks
-func IPv6FromBlocks(b1, b2, b3, b4, b5, b6, b7, b8 uint16) *IP {
+func IPv6FromBlocks(b1, b2, b3, b4, b5, b6, b7, b8 uint16) IP {
 	return IPv6(
 		uint64(uint64(b1)<<48+uint64(b2)<<32+uint64(b3)<<16+uint64(b4)),
 		uint64(uint64(b5)<<48+uint64(b6)<<32+uint64(b7)<<16+uint64(b8)))
 }
 
+// IPv4FromBytes creates an IPv4 Address from one or more bytes. Missing bytes are filled with zero bytes.
+func IPv4FromBytes(b []byte) IP {
+	switch len(b) {
+	case 0:
+		return IPv4FromOctets(0, 0, 0, 0)
+	case 1:
+		return IPv4FromOctets(b[0], 0, 0, 0)
+	case 2:
+		return IPv4FromOctets(b[0], b[1], 0, 0)
+	case 3:
+		return IPv4FromOctets(b[0], b[1], b[2], 0)
+	case 4:
+		return IPv4FromOctets(b[0], b[1], b[2], b[3])
+	}
+
+	return IP{}
+}
+
 // IPFromBytes returns an IP address for a byte slice
-func IPFromBytes(b []byte) (*IP, error) {
+func IPFromBytes(b []byte) (IP, error) {
 	if len(b) == 4 {
 		return IPv4FromOctets(b[0], b[1], b[2], b[3]), nil
 	}
@@ -100,14 +122,14 @@ func IPFromBytes(b []byte) (*IP, error) {
 			uint16(b[14])<<8+uint16(b[15])), nil
 	}
 
-	return nil, fmt.Errorf("byte slice has an invalid length. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
+	return IP{}, fmt.Errorf("byte slice has an invalid length. Expected either 4 (IPv4) or 16 (IPv6) bytes but got: %d", len(b))
 }
 
 // IPFromString returns an IP address for a given string
-func IPFromString(str string) (*IP, error) {
+func IPFromString(str string) (IP, error) {
 	ip := net.ParseIP(str)
 	if ip == nil {
-		return nil, fmt.Errorf("%s is not a valid IP address", str)
+		return IP{}, fmt.Errorf("%s is not a valid IP address", str)
 	}
 
 	ip4 := ip.To4()
@@ -121,11 +143,6 @@ func IPFromString(str string) (*IP, error) {
 // Equal returns true if ip is equal to other
 func (ip *IP) Equal(other *IP) bool {
 	return *ip == *other
-}
-
-// Less compares ips for use in btree.Btree
-func (ip *IP) Less(other btree.Item) bool {
-	return ip.Compare(other.(*IP)) == -1
 }
 
 // Compare compares two IP addresses (returns 0 if equal, -1 if `ip` is smaller than `other`, 1 if `ip` is greater than `other`)

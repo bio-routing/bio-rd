@@ -270,7 +270,7 @@ func TestBMPServer(t *testing.T) {
 		return
 	}
 
-	route := lr.Get(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8))
+	route := lr.Get(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr())
 	if route == nil {
 		t.Errorf("Expected route not found")
 		return
@@ -303,7 +303,7 @@ func TestBMPServer(t *testing.T) {
 		return
 	}
 
-	route = lr.Get(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8))
+	route = lr.Get(bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr())
 	if route != nil {
 		t.Errorf("Unexpected route found")
 		return

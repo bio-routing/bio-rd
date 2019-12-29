@@ -56,7 +56,7 @@ func TestDumpRIBInOut(t *testing.T) {
 				srv: &bgpServer{
 					peers: &peerManager{
 						peers: map[bnet.IP]*peer{
-							*bnet.IPv4FromOctets(10, 0, 0, 0): {
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
@@ -85,13 +85,13 @@ func TestDumpRIBInOut(t *testing.T) {
 				srv: &bgpServer{
 					peers: &peerManager{
 						peers: map[bnet.IP]*peer{
-							*bnet.IPv4FromOctets(10, 0, 0, 0): {
-								addr: bnet.IPv4(123),
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
+								addr: bnet.IPv4(123).Ptr(),
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, 0, 0, true),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(0)}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},
 								},
@@ -101,13 +101,13 @@ func TestDumpRIBInOut(t *testing.T) {
 				},
 			},
 			addRoutes: []*route.Route{
-				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16), &route.Path{
+				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							OriginatorID: 1,
-							NextHop:      bnet.IPv4FromOctets(100, 100, 100, 100),
-							Source:       bnet.IPv4FromOctets(100, 100, 100, 100),
+							NextHop:      bnet.IPv4FromOctets(100, 100, 100, 100).Ptr(),
+							Source:       bnet.IPv4FromOctets(100, 100, 100, 100).Ptr(),
 						},
 					},
 				}),
@@ -145,13 +145,13 @@ func TestDumpRIBInOut(t *testing.T) {
 				srv: &bgpServer{
 					peers: &peerManager{
 						peers: map[bnet.IP]*peer{
-							*bnet.IPv4FromOctets(10, 0, 0, 0): {
-								addr: bnet.IPv4(123),
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
+								addr: bnet.IPv4(123).Ptr(),
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 0, 0, true),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(123)}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},
 								},
@@ -161,13 +161,13 @@ func TestDumpRIBInOut(t *testing.T) {
 				},
 			},
 			addRoutes: []*route.Route{
-				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16), &route.Path{
+				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							OriginatorID: 1,
-							NextHop:      bnet.IPv4FromOctets(100, 100, 100, 100),
-							Source:       bnet.IPv4FromOctets(100, 100, 100, 100),
+							NextHop:      bnet.IPv4FromOctets(100, 100, 100, 100).Ptr(),
+							Source:       bnet.IPv4FromOctets(100, 100, 100, 100).Ptr(),
 							LocalPref:    1000,
 							MED:          2000,
 						},
@@ -252,7 +252,7 @@ func TestDumpRIBInOut(t *testing.T) {
 	for _, test := range tests {
 		for _, r := range test.addRoutes {
 			for _, p := range r.Paths() {
-				test.apisrv.srv.(*bgpServer).peers.peers[*bnet.IPv4FromOctets(10, 0, 0, 0)].fsms[0].ipv4Unicast.adjRIBIn.AddPath(r.Prefix(), p)
+				test.apisrv.srv.(*bgpServer).peers.peers[bnet.IPv4FromOctets(10, 0, 0, 0)].fsms[0].ipv4Unicast.adjRIBIn.AddPath(r.Prefix(), p)
 			}
 		}
 
@@ -298,7 +298,7 @@ func TestDumpRIBInOut(t *testing.T) {
 	for _, test := range tests {
 		for _, r := range test.addRoutes {
 			for _, p := range r.Paths() {
-				test.apisrv.srv.(*bgpServer).peers.peers[*bnet.IPv4FromOctets(10, 0, 0, 0)].fsms[0].ipv4Unicast.adjRIBOut.AddPath(r.Prefix(), p)
+				test.apisrv.srv.(*bgpServer).peers.peers[bnet.IPv4FromOctets(10, 0, 0, 0)].fsms[0].ipv4Unicast.adjRIBOut.AddPath(r.Prefix(), p)
 			}
 		}
 

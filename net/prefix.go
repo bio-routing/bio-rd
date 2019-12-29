@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/bio-routing/bio-rd/net/api"
-	"github.com/google/btree"
 	"github.com/pkg/errors"
 )
 
@@ -18,29 +17,15 @@ type Prefix struct {
 	pfxlen uint8
 }
 
-// Dedup gets a copy of Prefix from the cache
-func (p *Prefix) Dedup() *Prefix {
+// Dedup gets a copy of Prefix from the cache.
+// If Prefix is not in the cache it gets added.
+func (p Prefix) Dedup() *Prefix {
 	return pfxc.get(p)
 }
 
-// Less compares prefixes for use in btree.Btree
-func (p *Prefix) Less(other btree.Item) bool {
-	switch p.addr.Compare(other.(*Prefix).addr) {
-	case 0:
-		return p.pfxlen < other.(*Prefix).pfxlen
-	case -1:
-		return true
-	case 1:
-		return false
-	}
-
-	return false
-}
-
-// DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
-func (p *Prefix) DedupWithIP() *Prefix {
-	p.addr = p.addr.Dedup()
-	return pfxc.get(p)
+// Ptr returns a pointer to p
+func (p Prefix) Ptr() *Prefix {
+	return &p
 }
 
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
@@ -69,13 +54,13 @@ func PrefixFromString(s string) (*Prefix, error) {
 	}
 
 	return &Prefix{
-		addr:   ip,
+		addr:   ip.Dedup(),
 		pfxlen: uint8(l),
 	}, nil
 }
 
 // ToProto converts prefix to proto prefix
-func (p *Prefix) ToProto() *api.Prefix {
+func (p Prefix) ToProto() *api.Prefix {
 	return &api.Prefix{
 		Address: p.addr.ToProto(),
 		Pfxlen:  uint32(p.pfxlen),
@@ -83,9 +68,9 @@ func (p *Prefix) ToProto() *api.Prefix {
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr *IP, pfxlen uint8) *Prefix {
-	return &Prefix{
-		addr:   addr,
+func NewPfx(addr IP, pfxlen uint8) Prefix {
+	return Prefix{
+		addr:   addr.Dedup(),
 		pfxlen: pfxlen,
 	}
 }
@@ -96,7 +81,7 @@ func NewPfxFromIPNet(ipNet *gonet.IPNet) *Prefix {
 	ip, _ := IPFromBytes(ipNet.IP)
 
 	return &Prefix{
-		addr:   ip,
+		addr:   ip.Dedup(),
 		pfxlen: uint8(ones),
 	}
 }
@@ -193,7 +178,7 @@ func (pfx *Prefix) Equal(x *Prefix) bool {
 }
 
 // GetSupernet gets the next common supernet of pfx and x
-func (pfx *Prefix) GetSupernet(x *Prefix) *Prefix {
+func (pfx *Prefix) GetSupernet(x *Prefix) Prefix {
 	if pfx.addr.isLegacy {
 		return pfx.supernetIPv4(x)
 	}
@@ -201,7 +186,7 @@ func (pfx *Prefix) GetSupernet(x *Prefix) *Prefix {
 	return pfx.supernetIPv6(x)
 }
 
-func (pfx *Prefix) supernetIPv4(x *Prefix) *Prefix {
+func (pfx *Prefix) supernetIPv4(x *Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
 	a := pfx.addr.ToUint32() >> (32 - maxPfxLen)
 	b := x.addr.ToUint32() >> (32 - maxPfxLen)
@@ -212,13 +197,13 @@ func (pfx *Prefix) supernetIPv4(x *Prefix) *Prefix {
 		maxPfxLen--
 	}
 
-	return &Prefix{
-		addr:   IPv4(a << (32 - maxPfxLen)),
+	return Prefix{
+		addr:   IPv4(a << (32 - maxPfxLen)).Dedup(),
 		pfxlen: maxPfxLen,
 	}
 }
 
-func (pfx *Prefix) supernetIPv6(x *Prefix) *Prefix {
+func (pfx *Prefix) supernetIPv6(x *Prefix) Prefix {
 	maxPfxLen := min(pfx.pfxlen, x.pfxlen)
 
 	a := pfx.addr.BitAtPosition(1)

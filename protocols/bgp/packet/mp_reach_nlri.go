@@ -64,11 +64,11 @@ func deserializeMultiProtocolReachNLRI(b []byte, addPath bool) (MultiProtocolRea
 			fmt.Errorf("Failed to decode next hop IP: expected %d bytes for NLRI, only %d remaining", nextHopLength, budget)
 	}
 
-	n.NextHop, err = bnet.IPFromBytes(variable[:nextHopLength])
+	nh, err := bnet.IPFromBytes(variable[:nextHopLength])
 	if err != nil {
 		return MultiProtocolReachNLRI{}, errors.Wrap(err, "Failed to decode next hop IP")
 	}
-	n.NextHop = n.NextHop.Dedup()
+	n.NextHop = nh.Dedup()
 	budget -= int(nextHopLength)
 
 	if budget == 0 {

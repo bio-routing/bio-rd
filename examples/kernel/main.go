@@ -19,10 +19,10 @@ func main() {
 	}
 
 	rib4 := vrf.IPv4UnicastRIB()
-	rib4.AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 0), 24), &route.Path{
+	rib4.AddPath(bnet.NewPfx(bnet.IPv4FromOctets(8, 8, 8, 0), 24).Ptr(), &route.Path{
 		Type: route.StaticPathType,
 		StaticPath: &route.StaticPath{
-			NextHop: bnet.IPv4FromOctets(127, 0, 0, 1),
+			NextHop: bnet.IPv4FromOctets(127, 0, 0, 1).Ptr(),
 		},
 	})
 

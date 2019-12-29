@@ -34,7 +34,7 @@ func TestProcess(t *testing.T) {
 	}{
 		{
 			name:   "empty from",
-			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
+			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr(),
 			path:   &route.Path{},
 			from:   []*TermCondition{},
 			then: []actions.Action{
@@ -45,11 +45,11 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name:   "from matches",
-			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
+			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr(),
 			path:   &route.Path{},
 			from: []*TermCondition{
 				NewTermConditionWithPrefixLists(
-					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8))),
+					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr())),
 			},
 			then: []actions.Action{
 				&actions.AcceptAction{},
@@ -59,11 +59,11 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name:   "from does not match",
-			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
+			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr(),
 			path:   &route.Path{},
 			from: []*TermCondition{
 				NewTermConditionWithPrefixLists(
-					NewPrefixList(net.NewPfx(net.IPv4(0), 32))),
+					NewPrefixList(net.NewPfx(net.IPv4(0), 32).Ptr())),
 			},
 			then: []actions.Action{
 				&actions.AcceptAction{},
@@ -73,11 +73,11 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name:   "modified",
-			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
+			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr(),
 			path:   &route.Path{},
 			from: []*TermCondition{
 				NewTermConditionWithPrefixLists(
-					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8))),
+					NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr())),
 			},
 			then: []actions.Action{
 				&mockAction{},
@@ -87,11 +87,11 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name:   "modified and accepted (2 actions)",
-			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
+			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr(),
 			path:   &route.Path{},
 			from: []*TermCondition{
 				NewTermConditionWithRouteFilters(
-					NewRouteFilter(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8), NewExactMatcher())),
+					NewRouteFilter(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr(), NewExactMatcher())),
 			},
 			then: []actions.Action{
 				&mockAction{},
@@ -102,13 +102,13 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name:   "one of the prefix filters matches",
-			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8),
+			prefix: net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr(),
 			path:   &route.Path{},
 			from: []*TermCondition{
 				{
 					prefixLists: []*PrefixList{
-						NewPrefixListWithMatcher(NewExactMatcher(), net.NewPfx(net.IPv4(0), 32)),
-						NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8)),
+						NewPrefixListWithMatcher(NewExactMatcher(), net.NewPfx(net.IPv4(0), 32).Ptr()),
+						NewPrefixList(net.NewPfx(net.IPv4FromOctets(100, 64, 0, 1), 8).Ptr()),
 					},
 				},
 			},

@@ -210,9 +210,9 @@ func TestDecode(t *testing.T) {
 				Body: &BGPUpdate{
 					WithdrawnRoutesLen: 5,
 					WithdrawnRoutes: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 						Next: &NLRI{
-							Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+							Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 						},
 					},
 				},
@@ -428,9 +428,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 			},
@@ -465,9 +465,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				TotalPathAttrLen: 23,
@@ -499,7 +499,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          net.IPv4FromOctets(10, 20, 30, 40),
+							Value:          net.IPv4FromOctets(10, 20, 30, 40).Ptr(),
 						},
 					},
 				},
@@ -577,9 +577,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				TotalPathAttrLen: 27,
@@ -623,7 +623,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13).Ptr(),
 						},
 					},
 				},
@@ -666,9 +666,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				TotalPathAttrLen: 34,
@@ -711,7 +711,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13).Ptr(),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -768,9 +768,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				TotalPathAttrLen: 41,
@@ -812,7 +812,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13).Ptr(),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -882,9 +882,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				TotalPathAttrLen: 44,
@@ -926,7 +926,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13).Ptr(),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -1012,9 +1012,9 @@ func TestDecodeUpdateMsg(t *testing.T) {
 			expected: &BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 					Next: &NLRI{
-						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16),
+						Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 168, 0, 0), 16).Ptr(),
 					},
 				},
 				TotalPathAttrLen: 53,
@@ -1056,7 +1056,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          bnet.IPv4FromOctets(10, 11, 12, 13),
+							Value:          bnet.IPv4FromOctets(10, 11, 12, 13).Ptr(),
 							Next: &PathAttribute{
 								Optional:       false,
 								Transitive:     false,
@@ -1089,7 +1089,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 											TypeCode:       7,
 											Value: types.Aggregator{
 												ASN:     uint16(258),
-												Address: bnet.IPv4FromOctets(10, 11, 12, 13).ToUint32(),
+												Address: bnet.IPv4FromOctets(10, 11, 12, 13).Ptr().ToUint32(),
 											},
 										},
 									},
@@ -1099,7 +1099,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 					},
 				},
 				NLRI: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8),
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8).Ptr(),
 				},
 			},
 		},

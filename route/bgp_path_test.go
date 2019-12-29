@@ -58,8 +58,8 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 		PathIdentifier: 100,
 		BGPPathA: &BGPPathA{
 			BGPIdentifier: 123,
-			Source:        bnet.IPv4FromOctets(10, 0, 0, 2),
-			NextHop:       bnet.IPv4FromOctets(10, 0, 0, 1),
+			Source:        bnet.IPv4FromOctets(10, 0, 0, 2).Ptr(),
+			NextHop:       bnet.IPv4FromOctets(10, 0, 0, 1).Ptr(),
 			LocalPref:     1000,
 			Origin:        1,
 			EBGP:          true,
@@ -116,15 +116,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					LocalPref: 200,
-					Source:    bnet.IPv4(0),
-					NextHop:   bnet.IPv4(0),
+					Source:    bnet.IPv4(0).Ptr(),
+					NextHop:   bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					LocalPref: 100,
-					Source:    bnet.IPv4(0),
-					NextHop:   bnet.IPv4(0),
+					Source:    bnet.IPv4(0).Ptr(),
+					NextHop:   bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: 1,
@@ -134,15 +134,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					LocalPref: 100,
-					Source:    bnet.IPv4(0),
-					NextHop:   bnet.IPv4(0),
+					Source:    bnet.IPv4(0).Ptr(),
+					NextHop:   bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					LocalPref: 200,
-					Source:    bnet.IPv4(0),
-					NextHop:   bnet.IPv4(0),
+					Source:    bnet.IPv4(0).Ptr(),
+					NextHop:   bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: -1,
@@ -152,15 +152,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				ASPathLen: 100,
 				BGPPathA: &BGPPathA{
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				ASPathLen: 200,
 				BGPPathA: &BGPPathA{
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: 1,
@@ -170,15 +170,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				ASPathLen: 200,
 				BGPPathA: &BGPPathA{
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				ASPathLen: 100,
 				BGPPathA: &BGPPathA{
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: -1,
@@ -188,15 +188,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					Origin:  1,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					Origin:  2,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: 1,
@@ -206,15 +206,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					Origin:  2,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					Origin:  1,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: -1,
@@ -224,15 +224,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					MED:     1,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					MED:     2,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: 1,
@@ -242,15 +242,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					MED:     2,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					MED:     1,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: -1,
@@ -260,15 +260,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					EBGP:    true,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					EBGP:    false,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: 1,
@@ -278,15 +278,15 @@ func TestBGPSelect(t *testing.T) {
 			p: &BGPPath{
 				BGPPathA: &BGPPathA{
 					EBGP:    false,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			q: &BGPPath{
 				BGPPathA: &BGPPathA{
 					EBGP:    true,
-					Source:  bnet.IPv4(0),
-					NextHop: bnet.IPv4(0),
+					Source:  bnet.IPv4(0).Ptr(),
+					NextHop: bnet.IPv4(0).Ptr(),
 				},
 			},
 			expected: -1,
@@ -509,8 +509,8 @@ func TestLength(t *testing.T) {
 				},
 				BGPPathA: &BGPPathA{
 					OriginatorID: 10,
-					Source:       net.IPv4(0),
-					NextHop:      net.IPv4(0),
+					Source:       net.IPv4(0).Ptr(),
+					NextHop:      net.IPv4(0).Ptr(),
 				},
 			},
 			expected: 54,
@@ -533,8 +533,8 @@ func TestBGPPathString(t *testing.T) {
 				BGPPathA: &BGPPathA{
 					EBGP:         true,
 					OriginatorID: 23,
-					NextHop:      net.IPv6(0, 0),
-					Source:       net.IPv6(0, 0),
+					NextHop:      net.IPv6(0, 0).Ptr(),
+					Source:       net.IPv6(0, 0).Ptr(),
 				},
 				ASPath:           &types.ASPath{},
 				ClusterList:      &types.ClusterList{10, 20},

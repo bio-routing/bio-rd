@@ -35,7 +35,7 @@ func TestMetrics(t *testing.T) {
 			peer: &peer{
 				peerASN:  202739,
 				localASN: 201701,
-				addr:     bnet.IPv4(100),
+				addr:     bnet.IPv4(100).Ptr(),
 				ipv4:     &peerAddressFamily{},
 				ipv6:     &peerAddressFamily{},
 				vrf:      vrf,
@@ -50,7 +50,7 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:              bnet.IPv4(100),
+						IP:              bnet.IPv4(100).Ptr(),
 						ASN:             202739,
 						LocalASN:        201701,
 						UpdatesReceived: 3,
@@ -82,7 +82,7 @@ func TestMetrics(t *testing.T) {
 			peer: &peer{
 				peerASN:  202739,
 				localASN: 201701,
-				addr:     bnet.IPv4(100),
+				addr:     bnet.IPv4(100).Ptr(),
 				ipv4:     &peerAddressFamily{},
 				ipv6:     &peerAddressFamily{},
 				vrf:      vrf,
@@ -91,7 +91,7 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100),
+						IP:       bnet.IPv4(100).Ptr(),
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
@@ -115,7 +115,7 @@ func TestMetrics(t *testing.T) {
 			peer: &peer{
 				peerASN:  202739,
 				localASN: 201701,
-				addr:     bnet.IPv4(100),
+				addr:     bnet.IPv4(100).Ptr(),
 				ipv4:     &peerAddressFamily{},
 				ipv6:     &peerAddressFamily{},
 				vrf:      vrf,
@@ -124,7 +124,7 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100),
+						IP:       bnet.IPv4(100).Ptr(),
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
@@ -148,7 +148,7 @@ func TestMetrics(t *testing.T) {
 			peer: &peer{
 				peerASN:  202739,
 				localASN: 201701,
-				addr:     bnet.IPv4(100),
+				addr:     bnet.IPv4(100).Ptr(),
 				ipv4:     &peerAddressFamily{},
 				ipv6:     &peerAddressFamily{},
 				vrf:      vrf,
@@ -157,7 +157,7 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100),
+						IP:       bnet.IPv4(100).Ptr(),
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
@@ -181,7 +181,7 @@ func TestMetrics(t *testing.T) {
 			peer: &peer{
 				peerASN:  202739,
 				localASN: 201701,
-				addr:     bnet.IPv4(100),
+				addr:     bnet.IPv4(100).Ptr(),
 				ipv4:     &peerAddressFamily{},
 				ipv6:     &peerAddressFamily{},
 				vrf:      vrf,
@@ -190,7 +190,7 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100),
+						IP:       bnet.IPv4(100).Ptr(),
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
@@ -214,7 +214,7 @@ func TestMetrics(t *testing.T) {
 			peer: &peer{
 				peerASN:  202739,
 				localASN: 201701,
-				addr:     bnet.IPv4(100),
+				addr:     bnet.IPv4(100).Ptr(),
 				ipv4:     &peerAddressFamily{},
 				ipv6:     &peerAddressFamily{},
 				vrf:      vrf,
@@ -223,7 +223,7 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100),
+						IP:       bnet.IPv4(100).Ptr(),
 						ASN:      202739,
 						LocalASN: 201701,
 						VRF:      "inet.0",
@@ -248,7 +248,7 @@ func TestMetrics(t *testing.T) {
 			peer: &peer{
 				peerASN:  202739,
 				localASN: 201701,
-				addr:     bnet.IPv4(100),
+				addr:     bnet.IPv4(100).Ptr(),
 				ipv4:     &peerAddressFamily{},
 				ipv6:     &peerAddressFamily{},
 				vrf:      vrf,
@@ -256,7 +256,7 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:              bnet.IPv4(100),
+						IP:              bnet.IPv4(100).Ptr(),
 						ASN:             202739,
 						LocalASN:        201701,
 						VRF:             "inet.0",

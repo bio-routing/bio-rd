@@ -2,12 +2,10 @@ package net
 
 import (
 	"sync"
-
-	"github.com/google/btree"
 )
 
 const (
-	prefixCacheBTreeGrade = 3500
+	prefixCachePreAlloc = 1500000
 )
 
 var (
@@ -19,27 +17,30 @@ func init() {
 }
 
 type pfxCache struct {
+	cache   map[Prefix]*Prefix
 	cacheMu sync.Mutex
-	tree    *btree.BTree
 }
 
 func newPfxCache() *pfxCache {
 	return &pfxCache{
-		tree: btree.New(prefixCacheBTreeGrade),
+		cache: make(map[Prefix]*Prefix, prefixCachePreAlloc),
 	}
 }
 
-func (pfxc *pfxCache) get(pfx *Prefix) *Prefix {
+func (pfxc *pfxCache) get(pfx Prefix) *Prefix {
+	pfx.addr = pfx.addr.Dedup()
 	pfxc.cacheMu.Lock()
 
-	item := pfxc.tree.Get(pfx)
-	if item != nil {
+	if p, exists := pfxc.cache[pfx]; exists {
 		pfxc.cacheMu.Unlock()
-		return item.(*Prefix)
+		return p
 	}
 
-	pfxc.tree.ReplaceOrInsert(pfx)
+	pfxc._set(pfx)
 	pfxc.cacheMu.Unlock()
+	return pfxc.cache[pfx]
+}
 
-	return pfx
+func (pfxc *pfxCache) _set(pfx Prefix) {
+	pfxc.cache[pfx] = &pfx
 }

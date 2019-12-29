@@ -279,8 +279,8 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 		isBMP: true,
 		peer: &peer{
 			routerID:  sentOpen.BGPIdentifier,
-			addr:      peerAddress,
-			localAddr: localAddress,
+			addr:      peerAddress.Dedup(),
+			localAddr: localAddress.Dedup(),
 			peerASN:   msg.PerPeerHeader.PeerAS,
 			localASN:  uint32(sentOpen.ASN),
 			ipv4:      &peerAddressFamily{},

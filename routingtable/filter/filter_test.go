@@ -20,7 +20,7 @@ func TestProcessTerms(t *testing.T) {
 	}{
 		{
 			name:   "accept",
-			prefix: net.NewPfx(net.IPv4(0), 0),
+			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
 			term: &Term{
 				then: []actions.Action{
@@ -32,7 +32,7 @@ func TestProcessTerms(t *testing.T) {
 		},
 		{
 			name:   "reject",
-			prefix: net.NewPfx(net.IPv4(0), 0),
+			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
 			term: &Term{
 				then: []actions.Action{
@@ -44,7 +44,7 @@ func TestProcessTerms(t *testing.T) {
 		},
 		{
 			name:   "accept before reject",
-			prefix: net.NewPfx(net.IPv4(0), 0),
+			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
 			term: &Term{
 				then: []actions.Action{
@@ -57,7 +57,7 @@ func TestProcessTerms(t *testing.T) {
 		},
 		{
 			name:   "modified",
-			prefix: net.NewPfx(net.IPv4(0), 0),
+			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
 			term: &Term{
 				then: []actions.Action{
