@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/bio-routing/bio-rd/net/api"
-	"github.com/google/btree"
 	"github.com/pkg/errors"
 )
 
@@ -34,20 +33,6 @@ func (p Prefix) Copy() *Prefix {
 		addr:   p.addr,
 		pfxlen: p.pfxlen,
 	}
-}
-
-// Less compares prefixes for use in btree.Btree
-func (p Prefix) Less(other btree.Item) bool {
-	switch p.addr.Compare(other.(*Prefix).addr) {
-	case 0:
-		return p.pfxlen < other.(*Prefix).pfxlen
-	case -1:
-		return true
-	case 1:
-		return false
-	}
-
-	return false
 }
 
 // DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
