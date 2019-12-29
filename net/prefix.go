@@ -27,14 +27,6 @@ func (p Prefix) Ptr() *Prefix {
 	return &p
 }
 
-// Copy creates a copy of the prefix
-func (p Prefix) Copy() *Prefix {
-	return &Prefix{
-		addr:   p.addr,
-		pfxlen: p.pfxlen,
-	}
-}
-
 // DedupWithIP gets a copy of Prefix from the cache and dedups the IP part
 func (p Prefix) DedupWithIP() *Prefix {
 	p.addr = p.addr.Dedup()
