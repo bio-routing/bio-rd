@@ -171,7 +171,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							Source:  net.IPv4(0).Ptr(),
-							NextHop: net.IPv4(0).Ptr().Ptr(),
+							NextHop: net.IPv4(0).Ptr(),
 						},
 						Communities: &types.Communities{
 							types.WellKnownCommunityNoExport,
@@ -189,7 +189,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							Source:  net.IPv4(0).Ptr(),
-							NextHop: net.IPv4(0).Ptr().Ptr(),
+							NextHop: net.IPv4(0).Ptr(),
 						},
 						Communities: &types.Communities{
 							types.WellKnownCommunityNoAdvertise,
@@ -208,7 +208,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							Source:  net.IPv4(0).Ptr(),
-							NextHop: net.IPv4(0).Ptr().Ptr(),
+							NextHop: net.IPv4(0).Ptr(),
 						},
 						ASPath: &types.ASPath{},
 					},
