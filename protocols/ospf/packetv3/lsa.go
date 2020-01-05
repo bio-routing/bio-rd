@@ -17,7 +17,7 @@ func (t LSAType) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(uint16(t)))
 }
 
-func (t LSAType) ShouldFlood() bool {
+func (t LSAType) FloodIfUnknown() bool {
 	return t&(1<<15) != 0 // test for top bit
 }
 
