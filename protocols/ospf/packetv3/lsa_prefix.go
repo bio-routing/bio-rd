@@ -88,7 +88,7 @@ func DeserializeLSAPrefix(buf *bytes.Buffer) (LSAPrefix, int, error) {
 	if err != nil {
 		return pdu, readBytes, errors.Wrap(err, "unable to decode AddressPrefix")
 	}
-	pdu.Address = *addr
+	pdu.Address = addr
 	readBytes += len(pfxBytes)
 
 	return pdu, readBytes, nil

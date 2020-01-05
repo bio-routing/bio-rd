@@ -65,7 +65,7 @@ type deserializableIP struct {
 }
 
 func (ip deserializableIP) ToNetIP() net.IP {
-	return *(net.IPv6(ip.Higher, ip.Lower))
+	return net.IPv6(ip.Higher, ip.Lower)
 }
 
 func serializeIPv6(ip net.IP, buf *bytes.Buffer) {
