@@ -91,6 +91,10 @@ func runTest(t *testing.T, testCase test, src, dst net.IP) {
 	})
 }
 
+func routerID(o1, o2, o3, o4 uint8) ospf.ID {
+	return ospf.ID(net.IPv4FromOctets(o1, o2, o3, o4).Ptr().ToUint32())
+}
+
 func TestDecodeHello(t *testing.T) {
 	tests := []test{
 		{
@@ -121,7 +125,7 @@ func TestDecodeHello(t *testing.T) {
 				Type:         ospf.MsgTypeHello,
 				Checksum:     0x941c,
 				PacketLength: 36,
-				RouterID:     ospf.ID(net.IPv4FromOctets(3, 3, 3, 3).Ptr().ToUint32()),
+				RouterID:     routerID(3, 3, 3, 3),
 				AreaID:       0,
 				InstanceID:   0,
 				Body: &ospf.Hello{
@@ -199,7 +203,7 @@ func TestDecodeHello(t *testing.T) {
 				Type:         ospf.MsgTypeHello,
 				Checksum:     0x8e06,
 				PacketLength: 44,
-				RouterID:     ospf.ID(net.IPv4FromOctets(3, 3, 3, 3).Ptr().ToUint32()),
+				RouterID:     routerID(3, 3, 3, 3),
 				AreaID:       0,
 				InstanceID:   0,
 				Body: &ospf.Hello{
@@ -209,8 +213,8 @@ func TestDecodeHello(t *testing.T) {
 					RouterDeadInterval: 120,
 					Options:            ospf.OptionsFromFlags(ospf.RouterOptR, ospf.RouterOptE, ospf.RouterOptV6),
 					Neighbors: []ospf.ID{
-						ospf.ID(net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()),
-						ospf.ID(net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32()),
+						routerID(1, 1, 1, 1),
+						routerID(2, 2, 2, 2),
 					},
 				},
 			},
@@ -245,7 +249,7 @@ func TestDecodeHello(t *testing.T) {
 				Type:         ospf.MsgTypeHello,
 				Checksum:     0x8c04,
 				PacketLength: 44,
-				RouterID:     ospf.ID(net.IPv4FromOctets(3, 3, 3, 3).Ptr().ToUint32()),
+				RouterID:     routerID(3, 3, 3, 3),
 				AreaID:       0,
 				InstanceID:   0,
 				Body: &ospf.Hello{
@@ -254,10 +258,10 @@ func TestDecodeHello(t *testing.T) {
 					HelloInterval:      30,
 					RouterDeadInterval: 120,
 					Options:            ospf.OptionsFromFlags(ospf.RouterOptR, ospf.RouterOptE, ospf.RouterOptV6),
-					DesignatedRouterID: ospf.ID(net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()),
+					DesignatedRouterID: routerID(1, 1, 1, 1),
 					Neighbors: []ospf.ID{
-						ospf.ID(net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()),
-						ospf.ID(net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32()),
+						routerID(1, 1, 1, 1),
+						routerID(2, 2, 2, 2),
 					},
 				},
 			},
@@ -292,7 +296,7 @@ func TestDecodeHello(t *testing.T) {
 				Type:         ospf.MsgTypeHello,
 				Checksum:     0x8800,
 				PacketLength: 44,
-				RouterID:     ospf.ID(net.IPv4FromOctets(3, 3, 3, 3).Ptr().ToUint32()),
+				RouterID:     routerID(3, 3, 3, 3),
 				AreaID:       0,
 				InstanceID:   0,
 				Body: &ospf.Hello{
@@ -301,11 +305,11 @@ func TestDecodeHello(t *testing.T) {
 					HelloInterval:            30,
 					RouterDeadInterval:       120,
 					Options:                  ospf.OptionsFromFlags(ospf.RouterOptR, ospf.RouterOptE, ospf.RouterOptV6),
-					DesignatedRouterID:       ospf.ID(net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()),
-					BackupDesignatedRouterID: ospf.ID(net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32()),
+					DesignatedRouterID:       routerID(1, 1, 1, 1),
+					BackupDesignatedRouterID: routerID(2, 2, 2, 2),
 					Neighbors: []ospf.ID{
-						ospf.ID(net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()),
-						ospf.ID(net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32()),
+						routerID(1, 1, 1, 1),
+						routerID(2, 2, 2, 2),
 					},
 				},
 			},
@@ -350,7 +354,7 @@ func TestDecodeDBDesc(t *testing.T) {
 				Type:         ospf.MsgTypeDatabaseDescription,
 				Checksum:     0xe7ad,
 				PacketLength: 28,
-				RouterID:     ospf.ID(net.IPv4FromOctets(3, 3, 3, 3).Ptr().ToUint32()),
+				RouterID:     routerID(3, 3, 3, 3),
 				AreaID:       0,
 				InstanceID:   0,
 				Body: &ospf.DatabaseDescription{
