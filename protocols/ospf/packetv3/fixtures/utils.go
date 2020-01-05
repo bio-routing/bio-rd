@@ -1,10 +1,10 @@
 package fixtures
 
 import (
-	"net"
 	"os"
 	"testing"
 
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
@@ -35,8 +35,14 @@ func Payload(raw []byte) (pl []byte, src, dst net.IP, err error) {
 	}
 
 	flowSrc, flowDst := packet.NetworkLayer().NetworkFlow().Endpoints()
-	src = net.IP(flowSrc.Raw())
-	dst = net.IP(flowDst.Raw())
+	src, err = net.IPFromBytes(flowSrc.Raw())
+	if err != nil {
+		return
+	}
+	dst, err = net.IPFromBytes(flowDst.Raw())
+	if err != nil {
+		return
+	}
 
 	pl = packet.NetworkLayer().LayerPayload()
 	return

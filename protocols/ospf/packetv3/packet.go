@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	gonet "net"
 
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/checksum"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
@@ -42,7 +42,7 @@ const OSPFv3MessageHeaderLength = 16
 const OSPFv3MessagePacketLengthAtByte = 2
 const OSPFv3MessageChecksumAtByte = 12
 
-func (x *OSPFv3Message) Serialize(out *bytes.Buffer, src, dst gonet.IP) {
+func (x *OSPFv3Message) Serialize(out *bytes.Buffer, src, dst net.IP) {
 	buf := bytes.NewBuffer(nil)
 
 	buf.WriteByte(x.Version)
@@ -60,7 +60,7 @@ func (x *OSPFv3Message) Serialize(out *bytes.Buffer, src, dst gonet.IP) {
 	length := uint16(len(data))
 	putUint16(data, OSPFv3MessagePacketLengthAtByte, length)
 
-	checksum := checksum.IPv6UpperLayerChecksum(src, dst, OSPFProtocolNumber, data, OSPFv3MessageChecksumAtByte)
+	checksum := OSPFv3Checksum(data, src, dst)
 	putUint16(data, OSPFv3MessageChecksumAtByte, checksum)
 
 	out.Write(data)
@@ -70,7 +70,7 @@ func putUint16(b []byte, p int, v uint16) {
 	binary.BigEndian.PutUint16(b[p:p+2], v)
 }
 
-func DeserializeOSPFv3Message(buf *bytes.Buffer, src, dst gonet.IP) (*OSPFv3Message, int, error) {
+func DeserializeOSPFv3Message(buf *bytes.Buffer, src, dst net.IP) (*OSPFv3Message, int, error) {
 	pdu := &OSPFv3Message{}
 	data := buf.Bytes()
 
@@ -99,7 +99,7 @@ func DeserializeOSPFv3Message(buf *bytes.Buffer, src, dst gonet.IP) (*OSPFv3Mess
 		return nil, readBytes, fmt.Errorf("Invalid OSPF version: %d", pdu.Version)
 	}
 
-	expectedChecksum := checksum.IPv6UpperLayerChecksum(src, dst, OSPFProtocolNumber, data, OSPFv3MessageChecksumAtByte)
+	expectedChecksum := OSPFv3Checksum(data, src, dst)
 	if pdu.Checksum != expectedChecksum {
 		return nil, readBytes, fmt.Errorf("Checksum mismatch. Expected %#04x, got %#04x", expectedChecksum, pdu.Checksum)
 	}
@@ -111,6 +111,12 @@ func DeserializeOSPFv3Message(buf *bytes.Buffer, src, dst gonet.IP) (*OSPFv3Mess
 	readBytes += n
 
 	return pdu, readBytes, nil
+}
+
+func OSPFv3Checksum(data []byte, src, dst net.IP) uint16 {
+	data[12] = 0
+	data[13] = 0
+	return checksum.IPv6UpperLayerChecksum(src, dst, OSPFProtocolNumber, data)
 }
 
 func (m *OSPFv3Message) ReadBody(buf *bytes.Buffer) (int, error) {

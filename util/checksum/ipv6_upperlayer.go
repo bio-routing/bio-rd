@@ -29,14 +29,14 @@ package checksum
 
 import (
 	"encoding/binary"
-	"net"
 
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/tflow2/convert"
 	"golang.org/x/net/icmp"
 )
 
 func IPv6PseudoHeader(src, dst net.IP, lenght uint32, proto uint8) []byte {
-	header := icmp.IPv6PseudoHeader(src, dst)
+	header := icmp.IPv6PseudoHeader(src.ToNetIP(), dst.ToNetIP())
 
 	lenBytes := convert.Uint32Byte(uint32(lenght))
 	copy(header[32:36], lenBytes)
@@ -50,7 +50,7 @@ func IPv6PseudoHeader(src, dst net.IP, lenght uint32, proto uint8) []byte {
 //
 // Specify the position of the checksum using sumAt.
 // Use a value lower than 0 to not skip a checksum field.
-func IPv6UpperLayerChecksum(src, dst net.IP, proto uint8, pl []byte, sumAt int) uint16 {
+func IPv6UpperLayerChecksum(src, dst net.IP, proto uint8, pl []byte) uint16 {
 	header := IPv6PseudoHeader(src, dst, uint32(len(pl)), proto)
 	b := append(header, pl...)
 
@@ -59,9 +59,6 @@ func IPv6UpperLayerChecksum(src, dst net.IP, proto uint8, pl []byte, sumAt int) 
 	// skipping only the checksum field itself."
 	var chk uint32
 	for i := 0; i < len(b); i += 2 {
-		if sumAt > 0 && i == len(header)+sumAt {
-			continue
-		}
 		chk += uint32(binary.BigEndian.Uint16(b[i : i+2]))
 	}
 
