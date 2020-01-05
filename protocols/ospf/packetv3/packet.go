@@ -272,18 +272,16 @@ func DeserializeDatabaseDescription(buf *bytes.Buffer, bodyLength uint16) (*Data
 	return pdu, readBytes, nil
 }
 
-type LinkStateRequestMsg struct {
-	Requests []LinkStateRequest
-}
+type LinkStateRequestMsg []LinkStateRequest
 
-func (x *LinkStateRequestMsg) Serialize(buf *bytes.Buffer) {
-	for i := range x.Requests {
-		x.Requests[i].Serialize(buf)
+func (x LinkStateRequestMsg) Serialize(buf *bytes.Buffer) {
+	for i := range x {
+		x[i].Serialize(buf)
 	}
 }
 
-func DeserializeLinkStateRequestMsg(buf *bytes.Buffer, bodyLength uint16) (*LinkStateRequestMsg, int, error) {
-	pdu := &LinkStateRequestMsg{}
+func DeserializeLinkStateRequestMsg(buf *bytes.Buffer, bodyLength uint16) (LinkStateRequestMsg, int, error) {
+	reqs := make(LinkStateRequestMsg, 0)
 
 	var readBytes int
 	for readBytes < int(bodyLength) {
@@ -291,11 +289,11 @@ func DeserializeLinkStateRequestMsg(buf *bytes.Buffer, bodyLength uint16) (*Link
 		if err != nil {
 			return nil, readBytes, errors.Wrap(err, "unable to decode LinkStateRequest")
 		}
-		pdu.Requests = append(pdu.Requests, req)
+		reqs = append(reqs, req)
 		readBytes += n
 	}
 
-	return pdu, readBytes, nil
+	return reqs, readBytes, nil
 }
 
 type LinkStateRequest struct {
@@ -334,19 +332,17 @@ func DeserializeLinkStateRequest(buf *bytes.Buffer) (LinkStateRequest, int, erro
 	return pdu, readBytes, nil
 }
 
-type LinkStateUpdate struct {
-	LSAs []*LSA
-}
+type LinkStateUpdate []*LSA
 
-func (x *LinkStateUpdate) Serialize(buf *bytes.Buffer) {
-	buf.Write(convert.Uint32Byte(uint32(len(x.LSAs))))
-	for i := range x.LSAs {
-		x.LSAs[i].Serialize(buf)
+func (x LinkStateUpdate) Serialize(buf *bytes.Buffer) {
+	buf.Write(convert.Uint32Byte(uint32(len(x))))
+	for i := range x {
+		x[i].Serialize(buf)
 	}
 }
 
-func DeserializeLinkStateUpdate(buf *bytes.Buffer) (*LinkStateUpdate, int, error) {
-	pdu := &LinkStateUpdate{}
+func DeserializeLinkStateUpdate(buf *bytes.Buffer) (LinkStateUpdate, int, error) {
+	lsas := make(LinkStateUpdate, 0)
 
 	var lsaCount uint32
 	if err := binary.Read(buf, binary.BigEndian, &lsaCount); err != nil {
@@ -359,11 +355,11 @@ func DeserializeLinkStateUpdate(buf *bytes.Buffer) (*LinkStateUpdate, int, error
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "unable to decode LSA")
 		}
-		pdu.LSAs = append(pdu.LSAs, tlv)
+		lsas = append(lsas, tlv)
 		readBytes += n
 	}
 
-	return pdu, readBytes, nil
+	return lsas, readBytes, nil
 }
 
 type LinkStateAcknowledgement struct {
