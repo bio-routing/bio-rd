@@ -48,6 +48,22 @@ type RouterOptions struct {
 	Flags uint16
 }
 
+func OptionsFromFlags(flags ...uint16) RouterOptions {
+	opts := RouterOptions{Flags: 0}
+	for _, flag := range flags {
+		opts.Flags = opts.Flags | flag
+	}
+	return opts
+}
+
+func (r *RouterOptions) HasFlag(flag uint16) bool {
+	return r.Flags&flag != 0
+}
+
+func (r *RouterOptions) SetFlag(flag uint16) {
+	r.Flags = r.Flags | flag
+}
+
 func (r *RouterOptions) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(0)
 	buf.Write(convert.Uint16Byte(uint16(r.Flags)))
