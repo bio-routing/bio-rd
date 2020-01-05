@@ -321,3 +321,54 @@ func TestDecodeHello(t *testing.T) {
 		runTest(t, test, src, dst)
 	}
 }
+
+func TestDecodeDBDesc(t *testing.T) {
+	tests := []test{
+		{
+			name: "Default",
+			input: []byte{
+				// Header
+				0x03,       // Version
+				0x02,       // Type: Database Description
+				0x00, 0x1c, // Length
+				0x03, 0x03, 0x03, 0x03, // Router ID
+				0x00, 0x00, 0x00, 0x00, // Area ID
+				0xe7, 0xad, // Checksum
+				0x00, // Instance ID
+				0x00, // Reserved
+
+				// Payload
+				0x00,             // Reserved
+				0x00, 0x00, 0x13, // Options
+				0x05, 0xdc, // MTU
+				0x00,                   // Reserved
+				0x07,                   // Description Flags
+				0x00, 0x00, 0x0b, 0xbd, // Sequence Number
+			},
+			expected: &ospf.OSPFv3Message{
+				Version:      3,
+				Type:         ospf.MsgTypeDatabaseDescription,
+				Checksum:     0xe7ad,
+				PacketLength: 28,
+				RouterID:     ospf.ID(net.IPv4FromOctets(3, 3, 3, 3).Ptr().ToUint32()),
+				AreaID:       0,
+				InstanceID:   0,
+				Body: &ospf.DatabaseDescription{
+					Options:          ospf.OptionsFromFlags(ospf.RouterOptR, ospf.RouterOptE, ospf.RouterOptV6),
+					InterfaceMTU:     1500,
+					DBFlags:          ospf.DBFlagInit | ospf.DBFlagMore | ospf.DBFlagMS,
+					DDSequenceNumber: 3005,
+				},
+			},
+		},
+	}
+
+	src, err := net.IPFromString("fe80::3")
+	require.NoError(t, err)
+	dst, err := net.IPFromString("fe80::1")
+	require.NoError(t, err)
+
+	for _, test := range tests {
+		runTest(t, test, src, dst)
+	}
+}
