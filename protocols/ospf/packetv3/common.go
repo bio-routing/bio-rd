@@ -56,12 +56,14 @@ func OptionsFromFlags(flags ...uint16) RouterOptions {
 	return opts
 }
 
-func (r *RouterOptions) HasFlag(flag uint16) bool {
+func (r RouterOptions) HasFlag(flag uint16) bool {
 	return r.Flags&flag != 0
 }
 
-func (r *RouterOptions) SetFlag(flag uint16) {
-	r.Flags = r.Flags | flag
+func (r RouterOptions) SetFlag(flag uint16) RouterOptions {
+	return RouterOptions{
+		Flags: r.Flags | flag,
+	}
 }
 
 func (r *RouterOptions) Serialize(buf *bytes.Buffer) {
