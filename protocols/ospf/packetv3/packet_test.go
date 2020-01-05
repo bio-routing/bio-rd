@@ -538,3 +538,160 @@ func TestDecodeDBDesc(t *testing.T) {
 		runTest(t, test, src, dst)
 	}
 }
+
+func TestDecodeLSRequest(t *testing.T) {
+	tests := []test{
+		{
+			name: "Default",
+			input: []byte{
+				// Header
+				0x03,       // Version
+				0x03,       // Type
+				0x00, 0x34, // Length
+				0x03, 0x03, 0x03, 0x03, // Router ID
+				0x00, 0x00, 0x00, 0x00, // Area ID
+				0x8b, 0x13, // Checksum
+				0x00, // Instance ID
+				0x00, // Reserved
+
+				// LS Request
+				0x00, 0x00, // Reserved
+				0x20, 0x01, // Type
+				0x00, 0x00, 0x00, 0x00, // Link State ID
+				0x01, 0x01, 0x01, 0x01, // Advertising Router
+
+				// LS Request
+				0x00, 0x00,
+				0x20, 0x02,
+				0x00, 0x00, 0x00, 0x06,
+				0x03, 0x03, 0x03, 0x03,
+
+				// LS Request
+				0x00, 0x00,
+				0x20, 0x03,
+				0x00, 0x00, 0x00, 0x02,
+				0x03, 0x03, 0x03, 0x03,
+			},
+			expected: &ospf.OSPFv3Message{
+				Version:      3,
+				Type:         ospf.MsgTypeLinkStateRequest,
+				Checksum:     0x8b13,
+				PacketLength: 52,
+				RouterID:     routerID(3, 3, 3, 3),
+				AreaID:       0,
+				InstanceID:   0,
+				Body: ospf.LinkStateRequestMsg{
+					{
+						LSType:            ospf.LSATypeRouter,
+						LinkStateID:       0,
+						AdvertisingRouter: routerID(1, 1, 1, 1),
+					},
+					{
+						LSType:            ospf.LSATypeNetwork,
+						LinkStateID:       6,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+					},
+					{
+						LSType:            ospf.LSATypeInterAreaPrefix,
+						LinkStateID:       2,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+					},
+				},
+			},
+		},
+	}
+
+	src, err := net.IPFromString("fe80::3")
+	require.NoError(t, err)
+	dst, err := net.IPFromString("fe80::1")
+	require.NoError(t, err)
+
+	for _, test := range tests {
+		runTest(t, test, src, dst)
+	}
+}
+
+func TestDecodeLSUpdate(t *testing.T) {
+	tests := []test{
+		{
+			name: "Default",
+			input: []byte{
+				// Header
+				0x03,       // Version
+				0x04,       // Type: LS Update
+				0x00, 0x3c, // Length
+				0x01, 0x01, 0x01, 0x01, // Router ID
+				0x00, 0x00, 0x00, 0x00, // Area ID
+				0x40, 0xdd, // Checksum
+				0x00, // Instance ID
+				0x00, // Reserved
+
+				// Payload
+				0x00, 0x00, 0x00, 0x01, // Num of Updates
+
+				// Update
+				0x00, 0x01, // Age
+				0x20, 0x01, // Type
+				0x00, 0x00, 0x00, 0x00, // Link State ID
+				0x01, 0x01, 0x01, 0x01, // Router ID
+				0x80, 0x00, 0x00, 0x13, // Seq Num
+				0x11, 0x80, // Checksum
+				0x00, 0x28, // Length
+				0x01,             // Flags
+				0x00, 0x00, 0x33, // Options
+
+				// Interface #1
+				0x01,       // Type: PTP
+				0x00,       // Reserved
+				0x00, 0x40, // Metric
+				0x00, 0x00, 0x00, 0x06, // Interface ID
+				0x00, 0x00, 0x00, 0x06, // Neighbor Interface ID
+				0x03, 0x03, 0x03, 0x03, // Neighbor Router ID
+			},
+			expected: &ospf.OSPFv3Message{
+				Version:      3,
+				Type:         ospf.MsgTypeLinkStateUpdate,
+				Checksum:     0x40dd,
+				PacketLength: 60,
+				RouterID:     routerID(1, 1, 1, 1),
+				AreaID:       0,
+				InstanceID:   0,
+				Body: ospf.LinkStateUpdate{
+					{
+						Age:               1,
+						Type:              ospf.LSATypeRouter,
+						ID:                0,
+						AdvertisingRouter: routerID(1, 1, 1, 1),
+						SequenceNumber:    0x80000013,
+						Checksum:          0x1180,
+						Length:            40,
+						Body: &ospf.RouterLSA{
+							Flags: ospf.RouterLSAFlagsFrom(ospf.RouterLSAFlagBorder),
+							Options: ospf.OptionsFromFlags(
+								ospf.RouterOptDC, ospf.RouterOptR, ospf.RouterOptE, ospf.RouterOptV6,
+							),
+							LinkDescriptions: []ospf.AreaLinkDescription{
+								{
+									Type:                ospf.ALDTypePTP,
+									Metric:              ospf.InterfaceMetric{Low: 0x40},
+									InterfaceID:         6,
+									NeighborInterfaceID: 6,
+									NeighborRouterID:    routerID(3, 3, 3, 3),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	src, err := net.IPFromString("fe80::1")
+	require.NoError(t, err)
+	dst, err := net.IPFromString("fe80::3")
+	require.NoError(t, err)
+
+	for _, test := range tests {
+		runTest(t, test, src, dst)
+	}
+}
