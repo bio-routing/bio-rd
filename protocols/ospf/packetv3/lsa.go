@@ -176,8 +176,18 @@ func (x InterfaceMetric) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(x.Low))
 }
 
+type AreaLinkDescriptionType uint8
+
+const (
+	_ AreaLinkDescriptionType = iota
+	ALDTypePTP
+	ALDTypeTransit
+	ALDTypeReserved
+	ALDTypeVirtualLink
+)
+
 type AreaLinkDescription struct {
-	Type                uint8
+	Type                AreaLinkDescriptionType
 	Metric              InterfaceMetric
 	InterfaceID         ID
 	NeighborInterfaceID ID
@@ -185,7 +195,7 @@ type AreaLinkDescription struct {
 }
 
 func (x *AreaLinkDescription) Serialize(buf *bytes.Buffer) {
-	buf.WriteByte(x.Type)
+	buf.WriteByte(uint8(x.Type))
 	x.Metric.Serialize(buf)
 	x.InterfaceID.Serialize(buf)
 	x.NeighborInterfaceID.Serialize(buf)
