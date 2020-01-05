@@ -299,7 +299,7 @@ func DeserializeLinkStateRequestMsg(buf *bytes.Buffer, bodyLength uint16) (*Link
 }
 
 type LinkStateRequest struct {
-	LSType            LSType
+	LSType            LSAType
 	LinkStateID       ID
 	AdvertisingRouter ID
 }

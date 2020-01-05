@@ -11,25 +11,46 @@ import (
 	"github.com/pkg/errors"
 )
 
-type OSPFLSAType uint8
+type LSAType uint16
+
+func (t LSAType) Serialize(buf *bytes.Buffer) {
+	buf.Write(convert.Uint16Byte(uint16(t)))
+}
+
+func (t LSAType) ShouldFlood() bool {
+	return t&(1<<15) != 0 // test for top bit
+}
+
+type FloodingScope uint8
+
+const (
+	FloodLinkLocal FloodingScope = iota
+	FloodArea
+	FloodAS
+	FloodReserved
+)
+
+func (t LSAType) FloodingScope() FloodingScope {
+	return FloodingScope((t & 0b0110000000000000) >> 13) // second and third bit as int
+}
 
 // OSPF LSA types
 const (
-	LSATypeUnknown OSPFLSAType = iota
-	LSATypeRouter
-	LSATypeNetwork
-	LSATypeInterAreaPrefix
-	LSATypeInterAreaRouter
-	LSATypeASExternal
-	LSATypeDeprecated
-	LSATypeNSSA
-	LSATypeLink
-	LSATypeIntraAreaPrefix
+	LSATypeUnknown         LSAType = 0
+	LSATypeRouter                  = 0x2001
+	LSATypeNetwork                 = 0x2002
+	LSATypeInterAreaPrefix         = 0x2003
+	LSATypeInterAreaRouter         = 0x2004
+	LSATypeASExternal              = 0x4005
+	LSATypeDeprecated              = 0x2006
+	LSATypeNSSA                    = 0x2007
+	LSATypeLink                    = 0x0008
+	LSATypeIntraAreaPrefix         = 0x2009
 )
 
 type LSA struct {
 	Age               uint16
-	Type              LSType
+	Type              LSAType
 	ID                ID
 	AdvertisingRouter ID
 	SequenceNumber    uint32
@@ -96,13 +117,12 @@ func DeserializeLSA(buf *bytes.Buffer) (*LSA, int, error) {
 }
 
 func (x *LSA) ReadBody(buf *bytes.Buffer) (int, error) {
-	code := OSPFLSAType(x.Type & 8191) // Bitmask excludes top three bits
 	bodyLength := x.Length - LSAHeaderLength
 	var body Serializable
 	var readBytes int
 	var err error
 
-	switch code {
+	switch x.Type {
 	case LSATypeRouter:
 		body, readBytes, err = DeserializeRouterLSA(buf, bodyLength)
 	case LSATypeNetwork:
@@ -120,15 +140,23 @@ func (x *LSA) ReadBody(buf *bytes.Buffer) (int, error) {
 	case LSATypeIntraAreaPrefix:
 		body, readBytes, err = DeserializeIntraAreaPrefixLSA(buf)
 	default:
-		return 0, fmt.Errorf("unknown LSA type: %x", x.Type)
+		raw := make(UnknownLSA, bodyLength)
+		readBytes, err = buf.Read(raw)
+		body = raw
 	}
 
 	if err != nil {
-		return 0, err
+		return readBytes, err
 	}
 
 	x.Body = body
 	return readBytes, nil
+}
+
+type UnknownLSA []byte
+
+func (u UnknownLSA) Serialize(buf *bytes.Buffer) {
+	buf.Write(u)
 }
 
 // InterfaceMetric is the metric of a link
@@ -504,7 +532,7 @@ func DeserializeLinkLSA(buf *bytes.Buffer) (*LinkLSA, int, error) {
 }
 
 type IntraAreaPrefixLSA struct {
-	ReferencedLSType            LSType
+	ReferencedLSType            LSAType
 	ReferencedLinkStateID       ID
 	ReferencedAdvertisingRouter ID
 	Prefixes                    []LSAPrefix

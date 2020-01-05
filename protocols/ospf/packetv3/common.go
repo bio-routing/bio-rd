@@ -69,12 +69,6 @@ func (r *RouterOptions) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(uint16(r.Flags)))
 }
 
-type LSType uint16
-
-func (t LSType) Serialize(buf *bytes.Buffer) {
-	buf.Write(convert.Uint16Byte(uint16(t)))
-}
-
 type deserializableIP struct {
 	Higher uint64
 	Lower  uint64
