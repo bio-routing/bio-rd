@@ -77,16 +77,30 @@ type test struct {
 	expected interface{}
 }
 
-func TestDecode(t *testing.T) {
+func runTest(t *testing.T, testCase test, src, dst net.IP) {
+	t.Run(testCase.name, func(t *testing.T) {
+		buf := bytes.NewBuffer(testCase.input)
+		msg, _, err := ospf.DeserializeOSPFv3Message(buf, src, dst)
+		if testCase.wantFail {
+			require.Error(t, err)
+			return
+		}
+
+		require.NoError(t, err)
+		assert.Equal(t, testCase.expected, msg)
+	})
+}
+
+func TestDecodeHello(t *testing.T) {
 	tests := []test{
 		{
-			name: "Hello/Default",
+			name: "Default",
 			input: []byte{
 				// Header
 				3,     // Version
 				1,     // Type: Hello
 				0, 36, // Length
-				3, 3, 3, 3, // Source Router
+				3, 3, 3, 3, // Router ID
 				0, 0, 0, 0, // Area ID
 				0x94, 0x1c, // Checksum
 				0, // Instance ID
@@ -120,13 +134,13 @@ func TestDecode(t *testing.T) {
 			},
 		},
 		{
-			name: "Hello/InvalidLength",
+			name: "InvalidLength",
 			input: []byte{
 				// Header
 				3,     // Version
 				1,     // Type: Hello
 				0, 38, // Length (invalid, expecting 36)
-				3, 3, 3, 3, // Source Router
+				3, 3, 3, 3, // Router ID
 				0, 0, 0, 0, // Area ID
 				0x94, 0x1a, // Checksum
 				0, // Instance ID
@@ -138,13 +152,13 @@ func TestDecode(t *testing.T) {
 			wantFail: true,
 		},
 		{
-			name: "Hello/InvalidChecksum",
+			name: "InvalidChecksum",
 			input: []byte{
 				// Header
 				3,     // Version
 				1,     // Type: Hello
 				0, 36, // Length
-				3, 3, 3, 3, // Source Router
+				3, 3, 3, 3, // Router ID
 				0, 0, 0, 0, // Area ID
 				0x94, 0x1d, // Checksum (invalid)
 				0, // Instance ID
@@ -156,13 +170,13 @@ func TestDecode(t *testing.T) {
 			wantFail: true,
 		},
 		{
-			name: "Hello/WithNeighbors",
+			name: "WithNeighbors",
 			input: []byte{
 				// Header
 				3,     // Version
 				1,     // Type: Hello
 				0, 44, // Length
-				3, 3, 3, 3, // Source Router
+				3, 3, 3, 3, // Router ID
 				0, 0, 0, 0, // Area ID
 				0x8e, 0x06, // Checksum
 				0, // Instance ID
@@ -202,13 +216,13 @@ func TestDecode(t *testing.T) {
 			},
 		},
 		{
-			name: "Hello/WithDR",
+			name: "WithDR",
 			input: []byte{
 				// Header
 				3,     // Version
 				1,     // Type: Hello
 				0, 44, // Length
-				3, 3, 3, 3, // Source Router
+				3, 3, 3, 3, // Router ID
 				0, 0, 0, 0, // Area ID
 				0x8c, 0x04, // Checksum
 				0, // Instance ID
@@ -249,13 +263,13 @@ func TestDecode(t *testing.T) {
 			},
 		},
 		{
-			name: "Hello/WithBDR",
+			name: "WithBDR",
 			input: []byte{
 				// Header
 				3,     // Version
 				1,     // Type: Hello
 				0, 44, // Length
-				3, 3, 3, 3, // Source Router
+				3, 3, 3, 3, // Router ID
 				0, 0, 0, 0, // Area ID
 				0x88, 0x00, // Checksum
 				0, // Instance ID
@@ -304,16 +318,6 @@ func TestDecode(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			buf := bytes.NewBuffer(test.input)
-			msg, _, err := ospf.DeserializeOSPFv3Message(buf, src, dst)
-			if test.wantFail {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			assert.Equal(t, test.expected, msg)
-		})
+		runTest(t, test, src, dst)
 	}
 }
