@@ -226,14 +226,40 @@ func DeserializeAreaLinkDescription(buf *bytes.Buffer) (AreaLinkDescription, int
 	return pdu, readBytes, nil
 }
 
+type RouterLSAFlags uint8
+
+const (
+	RouterLSAFlagBorder RouterLSAFlags = 1 << iota
+	RouterLSAFlagExternal
+	RouterLSAFlagVirtualLink
+	_
+	RouterLSAFlagNSSATranslation
+)
+
+func RouterLSAFlagsFrom(flags ...RouterLSAFlags) RouterLSAFlags {
+	var val RouterLSAFlags
+	for _, flag := range flags {
+		val = val | flag
+	}
+	return val
+}
+
+func (f RouterLSAFlags) HasFlag(flag uint8) bool {
+	return uint8(f)&flag != 0
+}
+
+func (f RouterLSAFlags) SetFlag(flag uint8) uint8 {
+	return uint8(f) | flag
+}
+
 type RouterLSA struct {
-	Flags            uint8
+	Flags            RouterLSAFlags
 	Options          RouterOptions
 	LinkDescriptions []AreaLinkDescription
 }
 
 func (x *RouterLSA) Serialize(buf *bytes.Buffer) {
-	buf.WriteByte(x.Flags)
+	buf.WriteByte(byte(x.Flags))
 	x.Options.Serialize(buf)
 	for i := range x.LinkDescriptions {
 		x.LinkDescriptions[i].Serialize(buf)
