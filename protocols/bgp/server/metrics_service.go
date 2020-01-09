@@ -50,12 +50,17 @@ func metricsForPeer(peer *peer) *metrics.BGPPeerMetrics {
 	m.UpdatesReceived = fsm.counters.updatesReceived
 	m.UpdatesSent = fsm.counters.updatesSent
 
-	if peer.ipv4 != nil {
-		m.AddressFamilies = append(m.AddressFamilies, metricsForFamily(fsm.ipv4Unicast))
-	}
+	fsm.stateMu.RLock()
+	defer fsm.stateMu.RUnlock()
 
-	if peer.ipv6 != nil {
-		m.AddressFamilies = append(m.AddressFamilies, metricsForFamily(fsm.ipv6Unicast))
+	if fsm.ribsInitialized {
+		if peer.ipv4 != nil {
+			m.AddressFamilies = append(m.AddressFamilies, metricsForFamily(fsm.ipv4Unicast))
+		}
+
+		if peer.ipv6 != nil {
+			m.AddressFamilies = append(m.AddressFamilies, metricsForFamily(fsm.ipv6Unicast))
+		}
 	}
 
 	return m
