@@ -22,6 +22,7 @@ func TestMetrics(t *testing.T) {
 		peer               *peer
 		withoutFSM         bool
 		state              state
+		ribsInitialized    bool
 		updatesReceived    uint64
 		updatesSent        uint64
 		ipv4RoutesReceived int64
@@ -41,6 +42,7 @@ func TestMetrics(t *testing.T) {
 				vrf:      vrf,
 			},
 			state:              &establishedState{},
+			ribsInitialized:    true,
 			updatesReceived:    3,
 			updatesSent:        4,
 			ipv4RoutesReceived: 5,
@@ -91,21 +93,12 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100).Ptr(),
-						ASN:      202739,
-						LocalASN: 201701,
-						VRF:      "inet.0",
-						State:    metrics.StateIdle,
-						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
-							{
-								AFI:  packet.IPv4AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-							{
-								AFI:  packet.IPv6AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-						},
+						IP:              bnet.IPv4(100).Ptr(),
+						ASN:             202739,
+						LocalASN:        201701,
+						VRF:             "inet.0",
+						State:           metrics.StateIdle,
+						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{},
 					},
 				},
 			},
@@ -124,21 +117,12 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100).Ptr(),
-						ASN:      202739,
-						LocalASN: 201701,
-						VRF:      "inet.0",
-						State:    metrics.StateActive,
-						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
-							{
-								AFI:  packet.IPv4AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-							{
-								AFI:  packet.IPv6AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-						},
+						IP:              bnet.IPv4(100).Ptr(),
+						ASN:             202739,
+						LocalASN:        201701,
+						VRF:             "inet.0",
+						State:           metrics.StateActive,
+						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{},
 					},
 				},
 			},
@@ -157,21 +141,12 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100).Ptr(),
-						ASN:      202739,
-						LocalASN: 201701,
-						VRF:      "inet.0",
-						State:    metrics.StateOpenSent,
-						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
-							{
-								AFI:  packet.IPv4AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-							{
-								AFI:  packet.IPv6AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-						},
+						IP:              bnet.IPv4(100).Ptr(),
+						ASN:             202739,
+						LocalASN:        201701,
+						VRF:             "inet.0",
+						State:           metrics.StateOpenSent,
+						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{},
 					},
 				},
 			},
@@ -190,21 +165,12 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100).Ptr(),
-						ASN:      202739,
-						LocalASN: 201701,
-						VRF:      "inet.0",
-						State:    metrics.StateOpenConfirm,
-						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
-							{
-								AFI:  packet.IPv4AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-							{
-								AFI:  packet.IPv6AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-						},
+						IP:              bnet.IPv4(100).Ptr(),
+						ASN:             202739,
+						LocalASN:        201701,
+						VRF:             "inet.0",
+						State:           metrics.StateOpenConfirm,
+						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{},
 					},
 				},
 			},
@@ -223,21 +189,12 @@ func TestMetrics(t *testing.T) {
 			expected: &metrics.BGPMetrics{
 				Peers: []*metrics.BGPPeerMetrics{
 					{
-						IP:       bnet.IPv4(100).Ptr(),
-						ASN:      202739,
-						LocalASN: 201701,
-						VRF:      "inet.0",
-						State:    metrics.StateConnect,
-						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
-							{
-								AFI:  packet.IPv4AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-							{
-								AFI:  packet.IPv6AFI,
-								SAFI: packet.UnicastSAFI,
-							},
-						},
+						IP:              bnet.IPv4(100).Ptr(),
+						ASN:             202739,
+						LocalASN:        201701,
+						VRF:             "inet.0",
+						State:           metrics.StateConnect,
+						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{},
 					},
 				},
 			},
@@ -274,6 +231,7 @@ func TestMetrics(t *testing.T) {
 				test.peer.fsms = append(test.peer.fsms, fsm)
 
 				fsm.state = test.state
+				fsm.ribsInitialized = test.ribsInitialized
 				fsm.counters.updatesReceived = test.updatesReceived
 				fsm.counters.updatesSent = test.updatesSent
 
