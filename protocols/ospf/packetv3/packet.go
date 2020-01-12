@@ -362,18 +362,16 @@ func DeserializeLinkStateUpdate(buf *bytes.Buffer) (LinkStateUpdate, int, error)
 	return lsas, readBytes, nil
 }
 
-type LinkStateAcknowledgement struct {
-	LSAHeaders []*LSA
-}
+type LinkStateAcknowledgement []*LSA
 
-func (x *LinkStateAcknowledgement) Serialize(buf *bytes.Buffer) {
-	for i := range x.LSAHeaders {
-		x.LSAHeaders[i].SerializeHeader(buf)
+func (x LinkStateAcknowledgement) Serialize(buf *bytes.Buffer) {
+	for i := range x {
+		x[i].SerializeHeader(buf)
 	}
 }
 
-func DeserializeLinkStateAcknowledgement(buf *bytes.Buffer, bodyLength uint16) (*LinkStateAcknowledgement, int, error) {
-	pdu := &LinkStateAcknowledgement{}
+func DeserializeLinkStateAcknowledgement(buf *bytes.Buffer, bodyLength uint16) (LinkStateAcknowledgement, int, error) {
+	lsas := make(LinkStateAcknowledgement, 0)
 
 	var readBytes int
 
@@ -382,10 +380,10 @@ func DeserializeLinkStateAcknowledgement(buf *bytes.Buffer, bodyLength uint16) (
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "Unable to decode")
 		}
-		pdu.LSAHeaders = append(pdu.LSAHeaders, tlv)
+		lsas = append(lsas, tlv)
 		i += n
 		readBytes += n
 	}
 
-	return pdu, readBytes, nil
+	return lsas, readBytes, nil
 }
