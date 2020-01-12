@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type test struct {
+type decodeTest struct {
 	name     string
 	input    []byte
 	wantFail bool
-	expected interface{}
+	expected *ospf.OSPFv3Message
 }
 
-func runTest(t *testing.T, testCase test, src, dst net.IP) {
+func runDecodeTest(t *testing.T, testCase decodeTest, src, dst net.IP) {
 	t.Run(testCase.name, func(t *testing.T) {
 		buf := bytes.NewBuffer(testCase.input)
 		msg, _, err := ospf.DeserializeOSPFv3Message(buf, src, dst)
@@ -28,6 +28,7 @@ func runTest(t *testing.T, testCase test, src, dst net.IP) {
 
 		require.NoError(t, err)
 		assert.Equal(t, testCase.expected, msg)
+		assert.Len(t, testCase.input, int(testCase.expected.PacketLength))
 	})
 }
 
@@ -36,7 +37,7 @@ func routerID(o1, o2, o3, o4 uint8) ospf.ID {
 }
 
 func TestDecodeHello(t *testing.T) {
-	tests := []test{
+	tests := []decodeTest{
 		{
 			name: "Default",
 			input: []byte{
@@ -262,12 +263,12 @@ func TestDecodeHello(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range tests {
-		runTest(t, test, src, dst)
+		runDecodeTest(t, test, src, dst)
 	}
 }
 
 func TestDecodeDBDesc(t *testing.T) {
-	tests := []test{
+	tests := []decodeTest{
 		{
 			name: "Default",
 			input: []byte{
@@ -475,12 +476,12 @@ func TestDecodeDBDesc(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range tests {
-		runTest(t, test, src, dst)
+		runDecodeTest(t, test, src, dst)
 	}
 }
 
 func TestDecodeLSRequest(t *testing.T) {
-	tests := []test{
+	tests := []decodeTest{
 		{
 			name: "Default",
 			input: []byte{
@@ -547,7 +548,7 @@ func TestDecodeLSRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range tests {
-		runTest(t, test, src, dst)
+		runDecodeTest(t, test, src, dst)
 	}
 }
 
@@ -559,7 +560,7 @@ func mustIP(ip net.IP, err error) net.IP {
 }
 
 func TestDecodeLSUpdate(t *testing.T) {
-	tests := []test{
+	tests := []decodeTest{
 		{
 			name: "Default",
 			input: []byte{
@@ -789,12 +790,12 @@ func TestDecodeLSUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range tests {
-		runTest(t, test, src, dst)
+		runDecodeTest(t, test, src, dst)
 	}
 }
 
 func TestDecodeLSAck(t *testing.T) {
-	tests := []test{
+	tests := []decodeTest{
 		{
 			name: "Default",
 			input: []byte{
@@ -974,6 +975,6 @@ func TestDecodeLSAck(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range tests {
-		runTest(t, test, src, dst)
+		runDecodeTest(t, test, src, dst)
 	}
 }
