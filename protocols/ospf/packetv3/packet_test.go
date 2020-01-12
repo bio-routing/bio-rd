@@ -695,3 +695,188 @@ func TestDecodeLSUpdate(t *testing.T) {
 		runTest(t, test, src, dst)
 	}
 }
+
+func TestDecodeLSAck(t *testing.T) {
+	tests := []test{
+		{
+			name: "Default",
+			input: []byte{
+				// Header
+				0x03,       // Version
+				0x05,       // Type: LS Ack
+				0x00, 0xc4, // Length
+				0x03, 0x03, 0x03, 0x03, // Router ID
+				0x00, 0x00, 0x00, 0x00, // Area ID
+				0x8c, 0x8f, // Checksum
+				0x00, // Instance ID
+				0x00, // Reserved
+
+				// LSA Type 1
+				0x00, 0x1e, // Age
+				0x20, 0x01, // Type: Router-LSA
+				0x00, 0x00, 0x00, 0x00, // LS ID
+				0x01, 0x01, 0x01, 0x01, // Router ID
+				0x80, 0x00, 0x00, 0x12, // Seq Num
+				0xb1, 0x4a, // Checksum
+				0x00, 0x18, // Length
+
+				// LSA Type 2
+				0x01, 0xdd, 0x20, 0x02,
+				0x00, 0x00, 0x00, 0x06,
+				0x03, 0x03, 0x03, 0x03,
+				0x80, 0x00, 0x00, 0x02,
+				0x6d, 0x6c, 0x00, 0x24,
+
+				// LSA Type 3
+				0x02, 0x54, 0x20, 0x03,
+				0x00, 0x00, 0x00, 0x02,
+				0x03, 0x03, 0x03, 0x03,
+				0x80, 0x00, 0x00, 0x01,
+				0xfc, 0xec, 0x00, 0x24,
+
+				// LSA Type 3
+				0x02, 0x5e, 0x20, 0x03,
+				0x00, 0x00, 0x00, 0x01,
+				0x03, 0x03, 0x03, 0x03,
+				0x80, 0x00, 0x00, 0x01,
+				0x2e, 0x96, 0x00, 0x24,
+
+				// LSA Type 3
+				0x02, 0x5e, 0x20, 0x03,
+				0x00, 0x00, 0x00, 0x00,
+				0x03, 0x03, 0x03, 0x03,
+				0x80, 0x00, 0x00, 0x01,
+				0xc2, 0x34, 0x00, 0x24,
+
+				// LSA Type 3
+				0x00, 0x1f, 0x20, 0x03,
+				0x00, 0x00, 0x00, 0x05,
+				0x01, 0x01, 0x01, 0x01,
+				0x80, 0x00, 0x00, 0x01,
+				0xdb, 0x0f, 0x00, 0x24,
+
+				// LSA Type 8
+				0x00, 0x1e, 0x00, 0x08,
+				0x00, 0x00, 0x00, 0x06,
+				0x01, 0x01, 0x01, 0x01,
+				0x80, 0x00, 0x00, 0x01,
+				0x86, 0xd0, 0x00, 0x38,
+
+				// LSA Type 9
+				0x01, 0xdd, 0x20, 0x09,
+				0x00, 0x00, 0x18, 0x00,
+				0x03, 0x03, 0x03, 0x03,
+				0x80, 0x00, 0x00, 0x02,
+				0xbd, 0xe9, 0x00, 0x2c,
+
+				// LSA Type 9
+				0x00, 0x1e, 0x20, 0x09,
+				0x00, 0x00, 0x00, 0x00,
+				0x01, 0x01, 0x01, 0x01,
+				0x80, 0x00, 0x00, 0x01,
+				0x74, 0x18, 0x00, 0x34,
+			},
+			expected: &ospf.OSPFv3Message{
+				Version:      3,
+				Type:         ospf.MsgTypeLinkStateAcknowledgment,
+				PacketLength: 196,
+				RouterID:     routerID(3, 3, 3, 3),
+				AreaID:       0,
+				Checksum:     0x8c8f,
+				InstanceID:   0,
+				Body: ospf.LinkStateAcknowledgement{
+					{
+						Type:              ospf.LSATypeRouter,
+						Age:               0x1e,
+						ID:                0,
+						AdvertisingRouter: routerID(1, 1, 1, 1),
+						SequenceNumber:    0x80000012,
+						Checksum:          0xb14a,
+						Length:            0x18,
+					},
+					{
+						Type:              ospf.LSATypeNetwork,
+						Age:               0x1dd,
+						ID:                6,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000002,
+						Checksum:          0x6d6c,
+						Length:            0x24,
+					},
+					{
+						Type:              ospf.LSATypeInterAreaPrefix,
+						Age:               0x254,
+						ID:                2,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000001,
+						Checksum:          0xfcec,
+						Length:            0x24,
+					},
+					{
+						Type:              ospf.LSATypeInterAreaPrefix,
+						Age:               0x25e,
+						ID:                1,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000001,
+						Checksum:          0x2e96,
+						Length:            0x24,
+					},
+					{
+						Type:              ospf.LSATypeInterAreaPrefix,
+						Age:               0x25e,
+						ID:                0,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000001,
+						Checksum:          0xc234,
+						Length:            0x24,
+					},
+					{
+						Type:              ospf.LSATypeInterAreaPrefix,
+						Age:               0x1f,
+						ID:                5,
+						AdvertisingRouter: routerID(1, 1, 1, 1),
+						SequenceNumber:    0x80000001,
+						Checksum:          0xdb0f,
+						Length:            0x24,
+					},
+					{
+						Type:              ospf.LSATypeLink,
+						Age:               0x1e,
+						ID:                6,
+						AdvertisingRouter: routerID(1, 1, 1, 1),
+						SequenceNumber:    0x80000001,
+						Checksum:          0x86d0,
+						Length:            0x38,
+					},
+					{
+						Type:              ospf.LSATypeIntraAreaPrefix,
+						Age:               0x1dd,
+						ID:                0x1800,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000002,
+						Checksum:          0xbde9,
+						Length:            0x2c,
+					},
+					{
+						Type:              ospf.LSATypeIntraAreaPrefix,
+						Age:               0x1e,
+						ID:                0,
+						AdvertisingRouter: routerID(1, 1, 1, 1),
+						SequenceNumber:    0x80000001,
+						Checksum:          0x7418,
+						Length:            0x34,
+					},
+				},
+			},
+		},
+	}
+
+	src, err := net.IPFromString("fe80::3")
+	require.NoError(t, err)
+	dst, err := net.IPFromString("fe80::2")
+	require.NoError(t, err)
+
+	for _, test := range tests {
+		runTest(t, test, src, dst)
+	}
+}
