@@ -159,21 +159,20 @@ func (u UnknownLSA) Serialize(buf *bytes.Buffer) {
 	buf.Write(u)
 }
 
-// InterfaceMetric is the metric of a link
-// This is supposed to be 24-bit long
-type InterfaceMetric struct {
+// helper for deserializing 24-bit metric values
+type interfaceMetric struct {
 	High uint8
 	Low  uint16
 }
 
 // Value returns the numeric value of this metric field
-func (m InterfaceMetric) Value() uint32 {
-	return uint32(m.High<<16) + uint32(m.Low)
+func (m interfaceMetric) Value() uint32 {
+	return uint32(m.High)<<16 + uint32(m.Low)
 }
 
-func (x InterfaceMetric) Serialize(buf *bytes.Buffer) {
-	buf.WriteByte(x.High)
-	buf.Write(convert.Uint16Byte(x.Low))
+func serializeMetric(buf *bytes.Buffer, val uint32) {
+	metricBytes := convert.Uint32Byte(val)
+	buf.Write(metricBytes[1:4])
 }
 
 type AreaLinkDescriptionType uint8
@@ -188,7 +187,7 @@ const (
 
 type AreaLinkDescription struct {
 	Type                AreaLinkDescriptionType
-	Metric              InterfaceMetric
+	Metric              uint32 // max: 24 bit
 	InterfaceID         ID
 	NeighborInterfaceID ID
 	NeighborRouterID    ID
@@ -196,7 +195,7 @@ type AreaLinkDescription struct {
 
 func (x *AreaLinkDescription) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(uint8(x.Type))
-	x.Metric.Serialize(buf)
+	serializeMetric(buf, x.Metric)
 	x.InterfaceID.Serialize(buf)
 	x.NeighborInterfaceID.Serialize(buf)
 	x.NeighborRouterID.Serialize(buf)
@@ -208,10 +207,11 @@ func DeserializeAreaLinkDescription(buf *bytes.Buffer) (AreaLinkDescription, int
 	var readBytes int
 	var err error
 	var fields []interface{}
+	var metric interfaceMetric
 
 	fields = []interface{}{
 		&pdu.Type,
-		&pdu.Metric,
+		&metric,
 		&pdu.InterfaceID,
 		&pdu.NeighborInterfaceID,
 		&pdu.NeighborRouterID,
@@ -222,6 +222,8 @@ func DeserializeAreaLinkDescription(buf *bytes.Buffer) (AreaLinkDescription, int
 		return pdu, readBytes, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 	readBytes += 16
+
+	pdu.Metric = metric.Value()
 
 	return pdu, readBytes, nil
 }
@@ -342,47 +344,42 @@ func DeserializeNetworkLSA(buf *bytes.Buffer, bodyLength uint16) (*NetworkLSA, i
 }
 
 type InterAreaPrefixLSA struct {
-	Metric InterfaceMetric
+	Metric uint32 // max: 24 bit
 	Prefix LSAPrefix
 }
 
 func (x *InterAreaPrefixLSA) Serialize(buf *bytes.Buffer) {
-	buf.WriteByte(0) // 1 byte reserved
-	x.Metric.Serialize(buf)
+	buf.WriteByte(0) // Reserved
+	serializeMetric(buf, x.Metric)
 	x.Prefix.Serialize(buf)
 }
 
 func DeserializeInterAreaPrefixLSA(buf *bytes.Buffer) (*InterAreaPrefixLSA, int, error) {
 	pdu := &InterAreaPrefixLSA{}
-
 	var readBytes int
-	var err error
-	var fields []interface{}
 
-	fields = []interface{}{
-		new(uint8), // 1 byte reserved
-		&pdu.Metric,
+	// decode metric
+	_, _ = buf.ReadByte() // skip reserved byte
+	var metric interfaceMetric
+	if err := binary.Read(buf, binary.BigEndian, &metric); err != nil {
+		return nil, readBytes, errors.Wrap(err, "failed to read metric")
 	}
-
-	err = decode.Decode(buf, fields)
-	if err != nil {
-		return nil, readBytes, fmt.Errorf("Unable to decode fields: %v", err)
-	}
-	readBytes += 4
+	readBytes += 3
+	pdu.Metric = metric.Value()
 
 	pfx, n, err := DeserializeLSAPrefix(buf)
+	readBytes += n
 	if err != nil {
 		return nil, readBytes, errors.Wrap(err, "unable to decode prefix")
 	}
 	pdu.Prefix = pfx
-	readBytes += n
 
 	return pdu, readBytes, nil
 }
 
 type InterAreaRouterLSA struct {
 	Options             RouterOptions
-	Metric              InterfaceMetric
+	Metric              uint32 // max: 24 bit
 	DestinationRouterID ID
 }
 
@@ -390,7 +387,7 @@ func (x *InterAreaRouterLSA) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(0) // 1 byte reserved
 	x.Options.Serialize(buf)
 	buf.WriteByte(0) // 1 byte reserved
-	x.Metric.Serialize(buf)
+	serializeMetric(buf, x.Metric)
 	x.DestinationRouterID.Serialize(buf)
 }
 
@@ -399,13 +396,14 @@ func DeserializeInterAreaRouterLSA(buf *bytes.Buffer) (*InterAreaRouterLSA, int,
 
 	var readBytes int
 	var err error
+	var metric interfaceMetric
 	var fields []interface{}
 
 	fields = []interface{}{
 		new(uint8), // 1 byte reserved
 		&pdu.Options,
 		new(uint8), // 1 byte reserved
-		&pdu.Metric,
+		&metric,
 		&pdu.DestinationRouterID,
 	}
 
@@ -414,6 +412,8 @@ func DeserializeInterAreaRouterLSA(buf *bytes.Buffer) (*InterAreaRouterLSA, int,
 		return nil, readBytes, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 	readBytes += 12
+
+	pdu.Metric = metric.Value()
 
 	return pdu, readBytes, nil
 }
@@ -427,7 +427,7 @@ const (
 
 type ASExternalLSA struct {
 	Flags  uint8
-	Metric InterfaceMetric
+	Metric uint32 // max: 24 bit
 	Prefix LSAPrefix
 
 	ForwardingAddress     net.IP // optional
@@ -449,7 +449,7 @@ func (a *ASExternalLSA) FlagT() bool {
 
 func (x *ASExternalLSA) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(x.Flags)
-	x.Metric.Serialize(buf)
+	serializeMetric(buf, x.Metric)
 	x.Prefix.Serialize(buf)
 	if x.FlagF() {
 		serializeIPv6(x.ForwardingAddress, buf)
@@ -468,10 +468,11 @@ func DeserializeASExternalLSA(buf *bytes.Buffer) (*ASExternalLSA, int, error) {
 	var readBytes int
 	var err error
 	var fields []interface{}
+	var metric interfaceMetric
 
 	fields = []interface{}{
 		&pdu.Flags,
-		&pdu.Metric,
+		&metric,
 	}
 
 	err = decode.Decode(buf, fields)
@@ -479,6 +480,8 @@ func DeserializeASExternalLSA(buf *bytes.Buffer) (*ASExternalLSA, int, error) {
 		return nil, readBytes, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 	readBytes += 4
+
+	pdu.Metric = metric.Value()
 
 	pfx, n, err := DeserializeLSAPrefix(buf)
 	if err != nil {
