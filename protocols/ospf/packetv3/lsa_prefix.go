@@ -53,6 +53,10 @@ type LSAPrefix struct {
 	Address net.IP
 }
 
+func (x *LSAPrefix) ToNetPrefix() net.Prefix {
+	return net.NewPfx(x.Address, x.PrefixLength)
+}
+
 func DeserializeLSAPrefix(buf *bytes.Buffer) (LSAPrefix, int, error) {
 	pdu := LSAPrefix{}
 
