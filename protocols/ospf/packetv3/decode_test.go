@@ -551,6 +551,13 @@ func TestDecodeLSRequest(t *testing.T) {
 	}
 }
 
+func mustIP(ip net.IP, err error) net.IP {
+	if err != nil {
+		panic(err)
+	}
+	return ip
+}
+
 func TestDecodeLSUpdate(t *testing.T) {
 	tests := []test{
 		{
@@ -559,19 +566,19 @@ func TestDecodeLSUpdate(t *testing.T) {
 				// Header
 				0x03,       // Version
 				0x04,       // Type: LS Update
-				0x00, 0x3c, // Length
+				0x00, 0xf0, // Length
 				0x01, 0x01, 0x01, 0x01, // Router ID
 				0x00, 0x00, 0x00, 0x00, // Area ID
-				0x40, 0xdd, // Checksum
+				0xa6, 0x81, // Checksum
 				0x00, // Instance ID
 				0x00, // Reserved
 
 				// Payload
-				0x00, 0x00, 0x00, 0x01, // Num of Updates
+				0x00, 0x00, 0x00, 0x05, // Num of Updates
 
-				// Update
+				// Router LSA
 				0x00, 0x01, // Age
-				0x20, 0x01, // Type
+				0x20, 0x01, // Type: Router
 				0x00, 0x00, 0x00, 0x00, // Link State ID
 				0x01, 0x01, 0x01, 0x01, // Router ID
 				0x80, 0x00, 0x00, 0x13, // Seq Num
@@ -579,7 +586,6 @@ func TestDecodeLSUpdate(t *testing.T) {
 				0x00, 0x28, // Length
 				0x01,             // Flags
 				0x00, 0x00, 0x33, // Options
-
 				// Interface #1
 				0x01,       // Type: PTP
 				0x00,       // Reserved
@@ -587,12 +593,81 @@ func TestDecodeLSUpdate(t *testing.T) {
 				0x00, 0x00, 0x00, 0x06, // Interface ID
 				0x00, 0x00, 0x00, 0x06, // Neighbor Interface ID
 				0x03, 0x03, 0x03, 0x03, // Neighbor Router ID
+
+				// Inter-Area-Prefix LSA
+				0x00, 0x24, // Age
+				0x20, 0x03, // Type: Inter-Area-Prefix
+				0x00, 0x00, 0x00, 0x05, // LS ID
+				0x03, 0x03, 0x03, 0x03, // Router ID
+				0x80, 0x00, 0x00, 0x01, // Seq Num
+				0x06, 0xba, // Checksum
+				0x00, 0x24, // Length
+				0x00,             // Reserved
+				0x00, 0x00, 0x0a, // Metric
+				0x40,       // Prefix Length
+				0x00,       // Prefix Options
+				0x00, 0x00, //Reserved
+				// Address
+				0x20, 0x01, 0x0d, 0xb8,
+				0x00, 0x00, 0x00, 0x34,
+
+				// Link LSA
+				0x00, 0x23, // Ags
+				0x00, 0x08, // Type: Link
+				0x00, 0x00, 0x00, 0x06, // LS ID
+				0x03, 0x03, 0x03, 0x03, // Router ID
+				0x80, 0x00, 0x00, 0x01, // Seq Num
+				0xa0, 0x49, // Checksum
+				0x00, 0x38, // Length
+				0x64,             // Router Priority
+				0x00, 0x00, 0x33, // Options
+				// Link local addr
+				0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+				0x00, 0x00, 0x00, 0x01, // Num prefixes
+				// LSA Prefix
+				0x40, 0x00, 0x00, 0x00, // Len & Opts
+				0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, // Addr
+
+				// Intra-Area-Prefix LSA
+				0x00, 0x23, // Age
+				0x20, 0x09, // Type: Intra Area Prefix
+				0x00, 0x00, 0x00, 0x00, // LS ID
+				0x03, 0x03, 0x03, 0x03, // Router ID
+				0x80, 0x00, 0x00, 0x01, // Seq Num
+				0xe0, 0x99, // Checksum
+				0x00, 0x34, // Length
+				0x00, 0x01, // Num prefixes
+				0x20, 0x01, // Referenced type
+				0x00, 0x00, 0x00, 0x00, // Referenced ID
+				0x03, 0x03, 0x03, 0x03, // Referenced Router
+				0x80,       // Pfx Len
+				0x02,       // Pfx Opts
+				0x00, 0x00, // Metric
+				// Pfx Addr
+				0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+
+				// Network LSA
+				0x0e, 0x10, // Age
+				0x20, 0x02, // Type: Network
+				0x00, 0x00, 0x00, 0x06, // LS ID
+				0x03, 0x03, 0x03, 0x03, // Router ID
+				0x80, 0x00, 0x00, 0x03, // Seq Num
+				0x6b, 0x6d, // Checksum
+				0x00, 0x24, // Length
+				0x00,             // Reserved
+				0x00, 0x00, 0x33, // Options
+				// Attached Routers
+				0x03, 0x03, 0x03, 0x03,
+				0x02, 0x02, 0x02, 0x02,
+				0x01, 0x01, 0x01, 0x01,
 			},
 			expected: &ospf.OSPFv3Message{
 				Version:      3,
 				Type:         ospf.MsgTypeLinkStateUpdate,
-				Checksum:     0x40dd,
-				PacketLength: 60,
+				Checksum:     0xa681,
+				PacketLength: 240,
 				RouterID:     routerID(1, 1, 1, 1),
 				AreaID:       0,
 				InstanceID:   0,
@@ -613,11 +688,93 @@ func TestDecodeLSUpdate(t *testing.T) {
 							LinkDescriptions: []ospf.AreaLinkDescription{
 								{
 									Type:                ospf.ALDTypePTP,
-									Metric:              ospf.InterfaceMetric{Low: 0x40},
+									Metric:              64,
 									InterfaceID:         6,
 									NeighborInterfaceID: 6,
 									NeighborRouterID:    routerID(3, 3, 3, 3),
 								},
+							},
+						},
+					},
+					{
+						Age:               0x24,
+						Type:              ospf.LSATypeInterAreaPrefix,
+						ID:                5,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000001,
+						Checksum:          0x06ba,
+						Length:            0x24,
+						Body: &ospf.InterAreaPrefixLSA{
+							Metric: 10,
+							Prefix: ospf.LSAPrefix{
+								PrefixLength: 64,
+								Options:      ospf.PrefixOptions{},
+								Address:      mustIP(net.IPFromString("2001:db8:0:34::")),
+							},
+						},
+					},
+					{
+						Age:               0x23,
+						Type:              ospf.LSATypeLink,
+						ID:                6,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000001,
+						Checksum:          0xa049,
+						Length:            0x38,
+						Body: &ospf.LinkLSA{
+							RouterPriority: 100,
+							Options: ospf.OptionsFromFlags(
+								ospf.RouterOptDC, ospf.RouterOptR, ospf.RouterOptE, ospf.RouterOptV6),
+							LinkLocalInterfaceAddress: mustIP(net.IPFromString("fe80::3")),
+							PrefixNum:                 1,
+							Prefixes: []ospf.LSAPrefix{
+								{
+									PrefixLength: 64,
+									Options:      ospf.PrefixOptions{},
+									Address:      mustIP(net.IPFromString("2001:db8::")),
+								},
+							},
+						},
+					},
+					{
+						Age:               0x23,
+						Type:              ospf.LSATypeIntraAreaPrefix,
+						ID:                0,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000001,
+						Checksum:          0xe099,
+						Length:            0x34,
+						Body: &ospf.IntraAreaPrefixLSA{
+							ReferencedLSType:            ospf.LSATypeRouter,
+							ReferencedLinkStateID:       0,
+							ReferencedAdvertisingRouter: routerID(3, 3, 3, 3),
+							Prefixes: []ospf.LSAPrefix{
+								{
+									PrefixLength: 128,
+									Options: ospf.PrefixOptions{
+										LocalAddress: true,
+									},
+									Special: 0, // Metric
+									Address: mustIP(net.IPFromString("2001:db8::3")),
+								},
+							},
+						},
+					},
+					{
+						Age:               0xe10,
+						Type:              ospf.LSATypeNetwork,
+						ID:                6,
+						AdvertisingRouter: routerID(3, 3, 3, 3),
+						SequenceNumber:    0x80000003,
+						Checksum:          0x6b6d,
+						Length:            0x24,
+						Body: &ospf.NetworkLSA{
+							Options: ospf.OptionsFromFlags(
+								ospf.RouterOptDC, ospf.RouterOptR, ospf.RouterOptE, ospf.RouterOptV6),
+							AttachedRouter: []ospf.ID{
+								routerID(3, 3, 3, 3),
+								routerID(2, 2, 2, 2),
+								routerID(1, 1, 1, 1),
 							},
 						},
 					},
