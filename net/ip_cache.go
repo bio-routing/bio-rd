@@ -36,8 +36,9 @@ func (ipc *ipCache) get(addr IP) *IP {
 	}
 
 	ipc._set(addr)
+	res := ipc.cache[addr]
 	ipc.cacheMu.Unlock()
-	return ipc.cache[addr]
+	return res
 }
 
 func (ipc *ipCache) _set(addr IP) {
