@@ -29,6 +29,7 @@ type Router struct {
 	reconnectTimeMin int
 	reconnectTimeMax int
 	reconnectTime    int
+	dialTimeout      time.Duration
 	reconnectTimer   *time.Timer
 	vrfRegistry      *vrf.VRFRegistry
 	neighborManager  *neighborManager
@@ -69,6 +70,7 @@ func newRouter(addr net.IP, port uint16) *Router {
 		reconnectTimeMin: 30,  // Suggested by RFC 7854
 		reconnectTimeMax: 720, // Suggested by RFC 7854
 		reconnectTimer:   time.NewTimer(time.Duration(0)),
+		dialTimeout:      time.Second * 5,
 		vrfRegistry:      vrf.NewVRFRegistry(),
 		neighborManager:  newNeighborManager(),
 		logger:           log.New(),
