@@ -37,8 +37,9 @@ func (pfxc *pfxCache) get(pfx Prefix) *Prefix {
 	}
 
 	pfxc._set(pfx)
+	ret := pfxc.cache[pfx]
 	pfxc.cacheMu.Unlock()
-	return pfxc.cache[pfx]
+	return ret
 }
 
 func (pfxc *pfxCache) _set(pfx Prefix) {
