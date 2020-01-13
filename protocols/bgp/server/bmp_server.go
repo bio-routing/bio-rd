@@ -56,7 +56,7 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 	go func(r *Router) {
 		for {
 			<-r.reconnectTimer.C
-			c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port))
+			c, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port), r.dialTimeout)
 			if err != nil {
 				log.Infof("Unable to connect to BMP router: %v", err)
 				if r.reconnectTime == 0 {
@@ -68,7 +68,8 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 				continue
 			}
 
-			r.reconnectTime = 0
+			r.reconnectTime = r.reconnectTimeMin
+			r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
 			log.Infof("Connected to %s", r.address.String())
 			r.serve(c)
 		}
