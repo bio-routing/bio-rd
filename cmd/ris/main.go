@@ -46,6 +46,7 @@ func main() {
 	}
 
 	s := risserver.NewServer(b)
+	prometheus.MustRegister(s)
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
 	streamInterceptors := []grpc.StreamServerInterceptor{}
 	srv, err := servicewrapper.New(

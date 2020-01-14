@@ -3,6 +3,7 @@ package risserver
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
@@ -11,21 +12,96 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	bnet "github.com/bio-routing/bio-rd/net"
 	netapi "github.com/bio-routing/bio-rd/net/api"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
 
+const (
+	prefix = "bio_ris_"
+)
+
+var (
+	risObserveFIBClientsDesc *prometheus.Desc
+)
+
+func init() {
+	labels := []string{"router", "vrf", "afisafi"}
+
+	risObserveFIBClientsDesc = prometheus.NewDesc(prefix+"observe_fib_clients", "number of observe FIB clients per router/vrf/afisafi", labels, nil)
+}
+
 // Server represents an RoutingInformationService server
 type Server struct {
-	bmp *server.BMPServer
+	bmp              *server.BMPServer
+	observeClients   map[observeRIBRequest]uint64
+	observeClientsMu sync.Mutex
+}
+
+type observeRIBRequest struct {
+	router  string
+	vrfID   uint64
+	afisafi pb.ObserveRIBRequest_AFISAFI
 }
 
 // NewServer creates a new server
 func NewServer(b *server.BMPServer) *Server {
 	return &Server{
-		bmp: b,
+		bmp:            b,
+		observeClients: make(map[observeRIBRequest]uint64),
+	}
+}
+
+func convertRIBRequest(r *pb.ObserveRIBRequest) observeRIBRequest {
+	return observeRIBRequest{
+		router:  r.Router,
+		vrfID:   r.VrfId,
+		afisafi: r.Afisafi,
+	}
+}
+
+func (s *Server) addObserveRIBRequest(req *pb.ObserveRIBRequest) {
+	r := convertRIBRequest(req)
+
+	s.observeClientsMu.Lock()
+	defer s.observeClientsMu.Unlock()
+
+	if _, found := s.observeClients[r]; found {
+		s.observeClients[r]++
+		return
+	}
+
+	s.observeClients[r] = 1
+}
+
+func (s *Server) delObserveRIBRequest(req *pb.ObserveRIBRequest) {
+	r := convertRIBRequest(req)
+
+	s.observeClientsMu.Lock()
+	defer s.observeClientsMu.Unlock()
+
+	if _, found := s.observeClients[r]; found {
+		s.observeClients[r]--
+		return
+	}
+}
+
+// Describe describes metrics of this server
+func (s *Server) Describe(ch chan<- *prometheus.Desc) {
+	ch <- risObserveFIBClientsDesc
+}
+
+// Collect collects metrics of this server
+func (s *Server) Collect(ch chan<- prometheus.Metric) {
+	s.observeClientsMu.Lock()
+	defer s.observeClientsMu.Unlock()
+
+	for k, v := range s.observeClients {
+		l := []string{k.router, fmt.Sprintf("%d", k.vrfID), fmt.Sprintf("%d", k.afisafi)}
+		ch <- prometheus.MustNewConstMetric(risObserveFIBClientsDesc, prometheus.GaugeValue, float64(v), l...)
 	}
 }
 
@@ -114,6 +190,7 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 	return res, nil
 }
 
+// ObserveRIB implements the ObserveRIB RPC
 func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {
@@ -129,6 +206,9 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	if err != nil {
 		return err
 	}
+
+	s.addObserveRIBRequest(req)
+	defer s.delObserveRIBRequest(req)
 
 	fifo := newUpdateFIFO()
 	rc := newRIBClient(fifo)
@@ -162,6 +242,7 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	return nil
 }
 
+// DumpRIB implements the DumpRIB RPC
 func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationService_DumpRIBServer) error {
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {
