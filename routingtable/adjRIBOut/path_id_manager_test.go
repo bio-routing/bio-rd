@@ -36,8 +36,8 @@ X:
 		for i := 0; i < test.count; i++ {
 			_, err := m.addPath(&route.Path{BGPPath: &route.BGPPath{
 				BGPPathA: &route.BGPPathA{
-					NextHop:   net.IPv4(0),
-					Source:    net.IPv4(0),
+					NextHop:   net.IPv4(0).Ptr(),
+					Source:    net.IPv4(0).Ptr(),
 					LocalPref: uint32(i),
 				},
 			}})
@@ -73,8 +73,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 0,
 						},
 					},
@@ -82,8 +82,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 1,
 						},
 					},
@@ -91,8 +91,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 2,
 						},
 					},
@@ -100,8 +100,8 @@ func TestReleasePath(t *testing.T) {
 			},
 			release: &route.Path{BGPPath: &route.BGPPath{
 				BGPPathA: &route.BGPPathA{
-					Source:    net.IPv4(0),
-					NextHop:   net.IPv4(0),
+					Source:    net.IPv4(0).Ptr(),
+					NextHop:   net.IPv4(0).Ptr(),
 					LocalPref: 2,
 				},
 			}},
@@ -109,8 +109,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 0,
 						},
 					},
@@ -118,8 +118,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 1,
 						},
 					},
@@ -132,8 +132,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 0,
 						},
 					},
@@ -141,8 +141,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 1,
 						},
 					},
@@ -150,8 +150,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 2,
 						},
 					},
@@ -159,8 +159,8 @@ func TestReleasePath(t *testing.T) {
 			},
 			release: &route.Path{BGPPath: &route.BGPPath{
 				BGPPathA: &route.BGPPathA{
-					Source:    net.IPv4(0),
-					NextHop:   net.IPv4(0),
+					Source:    net.IPv4(0).Ptr(),
+					NextHop:   net.IPv4(0).Ptr(),
 					LocalPref: 5,
 				},
 			}},
@@ -168,8 +168,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 0,
 						},
 					},
@@ -177,8 +177,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 1,
 						},
 					},
@@ -186,8 +186,8 @@ func TestReleasePath(t *testing.T) {
 				{
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							Source:    net.IPv4(0),
-							NextHop:   net.IPv4(0),
+							Source:    net.IPv4(0).Ptr(),
+							NextHop:   net.IPv4(0).Ptr(),
 							LocalPref: 2,
 						},
 					},

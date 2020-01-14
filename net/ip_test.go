@@ -50,7 +50,7 @@ func TestHigher(t *testing.T) {
 func TestIPVersion(t *testing.T) {
 	tests := []struct {
 		name     string
-		ip       *IP
+		ip       IP
 		expected bool
 	}{
 		{
@@ -225,7 +225,7 @@ func TestCompare(t *testing.T) {
 
 func TestIPString(t *testing.T) {
 	tests := []struct {
-		ip       *IP
+		ip       IP
 		expected string
 	}{
 		{
@@ -262,7 +262,7 @@ func TestIPString(t *testing.T) {
 func TestBytes(t *testing.T) {
 	tests := []struct {
 		name     string
-		ip       *IP
+		ip       IP
 		expected []byte
 	}{
 		{
@@ -288,12 +288,12 @@ func TestIPv4FromOctets(t *testing.T) {
 	tests := []struct {
 		name     string
 		octets   []uint8
-		expected *IP
+		expected IP
 	}{
 		{
 			name:   "172.217.16.195",
 			octets: []uint8{172, 217, 16, 195},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    2899906755,
 				isLegacy: true,
@@ -302,7 +302,7 @@ func TestIPv4FromOctets(t *testing.T) {
 		{
 			name:   "0.0.0.0",
 			octets: []uint8{0, 0, 0, 0},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    0,
 				isLegacy: true,
@@ -311,7 +311,7 @@ func TestIPv4FromOctets(t *testing.T) {
 		{
 			name:   "255.255.255.255",
 			octets: []uint8{255, 255, 255, 255},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    math.MaxUint32,
 				isLegacy: true,
@@ -330,7 +330,7 @@ func TestIPv6FromBlocks(t *testing.T) {
 	tests := []struct {
 		name     string
 		blocks   []uint16
-		expected *IP
+		expected IP
 	}{
 		{
 			name: "IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
@@ -344,7 +344,7 @@ func TestIPv6FromBlocks(t *testing.T) {
 				0xbeef,
 				0xcafe,
 			},
-			expected: &IP{
+			expected: IP{
 				higher: 2306131596687708724,
 				lower:  6230974922281175806,
 			},
@@ -370,13 +370,13 @@ func TestIPFromBytes(t *testing.T) {
 	tests := []struct {
 		name     string
 		bytes    []byte
-		expected *IP
+		expected IP
 		wantFail bool
 	}{
 		{
 			name:  "IPV4: 172.217.16.195",
 			bytes: []byte{172, 217, 16, 195},
-			expected: &IP{
+			expected: IP{
 				higher:   0,
 				lower:    2899906755,
 				isLegacy: true,
@@ -385,7 +385,7 @@ func TestIPFromBytes(t *testing.T) {
 		{
 			name:  "IPV6: IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
 			bytes: []byte{0x20, 0x01, 0x06, 0x78, 0x01, 0xE0, 0x12, 0x34, 0x56, 0x78, 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE},
-			expected: &IP{
+			expected: IP{
 				higher: 2306131596687708724,
 				lower:  6230974922281175806,
 			},
@@ -404,6 +404,13 @@ func TestIPFromBytes(t *testing.T) {
 				t.Fatalf("Expected test to fail, but did not")
 			}
 
+			if test.wantFail {
+				if err == nil {
+					t.Fatalf("Unexpected success")
+				}
+				return
+			}
+
 			assert.Equal(t, test.expected, ip)
 		})
 	}
@@ -412,7 +419,7 @@ func TestIPFromBytes(t *testing.T) {
 func TestToNetIP(t *testing.T) {
 	tests := []struct {
 		name     string
-		ip       *IP
+		ip       IP
 		expected net.IP
 	}{
 		{
@@ -445,7 +452,7 @@ func TestToNetIP(t *testing.T) {
 func TestBitAtPosition(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *IP
+		input    IP
 		position uint8
 		expected bool
 	}{
@@ -521,7 +528,7 @@ func TestIPFromString(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		expected *IP
+		expected IP
 		wantFail bool
 	}{
 		{
@@ -563,7 +570,7 @@ func TestIPFromString(t *testing.T) {
 func TestSizeBytes(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *IP
+		input    IP
 		expected uint8
 	}{
 		{

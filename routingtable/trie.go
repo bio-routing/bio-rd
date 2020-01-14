@@ -169,7 +169,7 @@ func (n *node) newSuperNode(pfx *net.Prefix, p *route.Path) *node {
 	pfxLenDiff := n.route.Pfxlen() - superNet.Pfxlen()
 	skip := n.skip - pfxLenDiff
 
-	pseudoNode := newNode(superNet, nil, skip, true)
+	pseudoNode := newNode(&superNet, nil, skip, true)
 	pseudoNode.insertChildren(n, pfx, p)
 	return pseudoNode
 }

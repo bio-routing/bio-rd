@@ -12,8 +12,8 @@ import (
 )
 
 func TestAddPath(t *testing.T) {
-	routerID := net.IPv4FromOctets(1, 1, 1, 1).ToUint32()
-	clusterID := net.IPv4FromOctets(2, 2, 2, 2).ToUint32()
+	routerID := net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()
+	clusterID := net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32()
 
 	tests := []struct {
 		name       string
@@ -26,7 +26,7 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Add route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -38,7 +38,7 @@ func TestAddPath(t *testing.T) {
 			removePfx:  nil,
 			removePath: nil,
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -51,46 +51,46 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Overwrite routes",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
-							NextHop:   net.IPv4FromOctets(20, 0, 0, 0),
-							Source:    net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
-							NextHop:   net.IPv4FromOctets(20, 0, 0, 0),
-							Source:    net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
 			},
-			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 			removePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
 					BGPPathA: &route.BGPPathA{
 						LocalPref: 100,
-						NextHop:   net.IPv4FromOctets(20, 0, 0, 0),
-						Source:    net.IPv4FromOctets(20, 0, 0, 0),
+						NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 					},
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
-							NextHop:   net.IPv4FromOctets(20, 0, 0, 0),
-							Source:    net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
@@ -99,7 +99,7 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Add route with our RouterID as OriginatorID",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -114,7 +114,7 @@ func TestAddPath(t *testing.T) {
 		{
 			name: "Add route with our ClusterID within ClusterList",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -133,7 +133,7 @@ func TestAddPath(t *testing.T) {
 			name:    "Add route (with BGP add path)",
 			addPath: true,
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -141,7 +141,7 @@ func TestAddPath(t *testing.T) {
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
@@ -153,7 +153,7 @@ func TestAddPath(t *testing.T) {
 			removePfx:  nil,
 			removePath: nil,
 			expected: []*route.Route{
-				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), []*route.Path{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), []*route.Path{
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
@@ -181,7 +181,7 @@ func TestAddPath(t *testing.T) {
 		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
 		for _, route := range test.routes {
-			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
+			adjRIBIn.AddPath(route.Prefix().Ptr(), route.Paths()[0])
 		}
 
 		if test.removePath != nil {
@@ -213,57 +213,57 @@ func TestRemovePath(t *testing.T) {
 			name:    "Remove an a path from existing route",
 			addPath: true,
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						PathIdentifier: 100,
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						PathIdentifier: 200,
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						PathIdentifier: 300,
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
 			},
-			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 			removePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
 					PathIdentifier: 200,
 					BGPPathA: &route.BGPPathA{
-						NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-						Source:  net.IPv4FromOctets(20, 0, 0, 0),
+						NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 					},
 				},
 			},
 			expected: []*route.Route{
-				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), []*route.Path{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), []*route.Path{
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							PathIdentifier: 100,
 							BGPPathA: &route.BGPPathA{
-								NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-								Source:  net.IPv4FromOctets(20, 0, 0, 0),
+								NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+								Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 							},
 						},
 					},
@@ -272,8 +272,8 @@ func TestRemovePath(t *testing.T) {
 						BGPPath: &route.BGPPath{
 							PathIdentifier: 300,
 							BGPPathA: &route.BGPPathA{
-								NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-								Source:  net.IPv4FromOctets(20, 0, 0, 0),
+								NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+								Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 							},
 						},
 					},
@@ -284,60 +284,60 @@ func TestRemovePath(t *testing.T) {
 		{
 			name: "Remove an existing route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
 			},
-			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 			removePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
 					BGPPathA: &route.BGPPathA{
-						NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-						Source:  net.IPv4FromOctets(20, 0, 0, 0),
+						NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 					},
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
@@ -347,51 +347,51 @@ func TestRemovePath(t *testing.T) {
 		{
 			name: "Remove non existing route",
 			routes: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
 			},
-			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8),
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
 			removePath: &route.Path{
 				Type: route.BGPPathType,
 				BGPPath: &route.BGPPath{
 					BGPPathA: &route.BGPPathA{
-						NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-						Source:  net.IPv4FromOctets(20, 0, 0, 0),
+						NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 					},
 				},
 			},
 			expected: []*route.Route{
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
-				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9), &route.Path{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 128, 0, 0), 9).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop: net.IPv4FromOctets(20, 0, 0, 0),
-							Source:  net.IPv4FromOctets(20, 0, 0, 0),
+							NextHop: net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:  net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
@@ -403,7 +403,7 @@ func TestRemovePath(t *testing.T) {
 	for _, test := range tests {
 		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 1, 2, test.addPath)
 		for _, route := range test.routes {
-			adjRIBIn.AddPath(route.Prefix(), route.Paths()[0])
+			adjRIBIn.AddPath(route.Prefix().Ptr(), route.Paths()[0])
 		}
 
 		mc := routingtable.NewRTMockClient()
@@ -434,29 +434,29 @@ func TestUnregister(t *testing.T) {
 	adjRIBIn.Register(mc)
 
 	pfxs := []*net.Prefix{
-		net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 16),
-		net.NewPfx(net.IPv4FromOctets(10, 0, 1, 0), 24),
+		net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 16).Ptr(),
+		net.NewPfx(net.IPv4FromOctets(10, 0, 1, 0), 24).Ptr(),
 	}
 
 	paths := []*route.Path{
 		{
 			BGPPath: &route.BGPPath{
 				BGPPathA: &route.BGPPathA{
-					NextHop: net.IPv4FromOctets(192, 168, 0, 0),
+					NextHop: net.IPv4FromOctets(192, 168, 0, 0).Ptr(),
 				},
 			},
 		},
 		{
 			BGPPath: &route.BGPPath{
 				BGPPathA: &route.BGPPathA{
-					NextHop: net.IPv4FromOctets(192, 168, 2, 1),
+					NextHop: net.IPv4FromOctets(192, 168, 2, 1).Ptr(),
 				},
 			},
 		},
 		{
 			BGPPath: &route.BGPPath{
 				BGPPathA: &route.BGPPathA{
-					NextHop: net.IPv4FromOctets(192, 168, 3, 1),
+					NextHop: net.IPv4FromOctets(192, 168, 3, 1).Ptr(),
 				},
 			},
 		},

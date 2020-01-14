@@ -81,7 +81,7 @@ func (s *establishedState) init() error {
 		IBGP:                 s.fsm.peer.localASN == s.fsm.peer.peerASN,
 		LocalASN:             s.fsm.peer.localASN,
 		RouteServerClient:    s.fsm.peer.routeServerClient,
-		LocalAddress:         localAddr,
+		LocalAddress:         localAddr.Dedup(),
 		RouteReflectorClient: s.fsm.peer.routeReflectorClient,
 		ClusterID:            s.fsm.peer.clusterID,
 	}

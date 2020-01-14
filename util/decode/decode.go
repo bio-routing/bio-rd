@@ -18,3 +18,53 @@ func Decode(buf *bytes.Buffer, fields []interface{}) error {
 	}
 	return nil
 }
+
+func DecodeUint8(buf *bytes.Buffer, x *uint8) error {
+	y, err := buf.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	*x = y
+	return nil
+}
+
+func DecodeUint16(buf *bytes.Buffer, x *uint16) error {
+	a, err := buf.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	b, err := buf.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	*x = uint16(a)*256 + uint16(b)
+	return nil
+}
+
+func DecodeUint32(buf *bytes.Buffer, x *uint32) error {
+	a, err := buf.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	b, err := buf.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	c, err := buf.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	d, err := buf.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	*x = uint32(a)*256*256*256 + uint32(b)*256*256*256 + uint32(c)*256 + uint32(d)
+	return nil
+}

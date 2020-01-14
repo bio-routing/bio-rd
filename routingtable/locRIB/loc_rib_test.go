@@ -9,7 +9,7 @@ import (
 )
 
 type pfxPath struct {
-	pfx  *bnet.Prefix
+	pfx  bnet.Prefix
 	path *route.Path
 }
 
@@ -37,7 +37,7 @@ func TestContainsPfxPath(t *testing.T) {
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
-							NextHop: bnet.IPv4(2),
+							NextHop: bnet.IPv4(2).Ptr(),
 						},
 					},
 				},
@@ -56,7 +56,7 @@ func TestContainsPfxPath(t *testing.T) {
 					path: &route.Path{
 						Type: route.StaticPathType,
 						StaticPath: &route.StaticPath{
-							NextHop: bnet.IPv4(2),
+							NextHop: bnet.IPv4(2).Ptr(),
 						},
 					},
 				},
@@ -66,7 +66,7 @@ func TestContainsPfxPath(t *testing.T) {
 				path: &route.Path{
 					Type: route.StaticPathType,
 					StaticPath: &route.StaticPath{
-						NextHop: bnet.IPv4(2),
+						NextHop: bnet.IPv4(2).Ptr(),
 					},
 				},
 			},
@@ -76,21 +76,24 @@ func TestContainsPfxPath(t *testing.T) {
 	for i, tc := range testCases {
 		rib := New("inet.0")
 		for _, p := range tc.in {
-			err := rib.AddPath(p.pfx, p.path)
+			err := rib.AddPath(&p.pfx, p.path)
 			assert.Nil(t, err, "could not fill rib in testcase %v", i)
 		}
-		contains := rib.ContainsPfxPath(tc.check.pfx, tc.check.path)
+		contains := rib.ContainsPfxPath(&tc.check.pfx, tc.check.path)
 		assert.Equal(t, tc.expected, contains, "mismatch in testcase %v", i)
 	}
 }
 
 func TestLocRIB_RemovePathUnknown(t *testing.T) {
 	rib := New("inet.0")
-	assert.True(t, rib.RemovePath(bnet.NewPfx(bnet.IPv4(1), 32),
-		&route.Path{
-			Type: route.StaticPathType,
-			StaticPath: &route.StaticPath{
-				NextHop: bnet.IPv4(2),
-			},
-		}))
+	assert.True(
+		t,
+		rib.RemovePath(
+			bnet.NewPfx(bnet.IPv4(1), 32).Ptr(),
+			&route.Path{
+				Type: route.StaticPathType,
+				StaticPath: &route.StaticPath{
+					NextHop: bnet.IPv4(2).Ptr(),
+				},
+			}))
 }

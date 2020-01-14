@@ -166,7 +166,7 @@ func (b *bgpServer) incomingConnectionWorker() {
 		c := <-b.acceptCh
 
 		peerAddr, _ := bnetutils.BIONetIPFromAddr(c.RemoteAddr().String())
-		peer := b.peers.get(peerAddr)
+		peer := b.peers.get(peerAddr.Dedup())
 		if peer == nil {
 			c.Close()
 			log.WithFields(log.Fields{

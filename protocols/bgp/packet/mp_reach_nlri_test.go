@@ -20,9 +20,9 @@ func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 			nlri: MultiProtocolReachNLRI{
 				AFI:     IPv6AFI,
 				SAFI:    UnicastSAFI,
-				NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2),
+				NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Dedup(),
 				NLRI: &NLRI{
-					Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48),
+					Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Dedup(),
 				},
 			},
 			expected: []byte{
@@ -38,9 +38,9 @@ func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 			nlri: MultiProtocolReachNLRI{
 				AFI:     IPv6AFI,
 				SAFI:    UnicastSAFI,
-				NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2),
+				NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Dedup(),
 				NLRI: &NLRI{
-					Prefix:         bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48),
+					Prefix:         bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Dedup(),
 					PathIdentifier: 100,
 				},
 			},

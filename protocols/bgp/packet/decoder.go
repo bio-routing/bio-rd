@@ -45,7 +45,7 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOption
 func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
 	msg := &BGPUpdate{}
 
-	err := decode.Decode(buf, []interface{}{&msg.WithdrawnRoutesLen})
+	err := decode.DecodeUint16(buf, &msg.WithdrawnRoutesLen)
 	if err != nil {
 		return msg, err
 	}
@@ -55,7 +55,7 @@ func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdat
 		return msg, err
 	}
 
-	err = decode.Decode(buf, []interface{}{&msg.TotalPathAttrLen})
+	err = decode.DecodeUint16(buf, &msg.TotalPathAttrLen)
 	if err != nil {
 		return msg, err
 	}
@@ -352,40 +352,35 @@ func isValidIdentifier(id uint32) bool {
 func decodeHeader(buf *bytes.Buffer) (*BGPHeader, error) {
 	hdr := &BGPHeader{}
 
-	marker := make([]byte, MarkerLen)
-	n, err := buf.Read(marker)
-	if err != nil {
-		return hdr, BGPError{
-			ErrorCode:    Cease,
-			ErrorSubCode: 0,
-			ErrorStr:     fmt.Sprintf("Failed to read from buffer: %v", err.Error()),
+	for i := 0; i < MarkerLen; i++ {
+		b, err := buf.ReadByte()
+		if err != nil {
+			return hdr, BGPError{
+				ErrorCode:    Cease,
+				ErrorSubCode: 0,
+				ErrorStr:     fmt.Sprintf("Failed to read from buffer: %v", err),
+			}
 		}
-	}
 
-	if n != MarkerLen {
-		return hdr, BGPError{
-			ErrorCode:    Cease,
-			ErrorSubCode: 0,
-			ErrorStr:     fmt.Sprintf("Unable to read marker"),
-		}
-	}
-
-	for i := range marker {
-		if marker[i] != 255 {
+		if b != 0xff {
 			return nil, BGPError{
 				ErrorCode:    MessageHeaderError,
 				ErrorSubCode: ConnectionNotSync,
-				ErrorStr:     fmt.Sprintf("Invalid marker: %v", marker),
+				ErrorStr:     fmt.Sprintf("Invalid marker"),
 			}
 		}
 	}
 
-	fields := []interface{}{
-		&hdr.Length,
-		&hdr.Type,
+	err := decode.DecodeUint16(buf, &hdr.Length)
+	if err != nil {
+		return hdr, BGPError{
+			ErrorCode:    Cease,
+			ErrorSubCode: 0,
+			ErrorStr:     fmt.Sprintf("%v", err.Error()),
+		}
 	}
 
-	err = decode.Decode(buf, fields)
+	err = decode.DecodeUint8(buf, &hdr.Type)
 	if err != nil {
 		return hdr, BGPError{
 			ErrorCode:    Cease,

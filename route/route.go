@@ -43,7 +43,7 @@ func NewRoute(pfx *net.Prefix, p *Path) *Route {
 	}
 
 	if p == nil {
-		r.paths = make([]*Path, 0)
+		r.paths = make([]*Path, 0, 2)
 		return r
 	}
 
