@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	grpcPort         = flag.Uint("grpc_port", 4321, "gRPC server port")
-	httpPort         = flag.Uint("http_port", 4320, "HTTP server port")
-	keepaliveMinTime = flag.Uint("keepalive_min_time", 1, "Minimum time (seconds) for a client to wait between keepalive pings")
-	configFilePath   = flag.String("config.file", "ris_config.yml", "Configuration file")
+	grpcPort             = flag.Uint("grpc_port", 4321, "gRPC server port")
+	httpPort             = flag.Uint("http_port", 4320, "HTTP server port")
+	grpcKeepaliveMinTime = flag.Uint("grpc_keepalive_min_time", 1, "Minimum time (seconds) for a client to wait between GRPC keepalive pings")
+	configFilePath       = flag.String("config.file", "ris_config.yml", "Configuration file")
 )
 
 func main() {
@@ -57,7 +57,7 @@ func main() {
 		unaryInterceptors,
 		streamInterceptors,
 		keepalive.EnforcementPolicy{
-			MinTime:             time.Duration(*keepaliveMinTime) * time.Second,
+			MinTime:             time.Duration(*grpcKeepaliveMinTime) * time.Second,
 			PermitWithoutStream: true,
 		},
 	)
