@@ -14,6 +14,9 @@ type BMPRouterMetrics struct {
 	// Name of the monitored routers
 	Name string
 
+	// Status of TCP session
+	Established bool
+
 	// Count of received RouteMonitoringMessages
 	RouteMonitoringMessages uint64
 

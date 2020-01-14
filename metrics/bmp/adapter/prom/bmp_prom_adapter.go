@@ -16,6 +16,7 @@ const (
 )
 
 var (
+	bmpSessionEstablishedDesc    *prometheus.Desc
 	routeMonitoringMessagesDesc  *prometheus.Desc
 	statisticsReportMessages     *prometheus.Desc
 	peerDownNotificationMessages *prometheus.Desc
@@ -28,6 +29,7 @@ var (
 func init() {
 	labels := []string{"router"}
 
+	bmpSessionEstablishedDesc = prometheus.NewDesc(prefix+"session_established", "Indicates if a BMP session is established", labels, nil)
 	routeMonitoringMessagesDesc = prometheus.NewDesc(prefix+"route_monitoring_messages", "Returns number of received route monitoring messages", labels, nil)
 	statisticsReportMessages = prometheus.NewDesc(prefix+"statistics_report_messages", "Returns number of received statistics report messages", labels, nil)
 	peerDownNotificationMessages = prometheus.NewDesc(prefix+"peer_down_messages", "Returns number of received peer down notification messages", labels, nil)
@@ -49,6 +51,7 @@ type bmpCollector struct {
 
 // Describe conforms to the prometheus collector interface
 func (c *bmpCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- bmpSessionEstablishedDesc
 	ch <- routeMonitoringMessagesDesc
 	ch <- statisticsReportMessages
 	ch <- peerDownNotificationMessages
@@ -77,6 +80,12 @@ func (c *bmpCollector) Collect(ch chan<- prometheus.Metric) {
 func (c *bmpCollector) collectForRouter(ch chan<- prometheus.Metric, rtr *metrics.BMPRouterMetrics) {
 	l := []string{rtr.Name}
 
+	established := 0
+	if rtr.Established {
+		established = 1
+	}
+
+	ch <- prometheus.MustNewConstMetric(bmpSessionEstablishedDesc, prometheus.GaugeValue, float64(established), l...)
 	ch <- prometheus.MustNewConstMetric(routeMonitoringMessagesDesc, prometheus.CounterValue, float64(rtr.RouteMonitoringMessages), l...)
 	ch <- prometheus.MustNewConstMetric(statisticsReportMessages, prometheus.CounterValue, float64(rtr.StatisticsReportMessages), l...)
 	ch <- prometheus.MustNewConstMetric(peerDownNotificationMessages, prometheus.CounterValue, float64(rtr.PeerDownNotificationMessages), l...)

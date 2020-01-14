@@ -20,12 +20,14 @@ import (
 	"github.com/bio-routing/tflow2/convert"
 )
 
+// Router represents a BMP enabled route in BMP context
 type Router struct {
 	name             string
 	nameMu           sync.RWMutex
 	address          net.IP
 	port             uint16
 	con              net.Conn
+	established      uint32
 	reconnectTimeMin int
 	reconnectTimeMax int
 	reconnectTime    int
@@ -79,14 +81,17 @@ func newRouter(addr net.IP, port uint16) *Router {
 	}
 }
 
+// GetVRF get's a VRF
 func (r *Router) GetVRF(rd uint64) *vrf.VRF {
 	return r.vrfRegistry.GetVRFByRD(rd)
 }
 
+// GetVRFs gets all VRFs
 func (r *Router) GetVRFs() []*vrf.VRF {
 	return r.vrfRegistry.List()
 }
 
+// Name gets a routers name
 func (r *Router) Name() string {
 	r.nameMu.RLock()
 	defer r.nameMu.RUnlock()
