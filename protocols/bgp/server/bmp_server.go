@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
@@ -68,10 +69,12 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 				continue
 			}
 
+			atomic.StoreUint32(&r.established, 1)
 			r.reconnectTime = r.reconnectTimeMin
 			r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
 			log.Infof("Connected to %s", r.address.String())
 			r.serve(c)
+			atomic.StoreUint32(&r.established, 0)
 		}
 	}(r)
 }
@@ -126,6 +129,7 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 	return buffer[0:toRead], nil
 }
 
+// GetRouters gets all routers
 func (b *BMPServer) GetRouters() []*Router {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
@@ -138,6 +142,7 @@ func (b *BMPServer) GetRouters() []*Router {
 	return r
 }
 
+// GetRouter gets a router
 func (b *BMPServer) GetRouter(name string) *Router {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
@@ -153,6 +158,7 @@ func (b *BMPServer) GetRouter(name string) *Router {
 	return nil
 }
 
+// Metrics gets BMP server metrics
 func (b *BMPServer) Metrics() (*metrics.BMPMetrics, error) {
 	if b.metrics == nil {
 		return nil, fmt.Errorf("Server not started yet")
