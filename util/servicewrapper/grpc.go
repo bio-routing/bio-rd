@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
 	log "github.com/sirupsen/logrus"
@@ -57,7 +58,7 @@ type grpcSrv struct {
 }
 
 // New creates a new exarpc server wrapper
-func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerInterceptor, streamInterceptors []grpc.StreamServerInterceptor) (*Server, error) {
+func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerInterceptor, streamInterceptors []grpc.StreamServerInterceptor, keepalivePol keepalive.EnforcementPolicy) (*Server, error) {
 	s := &Server{
 		grpcSrv: &grpcSrv{port: grpcPort},
 		httpSrv: h,
@@ -79,10 +80,13 @@ func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerIn
 		grpc_recovery.StreamServerInterceptor(),
 		grpc_logrus.StreamServerInterceptor(logrusEntry, levelOpt),
 	)
-	unaryOpts := grpc_middleware.WithUnaryServerChain(unaryInterceptors...)
-	streamOpts := grpc_middleware.WithStreamServerChain(streamInterceptors...)
 
-	s.grpcSrv.srv = grpc.NewServer(unaryOpts, streamOpts)
+	opts := make([]grpc.ServerOption, 0)
+	opts = append(opts, grpc_middleware.WithUnaryServerChain(unaryInterceptors...))
+	opts = append(opts, grpc_middleware.WithStreamServerChain(streamInterceptors...))
+	opts = append(opts, grpc.KeepaliveEnforcementPolicy(keepalivePol))
+
+	s.grpcSrv.srv = grpc.NewServer(opts...)
 	reflection.Register(s.grpcSrv.srv)
 	grpc_prometheus.Register(s.grpcSrv.srv)
 	grpc_prometheus.EnableClientHandlingTimeHistogram()
