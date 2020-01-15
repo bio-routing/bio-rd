@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net"
 	"os"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/keepalive"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	prom_bmp "github.com/bio-routing/bio-rd/metrics/bmp/adapter/prom"
@@ -19,9 +21,10 @@ import (
 )
 
 var (
-	grpcPort       = flag.Uint("grpc_port", 4321, "gRPC server port")
-	httpPort       = flag.Uint("http_port", 4320, "HTTP server port")
-	configFilePath = flag.String("config.file", "ris_config.yml", "Configuration file")
+	grpcPort             = flag.Uint("grpc_port", 4321, "gRPC server port")
+	httpPort             = flag.Uint("http_port", 4320, "HTTP server port")
+	grpcKeepaliveMinTime = flag.Uint("grpc_keepalive_min_time", 1, "Minimum time (seconds) for a client to wait between GRPC keepalive pings")
+	configFilePath       = flag.String("config.file", "ris_config.yml", "Configuration file")
 )
 
 func main() {
@@ -53,6 +56,10 @@ func main() {
 		servicewrapper.HTTP(uint16(*httpPort)),
 		unaryInterceptors,
 		streamInterceptors,
+		keepalive.EnforcementPolicy{
+			MinTime:             time.Duration(*grpcKeepaliveMinTime) * time.Second,
+			PermitWithoutStream: true,
+		},
 	)
 	if err != nil {
 		log.Errorf("failed to listen: %v", err)
