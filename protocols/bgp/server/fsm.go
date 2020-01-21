@@ -295,9 +295,8 @@ func (fsm *FSM) startConnectRetryTimer() {
 }
 
 func (fsm *FSM) resetConnectRetryTimer() {
-	if !fsm.connectRetryTimer.Reset(fsm.connectRetryTime) {
-		<-fsm.connectRetryTimer.C
-	}
+	stopTimer(fsm.connectRetryTimer)
+	fsm.connectRetryTimer.Reset(fsm.connectRetryTime)
 }
 
 func (fsm *FSM) resetConnectRetryCounter() {
