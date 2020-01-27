@@ -39,5 +39,10 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (*bnet.Prefix, error)
 		return nil, err
 	}
 
-	return bnet.NewPfx(ip, pfxLen).Dedup(), nil
+	pfx := bnet.NewPfx(ip, pfxLen)
+	if !pfx.Valid() {
+		return nil, fmt.Errorf("Invalid prefix: %q", pfx.String())
+	}
+
+	return pfx.Dedup(), nil
 }
