@@ -234,9 +234,34 @@ func (pfx *Prefix) supernetIPv6(x *Prefix) Prefix {
 	return NewPfx(IPv6(pfx.addr.higher&mask, 0), pfxLen)
 }
 
+// Valid checks if all bits outside of the prefix lengths range are zero
+func (p *Prefix) Valid() bool {
+	if p.addr.isLegacy {
+		return checkLastNBitsUint32(uint32(p.addr.lower), 32-p.pfxlen)
+	}
+
+	if p.pfxlen <= 64 {
+		if p.addr.lower != 0 {
+			return false
+		}
+
+		return checkLastNBitsUint64(p.addr.higher, 64-p.pfxlen)
+	}
+
+	return checkLastNBitsUint64(p.addr.lower, 64-(p.pfxlen-64))
+}
+
 func min(a uint8, b uint8) uint8 {
 	if a < b {
 		return a
 	}
 	return b
+}
+
+func checkLastNBitsUint32(x uint32, n uint8) bool {
+	return x<<(32-n) == 0
+}
+
+func checkLastNBitsUint64(x uint64, n uint8) bool {
+	return x<<(64-n) == 0
 }

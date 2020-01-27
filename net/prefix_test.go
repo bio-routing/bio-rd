@@ -593,3 +593,67 @@ func TestEqualOperator(t *testing.T) {
 
 	assert.Equal(t, p1, p2, "p1 != p2 (even if attributes are equal)")
 }
+
+func TestValid(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{
+			name:     "Test #1",
+			input:    "169.254.100.0/24",
+			expected: true,
+		},
+		{
+			name:     "Test #2",
+			input:    "169.254.100.1/24",
+			expected: false,
+		},
+		{
+			name:     "Test #2a",
+			input:    "169.254.100.111/32",
+			expected: true,
+		},
+		{
+			name:     "Test #3",
+			input:    "2a05:1234:abcd::/48",
+			expected: true,
+		},
+		{
+			name:     "Test #4",
+			input:    "2a05:1234:abcd::1337/48",
+			expected: false,
+		},
+		{
+			name:     "Test #5",
+			input:    "2a05:1234:abcd:face::/64",
+			expected: true,
+		},
+		{
+			name:     "Test #6",
+			input:    "2a05:1234:abcd:face::a/64",
+			expected: false,
+		},
+		{
+			name:     "Test #7",
+			input:    "2a05:1234:abcd:face:b00c::/80",
+			expected: true,
+		},
+		{
+			name:     "Test #8",
+			input:    "2a05:1234:abcd:face:b00c::aa/72",
+			expected: false,
+		},
+		{
+			name:     "Test #9",
+			input:    "2a05:1234:abcd:face:b00c::aa/128",
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		p, _ := PrefixFromString(test.input)
+		assert.Equal(t, test.expected, p.Valid(), test.name)
+	}
+}
