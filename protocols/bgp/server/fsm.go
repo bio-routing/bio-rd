@@ -285,9 +285,21 @@ func (fsm *FSM) msgReceiver() error {
 }
 
 func (fsm *FSM) decodeOptions() *packet.DecodeOptions {
-	return &packet.DecodeOptions{
+	ret := &packet.DecodeOptions{
 		Use32BitASN: fsm.supports4OctetASN,
 	}
+
+	ipv4unicast := fsm.addressFamily(packet.IPv4AFI, packet.UnicastSAFI)
+	if ipv4unicast != nil {
+		ret.AddPathIPv4Unicast = ipv4unicast.addPathRX
+	}
+
+	ipv6unicast := fsm.addressFamily(packet.IPv6AFI, packet.UnicastSAFI)
+	if ipv6unicast != nil {
+		ret.AddPathIPv6Unicast = ipv6unicast.addPathRX
+	}
+
+	return ret
 }
 
 func (fsm *FSM) startConnectRetryTimer() {

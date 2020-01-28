@@ -362,44 +362,48 @@ func (n *neighbor) registerClients(clients map[afiClient]struct{}) {
 }
 
 func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
-	caps := getCaps(msg.OptParams)
-	for _, cap := range caps {
-		switch cap.Code {
-		case packet.AddPathCapabilityCode:
-			addPathCap := cap.Value.(packet.AddPathCapability)
-			peerFamily := p.addressFamily(addPathCap.AFI, addPathCap.SAFI)
-			if peerFamily == nil {
-				continue
-			}
-			switch addPathCap.SendReceive {
-			case packet.AddPathSend:
-				peerFamily.addPathSend = routingtable.ClientOptions{
-					MaxPaths: 10,
+	capsList := getCaps(msg.OptParams)
+	for _, caps := range capsList {
+		for _, cap := range caps {
+			switch cap.Code {
+			case packet.AddPathCapabilityCode:
+				addPathCap := cap.Value.(packet.AddPathCapability)
+				peerFamily := p.addressFamily(addPathCap.AFI, addPathCap.SAFI)
+				if peerFamily == nil {
+					continue
 				}
-			case packet.AddPathReceive:
-				peerFamily.addPathReceive = true
-			case packet.AddPathSendReceive:
-				peerFamily.addPathReceive = true
-				peerFamily.addPathSend = routingtable.ClientOptions{
-					MaxPaths: 10,
+				switch addPathCap.SendReceive {
+				case packet.AddPathSend:
+					peerFamily.addPathSend = routingtable.ClientOptions{
+						MaxPaths: 10,
+					}
+				case packet.AddPathReceive:
+					peerFamily.addPathReceive = true
+				case packet.AddPathSendReceive:
+					peerFamily.addPathReceive = true
+					peerFamily.addPathSend = routingtable.ClientOptions{
+						MaxPaths: 10,
+					}
 				}
+			case packet.ASN4CapabilityCode:
+				asn4Cap := cap.Value.(packet.ASN4Capability)
+				p.localASN = asn4Cap.ASN4
 			}
-		case packet.ASN4CapabilityCode:
-			asn4Cap := cap.Value.(packet.ASN4Capability)
-			p.localASN = asn4Cap.ASN4
 		}
 	}
 }
 
-func getCaps(optParams []packet.OptParam) packet.Capabilities {
+func getCaps(optParams []packet.OptParam) []packet.Capabilities {
+	res := make([]packet.Capabilities, 0)
 	for _, optParam := range optParams {
 		if optParam.Type != packet.CapabilitiesParamType {
 			continue
 		}
 
-		return optParam.Value.(packet.Capabilities)
+		res = append(res, optParam.Value.(packet.Capabilities))
 	}
-	return nil
+
+	return res
 }
 
 func addrToNetIP(a [16]byte) net.IP {
