@@ -2,6 +2,24 @@ package packet
 
 // DecodeOptions represents options for the BGP message decoder
 type DecodeOptions struct {
-	AddPath     bool
-	Use32BitASN bool
+	AddPathIPv4Unicast bool
+	AddPathIPv6Unicast bool
+	Use32BitASN        bool
+}
+
+func (d *DecodeOptions) addPath(afi int, safi int) bool {
+	switch afi {
+	case IPv4AFI:
+		switch safi {
+		case UnicastSAFI:
+			return d.AddPathIPv4Unicast
+		}
+	case IPv6AFI:
+		switch safi {
+		case UnicastSAFI:
+			return d.AddPathIPv6Unicast
+		}
+	}
+
+	return false
 }
