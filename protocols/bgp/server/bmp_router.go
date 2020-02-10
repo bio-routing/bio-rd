@@ -158,7 +158,9 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	}
 
 	s := n.fsm.state.(*establishedState)
-	s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
+	opt := s.fsm.decodeOptions()
+	opt.Use32BitASN = !msg.PerPeerHeader.GetAFlag()
+	s.msgReceived(msg.BGPUpdate, opt)
 }
 
 func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
@@ -283,8 +285,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	localAddress, _ := bnet.IPFromBytes(msg.LocalAddress[16-addrLen:])
 
 	fsm := &FSM{
-		isBMP:             true,
-		supports4OctetASN: msg.PerPeerHeader.GetAFlag(),
+		isBMP: true,
 		peer: &peer{
 			routerID:  sentOpen.BGPIdentifier,
 			addr:      peerAddress.Dedup(),
