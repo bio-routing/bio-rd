@@ -125,28 +125,28 @@ func TestGetIPVersion(t *testing.T) {
 		{
 			name: "IPv4",
 			p: &PerPeerHeader{
-				PeerFlags: 0,
+				PeerFlags: 0b00000000,
 			},
 			expected: 4,
 		},
 		{
 			name: "IPv4 #2",
 			p: &PerPeerHeader{
-				PeerFlags: 127,
+				PeerFlags: 0b01000000,
 			},
 			expected: 4,
 		},
 		{
 			name: "IPv6",
 			p: &PerPeerHeader{
-				PeerFlags: 128,
+				PeerFlags: 0b10000000,
 			},
 			expected: 6,
 		},
 		{
 			name: "IPv6 #2",
 			p: &PerPeerHeader{
-				PeerFlags: 129,
+				PeerFlags: 0b11000000,
 			},
 			expected: 6,
 		},
@@ -154,7 +154,7 @@ func TestGetIPVersion(t *testing.T) {
 
 	for _, test := range tests {
 		v := test.p.GetIPVersion()
-		assert.Equal(t, test.expected, v)
+		assert.Equal(t, test.expected, v, test.name)
 	}
 }
 
