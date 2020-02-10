@@ -131,6 +131,10 @@ func (b *bgpServer) GetRIBIn(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBIn.
 		return nil
 	}
 
+	if f.adjRIBIn == nil {
+		return nil
+	}
+
 	return f.adjRIBIn.(*adjRIBIn.AdjRIBIn)
 }
 
@@ -147,6 +151,10 @@ func (b *bgpServer) GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOu
 	fsm := p.fsms[0]
 	f := fsm.addressFamily(afi, safi)
 	if f == nil {
+		return nil
+	}
+
+	if f.adjRIBOut == nil {
 		return nil
 	}
 
