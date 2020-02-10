@@ -283,7 +283,8 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	localAddress, _ := bnet.IPFromBytes(msg.LocalAddress[16-addrLen:])
 
 	fsm := &FSM{
-		isBMP: true,
+		isBMP:             true,
+		supports4OctetASN: msg.PerPeerHeader.GetAFlag(),
 		peer: &peer{
 			routerID:  sentOpen.BGPIdentifier,
 			addr:      peerAddress.Dedup(),
@@ -385,9 +386,6 @@ func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 						MaxPaths: 10,
 					}
 				}
-			case packet.ASN4CapabilityCode:
-				asn4Cap := cap.Value.(packet.ASN4Capability)
-				p.localASN = asn4Cap.ASN4
 			}
 		}
 	}
