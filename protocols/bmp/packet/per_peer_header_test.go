@@ -167,14 +167,14 @@ func TestGetAFlag(t *testing.T) {
 		{
 			name: "Test #1",
 			input: &PerPeerHeader{
-				PeerFlags: 0xdf, // 11011111
+				PeerFlags: 0b11011111,
 			},
 			expected: false,
 		},
 		{
 			name: "Test #2",
 			input: &PerPeerHeader{
-				PeerFlags: 0x20,
+				PeerFlags: 0b00100000,
 			},
 			expected: true,
 		},
