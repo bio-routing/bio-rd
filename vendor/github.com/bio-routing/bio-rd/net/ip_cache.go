@@ -2,12 +2,10 @@ package net
 
 import (
 	"sync"
-
-	"github.com/google/btree"
 )
 
 const (
-	ipCacheBTreeGrade = 3500
+	ipCachePreAlloc = 1500000
 )
 
 var (
@@ -19,28 +17,30 @@ func init() {
 }
 
 type ipCache struct {
+	cache   map[IP]*IP
 	cacheMu sync.Mutex
-	tree    *btree.BTree
 }
 
 func newIPCache() *ipCache {
 	return &ipCache{
-		tree: btree.New(ipCacheBTreeGrade),
+		cache: make(map[IP]*IP, ipCachePreAlloc),
 	}
 }
 
-func (ipc *ipCache) get(addr *IP) *IP {
+func (ipc *ipCache) get(addr IP) *IP {
 	ipc.cacheMu.Lock()
 
-	item := ipc.tree.Get(addr)
-	if item != nil {
+	if a, exists := ipc.cache[addr]; exists {
 		ipc.cacheMu.Unlock()
-
-		return item.(*IP)
+		return a
 	}
 
-	ipc.tree.ReplaceOrInsert(addr)
+	ipc._set(addr)
+	res := ipc.cache[addr]
 	ipc.cacheMu.Unlock()
+	return res
+}
 
-	return addr
+func (ipc *ipCache) _set(addr IP) {
+	ipc.cache[addr] = &addr
 }

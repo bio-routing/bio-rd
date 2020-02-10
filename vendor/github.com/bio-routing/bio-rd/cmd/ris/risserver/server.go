@@ -11,11 +11,34 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	bnet "github.com/bio-routing/bio-rd/net"
 	netapi "github.com/bio-routing/bio-rd/net/api"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
+
+var (
+	risObserveFIBClients *prometheus.GaugeVec
+)
+
+func init() {
+	risObserveFIBClients = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "bio",
+			Subsystem: "ris",
+			Name:      "observe_fib_clients",
+			Help:      "number of observe FIB clients per router/vrf/afisafi",
+		},
+		[]string{
+			"router",
+			"vrf",
+			"afisafi",
+		},
+	)
+	prometheus.MustRegister(risObserveFIBClients)
+}
 
 // Server represents an RoutingInformationService server
 type Server struct {
@@ -114,6 +137,7 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 	return res, nil
 }
 
+// ObserveRIB implements the ObserveRIB RPC
 func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {
@@ -129,6 +153,9 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	if err != nil {
 		return err
 	}
+
+	risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Inc()
+	defer risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Dec()
 
 	fifo := newUpdateFIFO()
 	rc := newRIBClient(fifo)
@@ -162,6 +189,7 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	return nil
 }
 
+// DumpRIB implements the DumpRIB RPC
 func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationService_DumpRIBServer) error {
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {

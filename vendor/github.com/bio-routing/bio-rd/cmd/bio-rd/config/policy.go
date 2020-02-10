@@ -161,7 +161,7 @@ func (pst *PolicyStatementTerm) toFilterTerm() (*filter.Term, error) {
 			return nil, errors.Wrap(err, "Invalid next_hop address")
 		}
 
-		a = append(a, actions.NewSetNextHopAction(addr))
+		a = append(a, actions.NewSetNextHopAction(addr.Dedup()))
 	}
 
 	if pst.Then.Accept {

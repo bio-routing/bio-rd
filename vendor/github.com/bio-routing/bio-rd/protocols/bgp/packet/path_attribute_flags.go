@@ -8,7 +8,8 @@ import (
 
 func decodePathAttrFlags(buf *bytes.Buffer, pa *PathAttribute) error {
 	flags := uint8(0)
-	err := decode.Decode(buf, []interface{}{&flags})
+
+	err := decode.DecodeUint8(buf, &flags)
 	if err != nil {
 		return err
 	}

@@ -52,7 +52,7 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 			return errors.Wrap(err, "Unable to parse BGP local address")
 		}
 
-		bg.LocalAddressIP = a
+		bg.LocalAddressIP = a.Dedup()
 	}
 
 	if bg.HoldTime == 0 {
@@ -146,14 +146,14 @@ func (bn *BGPNeighbor) load(po *PolicyOptions) error {
 		return errors.Wrap(err, "Unable to parse BGP local address")
 	}
 
-	bn.LocalAddressIP = a
+	bn.LocalAddressIP = a.Dedup()
 
 	b, err := bnet.IPFromString(bn.PeerAddress)
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse BGP peer address")
 	}
 
-	bn.PeerAddressIP = b
+	bn.PeerAddressIP = b.Dedup()
 	bn.HoldTimeDuration = time.Second * time.Duration(bn.HoldTime)
 
 	for i := range bn.Import {

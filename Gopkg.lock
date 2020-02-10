@@ -29,7 +29,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:cff8f5ce2c7e9e4e60c3108e18e05ac0741183424833680aaaedbdb6c29308e3"
+  digest = "1:c7d18ad97987784012310b0fc8604238a7d22f9640f55a142b3bf0c899afc218"
   name = "github.com/bio-routing/bio-rd"
   packages = [
     "cmd/bio-rd/config",
@@ -72,8 +72,8 @@
     "util/time",
   ]
   pruneopts = "UT"
-  revision = "02bfd001bab07fd9276a7607587961d8d4e7229c"
-  version = "v0.0.1-pre1"
+  revision = "b858842766641f1ddd013a5025216232b0228d3f"
+  version = "v0.0.1-pre5"
 
 [[projects]]
   digest = "1:c915574f378668d6c35c631410d9c3c23219d1e04b2fc53a26c976b5cc745b00"
@@ -100,7 +100,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:454cfa53a9e013dc5ff9c7159d6cc72692bea23b9bd68bc921ed19ba5ef47ef5"
+  digest = "1:2cee13105f53653157bbb7b993c48ab1a00c4a9f1b98c2d1f1d6c39c259be4b5"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -113,19 +113,11 @@
     "ptypes/timestamp",
   ]
   pruneopts = "UT"
-  revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
-  version = "v1.3.2"
+  revision = "d23c5127dc24889085f8ccea5c9d560a57a879d8"
+  version = "v1.3.3"
 
 [[projects]]
-  digest = "1:0bfbe13936953a98ae3cfe8ed6670d396ad81edf069a806d2f6515d7bb6950df"
-  name = "github.com/google/btree"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "4030bb1f1f0c35b30ca7009e9ebd06849dd45306"
-  version = "v1.0.0"
-
-[[projects]]
-  digest = "1:479195a38f3b355a0a341e3e351d3b68068f1e1f8ccdcc8271081801a9862aa9"
+  digest = "1:a7d1c627098c2cb5238baeec75632caa8f39661e94430a2a3e9a1293b7eab72a"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
   packages = [
     ".",
@@ -134,11 +126,10 @@
     "logging/logrus/ctxlogrus",
     "recovery",
     "tags",
-    "tags/logrus",
   ]
   pruneopts = "UT"
-  revision = "dd15ed025b6054e5253963e355991f3070d4e593"
-  version = "v1.1.0"
+  revision = "3c51f7f332123e8be5a157c0802a228ac85bf9db"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:9b7a07ac7577787a8ecc1334cb9f34df1c76ed82a917d556c5713d3ab84fbc43"
@@ -163,14 +154,6 @@
   pruneopts = "UT"
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
   version = "v1.0.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:89da0f0574bc94cfd0ac8b59af67bf76cdd110d503df2721006b9f0492394333"
-  name = "github.com/petar/GoLLRB"
-  packages = ["llrb"]
-  pruneopts = "UT"
-  revision = "33fb24c13b99c46c93183c291836c573ac382536"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -201,12 +184,12 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:2d5cd61daa5565187e1d96bae64dbbc6080dacf741448e9629c64fd93203b0d4"
+  digest = "1:0db23933b8052702d980a3f029149b3f175f7c0eea0cff85b175017d0f2722c0"
   name = "github.com/prometheus/client_model"
   packages = ["go"]
   pruneopts = "UT"
-  revision = "14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016"
+  revision = "7bc5445566f0fe75b15de23e6b93886e982d7bf9"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:864bee50d88bfa27d7153b7803e375a166e5e58a457d9919620537b053dc3622"
@@ -222,7 +205,7 @@
   version = "v0.7.0"
 
 [[projects]]
-  digest = "1:3e363393b80d8f142984a811464eb7e34064700626cc111887373ea76f8ea0bf"
+  digest = "1:ec0ff4bd619a67065e34d6477711ed0117e335f99059a4c508e0fe21cfe7b304"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -230,8 +213,8 @@
     "internal/util",
   ]
   pruneopts = "UT"
-  revision = "8a055596020d692cf491851e47ba3e302d9f90ce"
-  version = "v0.0.6"
+  revision = "6d489fc7f1d9cd890a250f3ea3431b1744b9623f"
+  version = "v0.0.8"
 
 [[projects]]
   digest = "1:2ee0f15eb0fb04f918db7c2dcf39745f40d69f798ef171610a730e8a56aaa4fd"
@@ -274,15 +257,15 @@
   version = "v1.22.0"
 
 [[projects]]
-  digest = "1:2d9d06cb9d46dacfdbb45f8575b39fc0126d083841a29d4fbf8d97708f43107e"
+  digest = "1:1314b5ef1c0b25257ea02e454291bf042478a48407cfe3ffea7e20323bbf5fdf"
   name = "github.com/vishvananda/netlink"
   packages = [
     ".",
     "nl",
   ]
   pruneopts = "UT"
-  revision = "a2ad57a690f3caf3015351d2d6e1c0b95c349752"
-  version = "v1.0.0"
+  revision = "f049be6f391489d3f374498fe0c8df8449258372"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -294,7 +277,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:957579c244f371e4490a28c38685bfdb573639943d9add65aceb2dbd0ae76d50"
+  digest = "1:4311090d37cc317b15a3a3d2ce9a3d187d0b667ded11339a9564b3ec38cb21e4"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -306,11 +289,11 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "2180aed2234323691e9fd264fb1d32d20ff04b27"
+  revision = "16171245cfb220d5317888b716d69c1fb4e7992b"
 
 [[projects]]
   branch = "master"
-  digest = "1:6a30ea24bd604e55555e68606e0f5d3e782c1b062c245c1595806e7cd218bcbe"
+  digest = "1:e1ae0149d60eec6ffb98faa6a5ab7c3218acb48f9409542fd951e6733d2afd17"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -319,7 +302,7 @@
     "windows/svc/eventlog",
   ]
   pruneopts = "UT"
-  revision = "59a1497f0cead4659791683f1514d15ae8cf3934"
+  revision = "d101bd2416d505c0448a6ce8a282482678040a89"
 
 [[projects]]
   digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
@@ -348,17 +331,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:583a0c80f5e3a9343d33aea4aead1e1afcc0043db66fdf961ddd1fe8cd3a4faf"
+  digest = "1:0c679e19d1865dd65e7ec400bf9562d8f161cf59c4f74c0bb50f365fc9fb19eb"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "16a3f7862a1a494c52b23987ef8a993fd3f9a85e"
+  revision = "acff78025515167f36fd75dba2c230a16c989bb3"
 
 [[projects]]
-  digest = "1:efc1bb21e57b09c4e8f2d01222e1e064c145a4d264662760a9d9fd1b70bc5421"
+  digest = "1:9c1adb87fd1581604e56f0b137abb97cdaeeba01996d601e4b7f474119bb9cd8"
   name = "google.golang.org/grpc"
   packages = [
     ".",
+    "attributes",
     "backoff",
     "balancer",
     "balancer/base",
@@ -398,8 +382,8 @@
     "test/bufconn",
   ]
   pruneopts = "UT"
-  revision = "1a3960e4bd028ac0cec0a2afd27d7d8e67c11514"
-  version = "v1.25.1"
+  revision = "f495f5b15ae7ccda3b38c53a1bfcde4c1a58a2bc"
+  version = "v1.27.1"
 
 [[projects]]
   digest = "1:c06d9e11d955af78ac3bbb26bd02e01d2f61f689e1a3bce2ef6fb683ef8a7f2d"
@@ -410,12 +394,12 @@
   version = "v2.2.6"
 
 [[projects]]
-  digest = "1:f26a5d382387e03a40d1471dddfba85dfff9bf05352d7e42d37612677c4d3c5c"
+  digest = "1:55b110c99c5fdc4f14930747326acce56b52cfce60b24b1c03ef686ac0e46bb1"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f90ceb4f409096b60e2e9076b38b304b8246e5fa"
-  version = "v2.2.5"
+  revision = "53403b58ad1b561927d19068c655246f2db79d48"
+  version = "v2.2.8"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -461,7 +445,6 @@
     "github.com/bio-routing/bio-rd/util/time",
     "github.com/bio-routing/tflow2/convert",
     "github.com/golang/protobuf/proto",
-    "github.com/google/btree",
     "github.com/grpc-ecosystem/go-grpc-middleware",
     "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus",
     "github.com/grpc-ecosystem/go-grpc-middleware/recovery",
@@ -477,6 +460,7 @@
     "github.com/vishvananda/netlink",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
+    "google.golang.org/grpc/keepalive",
     "google.golang.org/grpc/reflection",
     "google.golang.org/grpc/test/bufconn",
     "gopkg.in/yaml.v2",

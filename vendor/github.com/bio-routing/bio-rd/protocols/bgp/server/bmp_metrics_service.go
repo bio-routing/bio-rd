@@ -30,8 +30,11 @@ func (b *bmpMetricsService) routerMetrics() []*metrics.BMPRouterMetrics {
 }
 
 func (b *bmpMetricsService) metricsForRouter(rtr *Router) *metrics.BMPRouterMetrics {
+	established := atomic.LoadUint32(&rtr.established)
+
 	rm := &metrics.BMPRouterMetrics{
 		Name:                         rtr.name,
+		Established:                  established == 1,
 		RouteMonitoringMessages:      atomic.LoadUint64(&rtr.counters.routeMonitoringMessages),
 		StatisticsReportMessages:     atomic.LoadUint64(&rtr.counters.statisticsReportMessages),
 		PeerDownNotificationMessages: atomic.LoadUint64(&rtr.counters.peerDownNotificationMessages),
