@@ -65,6 +65,6 @@ func DecodeUint32(buf *bytes.Buffer, x *uint32) error {
 		return err
 	}
 
-	*x = uint32(a)*256*256*256 + uint32(b)*256*256*256 + uint32(c)*256 + uint32(d)
+	*x = uint32(a)<<24 + uint32(b)<<16 + uint32(c)<<8 + uint32(d)
 	return nil
 }

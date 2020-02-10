@@ -2336,3 +2336,27 @@ func TestFourBytesToUint32(t *testing.T) {
 		}
 	}
 }
+
+func TestDecode4ByteASN(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *bytes.Buffer
+		expected uint32
+	}{
+		{
+			name:     "Test #1",
+			input:    bytes.NewBuffer([]byte{0b00000000, 0b00000011, 0b00010011, 0b11100101}),
+			expected: 201701,
+		},
+	}
+
+	for _, test := range tests {
+		res, err := decode4ByteASN(test.input)
+		if err != nil {
+			t.Errorf("error in test %q: %v", test.name, err)
+			continue
+		}
+
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
