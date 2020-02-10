@@ -24,16 +24,17 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 var (
-	// change the value from bio-rd.yml to wanted (e.g. bio-rd-A.yml or bio-rd-B.yml)
-	configFilePath *string
-	apiPort        = flag.Uint("api_port", 5566, "API server port")
-	metricsPort    = flag.Uint("metrics_port", 55667, "Metrics HTTP server port")
-	sigCh		   = make(chan os.Signal, 1)
-	vrfReg         = vrf.NewVRFRegistry()
-	bgpSrv         bgpserver.BGPServer
+	configFilePath       *string
+	sigCh                = make(chan os.Signal, 1)
+	grpcPort             = flag.Uint("grpc_port", 5566, "GRPC API server port")
+	grpcKeepaliveMinTime = flag.Uint("grpc_keepalive_min_time", 1, "Minimum time (seconds) for a client to wait between GRPC keepalive pings")
+	metricsPort          = flag.Uint("metrics_port", 55667, "Metrics HTTP server port")
+	vrfReg               = vrf.NewVRFRegistry()
+	bgpSrv               bgpserver.BGPServer
 )
 
 func init() {
@@ -91,10 +92,14 @@ func main() {
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
 	streamInterceptors := []grpc.StreamServerInterceptor{}
 	srv, err := servicewrapper.New(
-		uint16(*apiPort),
+		uint16(*grpcPort),
 		servicewrapper.HTTP(uint16(*metricsPort)),
 		unaryInterceptors,
 		streamInterceptors,
+		keepalive.EnforcementPolicy{
+			MinTime:             time.Duration(*grpcKeepaliveMinTime) * time.Second,
+			PermitWithoutStream: true,
+		},
 	)
 	if err != nil {
 		log.Errorf("failed to listen: %v", err)

@@ -921,7 +921,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          []byte
-		addPath        bool
+		opt            *DecodeOptions
 		wantFail       bool
 		explicitLength uint16
 		expected       *PathAttribute
@@ -929,6 +929,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 		{
 			name:           "incomplete",
 			input:          []byte{0, 0, 0, 0},
+			opt:            &DecodeOptions{},
 			wantFail:       true,
 			explicitLength: 32,
 		},
@@ -941,6 +942,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 				0x00,                                     // RESERVED
 				0x30, 0x26, 0x00, 0x00, 0x06, 0xff, 0x05, // Prefix
 			},
+			opt: &DecodeOptions{},
 			expected: &PathAttribute{
 				Length: 28,
 				Value: MultiProtocolReachNLRI{
@@ -958,6 +960,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			input: []byte{
 				0x00, 0x02, // AFI
 			},
+			opt:      &DecodeOptions{},
 			wantFail: true,
 		},
 		{
@@ -967,6 +970,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 				0x01,                                           // SAFI
 				0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, // incomplete NextHop
 			},
+			opt:      &DecodeOptions{},
 			wantFail: true,
 		},
 		{
@@ -977,6 +981,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 				0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, // NextHop
 				0x00, // RESERVED
 			},
+			opt: &DecodeOptions{},
 			expected: &PathAttribute{
 				Length: 21,
 				Value: MultiProtocolReachNLRI{
@@ -995,7 +1000,34 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 				0x00,             // RESERVED
 				0x30, 0x26, 0x00, // Prefix
 			},
+			opt:      &DecodeOptions{},
 			wantFail: true,
+		},
+		{
+			name: "valid MP_REACH_NLRI with addPath",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                                                                                 // SAFI
+				0x10, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, // NextHop
+				0x00, // RESERVED
+				0x00, 0x00, 0x00, 0x01,
+				0x30, 0x26, 0x00, 0x00, 0x06, 0xff, 0x05, // Prefix
+			},
+			opt: &DecodeOptions{
+				AddPathIPv6Unicast: true,
+			},
+			expected: &PathAttribute{
+				Length: 32,
+				Value: MultiProtocolReachNLRI{
+					AFI:     IPv6AFI,
+					SAFI:    UnicastSAFI,
+					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Ptr(),
+					NLRI: &NLRI{
+						PathIdentifier: 1,
+						Prefix:         bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Ptr(),
+					},
+				},
+			},
 		},
 	}
 
@@ -1011,7 +1043,7 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			pa := &PathAttribute{
 				Length: l,
 			}
-			err := pa.decodeMultiProtocolReachNLRI(bytes.NewBuffer(test.input), test.addPath)
+			err := pa.decodeMultiProtocolReachNLRI(bytes.NewBuffer(test.input), test.opt)
 
 			if test.wantFail {
 				if err != nil {
@@ -1091,7 +1123,7 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 			pa := &PathAttribute{
 				Length: l,
 			}
-			err := pa.decodeMultiProtocolUnreachNLRI(bytes.NewBuffer(test.input), false)
+			err := pa.decodeMultiProtocolUnreachNLRI(bytes.NewBuffer(test.input), &DecodeOptions{})
 
 			if test.wantFail {
 				if err != nil {
@@ -1104,7 +1136,7 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 				t.Fatalf("Unexpected failure for test %q: %v", test.name, err)
 			}
 
-			assert.Equal(t, test.expected, pa)
+			assert.Equal(t, test.expected, pa, test.name)
 		})
 	}
 }
