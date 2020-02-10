@@ -72,7 +72,6 @@ func main() {
 
 	vrfReg.CreateVRFIfNotExists("master", 0)
 
-	//go configReloader()
 	go signalChecker()
 	sigCh <- syscall.SIGHUP
 	installSignalHandler()
@@ -88,7 +87,6 @@ func main() {
 	rib.Register(k)
 
 	s := bgpserver.NewBGPAPIServer(bgpSrv)
-	// bgpSrv.DisposePeer()
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
 	streamInterceptors := []grpc.StreamServerInterceptor{}
 	srv, err := servicewrapper.New(
