@@ -29,7 +29,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:c7d18ad97987784012310b0fc8604238a7d22f9640f55a142b3bf0c899afc218"
+  digest = "1:102aa495fc7ee166a6e1353808a75d2ae1847ae6ce703b8ba00284fcd59a33a2"
   name = "github.com/bio-routing/bio-rd"
   packages = [
     "cmd/bio-rd/config",
@@ -72,8 +72,8 @@
     "util/time",
   ]
   pruneopts = "UT"
-  revision = "b858842766641f1ddd013a5025216232b0228d3f"
-  version = "v0.0.1-pre5"
+  revision = "90a8201fb8e1197d24c3a0aa429e406e4daf25c7"
+  source = "https://github.com/sartura/bio-rd.git"
 
 [[projects]]
   digest = "1:c915574f378668d6c35c631410d9c3c23219d1e04b2fc53a26c976b5cc745b00"

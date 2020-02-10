@@ -25,9 +25,11 @@
 #   unused-packages = true
 
 
+# use patched version of protocols/bgp/server/server.go
 [[constraint]]
   name = "github.com/bio-routing/bio-rd"
-  version = "0.0.1-pre5"
+  source = "https://github.com/sartura/bio-rd.git"
+  revision = "90a8201fb8e1197d24c3a0aa429e406e4daf25c7"
 
 [[constraint]]
   name = "github.com/bio-routing/tflow2"
