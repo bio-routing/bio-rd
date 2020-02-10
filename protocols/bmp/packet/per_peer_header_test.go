@@ -157,3 +157,30 @@ func TestGetIPVersion(t *testing.T) {
 		assert.Equal(t, test.expected, v)
 	}
 }
+
+func TestGetAFlag(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *PerPeerHeader
+		expected bool
+	}{
+		{
+			name: "Test #1",
+			input: &PerPeerHeader{
+				PeerFlags: 0xdf, // 11011111
+			},
+			expected: false,
+		},
+		{
+			name: "Test #2",
+			input: &PerPeerHeader{
+				PeerFlags: 0x20,
+			},
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expected, test.input.GetAFlag())
+	}
+}

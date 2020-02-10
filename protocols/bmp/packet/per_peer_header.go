@@ -65,3 +65,8 @@ func (p *PerPeerHeader) GetIPVersion() uint8 {
 	}
 	return 4
 }
+
+// GetAFlag checks if the A flag is set
+func (p *PerPeerHeader) GetAFlag() bool {
+	return p.PeerFlags&0x20 == 0x20
+}
