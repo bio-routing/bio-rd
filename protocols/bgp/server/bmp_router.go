@@ -158,7 +158,9 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	}
 
 	s := n.fsm.state.(*establishedState)
-	s.msgReceived(msg.BGPUpdate, s.fsm.decodeOptions())
+	opt := s.fsm.decodeOptions()
+	opt.Use32BitASN = !msg.PerPeerHeader.GetAFlag()
+	s.msgReceived(msg.BGPUpdate, opt)
 }
 
 func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
@@ -385,9 +387,6 @@ func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 						MaxPaths: 10,
 					}
 				}
-			case packet.ASN4CapabilityCode:
-				asn4Cap := cap.Value.(packet.ASN4Capability)
-				p.localASN = asn4Cap.ASN4
 			}
 		}
 	}

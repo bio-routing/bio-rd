@@ -60,8 +60,14 @@ func decodePerPeerHeader(buf *bytes.Buffer) (*PerPeerHeader, error) {
 
 // GetIPVersion gets the IP version of the BGP session
 func (p *PerPeerHeader) GetIPVersion() uint8 {
-	if p.PeerFlags>>7 == 1 {
+	if p.PeerFlags&0b10000000 == 0b10000000 {
 		return 6
 	}
+
 	return 4
+}
+
+// GetAFlag checks if the A flag is set
+func (p *PerPeerHeader) GetAFlag() bool {
+	return p.PeerFlags&0b00100000 == 0b00100000
 }
