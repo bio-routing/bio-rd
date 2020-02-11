@@ -121,7 +121,7 @@ func signalChecker() {
 	for sig := range sigCh {
 		if sig != syscall.SIGHUP {
 			log.Infof("Received signal to STOP")
-			// send grpc message to the peer to shut it down
+			// TO DO: send grpc message to the peer to shut it down
 			os.Exit(1)
 		}
 
