@@ -224,7 +224,7 @@ func TestBMPServer(t *testing.T) {
 		0, // Msg Type (route monitoring)
 
 		0,                        // Peer Type (global instance peer)
-		0,                        // Peer Flags
+		0b00100000,               // Peer Flags
 		0, 0, 0, 0, 0, 0, 0, 123, // Peer Distinguisher
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 1, 1, // Peer Address (10.1.1.1)
 		0, 0, 0, 200, // Peer AS = 200
@@ -315,7 +315,7 @@ func TestBMPServer(t *testing.T) {
 		0, // Msg Type (route monitoring)
 
 		0,                        // Peer Type (global instance peer)
-		0,                        // Peer Flags
+		0b00100000,                        // Peer Flags
 		0, 0, 0, 0, 0, 0, 0, 123, // Peer Distinguisher
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 1, // Peer Address (10.1.2.1)
 		0, 0, 0, 222, // Peer AS = 222
