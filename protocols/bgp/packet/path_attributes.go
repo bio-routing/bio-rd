@@ -281,23 +281,23 @@ func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer, asnLength uint8) error 
 
 func (pa *PathAttribute) decodeASN(buf *bytes.Buffer, asnSize uint8) (asn uint32, err error) {
 	if asnSize == 4 {
-		return pa.decode4ByteASN(buf)
+		return decode4ByteASN(buf)
 	}
 
-	return pa.decode2ByteASN(buf)
+	return decode2ByteASN(buf)
 }
 
-func (pa *PathAttribute) decode4ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
+func decode4ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
 	asn4 := uint32(0)
 	err = decode.DecodeUint32(buf, &asn4)
 	if err != nil {
 		return 0, err
 	}
 
-	return uint32(asn4), nil
+	return asn4, nil
 }
 
-func (pa *PathAttribute) decode2ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
+func decode2ByteASN(buf *bytes.Buffer) (asn uint32, err error) {
 	asn2 := uint16(0)
 	err = decode.DecodeUint16(buf, &asn2)
 	if err != nil {

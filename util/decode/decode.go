@@ -19,6 +19,7 @@ func Decode(buf *bytes.Buffer, fields []interface{}) error {
 	return nil
 }
 
+// DecodeUint8 decodes an uint8
 func DecodeUint8(buf *bytes.Buffer, x *uint8) error {
 	y, err := buf.ReadByte()
 	if err != nil {
@@ -29,6 +30,7 @@ func DecodeUint8(buf *bytes.Buffer, x *uint8) error {
 	return nil
 }
 
+// DecodeUint16 decodes an uint16
 func DecodeUint16(buf *bytes.Buffer, x *uint16) error {
 	a, err := buf.ReadByte()
 	if err != nil {
@@ -40,10 +42,11 @@ func DecodeUint16(buf *bytes.Buffer, x *uint16) error {
 		return err
 	}
 
-	*x = uint16(a)*256 + uint16(b)
+	*x = uint16(a)<<8 + uint16(b)
 	return nil
 }
 
+// DecodeUint32 decodes an uint32
 func DecodeUint32(buf *bytes.Buffer, x *uint32) error {
 	a, err := buf.ReadByte()
 	if err != nil {
@@ -65,6 +68,6 @@ func DecodeUint32(buf *bytes.Buffer, x *uint32) error {
 		return err
 	}
 
-	*x = uint32(a)*256*256*256 + uint32(b)*256*256*256 + uint32(c)*256 + uint32(d)
+	*x = uint32(a)<<24 + uint32(b)<<16 + uint32(c)<<8 + uint32(d)
 	return nil
 }
