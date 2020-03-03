@@ -185,18 +185,20 @@ func (a *AdjRIBOut) removePath(pfx *bnet.Prefix, p *route.Path) bool {
 
 	sentPath := p
 	if a.addPathTX {
-		for _, sentPath := range r.Paths() {
-			if sentPath.Select(p) != 0 {
-				continue
+		for _, sp := range r.Paths() {
+			if sp.Select(p) == 0 {
+				a.rt.RemovePath(pfx, sp)
+
+				_, err := a.pathIDManager.releasePath(p)
+				if err != nil {
+					log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
+					return true
+				}
+
+				sentPath = sp
+				break
 			}
 
-			a.rt.RemovePath(pfx, sentPath)
-
-			_, err := a.pathIDManager.releasePath(p)
-			if err != nil {
-				log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
-				return true
-			}
 		}
 
 		if sentPath == p {
