@@ -57,6 +57,14 @@ func (ip *IP) Higher() uint64 {
 	return ip.higher
 }
 
+func (ip *IP) copy() *IP {
+	return &IP{
+		higher:   ip.higher,
+		lower:    ip.lower,
+		isLegacy: ip.isLegacy,
+	}
+}
+
 // IPv4 returns a new `IP` representing an IPv4 address
 func IPv4(val uint32) IP {
 	return IP{
@@ -284,4 +292,20 @@ func (ip *IP) bitAtPositionIPv6(pos uint8) bool {
 	}
 
 	return (ip.lower & (1 << (128 - pos))) != 0
+}
+
+// Next gets the next ip address
+func (ip *IP) Next() *IP {
+	newIP := ip.copy()
+	if ip.isLegacy {
+		newIP.lower++
+		return newIP
+	}
+
+	newIP.lower++
+	if newIP.lower == 0 {
+		newIP.higher++
+	}
+
+	return newIP
 }
