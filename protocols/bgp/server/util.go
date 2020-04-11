@@ -31,3 +31,28 @@ func extractFileAndFamilyFromTCPListener(l *net.TCPListener) (*os.File, int, err
 
 	return fi, family, nil
 }
+
+func extractFileAndFamilyFromTCPConn(c *net.TCPConn) (*os.File, int, error) {
+	// Note #1: TCPListener.File() has the unexpected side-effect of putting
+	// the original socket into blocking mode. See Note #2.
+	fi, err := c.File()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Note #2: Call net.FileListener() to put the original socket back into
+	// non-blocking mode.
+	fl, err := net.FileListener(fi)
+	if err != nil {
+		fi.Close()
+		return nil, 0, err
+	}
+	fl.Close()
+
+	family := syscall.AF_INET
+	if strings.Contains(c.LocalAddr().String(), "[") {
+		family = syscall.AF_INET6
+	}
+
+	return fi, family, nil
+}

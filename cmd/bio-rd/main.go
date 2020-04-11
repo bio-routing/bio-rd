@@ -189,6 +189,7 @@ func BGPPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig {
 		PeerAS:            n.PeerAS,
 		PeerAddress:       n.PeerAddressIP,
 		LocalAddress:      n.LocalAddressIP,
+		TTL:               n.TTL,
 		ReconnectInterval: time.Second * 15,
 		HoldTime:          n.HoldTimeDuration,
 		KeepAlive:         n.HoldTimeDuration / 3,
