@@ -24,12 +24,7 @@ func extractFileAndFamilyFromTCPListener(l *net.TCPListener) (*os.File, int, err
 	}
 	fl.Close()
 
-	family := syscall.AF_INET
-	if strings.Contains(l.Addr().String(), "[") {
-		family = syscall.AF_INET6
-	}
-
-	return fi, family, nil
+	return fi, getAFIFromAddr(l.Addr().String()), nil
 }
 
 func extractFileAndFamilyFromTCPConn(c *net.TCPConn) (*os.File, int, error) {
@@ -49,10 +44,13 @@ func extractFileAndFamilyFromTCPConn(c *net.TCPConn) (*os.File, int, error) {
 	}
 	fl.Close()
 
-	family := syscall.AF_INET
-	if strings.Contains(c.LocalAddr().String(), "[") {
-		family = syscall.AF_INET6
+	return fi, getAFIFromAddr(c.LocalAddr().String()), nil
+}
+
+func getAFIFromAddr(addr string) int {
+	if strings.Contains(addr, "[") {
+		return syscall.AF_INET6
 	}
 
-	return fi, family, nil
+	return syscall.AF_INET
 }
