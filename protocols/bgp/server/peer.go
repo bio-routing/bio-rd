@@ -404,3 +404,7 @@ func (p *peer) stop() {
 		fsm.eventCh <- ManualStop
 	}
 }
+
+func (p *peer) isEBGP() bool {
+	return p.localASN != p.peerASN
+}

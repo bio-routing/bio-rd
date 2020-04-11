@@ -39,7 +39,7 @@ func (s connectState) run() (state, string) {
 func (s *connectState) connectionSuccess(c net.Conn) (state, string) {
 	if s.fsm.peer.ttl != 0 {
 		SetTCPConnTTLSockopt(c, s.fsm.peer.ttl)
-	} else if s.fsm.peer.localASN != s.fsm.peer.peerASN {
+	} else if s.fsm.peer.isEBGP() {
 		SetTCPConnTTLSockopt(c, 1)
 	}
 
