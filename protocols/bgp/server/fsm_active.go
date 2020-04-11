@@ -54,6 +54,12 @@ func (s *activeState) connectRetryTimerExpired() (state, string) {
 }
 
 func (s *activeState) connectionSuccess(con net.Conn) (state, string) {
+	if s.fsm.peer.ttl != 0 {
+		SetTCPConnTTLSockopt(con, s.fsm.peer.ttl)
+	} else if s.fsm.peer.isEBGP() {
+		SetTCPConnTTLSockopt(con, 1)
+	}
+
 	s.fsm.con = con
 	stopTimer(s.fsm.connectRetryTimer)
 	err := s.fsm.sendOpen()

@@ -20,6 +20,7 @@ type peer struct {
 	config    *PeerConfig
 	addr      *bnet.IP
 	localAddr *bnet.IP
+	ttl       uint8
 	passive   bool
 	peerASN   uint32
 	localASN  uint32
@@ -51,6 +52,7 @@ type PeerConfig struct {
 	HoldTime                   time.Duration
 	LocalAddress               *bnet.IP
 	PeerAddress                *bnet.IP
+	TTL                        uint8
 	LocalAS                    uint32
 	PeerAS                     uint32
 	Passive                    bool
@@ -242,6 +244,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		server:               server,
 		config:               &c,
 		addr:                 c.PeerAddress,
+		ttl:                  c.TTL,
 		passive:              c.Passive,
 		peerASN:              c.PeerAS,
 		localASN:             c.LocalAS,
@@ -400,4 +403,8 @@ func (p *peer) stop() {
 	for _, fsm := range p.fsms {
 		fsm.eventCh <- ManualStop
 	}
+}
+
+func (p *peer) isEBGP() bool {
+	return p.localASN != p.peerASN
 }

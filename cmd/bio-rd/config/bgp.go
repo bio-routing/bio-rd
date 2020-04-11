@@ -28,6 +28,7 @@ type BGPGroup struct {
 	Name              string `yaml:"name"`
 	LocalAddress      string `yaml:"local_address"`
 	LocalAddressIP    *bnet.IP
+	TTL               uint8          `yaml:"ttl"`
 	AuthenticationKey string         `yaml:"authentication_key"`
 	PeerAS            uint32         `yaml:"peer_as"`
 	LocalAS           uint32         `yaml:"local_as"`
@@ -70,6 +71,10 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 
 		if n.LocalAddress == "" {
 			n.LocalAddress = bg.LocalAddress
+		}
+
+		if n.TTL == 0 {
+			n.TTL = bg.TTL
 		}
 
 		if n.AuthenticationKey == "" {
@@ -115,6 +120,7 @@ type BGPNeighbor struct {
 	PeerAddressIP     *bnet.IP
 	LocalAddress      string `yaml:"local_address"`
 	LocalAddressIP    *bnet.IP
+	TTL               uint8  `yaml:"ttl"`
 	AuthenticationKey string `yaml:"authentication_key"`
 	PeerAS            uint32 `yaml:"peer_as"`
 	LocalAS           uint32 `yaml:"local_as"`
