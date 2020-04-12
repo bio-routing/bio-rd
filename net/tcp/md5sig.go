@@ -19,7 +19,7 @@ type tcpMD5sig struct {
 	prefixLen uint8
 	keylen    uint16
 	ifIndex   uint32
-	key       [80]byte
+	key       [tcpMD5SIGMaxKeyLen]byte
 }
 
 func buildTCPMD5Sig(addr net.IP, key string) tcpMD5sig {
