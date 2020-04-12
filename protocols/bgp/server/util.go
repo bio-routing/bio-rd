@@ -1,13 +1,6 @@
 package server
 
-import (
-	"net"
-	"os"
-	"strings"
-	"syscall"
-)
-
-func extractFileAndFamilyFromTCPListener(l *net.TCPListener) (*os.File, int, error) {
+/*func extractFileAndFamilyFromTCPListener(l *net.TCPListener) (*os.File, int, error) {
 	// Note #1: TCPListener.File() has the unexpected side-effect of putting
 	// the original socket into blocking mode. See Note #2.
 	fi, err := l.File()
@@ -54,3 +47,4 @@ func getAFIFromAddr(addr string) int {
 
 	return syscall.AF_INET
 }
+*/

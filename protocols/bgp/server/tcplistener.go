@@ -3,36 +3,31 @@ package server
 import (
 	"net"
 
+	"github.com/bio-routing/bio-rd/net/tcp"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
+	// BGPPORT is the port of the BGP protocol
 	BGPPORT = 179
 )
 
+// TCPListener is a TCP listen wrapper
 type TCPListener struct {
-	l       *net.TCPListener
+	l       *tcp.Listener
 	closeCh chan struct{}
 }
 
+// NewTCPListener creates a new TCPListener
 func NewTCPListener(addr string, ch chan net.Conn) (*TCPListener, error) {
 	tcpaddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := net.ListenTCP("tcp", tcpaddr)
+	l, err := tcp.Listen(tcpaddr, 255)
 	if err != nil {
 		return nil, err
-	}
-
-	// Note: Set TTL=255 for incoming connection listener in order to accept
-	// connection in case for the neighbor has TTL Security settings.
-	if err := SetListenTCPTTLSockopt(l, 255); err != nil {
-		log.WithFields(log.Fields{
-			"Topic": "Peer",
-			"Key":   addr,
-		}).Warnf("cannot set TTL(=%d) for TCPListener: %s", 255, err)
 	}
 
 	tl := &TCPListener{
@@ -56,4 +51,8 @@ func NewTCPListener(addr string, ch chan net.Conn) (*TCPListener, error) {
 	}(tl)
 
 	return tl, nil
+}
+
+func (t *TCPListener) setTCPMD5(addr net.IP, secret string) error {
+	return t.l.SetTCPMD5(addr, secret)
 }
