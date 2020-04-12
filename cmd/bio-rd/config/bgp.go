@@ -50,7 +50,7 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 	if bg.LocalAddress != "" {
 		a, err := bnet.IPFromString(bg.LocalAddress)
 		if err != nil {
-			return errors.Wrap(err, "Unable to parse BGP local address")
+			return errors.Wrapf(err, "Unable to parse BGP local address: %q", bg.LocalAddress)
 		}
 
 		bg.LocalAddressIP = a.Dedup()
@@ -70,7 +70,7 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 		}
 
 		if n.LocalAddress == "" {
-			n.LocalAddress = bg.LocalAddress
+			n.LocalAddressIP = bg.LocalAddressIP
 		}
 
 		if n.TTL == 0 {
@@ -147,12 +147,14 @@ func (bn *BGPNeighbor) load(po *PolicyOptions) error {
 		return fmt.Errorf("Mandatory parameter BGP peer address is empty")
 	}
 
-	a, err := bnet.IPFromString(bn.LocalAddress)
-	if err != nil {
-		return errors.Wrap(err, "Unable to parse BGP local address")
-	}
+	if bn.LocalAddress != "" {
+		a, err := bnet.IPFromString(bn.LocalAddress)
+		if err != nil {
+			return errors.Wrap(err, "Unable to parse BGP local address")
+		}
 
-	bn.LocalAddressIP = a.Dedup()
+		bn.LocalAddressIP = a.Dedup()
+	}
 
 	b, err := bnet.IPFromString(bn.PeerAddress)
 	if err != nil {
