@@ -42,7 +42,8 @@ func main() {
 	bgpSrv = bgpserver.NewBGPServer(
 		startCfg.RoutingOptions.RouterIDUint32,
 		[]string{
-			":179",
+			"[::]:179",
+			"0.0.0.0:179",
 		},
 	)
 
@@ -183,8 +184,10 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 	return nil
 }
 
+// BGPPeerConfig converts a BGPNeighbor config into a PeerConfig
 func BGPPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig {
 	r := &bgpserver.PeerConfig{
+		AuthenticationKey: n.AuthenticationKey,
 		LocalAS:           n.LocalAS,
 		PeerAS:            n.PeerAS,
 		PeerAddress:       n.PeerAddressIP,

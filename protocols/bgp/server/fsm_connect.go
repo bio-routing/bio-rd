@@ -37,15 +37,14 @@ func (s connectState) run() (state, string) {
 }
 
 func (s *connectState) connectionSuccess(c net.Conn) (state, string) {
-	if s.fsm.peer.ttl != 0 {
-		SetTCPConnTTLSockopt(c, s.fsm.peer.ttl)
-	} else if s.fsm.peer.isEBGP() {
-		SetTCPConnTTLSockopt(c, 1)
+	err := s.fsm.sockSettings(c)
+	if err != nil {
+		return newIdleState(s.fsm), fmt.Sprintf("Unable to set socket options: %v", err)
 	}
 
 	s.fsm.con = c
 	stopTimer(s.fsm.connectRetryTimer)
-	err := s.fsm.sendOpen()
+	err = s.fsm.sendOpen()
 	if err != nil {
 		return newIdleState(s.fsm), fmt.Sprintf("Unable to send open: %v", err)
 	}

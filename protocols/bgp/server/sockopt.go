@@ -2,49 +2,28 @@ package server
 
 import (
 	"net"
-	"os"
-	"syscall"
+
+	"github.com/bio-routing/bio-rd/net/tcp"
 )
 
-const (
-	TCP_MD5SIG       = 14 // TCP MD5 Signature (RFC2385)
-	IPV6_MINHOPCOUNT = 73 // Generalized TTL Security Mechanism (RFC5082)
-)
-
-// SetListenTCPTTLSockopt sets the TTL on a TCP listener
-func SetListenTCPTTLSockopt(l *net.TCPListener, ttl uint8) error {
-	fi, family, err := extractFileAndFamilyFromTCPListener(l)
-	defer fi.Close()
-	if err != nil {
-		return err
-	}
-	return setsockoptIPTTL(int(fi.Fd()), family, ttl)
-}
-
-// SetTCPConnTTLSockopt sets the TTL on a TCP connection
-func SetTCPConnTTLSockopt(c net.Conn, ttl uint8) error {
+func setTTL(c net.Conn, ttl uint8) error {
+	// as c is an interface for testability reason we're checking here if the concrete type
+	// is a real TCP connection as only that supports setting a TTL
 	switch c.(type) {
-	case *net.TCPConn:
+	case *tcp.Conn:
+		return c.(*tcp.Conn).SetTTL(ttl)
 	default:
 		return nil
 	}
-
-	fi, family, err := extractFileAndFamilyFromTCPConn(c.(*net.TCPConn))
-	defer fi.Close()
-	if err != nil {
-		return err
-	}
-
-	return setsockoptIPTTL(int(fi.Fd()), family, ttl)
 }
 
-func setsockoptIPTTL(fd int, family int, value uint8) error {
-	level := syscall.IPPROTO_IP
-	name := syscall.IP_TTL
-	if family == syscall.AF_INET6 {
-		level = syscall.IPPROTO_IPV6
-		name = syscall.IPV6_UNICAST_HOPS
+func setDontRoute(c net.Conn) error {
+	// as c is an interface for testability reason we're checking here if the concrete type
+	// is a real TCP connection as only that supports setting SetDontRoute()
+	switch c.(type) {
+	case *tcp.Conn:
+		return c.(*tcp.Conn).SetDontRoute()
+	default:
+		return nil
 	}
-
-	return os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, level, name, int(value)))
 }

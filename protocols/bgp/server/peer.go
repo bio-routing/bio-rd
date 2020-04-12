@@ -46,6 +46,7 @@ type peer struct {
 
 // PeerConfig defines the configuration for a BGP session
 type PeerConfig struct {
+	AuthenticationKey          string
 	AdminEnabled               bool
 	ReconnectInterval          time.Duration
 	KeepAlive                  time.Duration
@@ -74,7 +75,12 @@ type AddressFamilyConfig struct {
 	AddPathRecv       bool
 }
 
+// NeedsRestart determines if the peer needs a restart on cfg change
 func (pc *PeerConfig) NeedsRestart(x *PeerConfig) bool {
+	if pc.AuthenticationKey != x.AuthenticationKey {
+		return true
+	}
+
 	if pc.LocalAS != x.LocalAS {
 		return true
 	}
