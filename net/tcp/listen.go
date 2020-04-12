@@ -78,16 +78,18 @@ func Listen(laddr *net.TCPAddr, ttl uint8) (*Listener, error) {
 }
 
 // SetTCPMD5 sets a TCP md5 secret for addr
-func (l *Listener) SetTCPMD5(addr net.IP, secret string) error {
+func (l *Listener) SetTCPMD5(peerAddr net.IP, secret string) error {
 	isIPv4Listener := l.laddr.IP.To4() != nil
-	isIPv4Client := addr.To4() != nil
+	isIPv4Client := peerAddr.To4() != nil
 
-	// Nothing to do if address families don't match
+	// Do not try to set MD5 secret if listener and peerAddr are of different AFIs.
+	// Call to setsockopt() would fail with -EINVAL. This is also why we use separate listeners
+	// per AFI. Tested for you by takt
 	if isIPv4Client != isIPv4Listener {
 		return nil
 	}
 
-	return setTCPMD5Option(l.fd, addr, secret)
+	return setTCPMD5Option(l.fd, peerAddr, secret)
 }
 
 // AcceptTCP accepts a new TCP connection
