@@ -1,6 +1,6 @@
 routing_options:
-  autonomous_system: 65100
-  router_id: 192.0.2.1
+  autonomous_system: 201701
+  router_id: 2.2.2.2
 policy_options:
   policy_statements:
     - name: "PeerA-In"
@@ -64,6 +64,17 @@ policy_options:
 protocols:
   bgp:
     groups:
+      - name: "AS199714"
+        authentication_key: "topSecret123"
+        ttl: 42
+        local_address: 169.254.0.1
+        neighbors:
+          - peer_address: 169.254.0.0
+            local_address: 169.254.0.1
+            passive: true
+            peer_as: 199714
+            import: ["ACCEPT_ALL"]
+            export: ["ACCEPT_ALL"]
       - name: "IXP RS Clients"
         local_address: 192.0.2.1
         route_server_client: true
