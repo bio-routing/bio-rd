@@ -269,7 +269,7 @@ func (r *Route) ToProto() *api.Route {
 // RouteFromProtoRoute converts a proto Route to a Route
 func RouteFromProtoRoute(ar *api.Route, dedup bool) *Route {
 	r := &Route{
-		pfx:   net.NewPrefixFromProtoPrefix(*ar.Pfx),
+		pfx:   net.NewPrefixFromProtoPrefix(ar.Pfx),
 		paths: make([]*Path, 0, len(ar.Paths)),
 	}
 

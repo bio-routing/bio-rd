@@ -142,7 +142,7 @@ func TestIPFromProtoIP(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res := IPFromProtoIP(test.proto)
+		res := IPFromProtoIP(&test.proto)
 		assert.Equal(t, test.expected, res, test.name)
 	}
 }

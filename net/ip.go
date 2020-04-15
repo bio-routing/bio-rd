@@ -25,7 +25,7 @@ func (ip IP) Ptr() *IP {
 }
 
 // IPFromProtoIP creates an IP address from a proto IP
-func IPFromProtoIP(addr api.IP) *IP {
+func IPFromProtoIP(addr *api.IP) *IP {
 	return &IP{
 		higher:   addr.Higher,
 		lower:    addr.Lower,

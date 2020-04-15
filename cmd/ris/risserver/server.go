@@ -87,7 +87,7 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 		return nil, err
 	}
 
-	routes := rib.LPM(bnet.NewPrefixFromProtoPrefix(*req.Pfx))
+	routes := rib.LPM(bnet.NewPrefixFromProtoPrefix(req.Pfx))
 	res := &pb.LPMResponse{
 		Routes: make([]*routeapi.Route, 0, len(routes)),
 	}
@@ -105,7 +105,7 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 		return nil, err
 	}
 
-	route := rib.Get(bnet.NewPrefixFromProtoPrefix(*req.Pfx))
+	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
 	if route == nil {
 		return &pb.GetResponse{
 			Routes: make([]*routeapi.Route, 0, 0),
@@ -126,7 +126,7 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 		return nil, err
 	}
 
-	routes := rib.GetLonger(bnet.NewPrefixFromProtoPrefix(*req.Pfx))
+	routes := rib.GetLonger(bnet.NewPrefixFromProtoPrefix(req.Pfx))
 	res := &pb.GetLongerResponse{
 		Routes: make([]*routeapi.Route, 0, len(routes)),
 	}

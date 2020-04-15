@@ -154,7 +154,7 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res := NewPrefixFromProtoPrefix(test.proto)
+		res := NewPrefixFromProtoPrefix(&test.proto)
 		assert.Equal(t, test.expected, *res, test.name)
 	}
 }

@@ -29,9 +29,9 @@ func (p Prefix) Ptr() *Prefix {
 }
 
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
-func NewPrefixFromProtoPrefix(pfx api.Prefix) *Prefix {
+func NewPrefixFromProtoPrefix(pfx *api.Prefix) *Prefix {
 	return &Prefix{
-		addr:   IPFromProtoIP(*pfx.Address),
+		addr:   IPFromProtoIP(pfx.Address),
 		pfxlen: uint8(pfx.Pfxlen),
 	}
 }
