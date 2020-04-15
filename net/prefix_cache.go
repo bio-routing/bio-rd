@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	prefixCachePreAlloc = 1500000
+	prefixCachePreAlloc = 0
 )
 
 var (
