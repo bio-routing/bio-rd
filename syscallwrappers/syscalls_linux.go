@@ -63,17 +63,8 @@ int isis_multicast_join(int fd, int registerto, int ifindex)
 */
 import "C"
 
-import (
-	"unsafe"
-)
-
 func SetBPFFilter(sockfd int) int {
 	return int(C.reg_bpf(C.int(sockfd)))
-}
-
-func SetSockOpt(sockfd int, level int, optName int, optVal uintptr, optLen int) int {
-	ptr := unsafe.Pointer(optVal)
-	return int(C.setsockopt(C.int(sockfd), C.int(level), C.int(optName), ptr, C.uint(optLen)))
 }
 
 func JoinISISMcast(sockfd int, ifIndex int) int {
