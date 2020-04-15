@@ -50,7 +50,7 @@ func TestFSMAFIInitDispose(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	assert.Equal(t, wg, f.updateSender.wg)
+	assert.EqualValues(t, &wg, &f.updateSender.wg)
 
 	assert.Equal(t, uint64(1), f.adjRIBOut.ClientCount())
 
