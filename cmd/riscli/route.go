@@ -8,6 +8,6 @@ import (
 )
 
 func printRoute(ar *api.Route) {
-	r := route.RouteFromProtoRoute(ar)
+	r := route.RouteFromProtoRoute(ar, false)
 	fmt.Println(r.Print())
 }
