@@ -106,7 +106,7 @@ func showRouteReceiveBGP(parts []string) {
 			return
 		}
 
-		rr := route.RouteFromProtoRoute(r)
+		rr := route.RouteFromProtoRoute(r, false)
 		fmt.Println(rr.Print())
 	}
 
