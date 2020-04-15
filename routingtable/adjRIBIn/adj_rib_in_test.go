@@ -470,7 +470,7 @@ func TestUnregister(t *testing.T) {
 
 	r := mc.Removed()
 	assert.Equalf(t, 3, len(r), "Should have removed 3 paths, but only removed %d", len(r))
-	assert.Equal(t, &routingtable.RemovePathParams{pfxs[0], paths[0]}, r[0], "Withdraw 1")
-	assert.Equal(t, &routingtable.RemovePathParams{pfxs[0], paths[1]}, r[1], "Withdraw 2")
-	assert.Equal(t, &routingtable.RemovePathParams{pfxs[1], paths[2]}, r[2], "Withdraw 3")
+	assert.Equal(t, &routingtable.RemovePathParams{Pfx: pfxs[0], Path: paths[0]}, r[0], "Withdraw 1")
+	assert.Equal(t, &routingtable.RemovePathParams{Pfx: pfxs[0], Path: paths[1]}, r[1], "Withdraw 2")
+	assert.Equal(t, &routingtable.RemovePathParams{Pfx: pfxs[1], Path: paths[2]}, r[2], "Withdraw 3")
 }
