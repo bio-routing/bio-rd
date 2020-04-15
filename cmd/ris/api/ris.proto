@@ -7,9 +7,10 @@ import "github.com/bio-routing/bio-rd/route/api/route.proto";
 option go_package = "github.com/bio-routing/bio-rd/cmd/ris/api";
 
 service RoutingInformationService {
-    rpc LPM(LPMRequest) returns (LPMResponse) {}
-    rpc Get(GetRequest) returns (GetResponse) {}
-    rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {}
+    rpc LPM(LPMRequest) returns (LPMResponse) {};
+    rpc Get(GetRequest) returns (GetResponse) {};
+    rpc GetRouters(GetRoutersRequest) returns (GetRoutersResponse) {};
+    rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {};
     rpc ObserveRIB(ObserveRIBRequest) returns (stream RIBUpdate);
     rpc DumpRIB(DumpRIBRequest) returns (stream DumpRIBReply);
 }
@@ -73,3 +74,17 @@ message DumpRIBRequest {
 message DumpRIBReply {
     bio.route.Route route = 1;
 }
+
+message GetRoutersRequest {
+
+}
+
+message Router {
+    string router = 1;
+    repeated uint64 vrf_ids = 2;
+}
+
+message GetRoutersResponse {
+    repeated Router routers = 1;
+}
+

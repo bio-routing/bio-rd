@@ -225,6 +225,24 @@ func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationSer
 	return nil
 }
 
+// GetRouters implements the GetRouters RPC
+func (s *Server) GetRouters(c context.Context, request *pb.GetRoutersRequest) (*pb.GetRoutersResponse, error) {
+	resp := &pb.GetRoutersResponse{}
+	routers := s.bmp.GetRouters()
+	for _, r := range routers {
+		vrfs := r.GetVRFs()
+		vrfIDs := make([]uint64, 0, len(vrfs))
+		for _, vrf := range vrfs {
+			vrfIDs = append(vrfIDs, vrf.RD())
+		}
+		resp.Routers = append(resp.Routers, &pb.Router{
+			Router: r.Name(),
+			VrfIds: vrfIDs,
+		})
+	}
+	return resp, nil
+}
+
 type update struct {
 	advertisement bool
 	prefix        net.Prefix
