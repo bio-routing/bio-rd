@@ -267,7 +267,7 @@ func (r *Route) ToProto() *api.Route {
 }
 
 // RouteFromProtoRoute converts a proto Route to a Route
-func RouteFromProtoRoute(ar *api.Route) *Route {
+func RouteFromProtoRoute(ar *api.Route, dedup bool) *Route {
 	r := &Route{
 		pfx:   net.NewPrefixFromProtoPrefix(*ar.Pfx),
 		paths: make([]*Path, 0, len(ar.Paths)),
@@ -278,7 +278,7 @@ func RouteFromProtoRoute(ar *api.Route) *Route {
 		switch ar.Paths[i].Type {
 		case api.Path_BGP:
 			p.Type = BGPPathType
-			p.BGPPath = BGPPathFromProtoBGPPath(ar.Paths[i].BgpPath)
+			p.BGPPath = BGPPathFromProtoBGPPath(ar.Paths[i].BgpPath, dedup)
 		}
 
 		r.paths = append(r.paths, p)
