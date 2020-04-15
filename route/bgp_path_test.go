@@ -100,7 +100,7 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 		ClusterList: &types.ClusterList{999, 199},
 	}
 
-	result := BGPPathFromProtoBGPPath(input)
+	result := BGPPathFromProtoBGPPath(input, false)
 	assert.Equal(t, expected, result)
 }
 
