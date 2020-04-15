@@ -291,7 +291,16 @@ func TestDumpRIBInOut(t *testing.T) {
 			res = append(res, r)
 		}
 
-		assert.Equal(t, test.expected, res, test.name)
+		expected := make([]string, 0)
+		for _, exp := range test.expected {
+			expected = append(expected, exp.String())
+		}
+
+		results := make([]string, 0)
+		for _, r := range res {
+			results = append(results, r.String())
+		}
+		assert.Equal(t, expected, results, test.name)
 	}
 
 	// Test RIBout
@@ -337,6 +346,15 @@ func TestDumpRIBInOut(t *testing.T) {
 			res = append(res, r)
 		}
 
-		assert.Equal(t, test.expected, res, test.name)
+		expected := make([]string, 0)
+		for _, exp := range test.expected {
+			expected = append(expected, exp.String())
+		}
+
+		results := make([]string, 0)
+		for _, r := range res {
+			results = append(results, r.String())
+		}
+		assert.Equal(t, expected, results, test.name)
 	}
 }
