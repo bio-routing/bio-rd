@@ -29,9 +29,10 @@ type ISISInterface struct {
 
 // ISISInterfaceLevel interface level config
 type ISISInterfaceLevel struct {
-	Disable  bool   `yaml:"disable"`
-	HoldTime uint16 `yaml:"hold_time"`
-	Metric   uint32 `yaml:"metric"`
-	Passive  bool   `yaml:"passive"`
-	Priority uint8  `yaml:"priority"`
+	Disable       bool   `yaml:"disable"`
+	HelloInterval uint16 `yaml:"hello_interval"`
+	HoldTime      uint16 `yaml:"hold_time"`
+	Metric        uint32 `yaml:"metric"`
+	Passive       bool   `yaml:"passive"`
+	Priority      uint8  `yaml:"priority"`
 }

@@ -51,11 +51,11 @@ func translateInterfaceLevelConfig(c *config.ISISInterfaceLevel) *server.Interfa
 	}
 
 	return &server.InterfaceLevelConfig{
-		Disable:  c.Disable,
-		HoldTime: c.HoldTime,
-		Metric:   c.Metric,
-		Passive:  c.Passive,
-		Priority: c.Priority,
+		HelloInterval: c.HelloInterval,
+		HoldTime:      c.HoldTime,
+		Metric:        c.Metric,
+		Passive:       c.Passive,
+		Priority:      c.Priority,
 	}
 }
 

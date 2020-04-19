@@ -1,14 +1,6 @@
 package server
 
-import (
-	"testing"
-
-	"github.com/bio-routing/bio-rd/config"
-	"github.com/bio-routing/bio-rd/protocols/device"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestRemoveDevice(t *testing.T) {
+/*func TestRemoveDevice(t *testing.T) {
 	tests := []struct {
 		name           string
 		db             *devices
@@ -247,4 +239,4 @@ func TestDeviceAddDevice(t *testing.T) {
 
 		assert.Equal(t, test.expected, test.db, test.name)
 	}
-}
+}*/

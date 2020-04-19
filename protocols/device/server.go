@@ -24,7 +24,7 @@ type Server struct {
 
 // Client represents a client of the device server
 type Client interface {
-	DeviceUpdate(*Device)
+	DeviceUpdate(DeviceInterface)
 }
 
 type osAdapter interface {
@@ -106,7 +106,7 @@ func (ds *Server) addDevice(d *Device) {
 	ds.devicesMu.Lock()
 	defer ds.devicesMu.Unlock()
 
-	ds.devices[d.Index] = d
+	ds.devices[d.index] = d
 }
 
 func (ds *Server) delDevice(index uint64) {
@@ -118,7 +118,7 @@ func (ds *Server) getLinkState(name string) *Device {
 	defer ds.devicesMu.RUnlock()
 
 	for _, d := range ds.devices {
-		if d.Name != name {
+		if d.name != name {
 			continue
 		}
 
@@ -137,7 +137,7 @@ func (ds *Server) notify(index uint64) {
 			continue
 		}
 
-		for _, c := range ds.clientsByDevice[d.Name] {
+		for _, c := range ds.clientsByDevice[d.name] {
 			c.DeviceUpdate(d.copy())
 		}
 	}

@@ -1,13 +1,6 @@
 package server
 
-import (
-	"testing"
-
-	"github.com/bio-routing/bio-rd/protocols/device"
-	"github.com/stretchr/testify/assert"
-)
-
-func (d *dev) mockRecv() {
+/*func (d *dev) mockRecv() {
 	<-d.done
 	d.wg.Done()
 }
@@ -139,3 +132,4 @@ func TestDeviceUpdate(t *testing.T) {
 		assert.Equal(t, test.expected, test.dev.up, test.name)
 	}
 }
+*/

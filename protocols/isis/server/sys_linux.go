@@ -19,7 +19,7 @@ func (b *bioSys) openPacketSocket() error {
 		return fmt.Errorf("Unable to set BPF filter")
 	}
 
-	if syscallwrappers.BindToInterface(b.socket, int(b.device.Index)) != 0 {
+	if syscallwrappers.BindToInterface(b.socket, int(b.device.GetIndex())) != 0 {
 		return fmt.Errorf("Unable to bind to interface")
 	}
 
@@ -31,7 +31,7 @@ func (b *bioSys) closePacketSocket() error {
 }
 
 func (b *bioSys) mcastJoin(addr [6]byte) error {
-	if syscallwrappers.JoinISISMcast(b.socket, int(b.device.Index)) != 0 {
+	if syscallwrappers.JoinISISMcast(b.socket, int(b.device.GetIndex())) != 0 {
 		return fmt.Errorf("setsockopt failed")
 	}
 
@@ -53,7 +53,7 @@ func (b *bioSys) recvPacket() (pkt []byte, src types.MACAddress, err error) {
 
 func (b *bioSys) sendPacket(pkt []byte, dst [6]byte) error {
 	ll := syscall.SockaddrLinklayer{
-		Ifindex: int(b.device.Index),
+		Ifindex: int(b.device.GetIndex()),
 		Halen:   6, // MAC address length
 	}
 
