@@ -2,8 +2,10 @@ package config
 
 import "github.com/pkg/errors"
 
+// Protocols is routing protocol config
 type Protocols struct {
-	BGP *BGP `yaml:"bgp"`
+	BGP  *BGP  `yaml:"bgp"`
+	ISIS *ISIS `yaml:"isis"`
 }
 
 func (p *Protocols) load(localAS uint32, policyOptions *PolicyOptions) error {
