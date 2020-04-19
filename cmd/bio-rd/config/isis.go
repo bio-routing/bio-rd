@@ -2,6 +2,7 @@ package config
 
 // ISIS config
 type ISIS struct {
+	NETs   []string   `yaml:"NETs"`
 	Level1 *ISISLevel `yaml:"level1"`
 	Level2 *ISISLevel `yaml:"level2"`
 }
@@ -18,8 +19,9 @@ type ISISLevel struct {
 
 // ISISInterface interface config
 type ISISInterface struct {
-	Passive      bool `yaml:"passive"`
-	PointToPoint bool `yaml:"point_to_point"`
+	Name         string `yaml:"name"`
+	Passive      bool   `yaml:"passive"`
+	PointToPoint bool   `yaml:"point_to_point"`
 }
 
 // ISISInterfaceLevel interface level config

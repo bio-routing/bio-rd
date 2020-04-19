@@ -10,6 +10,7 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
 	bgpapi "github.com/bio-routing/bio-rd/protocols/bgp/api"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
+	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
@@ -27,6 +28,7 @@ var (
 	sigHUP               = make(chan os.Signal)
 	vrfReg               = vrf.NewVRFRegistry()
 	bgpSrv               bgpserver.BGPServer
+	isisSrv              *isisserver.Server
 	runCfg               *config.Config
 )
 
@@ -122,6 +124,13 @@ func loadConfig(cfg *config.Config) error {
 			err := configureProtocolsBGP(cfg.Protocols.BGP)
 			if err != nil {
 				return errors.Wrap(err, "Unable to configure BGP")
+			}
+		}
+
+		if cfg.Protocols.ISIS != nil {
+			err := configureProtocolsISIS(cfg.Protocols.ISIS)
+			if err != nil {
+				return errors.Wrap(err, "Unable to configure ISIS")
 			}
 		}
 	}
