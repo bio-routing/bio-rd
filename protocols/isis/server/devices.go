@@ -1,13 +1,6 @@
 package server
 
-import (
-	"fmt"
-	"sync"
-
-	"github.com/bio-routing/bio-rd/config"
-	"github.com/pkg/errors"
-)
-
+/*
 type devices struct {
 	srv  *Server
 	db   map[string]*dev
@@ -53,3 +46,4 @@ func (db *devices) removeDevice(name string) error {
 	delete(db.db, name)
 	return nil
 }
+*/

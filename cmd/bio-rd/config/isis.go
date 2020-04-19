@@ -2,9 +2,10 @@ package config
 
 // ISIS config
 type ISIS struct {
-	NETs   []string   `yaml:"NETs"`
-	Level1 *ISISLevel `yaml:"level1"`
-	Level2 *ISISLevel `yaml:"level2"`
+	NETs       []string         `yaml:"NETs"`
+	Level1     *ISISLevel       `yaml:"level1"`
+	Level2     *ISISLevel       `yaml:"level2"`
+	Interfaces []*ISISInterface `yaml:"interfaces"`
 }
 
 //ISISLevel level config

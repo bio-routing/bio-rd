@@ -1,15 +1,9 @@
 package server
 
 import (
-	"fmt"
 	"sync"
 
-	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/device"
-	"github.com/bio-routing/bio-rd/protocols/isis/packet"
-	"github.com/pkg/errors"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type dev struct {
@@ -35,6 +29,7 @@ type level struct {
 	neighbors     *neighbors
 }
 
+/*
 func newDev(srv *Server, ifcfg *config.ISISInterfaceConfig) *dev {
 	d := &dev{
 		name:               ifcfg.Name,
@@ -121,3 +116,4 @@ func (d *dev) receiverRoutine() {
 func (d *dev) helloRoutine() {
 	// To be implemented
 }
+*/

@@ -10,6 +10,7 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
 	bgpapi "github.com/bio-routing/bio-rd/protocols/bgp/api"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/protocols/device"
 	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
@@ -28,7 +29,8 @@ var (
 	sigHUP               = make(chan os.Signal)
 	vrfReg               = vrf.NewVRFRegistry()
 	bgpSrv               bgpserver.BGPServer
-	isisSrv              *isisserver.Server
+	isisSrv              isisserver.ISISServer
+	ds                   device.Updater
 	runCfg               *config.Config
 )
 

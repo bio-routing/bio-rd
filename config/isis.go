@@ -1,5 +1,6 @@
 package config
 
+/*
 type ISISConfig struct {
 	NETs                       []NET
 	Interfaces                 []ISISInterfaceConfig
@@ -20,3 +21,4 @@ type ISISLevelConfig struct {
 	Metric        uint32
 	Priority      uint8
 }
+*/

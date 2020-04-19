@@ -49,7 +49,7 @@ type NET struct {
 }
 
 // ParseNET parses an network entity title
-func ParseNET(addr string) (*NET, error) {
+func ParseNET(addr []byte) (*NET, error) {
 	l := len(addr)
 
 	if l < 8 {

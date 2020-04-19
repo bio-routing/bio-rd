@@ -1,32 +1,54 @@
 package server
 
 import (
+	"sync"
 	"time"
 
-	"github.com/bio-routing/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/device"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
-//Server represents an ISIS server
-type Server struct {
-	config         *config.ISISConfig
-	sequenceNumber uint32
-	devices        *devices
-	lsdb           *lsdb
-	stop           chan struct{}
-	ds             device.Updater
+type ISISServer interface {
+	AddInterface(*InterfaceConfig) error
+	//GetInterfaceConfig(string) *InterfaceConfig
+	//DisposeInterface(string)
+	Start() error
 }
 
-func New(cfg *config.ISISConfig, ds device.Updater) *Server {
+//Server represents an ISIS server
+type Server struct {
+	running        bool
+	runningMu      sync.Mutex
+	nets           []*types.NET
+	sequenceNumber uint32
+	//devices        *devices
+	lsdb *lsdb
+	stop chan struct{}
+	ds   device.Updater
+}
+
+func (s *Server) Start() error {
+	s.runningMu.Lock()
+	defer s.runningMu.Unlock()
+
+	if !s.running {
+		s.running = true
+		s.start()
+	}
+
+	return nil
+}
+
+func New(nets []*types.NET, ds device.Updater) *Server {
 	s := &Server{
-		config:         cfg,
+		nets:           nets,
 		ds:             ds,
 		sequenceNumber: 1,
 		stop:           make(chan struct{}),
 	}
 
-	s.devices = newDevices(s)
+	//s.devices = newDevices(s)
 	s.lsdb = newLSDB(s)
 	return s
 }
@@ -38,14 +60,4 @@ func (s *Server) start() {
 func (s *Server) dispose() {
 	s.lsdb.dispose()
 	s.lsdb = nil
-}
-
-// AddInterface adds an interface to the ISIS Server
-func (s *Server) AddInterface(ifcfg *config.ISISInterfaceConfig) {
-	s.devices.addDevice(ifcfg)
-}
-
-// RemoveInterface removes an interface from the ISIS Server
-func (s *Server) RemoveInterface(name string) {
-	s.devices.removeDevice(name)
 }
