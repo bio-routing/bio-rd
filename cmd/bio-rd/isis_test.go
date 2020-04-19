@@ -19,7 +19,7 @@ func TestNetStringToByteSlice(t *testing.T) {
 			expected: []byte{0x49, 0, 1, 1, 0, 0, 0, 0, 1, 0},
 		},
 		{
-			name:     "Test #1",
+			name:     "Test #2",
 			input:    "49.000g.0100.0000.0001.00",
 			wantFail: true,
 		},

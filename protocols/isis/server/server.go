@@ -9,6 +9,7 @@ import (
 	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
+// ISISServer is generic ISIS server interface
 type ISISServer interface {
 	AddInterface(*InterfaceConfig) error
 	//GetInterfaceConfig(string) *InterfaceConfig
@@ -23,11 +24,13 @@ type Server struct {
 	nets           []*types.NET
 	sequenceNumber uint32
 	//devices        *devices
-	lsdb *lsdb
-	stop chan struct{}
-	ds   device.Updater
+	netIfaManager *netIfaManager
+	lsdb          *lsdb
+	stop          chan struct{}
+	ds            device.Updater
 }
 
+// Start starts the ISIS server
 func (s *Server) Start() error {
 	s.runningMu.Lock()
 	defer s.runningMu.Unlock()
@@ -40,6 +43,7 @@ func (s *Server) Start() error {
 	return nil
 }
 
+// New creates a new ISIS server
 func New(nets []*types.NET, ds device.Updater) *Server {
 	s := &Server{
 		nets:           nets,
@@ -47,6 +51,8 @@ func New(nets []*types.NET, ds device.Updater) *Server {
 		sequenceNumber: 1,
 		stop:           make(chan struct{}),
 	}
+
+	s.netIfaManager = newNetIfaManager(s)
 
 	//s.devices = newDevices(s)
 	s.lsdb = newLSDB(s)

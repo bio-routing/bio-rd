@@ -20,9 +20,11 @@ type ISISLevel struct {
 
 // ISISInterface interface config
 type ISISInterface struct {
-	Name         string `yaml:"name"`
-	Passive      bool   `yaml:"passive"`
-	PointToPoint bool   `yaml:"point_to_point"`
+	Name         string              `yaml:"name"`
+	Passive      bool                `yaml:"passive"`
+	PointToPoint bool                `yaml:"point_to_point"`
+	Level1       *ISISInterfaceLevel `yaml:"level1"`
+	Level2       *ISISInterfaceLevel `yaml:"level2"`
 }
 
 // ISISInterfaceLevel interface level config

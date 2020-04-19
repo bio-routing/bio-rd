@@ -30,13 +30,33 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 	}
 
 	for _, ifa := range isis.Interfaces {
-		err := isisSrv.AddInterface(&server.InterfaceConfig{})
+		err := isisSrv.AddInterface(&server.InterfaceConfig{
+			Name:         ifa.Name,
+			Passive:      ifa.Passive,
+			PointToPoint: ifa.PointToPoint,
+			Level1:       translateInterfaceLevelConfig(ifa.Level1),
+			Level2:       translateInterfaceLevelConfig(ifa.Level2),
+		})
 		if err != nil {
 			return errors.Wrapf(err, "Unable to add interface: %s", ifa.Name)
 		}
 	}
 
-	return fmt.Errorf("ISIS not implemented yet")
+	return nil
+}
+
+func translateInterfaceLevelConfig(c *config.ISISInterfaceLevel) *server.InterfaceLevelConfig {
+	if c == nil {
+		return nil
+	}
+
+	return &server.InterfaceLevelConfig{
+		Disable:  c.Disable,
+		HoldTime: c.HoldTime,
+		Metric:   c.Metric,
+		Passive:  c.Passive,
+		Priority: c.Priority,
+	}
 }
 
 func parseNETs(nets []string) ([]*types.NET, error) {
