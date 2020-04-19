@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNetStringToByteSlice(t *testing.T) {
+func TestParseHexString(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -26,7 +26,7 @@ func TestNetStringToByteSlice(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := netStringToByteSlice(test.input)
+		res, err := parseHexString(test.input)
 		if test.wantFail {
 			if err == nil {
 				t.Errorf("Unexpected success for test %s", test.name)

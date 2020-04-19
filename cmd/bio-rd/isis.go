@@ -63,7 +63,12 @@ func parseNETs(nets []string) ([]*types.NET, error) {
 	ret := make([]*types.NET, 0, len(nets))
 
 	for _, net := range nets {
-		n, err := types.ParseNET([]byte(net))
+		b, err := parseHexString(net)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to convert NET hex string into ints")
+		}
+
+		n, err := types.ParseNET(b)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Unable to parse NET %q", net)
 		}
@@ -74,7 +79,8 @@ func parseNETs(nets []string) ([]*types.NET, error) {
 	return ret, nil
 }
 
-func netStringToByteSlice(s string) ([]byte, error) {
+// parseHexString converts a string of hex numbers into a byte slice
+func parseHexString(s string) ([]byte, error) {
 	ret := make([]byte, 0)
 
 	s = strings.Replace(s, ".", "", -1)
