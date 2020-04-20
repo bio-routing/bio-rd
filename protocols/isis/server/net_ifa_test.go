@@ -109,6 +109,4 @@ func TestNetIfa(t *testing.T) {
 	fmt.Printf("n: %d\n", n)
 	fmt.Printf("Buf: %v\n", buf[:n])
 	panic("BOOM")
-
-	_ = eth0
 }

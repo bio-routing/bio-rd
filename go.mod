@@ -11,6 +11,7 @@ require (
 	github.com/prometheus/client_golang v1.0.0
 	github.com/prometheus/common v0.6.0
 	github.com/sirupsen/logrus v1.3.0
+	github.com/soniah/gosnmp v1.24.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/urfave/cli v1.21.0
 	github.com/vishvananda/netlink v1.0.0

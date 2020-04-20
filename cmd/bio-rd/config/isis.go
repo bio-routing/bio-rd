@@ -1,5 +1,10 @@
 package config
 
+const (
+	defaultHelloInterval = 9
+	defaultHoldTime      = 27
+)
+
 // ISIS config
 type ISIS struct {
 	NETs       []string         `yaml:"NETs"`
@@ -35,4 +40,30 @@ type ISISInterfaceLevel struct {
 	Metric        uint32 `yaml:"metric"`
 	Passive       bool   `yaml:"passive"`
 	Priority      uint8  `yaml:"priority"`
+}
+
+func (i *ISIS) loadDefaults() {
+	for _, ifa := range i.Interfaces {
+		ifa.loadDefaults()
+	}
+}
+
+func (i *ISISInterface) loadDefaults() {
+	if i.Level1 != nil {
+		i.Level1.loadDefaults()
+	}
+
+	if i.Level2 != nil {
+		i.Level2.loadDefaults()
+	}
+}
+
+func (i *ISISInterfaceLevel) loadDefaults() {
+	if i.HelloInterval == 0 {
+		i.HelloInterval = defaultHelloInterval
+	}
+
+	if i.HoldTime == 0 {
+		i.HoldTime = defaultHoldTime
+	}
 }

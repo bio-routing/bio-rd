@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func configureProtocolsISIS(isis *config.ISIS) error {
@@ -22,14 +23,20 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 	}
 
 	if isisSrv == nil {
-		isisSrv = server.New(nets, ds)
-		err := isisSrv.Start()
+		var err error
+		isisSrv, err = server.New(nets, ds)
+		if err != nil {
+			return errors.Wrap(err, "Unable to create ISIS server")
+		}
+
+		err = isisSrv.Start()
 		if err != nil {
 			return errors.Wrap(err, "Unable to start ISIS server")
 		}
 	}
 
 	for _, ifa := range isis.Interfaces {
+		log.Infof("ISIS: Adding interface %s to ISIS server", ifa.Name)
 		err := isisSrv.AddInterface(&server.InterfaceConfig{
 			Name:         ifa.Name,
 			Passive:      ifa.Passive,
@@ -52,7 +59,7 @@ func translateInterfaceLevelConfig(c *config.ISISInterfaceLevel) *server.Interfa
 
 	return &server.InterfaceLevelConfig{
 		HelloInterval: c.HelloInterval,
-		HoldTime:      c.HoldTime,
+		HoldingTimer:  c.HoldTime,
 		Metric:        c.Metric,
 		Passive:       c.Passive,
 		Priority:      c.Priority,

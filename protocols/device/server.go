@@ -4,12 +4,15 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Updater is a device updater interface
 type Updater interface {
 	Subscribe(Client, string)
 	Unsubscribe(Client, string)
+	Start() error
 }
 
 // Server represents a device server
@@ -68,6 +71,8 @@ func (ds *Server) Stop() {
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
 func (ds *Server) Subscribe(client Client, devName string) {
+	log.Infof("Device: Registering client for interface %s", devName)
+
 	d := ds.getLinkState(devName)
 	if d != nil {
 		client.DeviceUpdate(d)

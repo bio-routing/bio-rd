@@ -14,5 +14,9 @@ func (p *Protocols) load(localAS uint32, policyOptions *PolicyOptions) error {
 		return errors.Wrap(err, "BGP error")
 	}
 
+	if p.ISIS != nil {
+		p.ISIS.loadDefaults()
+	}
+
 	return nil
 }

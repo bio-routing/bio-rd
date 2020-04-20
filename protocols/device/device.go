@@ -41,6 +41,11 @@ func newDevice() *Device {
 	}
 }
 
+// GetName gets the devices name
+func (d *Device) GetName() string {
+	return d.name
+}
+
 // GetIndex gets the interface ifIndex
 func (d *Device) GetIndex() uint64 {
 	return d.index

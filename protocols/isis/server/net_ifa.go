@@ -8,10 +8,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btime "github.com/bio-routing/bio-rd/util/time"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -68,7 +70,9 @@ type netIfa struct {
 	done        chan struct{}
 	wg          sync.WaitGroup
 	helloTicker btime.Ticker
+	ethHandler  *ethernet.Handler
 	conn        net.Conn
+	ISP2PHELLO  net.Conn
 }
 
 func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
@@ -83,7 +87,7 @@ func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
 	if srv.netIfaManager.useMockTicker {
 		ret.helloTicker = btime.NewMockTicker()
 	} else {
-		ret.helloTicker = btime.NewBIOTicker(time.Duration(cfg.getMinHelloInterval()))
+		ret.helloTicker = btime.NewBIOTicker(time.Duration(cfg.getMinHelloInterval()) * time.Second)
 	}
 
 	srv.ds.Subscribe(ret, cfg.Name)
@@ -118,6 +122,14 @@ func (nifa *netIfa) start() error {
 
 	nifa.active = 1
 
+	ethHandler, err := ethernet.NewHandler(nifa.name)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to create ethernet handler (%s)", nifa.name)
+	}
+
+	nifa.ethHandler = ethHandler
+	nifa.ISP2PHELLO = nifa.ethHandler.NewConn(ethernet.ISP2PHELLO)
+
 	fmt.Printf("TODO: start hello sender and packet receiver\n")
 	// TODO: start hello sender and packet receiver
 
@@ -141,6 +153,7 @@ func (nifa *netIfa) broadCastL2() error {
 }
 
 func (nifa *netIfa) p2pHelloSender() {
+	fmt.Printf("This is the p2pHelloSender!\n")
 	for {
 		select {
 		case <-nifa.done:
@@ -148,17 +161,49 @@ func (nifa *netIfa) p2pHelloSender() {
 			nifa.wg.Done()
 			return
 		case <-nifa.helloTicker.C():
-			nifa.conn.Write(nifa.p2pHello())
+			fmt.Printf("Sending Hello!\n")
+
+			hello := nifa.p2pHello()
+			helloBuf := bytes.NewBuffer(nil)
+			hello.Serialize(helloBuf)
+
+			hdr := packet.ISISHeader{
+				ProtoDiscriminator:  0x83,
+				LengthIndicator:     packet.P2PHelloMinLen,
+				ProtocolIDExtension: 1,
+				IDLength:            0,
+				PDUType:             packet.P2P_HELLO,
+				Version:             1,
+				MaxAreaAddresses:    0,
+			}
+
+			hdrBuf := bytes.NewBuffer(nil)
+			hdr.Serialize(hdrBuf)
+			hdrBuf.Write(helloBuf.Bytes())
+
+			_, err := nifa.ISP2PHELLO.Write(hdrBuf.Bytes())
+			if err != nil {
+				panic(err)
+			}
 		}
 
 	}
 }
 
-func (nifa *netIfa) p2pHello() []byte {
-	h := packet.P2PHello{
-		CircuitType:    0,
+func (nifa *netIfa) p2pHello() *packet.P2PHello {
+	circuitType := uint8(0)
+	if nifa.cfg.Level1 != nil {
+		circuitType++
+	}
+	if nifa.cfg.Level2 != nil {
+		circuitType += 2
+	}
+
+	h := &packet.P2PHello{
+		CircuitType:    circuitType,
 		SystemID:       nifa.srv.nets[0].SystemID,
 		HoldingTimer:   nifa.cfg.HoldingTimer,
+		PDULength:      packet.P2PHelloMinLen,
 		LocalCircuitID: 1,
 		TLVs:           make([]packet.TLV, 4),
 	}
@@ -177,8 +222,5 @@ func (nifa *netIfa) p2pHello() []byte {
 	}
 	h.TLVs[3] = packet.NewAreaAddressesTLV(areas)
 
-	buf := bytes.NewBuffer(nil)
-	h.Serialize(buf)
-
-	return buf.Bytes()
+	return h
 }

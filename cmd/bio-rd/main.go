@@ -43,6 +43,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	ds, err = device.New()
+	if err != nil {
+		log.Fatalf("Unable to create device server: %v", err)
+	}
+
+	err = ds.Start()
+	if err != nil {
+		log.Fatalf("Unable to start device server: %v", err)
+	}
+
 	bgpSrv = bgpserver.NewBGPServer(
 		startCfg.RoutingOptions.RouterIDUint32,
 		[]string{
