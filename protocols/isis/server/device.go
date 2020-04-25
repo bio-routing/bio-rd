@@ -9,7 +9,6 @@ import (
 type dev struct {
 	name               string
 	srv                *Server
-	sys                sys
 	up                 bool
 	passive            bool
 	p2p                bool
