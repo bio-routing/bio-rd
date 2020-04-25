@@ -1,19 +1,15 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/bio-routing/tflow2/convert"
-
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
-	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btime "github.com/bio-routing/bio-rd/util/time"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -94,7 +90,6 @@ type netIfa struct {
 	wg            sync.WaitGroup
 	helloTicker   btime.Ticker
 	ethHandler    ethernet.HandlerInterface
-	conn          net.Conn
 	isP2PHelloCon net.Conn
 }
 
@@ -129,7 +124,7 @@ func (nifa *netIfa) DeviceUpdate(dev device.DeviceInterface) {
 		nifa.devStatus = dev
 		err := nifa.start()
 		if err != nil {
-			log.Errorf("Unable to start ISIS on interface %s", nifa.name)
+			log.Errorf("Unable to start ISIS on interface %s: %v", nifa.name, err)
 		}
 	}
 }
@@ -155,11 +150,16 @@ func (nifa *netIfa) start() error {
 
 	nifa.isP2PHelloCon = nifa.ethHandler.NewConn(ethernet.ISp2pHello)
 
-	fmt.Printf("TODO: start hello sender and packet receiver\n")
-	// TODO: start hello sender and packet receiver
-
 	nifa.wg.Add(1)
 	go nifa.p2pHelloSender()
+
+	err := nifa.ethHandler.MCastJoin(ethernet.ISp2pHello)
+	if err != nil {
+		return errors.Wrap(err, "Unable to join IS p2p hello multicast group")
+	}
+
+	nifa.wg.Add(2)
+	go nifa.receiver()
 
 	return nil
 }
@@ -175,84 +175,4 @@ func (nifa *netIfa) broadCastL1() error {
 
 func (nifa *netIfa) broadCastL2() error {
 	return fmt.Errorf("broadcast networks not supported yet")
-}
-
-func (nifa *netIfa) p2pHelloSender() {
-	for {
-		select {
-		case <-nifa.done:
-			nifa.helloTicker.Stop()
-			nifa.wg.Done()
-			return
-		case <-nifa.helloTicker.C():
-			fmt.Printf("Sending Hello!\n")
-
-			hello := nifa.p2pHello()
-			helloBuf := bytes.NewBuffer(nil)
-			hello.Serialize(helloBuf)
-
-			hdr := packet.ISISHeader{
-				ProtoDiscriminator:  0x83,
-				LengthIndicator:     packet.P2PHelloMinLen,
-				ProtocolIDExtension: 1,
-				IDLength:            0,
-				PDUType:             packet.P2P_HELLO,
-				Version:             1,
-				MaxAreaAddresses:    0,
-			}
-
-			hdrBuf := bytes.NewBuffer(nil)
-			hdr.Serialize(hdrBuf)
-			hdrBuf.Write(helloBuf.Bytes())
-
-			_, err := nifa.isP2PHelloCon.Write(hdrBuf.Bytes())
-			if err != nil {
-				panic(err)
-			}
-		}
-
-	}
-}
-
-func (nifa *netIfa) p2pHello() *packet.P2PHello {
-	circuitType := uint8(0)
-	if nifa.cfg.Level1 != nil {
-		circuitType++
-	}
-	if nifa.cfg.Level2 != nil {
-		circuitType += 2
-	}
-
-	h := &packet.P2PHello{
-		CircuitType:    circuitType,
-		SystemID:       nifa.srv.nets[0].SystemID,
-		HoldingTimer:   nifa.cfg.holdingTimer(),
-		PDULength:      packet.P2PHelloMinLen,
-		LocalCircuitID: 1,
-		TLVs:           make([]packet.TLV, 0, 5),
-	}
-
-	h.TLVs = append(h.TLVs, packet.NewP2PAdjacencyStateTLV(nifa.p2pAdjState, uint32(nifa.devStatus.GetIndex())))
-	h.TLVs = append(h.TLVs, packet.NewProtocolsSupportedTLV([]uint8{
-		packet.NLPIDIPv4,
-		packet.NLPIDIPv6,
-	}))
-
-	ipv4Addrs := make([]uint32, 0)
-	for _, a := range nifa.devStatus.GetAddrs() {
-		if !a.Addr().IsIPv4() {
-			continue
-		}
-
-		ipv4Addrs = append(ipv4Addrs, convert.Uint32(convert.Reverse(a.Addr().Bytes())))
-	}
-	h.TLVs = append(h.TLVs, packet.NewIPInterfaceAddressesTLV(ipv4Addrs))
-
-	areas := make([]types.AreaID, 0)
-	for _, net := range nifa.srv.nets {
-		areas = append(areas, append([]byte{net.AFI}, net.AreaID...))
-	}
-	h.TLVs = append(h.TLVs, packet.NewAreaAddressesTLV(areas))
-
-	return h
 }

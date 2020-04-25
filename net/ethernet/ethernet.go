@@ -94,29 +94,6 @@ type sockFilter struct {
 	k    uint32
 }
 
-func (s sockFprog) serialize() []byte {
-	prog := bytes.NewBuffer(nil)
-
-	// Length
-	length := uint16(len(s.filters))
-	prog.Write(convert.Reverse(convert.Uint16Byte(length)))
-
-	for i := 0; i < 6; i++ {
-		prog.WriteByte(0)
-	}
-
-	directives := s.serializeTerms()
-
-	fmt.Printf("Filter: %v\n", directives)
-	p := unsafe.Pointer(&directives)
-	fmt.Printf("ptr = %d\n", uint64(uintptr(p)))
-
-	prog.Write(convert.Reverse(convert.Uint64Byte(uint64(uintptr(p)))))
-	//prog.Write(convert.Uint64Byte(uint64(uintptr(p)))) => bad address
-
-	return prog.Bytes()
-}
-
 func (s sockFprog) serializeTerms() [48]byte {
 	directives := bytes.NewBuffer(nil)
 	for _, sf := range s.filters {
@@ -195,12 +172,6 @@ func (e *Handler) init() error {
 		return errors.Wrap(err, "Bind failed")
 	}
 
-	go func() {
-		buf := make([]byte, 1500)
-		syscall.Recvfrom(socket, buf, 0)
-		panic("XXXXX!")
-	}()
-
 	return nil
 }
 
@@ -226,7 +197,6 @@ func (p packetMreq) serialize() []byte {
 
 // MCastJoin joins a multicast group
 func (e *Handler) MCastJoin(addr MACAddr) error {
-	fmt.Printf("Joining group %s\n", addr.String())
 	mreq := packetMreq{
 		mrIfIndex: uint32(e.ifIndex),
 		mrType:    syscall.PACKET_MR_MULTICAST,
