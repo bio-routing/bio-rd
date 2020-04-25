@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"syscall"
+	"unsafe"
 
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
@@ -16,24 +17,36 @@ import (
 const (
 	// EthALen is the length of an ethernet address
 	EthALen = 6
+
+	// ETH_P_ALL real value
+	ETH_P_ALL = 0x0300
+
+	maxMTU = 9216
 )
 
 var (
 	// AllL1ISs is All Level 1 Intermediate Systems
-	AllL1ISs = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x14}
+	AllL1ISs = [EthALen]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x14}
 
 	// AllL2ISs is All Level 2 Intermediate Systems
-	AllL2ISs = [6]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x15}
+	AllL2ISs = [EthALen]byte{0x01, 0x80, 0xC2, 0x00, 0x00, 0x15}
 
 	// AllP2PISs is All Point-to-Point Intermediate Systems
-	AllP2PISs = [6]byte{0x09, 0x00, 0x2b, 0x00, 0x00, 0x5b}
+	AllP2PISs = [EthALen]byte{0x09, 0x00, 0x2b, 0x00, 0x00, 0x5b}
 
 	// ISp2pHello is Intermediate System Point-to-Point Hello
-	ISp2pHello = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
+	ISp2pHello = [EthALen]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
 
-	AllISS = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
-	AllESS = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
+	AllISS = [EthALen]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
+	AllESS = [EthALen]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
 )
+
+// MACAddr represens a MAC address
+type MACAddr [6]byte
+
+func (m MACAddr) String() string {
+	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5])
+}
 
 // Handler is an Ethernet handler
 type Handler struct {
@@ -45,6 +58,8 @@ type Handler struct {
 // HandlerInterface is an handler interface
 type HandlerInterface interface {
 	NewConn(dest [EthALen]byte) net.Conn
+	RecvPacket() (pkt []byte, src types.MACAddress, err error)
+	MCastJoin(addr MACAddr) error
 }
 
 // NewHandler creates a new Ethernet handler
@@ -75,21 +90,45 @@ type sockFprog struct {
 type sockFilter struct {
 	code uint16
 	jt   uint8
-	fj   uint8
+	jf   uint8
 	k    uint32
 }
 
 func (s sockFprog) serialize() []byte {
-	buf := bytes.NewBuffer(nil)
-	buf.Write(convert.Uint16Byte(uint16(len(s.filters) + 2)))
-	for _, sf := range s.filters {
-		buf.Write(convert.Uint16Byte(sf.code))
-		buf.WriteByte(sf.jt)
-		buf.WriteByte(sf.fj)
-		buf.Write(convert.Uint32Byte(sf.k))
+	prog := bytes.NewBuffer(nil)
+
+	// Length
+	length := uint16(len(s.filters))
+	prog.Write(convert.Reverse(convert.Uint16Byte(length)))
+
+	for i := 0; i < 6; i++ {
+		prog.WriteByte(0)
 	}
 
-	return buf.Bytes()
+	directives := s.serializeTerms()
+
+	fmt.Printf("Filter: %v\n", directives)
+	p := unsafe.Pointer(&directives)
+	fmt.Printf("ptr = %d\n", uint64(uintptr(p)))
+
+	prog.Write(convert.Reverse(convert.Uint64Byte(uint64(uintptr(p)))))
+	//prog.Write(convert.Uint64Byte(uint64(uintptr(p)))) => bad address
+
+	return prog.Bytes()
+}
+
+func (s sockFprog) serializeTerms() [48]byte {
+	directives := bytes.NewBuffer(nil)
+	for _, sf := range s.filters {
+		directives.Write(convert.Reverse(convert.Uint16Byte(sf.code)))
+		directives.WriteByte(sf.jt)
+		directives.WriteByte(sf.jf)
+		directives.Write(convert.Reverse(convert.Uint32Byte(sf.k)))
+	}
+
+	ret := [48]byte{}
+	copy(ret[:], directives.Bytes())
+	return ret
 }
 
 func getISISFilter() sockFprog {
@@ -101,7 +140,7 @@ func getISISFilter() sockFprog {
 			},
 			{
 				code: 0x15,
-				fj:   3,
+				jf:   3,
 				k:    0x0000fefe,
 			},
 			{
@@ -110,7 +149,7 @@ func getISISFilter() sockFprog {
 			},
 			{
 				code: 0x15,
-				fj:   1,
+				jf:   1,
 				k:    0x00000083,
 			},
 			{
@@ -131,15 +170,36 @@ func (e *Handler) init() error {
 	}
 	e.socket = socket
 
-	/*err = syscall.SetsockoptString(socket, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, string(getISISFilter().serialize()))
+	f := getISISFilter()
+	terms := f.serializeTerms()
+	buf := bytes.NewBuffer(nil)
+	buf.Write(convert.Reverse(convert.Uint16Byte(6)))
+
+	// Align to next 8 byte word
+	for i := 0; i < 6; i++ {
+		buf.WriteByte(0)
+	}
+
+	p := unsafe.Pointer(&terms)
+	buf.Write(convert.Reverse(convert.Uint64Byte(uint64(uintptr(p)))))
+	err = syscall.SetsockoptString(socket, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, string(buf.Bytes()))
 	if err != nil {
 		return errors.Wrap(err, "Setsockopt failed (SO_ATTACH_FILTER)")
-	}*/
+	}
 
-	err = syscall.BindToDevice(e.socket, e.devName)
+	err = syscall.Bind(e.socket, &syscall.SockaddrLinklayer{
+		Protocol: ETH_P_ALL,
+		Ifindex:  int(e.ifIndex),
+	})
 	if err != nil {
 		return errors.Wrap(err, "Bind failed")
 	}
+
+	go func() {
+		buf := make([]byte, 1500)
+		syscall.Recvfrom(socket, buf, 0)
+		panic("XXXXX!")
+	}()
 
 	return nil
 }
@@ -157,14 +217,16 @@ type packetMreq struct {
 
 func (p packetMreq) serialize() []byte {
 	buf := bytes.NewBuffer(nil)
-	buf.Write(convert.Uint32Byte(p.mrIfIndex))
-	buf.Write(convert.Uint16Byte(p.mrType))
-	buf.Write(convert.Uint16Byte(p.mrAlen))
+	buf.Write(convert.Reverse(convert.Uint32Byte(p.mrIfIndex)))
+	buf.Write(convert.Reverse(convert.Uint16Byte(p.mrType)))
+	buf.Write(convert.Reverse(convert.Uint16Byte(p.mrAlen)))
 	buf.Write(p.mrAddress[:])
 	return buf.Bytes()
 }
 
-func (e *Handler) mcastJoin(addr [EthALen]byte) error {
+// MCastJoin joins a multicast group
+func (e *Handler) MCastJoin(addr MACAddr) error {
+	fmt.Printf("Joining group %s\n", addr.String())
 	mreq := packetMreq{
 		mrIfIndex: uint32(e.ifIndex),
 		mrType:    syscall.PACKET_MR_MULTICAST,
@@ -180,22 +242,23 @@ func (e *Handler) mcastJoin(addr [EthALen]byte) error {
 	return nil
 }
 
-func (e *Handler) recvPacket() (pkt []byte, src types.MACAddress, err error) {
-	buf := make([]byte, 1500)
+// RecvPacket receives a packet on the ethernet handler
+func (e *Handler) RecvPacket() (pkt []byte, src types.MACAddress, err error) {
+	buf := make([]byte, maxMTU)
 	nBytes, from, err := syscall.Recvfrom(e.socket, buf, 0)
+	panic("RECV!")
 	if err != nil {
 		return nil, types.MACAddress{}, fmt.Errorf("recvfrom failed: %v", err)
 	}
 
 	ll := from.(*syscall.SockaddrLinklayer)
-	copy(src[:], ll.Addr[:6])
+	copy(src[:], ll.Addr[:EthALen])
 
 	return buf[:nBytes], src, nil
 }
 
 func (e *Handler) sendPacket(pkt []byte, dst [EthALen]byte) error {
 	fmt.Printf("Sending packet: %v\n", pkt)
-	fmt.Printf("Pkt len: %d\n", len(pkt))
 	ll := syscall.SockaddrLinklayer{
 		Ifindex: int(e.ifIndex),
 		Halen:   EthALen,
@@ -210,7 +273,6 @@ func (e *Handler) sendPacket(pkt []byte, dst [EthALen]byte) error {
 	}
 
 	newPkt = append(newPkt, pkt...)
-	fmt.Printf("len(newPkt: %d\n", len(newPkt))
 
 	length := []byte{0, 0}
 	binary.BigEndian.PutUint16(length, uint16(len(newPkt)))
