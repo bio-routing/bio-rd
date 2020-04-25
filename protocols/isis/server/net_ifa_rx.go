@@ -17,11 +17,8 @@ func (nifa *netIfa) receiver() {
 }
 
 func (nifa *netIfa) receive() error {
-	fmt.Printf("received: Waiting for incoming packet\n")
 	pkt, src, err := nifa.ethHandler.RecvPacket()
-	panic(pkt)
 	if err != nil {
-		panic(err)
 		return errors.Wrap(err, "Read failed")
 	}
 

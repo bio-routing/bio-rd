@@ -216,7 +216,6 @@ func (e *Handler) MCastJoin(addr MACAddr) error {
 func (e *Handler) RecvPacket() (pkt []byte, src types.MACAddress, err error) {
 	buf := make([]byte, maxMTU)
 	nBytes, from, err := syscall.Recvfrom(e.socket, buf, 0)
-	panic("RECV!")
 	if err != nil {
 		return nil, types.MACAddress{}, fmt.Errorf("recvfrom failed: %v", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/device"
 )
 
+// TODO: This is to be replaced with netIfa
 type dev struct {
 	name               string
 	srv                *Server
