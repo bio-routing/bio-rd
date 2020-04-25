@@ -70,15 +70,14 @@ func (o *osAdapterLinux) init() error {
 	for _, l := range links {
 		d := linkUpdateToDevice(l.Attrs())
 
-		for _, f := range []int{4, 6} {
-			addrs, err := o.handle.AddrList(l, f)
-			if err != nil {
-				return errors.Wrapf(err, "Unable to get addresses for interface %s", d.name)
-			}
+		addrs, err := o.handle.AddrList(l, 0)
+		if err != nil {
+			panic(err)
+			return errors.Wrapf(err, "Unable to get addresses for interface %s", d.name)
+		}
 
-			for _, addr := range addrs {
-				d.addrs = append(d.addrs, bnet.NewPfxFromIPNet(addr.IPNet))
-			}
+		for _, addr := range addrs {
+			d.addrs = append(d.addrs, bnet.NewPfxFromIPNet(addr.IPNet))
 		}
 
 		o.srv.addDevice(d)

@@ -49,6 +49,8 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 		return nil, fmt.Errorf("No NETs given. One is minimum")
 	}
 
+	fmt.Printf("AreaID: %v\n", nets[0].AreaID)
+
 	if !netsCompatible(nets) {
 		return nil, fmt.Errorf("Incompatible NETs. System IDs must be equal")
 	}

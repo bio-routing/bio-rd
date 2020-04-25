@@ -28,7 +28,7 @@ type Conn struct {
 }
 
 // NewConn creates a new ethernet conn
-func (e *Handler) NewConn(dest [EthALen]byte) *Conn {
+func (e *Handler) NewConn(dest [EthALen]byte) net.Conn {
 	return &Conn{
 		eth:      e,
 		destAddr: dest,

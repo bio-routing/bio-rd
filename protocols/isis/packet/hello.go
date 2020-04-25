@@ -91,7 +91,7 @@ func (h *P2PHello) GetIPInterfaceAddressesesTLV() *IPInterfaceAddressesTLV {
 func (h *P2PHello) Serialize(buf *bytes.Buffer) {
 	tlvsLen := uint16(0)
 	for _, TLV := range h.TLVs {
-		tlvsLen += uint16(TLV.Length())
+		tlvsLen += uint16(TLV.Length()) + tlvBaseLen
 	}
 	h.PDULength = P2PHelloMinLen + tlvsLen
 

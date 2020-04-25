@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bio-routing/tflow2/convert"
+
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
@@ -22,9 +24,30 @@ type InterfaceConfig struct {
 	Name         string
 	Passive      bool
 	PointToPoint bool
-	HoldingTimer uint16
 	Level1       *InterfaceLevelConfig
 	Level2       *InterfaceLevelConfig
+	mock         bool
+}
+
+// holdingTimer() picks the maximum holding timer from Level1 and Level2 config
+func (ifCfg *InterfaceConfig) holdingTimer() uint16 {
+	if ifCfg.Level1 != nil && ifCfg.Level2 == nil {
+		return ifCfg.Level1.HoldingTimer
+	}
+
+	if ifCfg.Level2 != nil && ifCfg.Level1 == nil {
+		return ifCfg.Level2.HoldingTimer
+	}
+
+	if ifCfg.Level1 == nil && ifCfg.Level2 == nil {
+		return 0
+	}
+
+	if ifCfg.Level1.HoldingTimer > ifCfg.Level2.HoldingTimer {
+		return ifCfg.Level1.HoldingTimer
+	}
+
+	return ifCfg.Level2.HoldingTimer
 }
 
 func (ifCfg *InterfaceConfig) getMinHelloInterval() uint16 {
@@ -61,18 +84,18 @@ type netIfaInterface interface {
 }
 
 type netIfa struct {
-	name        string
-	srv         *Server
-	cfg         *InterfaceConfig
-	active      uint64
-	p2pAdjState uint8
-	devStatus   device.DeviceInterface
-	done        chan struct{}
-	wg          sync.WaitGroup
-	helloTicker btime.Ticker
-	ethHandler  *ethernet.Handler
-	conn        net.Conn
-	ISP2PHELLO  net.Conn
+	name          string
+	srv           *Server
+	cfg           *InterfaceConfig
+	active        uint64
+	p2pAdjState   uint8
+	devStatus     device.DeviceInterface
+	done          chan struct{}
+	wg            sync.WaitGroup
+	helloTicker   btime.Ticker
+	ethHandler    ethernet.HandlerInterface
+	conn          net.Conn
+	isP2PHelloCon net.Conn
 }
 
 func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
@@ -96,7 +119,6 @@ func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
 
 // DeviceUpdate receives device up/down events and other (net)device changes
 func (nifa *netIfa) DeviceUpdate(dev device.DeviceInterface) {
-	fmt.Printf("DeviceUpdate!\n")
 	oldState := uint8(device.IfOperUnknown)
 	if nifa.devStatus != nil {
 		oldState = nifa.devStatus.GetOperState()
@@ -105,7 +127,6 @@ func (nifa *netIfa) DeviceUpdate(dev device.DeviceInterface) {
 	if oldState != device.IfOperUp && dev.GetOperState() == device.IfOperUp {
 		log.Infof("ISIS: Interface %s came up (phy). Enabling ISIS", nifa.name)
 		nifa.devStatus = dev
-		fmt.Printf("Calling nifa.start()\n")
 		err := nifa.start()
 		if err != nil {
 			log.Errorf("Unable to start ISIS on interface %s", nifa.name)
@@ -122,13 +143,17 @@ func (nifa *netIfa) start() error {
 
 	nifa.active = 1
 
-	ethHandler, err := ethernet.NewHandler(nifa.name)
-	if err != nil {
-		return errors.Wrapf(err, "Unable to create ethernet handler (%s)", nifa.name)
+	if nifa.cfg.mock {
+		nifa.ethHandler = ethernet.NewMockHandler()
+	} else {
+		ethHandler, err := ethernet.NewHandler(nifa.name)
+		if err != nil {
+			return errors.Wrapf(err, "Unable to create ethernet handler (%s)", nifa.name)
+		}
+		nifa.ethHandler = ethHandler
 	}
 
-	nifa.ethHandler = ethHandler
-	nifa.ISP2PHELLO = nifa.ethHandler.NewConn(ethernet.ISP2PHELLO)
+	nifa.isP2PHelloCon = nifa.ethHandler.NewConn(ethernet.ISp2pHello)
 
 	fmt.Printf("TODO: start hello sender and packet receiver\n")
 	// TODO: start hello sender and packet receiver
@@ -153,7 +178,6 @@ func (nifa *netIfa) broadCastL2() error {
 }
 
 func (nifa *netIfa) p2pHelloSender() {
-	fmt.Printf("This is the p2pHelloSender!\n")
 	for {
 		select {
 		case <-nifa.done:
@@ -181,7 +205,7 @@ func (nifa *netIfa) p2pHelloSender() {
 			hdr.Serialize(hdrBuf)
 			hdrBuf.Write(helloBuf.Bytes())
 
-			_, err := nifa.ISP2PHELLO.Write(hdrBuf.Bytes())
+			_, err := nifa.isP2PHelloCon.Write(hdrBuf.Bytes())
 			if err != nil {
 				panic(err)
 			}
@@ -202,25 +226,33 @@ func (nifa *netIfa) p2pHello() *packet.P2PHello {
 	h := &packet.P2PHello{
 		CircuitType:    circuitType,
 		SystemID:       nifa.srv.nets[0].SystemID,
-		HoldingTimer:   nifa.cfg.HoldingTimer,
+		HoldingTimer:   nifa.cfg.holdingTimer(),
 		PDULength:      packet.P2PHelloMinLen,
 		LocalCircuitID: 1,
-		TLVs:           make([]packet.TLV, 4),
+		TLVs:           make([]packet.TLV, 0, 5),
 	}
 
-	h.TLVs[0] = packet.NewP2PAdjacencyStateTLV(nifa.p2pAdjState, uint32(nifa.devStatus.GetIndex()))
-	h.TLVs[1] = packet.NewProtocolsSupportedTLV([]uint8{
+	h.TLVs = append(h.TLVs, packet.NewP2PAdjacencyStateTLV(nifa.p2pAdjState, uint32(nifa.devStatus.GetIndex())))
+	h.TLVs = append(h.TLVs, packet.NewProtocolsSupportedTLV([]uint8{
 		packet.NLPIDIPv4,
 		packet.NLPIDIPv6,
-	})
-	h.TLVs[2] = packet.NewIPInterfaceAddressesTLV([]uint32{
-		10*256 ^ 3,
-	})
+	}))
+
+	ipv4Addrs := make([]uint32, 0)
+	for _, a := range nifa.devStatus.GetAddrs() {
+		if !a.Addr().IsIPv4() {
+			continue
+		}
+
+		ipv4Addrs = append(ipv4Addrs, convert.Uint32(convert.Reverse(a.Addr().Bytes())))
+	}
+	h.TLVs = append(h.TLVs, packet.NewIPInterfaceAddressesTLV(ipv4Addrs))
+
 	areas := make([]types.AreaID, 0)
 	for _, net := range nifa.srv.nets {
-		areas = append(areas, net.AreaID)
+		areas = append(areas, append([]byte{net.AFI}, net.AreaID...))
 	}
-	h.TLVs[3] = packet.NewAreaAddressesTLV(areas)
+	h.TLVs = append(h.TLVs, packet.NewAreaAddressesTLV(areas))
 
 	return h
 }
