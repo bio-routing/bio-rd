@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
@@ -49,6 +50,7 @@ func NewDumpLocRIBCommand() cli.Command {
 			err = dumpRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), afisafi)
 			if err != nil {
 				log.Errorf("DumpRIB failed: %v", err)
+				os.Exit(1)
 			}
 		}
 
@@ -71,6 +73,9 @@ func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint
 	for {
 		r, err := client.Recv()
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return errors.Wrap(err, "Received failed")
 		}
 
