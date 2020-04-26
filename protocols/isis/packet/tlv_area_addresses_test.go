@@ -173,5 +173,5 @@ func TestAreaAddressesTLVValue(t *testing.T) {
 		AreaIDs:   []types.AreaID{},
 	}
 
-	assert.Equal(t, tlv, tlv.Value())
+	assert.Equal(t, tlv.AreaIDs, tlv.Value())
 }

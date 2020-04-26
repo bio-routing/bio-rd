@@ -19,6 +19,21 @@ type MACAddress [6]byte
 // AreaID is an ISIS Area ID
 type AreaID []byte
 
+// Equal checks if area IDs are equal
+func (a AreaID) Equal(b AreaID) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (sysID *SystemID) String() string {
 	return fmt.Sprintf("%d%d.%d%d.%d%d", sysID[0], sysID[1], sysID[2], sysID[3], sysID[4], sysID[5])
 }
