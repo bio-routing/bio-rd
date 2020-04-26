@@ -31,7 +31,7 @@ func (nifa *netIfa) processPkt(rawPkt []byte) error {
 	buf := bytes.NewBuffer(rawPkt)
 	pkt, err := packet.Decode(buf)
 	if err != nil {
-		panic(err)
+		return errors.Wrap(err, "Decode failed")
 	}
 
 	switch pkt.Header.PDUType {

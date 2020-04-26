@@ -117,5 +117,4 @@ func TestNetIfa(t *testing.T) {
 	n, _ := eth0BidiConn.ReadA(buf)
 	fmt.Printf("n: %d\n", n)
 	fmt.Printf("Buf: %v\n", buf[:n])
-	panic("BOOM")
 }
