@@ -16,9 +16,9 @@ type lsdb struct {
 }
 
 type lsdbEntry struct {
-	lspdu    *packet.LSPDU
-	srmFlags map[*dev]struct{}
-	ssnFlags map[*dev]struct{}
+	lspdu *packet.LSPDU
+	//srmFlags map[*dev]struct{}
+	//ssnFlags map[*dev]struct{}
 }
 
 func newLSDB(s *Server) *lsdb {

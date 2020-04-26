@@ -74,7 +74,7 @@ func (a *AreaAddressesTLV) Length() uint8 {
 
 // Value gets the TLV itself
 func (a *AreaAddressesTLV) Value() interface{} {
-	return a.AreaIDs
+	return a
 }
 
 // Serialize serializes an area address TLV

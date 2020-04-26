@@ -9,7 +9,6 @@ import (
 
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
-	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	btime "github.com/bio-routing/bio-rd/util/time"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -80,26 +79,34 @@ type netIfaInterface interface {
 }
 
 type netIfa struct {
-	name          string
-	srv           *Server
-	cfg           *InterfaceConfig
-	active        uint64
-	p2pAdjState   uint8
-	devStatus     device.DeviceInterface
-	done          chan struct{}
-	wg            sync.WaitGroup
-	helloTicker   btime.Ticker
-	ethHandler    ethernet.HandlerInterface
-	isP2PHelloCon net.Conn
+	name              string
+	srv               *Server
+	cfg               *InterfaceConfig
+	active            uint64
+	devStatus         device.DeviceInterface
+	done              chan struct{}
+	wg                sync.WaitGroup
+	helloTicker       btime.Ticker
+	ethHandler        ethernet.HandlerInterface
+	isP2PHelloCon     net.Conn
+	neighborManagerL1 *neighborManager
+	neighborManagerL2 *neighborManager
 }
 
 func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
 	ret := &netIfa{
-		name:        cfg.Name,
-		srv:         srv,
-		cfg:         cfg,
-		p2pAdjState: packet.P2PAdjStateDown,
-		done:        make(chan struct{}),
+		name: cfg.Name,
+		srv:  srv,
+		cfg:  cfg,
+		done: make(chan struct{}),
+	}
+
+	if cfg.Level1 != nil {
+		ret.neighborManagerL1 = newNeighborManager(ret, 1)
+	}
+
+	if cfg.Level2 != nil {
+		ret.neighborManagerL2 = newNeighborManager(ret, 2)
 	}
 
 	if srv.netIfaManager.useMockTicker {
@@ -120,7 +127,7 @@ func (nifa *netIfa) DeviceUpdate(dev device.DeviceInterface) {
 	}
 
 	if oldState != device.IfOperUp && dev.GetOperState() == device.IfOperUp {
-		log.Infof("ISIS: Interface %s came up (phy). Enabling ISIS", nifa.name)
+		log.WithFields(nifa.fields()).Info("Interface changed state to operational. Enabling IS-IS")
 		nifa.devStatus = dev
 		err := nifa.start()
 		if err != nil {
@@ -129,8 +136,16 @@ func (nifa *netIfa) DeviceUpdate(dev device.DeviceInterface) {
 	}
 }
 
+func (nifa *netIfa) fields() log.Fields {
+	return log.Fields{
+		"protocol":  "IS-IS",
+		"component": "Interface",
+		"interface": nifa.name,
+	}
+}
+
 func (nifa *netIfa) start() error {
-	log.Infof("Starting ISIS on %s", nifa.name)
+	log.WithFields(nifa.fields()).Info("Starting ISIS")
 
 	if !atomic.CompareAndSwapUint64(&nifa.active, 0, 1) {
 		return fmt.Errorf("already active")

@@ -40,6 +40,10 @@ func (nifa *netIfa) processPkt(rawPkt []byte) error {
 	switch pkt.Header.PDUType {
 	case packet.P2P_HELLO:
 		return nifa.processP2PHello(pkt)
+	case packet.L2_LS_PDU_TYPE:
+		log.WithFields(nifa.fields()).Infof("Received L2 LSPDU")
+	case packet.L2_CSNP_TYPE:
+		log.WithFields(nifa.fields()).Infof("Received L2 CSNP")
 	}
 
 	return fmt.Errorf("Unknown PDU type %d", pkt.Header.PDUType)
@@ -48,26 +52,25 @@ func (nifa *netIfa) processPkt(rawPkt []byte) error {
 func (nifa *netIfa) processP2PHello(pkt *packet.ISISPacket) error {
 	hello := pkt.Body.(*packet.P2PHello)
 
-	if !nifa.validateRxTLVs(hello.TLVs) {
-		return fmt.Errorf("Invalid TLVs")
-	}
-
-	return nil
-}
-
-func (nifa *netIfa) validateRxTLVs(tlvs []packet.TLV) bool {
-	for _, tlv := range tlvs {
-		switch tlv.Type() {
-		case packet.AreaAddressesTLVType:
-			if !nifa.validateAreasL1(tlv.Value().([]types.AreaID)) {
-				return false
+	if hello.CircuitType == 1 || hello.CircuitType == 3 {
+		if nifa.neighborManagerL1 != nil {
+			err := nifa.neighborManagerL1.processP2PHello(hello)
+			if err != nil {
+				return errors.Wrap(err, "neighbor manager L1 failed processing the p2p hello")
 			}
-		case packet.ProtocolsSupportedTLVType:
-
 		}
 	}
 
-	return true
+	if hello.CircuitType == 2 || hello.CircuitType == 3 {
+		if nifa.neighborManagerL2 != nil {
+			err := nifa.neighborManagerL2.processP2PHello(hello)
+			if err != nil {
+				return errors.Wrap(err, "neighbor manager L1 failed processing the p2p hello")
+			}
+		}
+	}
+
+	return nil
 }
 
 // validateAreasL1 checks if any of the received areas matches with a localy configured area

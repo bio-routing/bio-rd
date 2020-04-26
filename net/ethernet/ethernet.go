@@ -227,7 +227,6 @@ func (e *Handler) RecvPacket() (pkt []byte, src types.MACAddress, err error) {
 }
 
 func (e *Handler) sendPacket(pkt []byte, dst [EthALen]byte) error {
-	fmt.Printf("Sending packet: %v\n", pkt)
 	ll := syscall.SockaddrLinklayer{
 		Ifindex: int(e.ifIndex),
 		Halen:   EthALen,
