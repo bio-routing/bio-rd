@@ -151,8 +151,6 @@ func (nifa *netIfa) start() error {
 		return fmt.Errorf("already active")
 	}
 
-	nifa.active = 1
-
 	if nifa.cfg.mock {
 		nifa.ethHandler = ethernet.NewMockHandler()
 	} else {
