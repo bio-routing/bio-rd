@@ -25,7 +25,8 @@ type Server struct {
 	nets           []*types.NET
 	sequenceNumber uint32
 	netIfaManager  *netIfaManager
-	lsdb           *lsdb
+	lsdbL1         *lsdb
+	lsdbL2         *lsdb
 	stop           chan struct{}
 	ds             device.Updater
 }
@@ -62,17 +63,20 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 
 	s.netIfaManager = newNetIfaManager(s)
 
-	s.lsdb = newLSDB(s)
+	s.lsdbL1 = newLSDB(s)
+	s.lsdbL2 = newLSDB(s)
+
 	return s, nil
 }
 
 func (s *Server) start() {
-	s.lsdb.start(btime.NewBIOTicker(time.Second))
+	s.lsdbL1.start(btime.NewBIOTicker(time.Second))
+	s.lsdbL2.start(btime.NewBIOTicker(time.Second))
 }
 
 func (s *Server) dispose() {
-	s.lsdb.dispose()
-	s.lsdb = nil
+	s.lsdbL1.dispose()
+	s.lsdbL2.dispose()
 }
 
 // netsCompatible verifies if the system id is equal in all NETs

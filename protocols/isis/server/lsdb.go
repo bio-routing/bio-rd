@@ -16,9 +16,9 @@ type lsdb struct {
 }
 
 type lsdbEntry struct {
-	lspdu *packet.LSPDU
-	//srmFlags map[*dev]struct{}
-	//ssnFlags map[*dev]struct{}
+	lspdu    *packet.LSPDU
+	srmFlags map[*netIfa]struct{}
+	ssnFlags map[*netIfa]struct{}
 }
 
 func newLSDB(s *Server) *lsdb {
@@ -30,7 +30,6 @@ func newLSDB(s *Server) *lsdb {
 
 func (l *lsdb) dispose() {
 	l.stop()
-	l.srv = nil
 }
 
 func (l *lsdb) start(t btime.Ticker) {

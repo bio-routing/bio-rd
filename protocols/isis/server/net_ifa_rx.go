@@ -45,6 +45,10 @@ func (nifa *netIfa) processPkt(rawPkt []byte) error {
 		log.WithFields(nifa.fields()).Infof("Received L2 CSNP")
 
 		return nil
+	case packet.L2_PSNP_TYPE:
+		log.WithFields(nifa.fields()).Infof("Received L2 PSNP")
+
+		return nil
 	}
 
 	return fmt.Errorf("Unknown PDU type %d", pkt.Header.PDUType)
