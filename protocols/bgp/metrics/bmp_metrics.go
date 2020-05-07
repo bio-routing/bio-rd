@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"net"
+
 	vrf_metrics "github.com/bio-routing/bio-rd/routingtable/vrf/metrics"
 )
 
@@ -11,8 +13,11 @@ type BMPMetrics struct {
 
 // BMPRouterMetrics contains a routers BMP metrics
 type BMPRouterMetrics struct {
-	// Name of the monitored routers
-	Name string
+	// Routers IP Address
+	Address net.IP
+
+	// SysName of the monitored router
+	SysName string
 
 	// Status of TCP session
 	Established bool

@@ -33,7 +33,8 @@ func (b *bmpMetricsService) metricsForRouter(rtr *Router) *metrics.BMPRouterMetr
 	established := atomic.LoadUint32(&rtr.established)
 
 	rm := &metrics.BMPRouterMetrics{
-		Name:                         rtr.name,
+		Address:                      rtr.address,
+		SysName:                      rtr.name,
 		Established:                  established == 1,
 		RouteMonitoringMessages:      atomic.LoadUint64(&rtr.counters.routeMonitoringMessages),
 		StatisticsReportMessages:     atomic.LoadUint64(&rtr.counters.statisticsReportMessages),
