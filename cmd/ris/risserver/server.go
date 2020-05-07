@@ -236,8 +236,9 @@ func (s *Server) GetRouters(c context.Context, request *pb.GetRoutersRequest) (*
 			vrfIDs = append(vrfIDs, vrf.RD())
 		}
 		resp.Routers = append(resp.Routers, &pb.Router{
-			Router: r.Name(),
-			VrfIds: vrfIDs,
+			SysName: r.Name(),
+			VrfIds:  vrfIDs,
+			Address: r.Address().String(),
 		})
 	}
 	return resp, nil

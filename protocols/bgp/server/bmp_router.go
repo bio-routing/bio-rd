@@ -98,6 +98,11 @@ func (r *Router) Name() string {
 	return r.name
 }
 
+// Address gets a routers address
+func (r *Router) Address() net.IP {
+	return r.address
+}
+
 func (r *Router) serve(con net.Conn) {
 	r.con = con
 	r.runMu.Lock()
