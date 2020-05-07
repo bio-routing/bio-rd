@@ -15,15 +15,15 @@ import (
 type neighborManager struct {
 	netIfa      *netIfa
 	level       uint8
-	neighbors   map[types.SystemID]*neighbor
-	neighborsMu sync.Mutex
+	neighbors   map[types.MACAddress]*neighbor
+	neighborsMu sync.RWMutex
 }
 
 func newNeighborManager(netIfa *netIfa, level uint8) *neighborManager {
 	return &neighborManager{
 		netIfa:    netIfa,
 		level:     level,
-		neighbors: make(map[types.SystemID]*neighbor),
+		neighbors: make(map[types.MACAddress]*neighbor),
 	}
 }
 
@@ -48,8 +48,19 @@ func (nm *neighborManager) getNeighbors() []*neighbor {
 	return ret
 }
 
+func (nm *neighborManager) neighborUp(src types.MACAddress) bool {
+	nm.neighborsMu.RLock()
+	defer nm.neighborsMu.RUnlock()
+
+	if _, found := nm.neighbors[src]; !found {
+		return false
+	}
+
+	return nm.neighbors[src].getState() == packet.UP_STATE
+}
+
 // TODO: Catch if P2P Adj. State is DOWN. What to do then? Drop the neighbor?
-func (nm *neighborManager) processP2PHello(hello *packet.P2PHello) error {
+func (nm *neighborManager) processP2PHello(src types.MACAddress, hello *packet.P2PHello) error {
 	nm.neighborsMu.Lock()
 	defer nm.neighborsMu.Unlock()
 
@@ -69,9 +80,9 @@ func (nm *neighborManager) processP2PHello(hello *packet.P2PHello) error {
 		}
 	}
 
-	if _, found := nm.neighbors[hello.SystemID]; !found {
+	if _, found := nm.neighbors[src]; !found {
 		n := nm.neighborFromP2PHello(hello)
-		nm.neighbors[hello.SystemID] = n
+		nm.neighbors[src] = n
 
 		n.wg.Add(1)
 		go n.adjChecker()
@@ -80,7 +91,7 @@ func (nm *neighborManager) processP2PHello(hello *packet.P2PHello) error {
 		return nil
 	}
 
-	n := nm.neighbors[hello.SystemID]
+	n := nm.neighbors[src]
 	return n.processP2PHello(hello)
 }
 

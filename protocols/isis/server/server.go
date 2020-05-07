@@ -20,15 +20,16 @@ type ISISServer interface {
 
 //Server represents an ISIS server
 type Server struct {
-	running        bool
-	runningMu      sync.Mutex
-	nets           []*types.NET
-	sequenceNumber uint32
-	netIfaManager  *netIfaManager
-	lsdbL1         *lsdb
-	lsdbL2         *lsdb
-	stop           chan struct{}
-	ds             device.Updater
+	running          bool
+	runningMu        sync.Mutex
+	nets             []*types.NET
+	sequenceNumberL1 uint32
+	sequenceNumberL2 uint32
+	netIfaManager    *netIfaManager
+	lsdbL1           *lsdb
+	lsdbL2           *lsdb
+	stop             chan struct{}
+	ds               device.Updater
 }
 
 // Start starts the ISIS server
@@ -55,10 +56,11 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 	}
 
 	s := &Server{
-		nets:           nets,
-		ds:             ds,
-		sequenceNumber: 1,
-		stop:           make(chan struct{}),
+		nets:             nets,
+		ds:               ds,
+		sequenceNumberL1: 1,
+		sequenceNumberL2: 1,
+		stop:             make(chan struct{}),
 	}
 
 	s.netIfaManager = newNetIfaManager(s)

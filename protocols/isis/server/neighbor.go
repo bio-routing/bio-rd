@@ -23,7 +23,7 @@ type neighbor struct {
 	extendedLocalCircuitID uint32
 	nm                     *neighborManager
 	state                  uint8
-	stateMu                sync.Mutex
+	stateMu                sync.RWMutex
 	timeout                time.Time
 	timeoutMu              sync.Mutex
 	priority               uint8

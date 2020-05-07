@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,28 +20,51 @@ func (nifa *netIfa) receiver() {
 }
 
 func (nifa *netIfa) receive() error {
-	pkt, _, err := nifa.ethHandler.RecvPacket()
+	pkt, src, err := nifa.ethHandler.RecvPacket()
 	if err != nil {
 		return errors.Wrap(err, "Read failed")
 	}
 
-	return nifa.processPkt(pkt)
+	return nifa.processPkt(src, pkt)
 }
 
-func (nifa *netIfa) processPkt(rawPkt []byte) error {
+func (nifa *netIfa) processPkt(src types.MACAddress, rawPkt []byte) error {
 	buf := bytes.NewBuffer(rawPkt)
 	pkt, err := packet.Decode(buf)
 	if err != nil {
 		return errors.Wrap(err, "Decode failed")
 	}
 
+	if pkt.Header.PDUType == packet.L2_LS_PDU_TYPE || pkt.Header.PDUType == packet.L2_CSNP_TYPE || pkt.Header.PDUType == packet.L2_PSNP_TYPE {
+		if nifa.neighborManagerL2 == nil {
+			log.WithFields(nifa.fields()).Debugf("Received L2 PDU on L2 disabled interface")
+			return nil
+		}
+
+		if !nifa.neighborManagerL2.neighborUp(src) {
+			log.WithFields(nifa.fields()).Debugf("Received L2 PDU without neighbor up (src=%v)", src)
+			return nil
+		}
+	}
+
+	if pkt.Header.PDUType == packet.L1_LS_PDU_TYPE || pkt.Header.PDUType == packet.L1_CSNP_TYPE || pkt.Header.PDUType == packet.L1_PSNP_TYPE {
+		if nifa.neighborManagerL1 == nil {
+			log.WithFields(nifa.fields()).Debugf("Received L1 PDU on L1 disabled interface")
+			return nil
+		}
+
+		if !nifa.neighborManagerL1.neighborUp(src) {
+			log.WithFields(nifa.fields()).Debugf("Received L1 PDU without neighbor up (src=%v)", src)
+			return nil
+		}
+	}
+
 	switch pkt.Header.PDUType {
 	case packet.P2P_HELLO:
-		return nifa.processP2PHello(pkt)
+		return nifa.processP2PHello(src, pkt.Body.(*packet.P2PHello))
 	case packet.L2_LS_PDU_TYPE:
-		log.WithFields(nifa.fields()).Infof("Received L2 LSPDU")
-
-		return nil
+		log.WithFields(nifa.fields()).Debug("Received L2 LSPDU")
+		return nifa.processL2LSPDU(pkt.Body.(*packet.LSPDU))
 	case packet.L2_CSNP_TYPE:
 		log.WithFields(nifa.fields()).Infof("Received L2 CSNP")
 
@@ -54,12 +78,10 @@ func (nifa *netIfa) processPkt(rawPkt []byte) error {
 	return fmt.Errorf("Unknown PDU type %d", pkt.Header.PDUType)
 }
 
-func (nifa *netIfa) processP2PHello(pkt *packet.ISISPacket) error {
-	hello := pkt.Body.(*packet.P2PHello)
-
+func (nifa *netIfa) processP2PHello(src types.MACAddress, hello *packet.P2PHello) error {
 	if hello.CircuitType == 1 || hello.CircuitType == 3 {
 		if nifa.neighborManagerL1 != nil {
-			err := nifa.neighborManagerL1.processP2PHello(hello)
+			err := nifa.neighborManagerL1.processP2PHello(src, hello)
 			if err != nil {
 				return errors.Wrap(err, "neighbor manager L1 failed processing the p2p hello")
 			}
@@ -68,12 +90,19 @@ func (nifa *netIfa) processP2PHello(pkt *packet.ISISPacket) error {
 
 	if hello.CircuitType == 2 || hello.CircuitType == 3 {
 		if nifa.neighborManagerL2 != nil {
-			err := nifa.neighborManagerL2.processP2PHello(hello)
+			err := nifa.neighborManagerL2.processP2PHello(src, hello)
 			if err != nil {
 				return errors.Wrap(err, "neighbor manager L2 failed processing the p2p hello")
 			}
 		}
 	}
 
+	return nil
+}
+
+func (nifa *netIfa) processL2LSPDU(pkt *packet.LSPDU) error {
+	if nifa.cfg.PointToPoint {
+
+	}
 	return nil
 }
