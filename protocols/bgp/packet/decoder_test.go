@@ -387,7 +387,7 @@ func TestDecodeNotificationMsg(t *testing.T) {
 		},
 		{
 			name:     "Cease (invalid subcode)",
-			input:    []byte{6, 1},
+			input:    []byte{6, 9},
 			wantFail: true,
 		},
 	}
