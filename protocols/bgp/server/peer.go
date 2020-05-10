@@ -377,9 +377,11 @@ func addPathCapabilityForFamily(f *AddressFamilyConfig, afi uint16, safi uint8) 
 	return true, packet.Capability{
 		Code: packet.AddPathCapabilityCode,
 		Value: packet.AddPathCapability{
-			AFI:         afi,
-			SAFI:        safi,
-			SendReceive: addPath,
+			packet.AddPathCapabilityTuple{
+				AFI:         afi,
+				SAFI:        safi,
+				SendReceive: addPath,
+			},
 		},
 	}
 }

@@ -10,6 +10,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	addPathTupleSize = 4
+)
+
 // Decode decodes a BGP message
 func Decode(buf *bytes.Buffer, opt *DecodeOptions) (*BGPMessage, error) {
 	hdr, err := decodeHeader(buf)
@@ -242,7 +246,7 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 		}
 		cap.Value = mpCap
 	case AddPathCapabilityCode:
-		addPathCap, err := decodeAddPathCapability(buf)
+		addPathCap, err := decodeAddPathCapability(buf, cap.Length)
 		if err != nil {
 			return cap, errors.Wrap(err, "Unable to decode add path capability")
 		}
@@ -280,20 +284,29 @@ func decodeMultiProtocolCapability(buf *bytes.Buffer) (MultiProtocolCapability, 
 	return mpCap, nil
 }
 
-func decodeAddPathCapability(buf *bytes.Buffer) (AddPathCapability, error) {
-	addPathCap := AddPathCapability{}
-	fields := []interface{}{
-		&addPathCap.AFI,
-		&addPathCap.SAFI,
-		&addPathCap.SendReceive,
+func decodeAddPathCapability(buf *bytes.Buffer, capLength uint8) (AddPathCapability, error) {
+	addPathCaps := make(AddPathCapability, 0)
+
+	if capLength%addPathTupleSize != 0 {
+		return nil, fmt.Errorf("Invalid caplength %d, must be multiple of %d", capLength, addPathTupleSize)
 	}
 
-	err := decode.Decode(buf, fields)
-	if err != nil {
-		return addPathCap, err
+	for ; capLength >= addPathTupleSize; capLength -= addPathTupleSize {
+		addPathCap := AddPathCapabilityTuple{}
+		fields := []interface{}{
+			&addPathCap.AFI,
+			&addPathCap.SAFI,
+			&addPathCap.SendReceive,
+		}
+		err := decode.Decode(buf, fields)
+		if err != nil {
+			return nil, err
+		}
+
+		addPathCaps = append(addPathCaps, addPathCap)
 	}
 
-	return addPathCap, nil
+	return addPathCaps, nil
 }
 
 func decodeASN4Capability(buf *bytes.Buffer) (ASN4Capability, error) {
