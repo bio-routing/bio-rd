@@ -116,9 +116,11 @@ func TestSerializeOptParams(t *testing.T) {
 							Code:   69,
 							Length: 4,
 							Value: AddPathCapability{
-								AFI:         1,
-								SAFI:        1,
-								SendReceive: 3,
+								AddPathCapabilityTuple{
+									AFI:         1,
+									SAFI:        1,
+									SendReceive: 3,
+								},
 							},
 						},
 					},

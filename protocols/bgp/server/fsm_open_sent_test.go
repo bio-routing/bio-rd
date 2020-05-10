@@ -229,9 +229,11 @@ func TestProcessAddPathCapabilityTX(t *testing.T) {
 			},
 			caps: []packet.AddPathCapability{
 				{
-					AFI:         packet.IPv4AFI,
-					SAFI:        packet.UnicastSAFI,
-					SendReceive: packet.AddPathReceive,
+					packet.AddPathCapabilityTuple{
+						AFI:         packet.IPv4AFI,
+						SAFI:        packet.UnicastSAFI,
+						SendReceive: packet.AddPathReceive,
+					},
 				},
 			},
 			expected: routingtable.ClientOptions{MaxPaths: 3},
@@ -255,9 +257,11 @@ func TestProcessAddPathCapabilityTX(t *testing.T) {
 			},
 			caps: []packet.AddPathCapability{
 				{
-					AFI:         packet.IPv4AFI,
-					SAFI:        packet.UnicastSAFI,
-					SendReceive: packet.AddPathReceive,
+					packet.AddPathCapabilityTuple{
+						AFI:         packet.IPv4AFI,
+						SAFI:        packet.UnicastSAFI,
+						SendReceive: packet.AddPathReceive,
+					},
 				},
 			},
 			expected: routingtable.ClientOptions{BestOnly: true},

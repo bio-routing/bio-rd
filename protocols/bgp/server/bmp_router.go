@@ -375,21 +375,23 @@ func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 			switch cap.Code {
 			case packet.AddPathCapabilityCode:
 				addPathCap := cap.Value.(packet.AddPathCapability)
-				peerFamily := p.addressFamily(addPathCap.AFI, addPathCap.SAFI)
-				if peerFamily == nil {
-					continue
-				}
-				switch addPathCap.SendReceive {
-				case packet.AddPathSend:
-					peerFamily.addPathSend = routingtable.ClientOptions{
-						MaxPaths: 10,
+				for _, addPathCapTuple := range addPathCap {
+					peerFamily := p.addressFamily(addPathCapTuple.AFI, addPathCapTuple.SAFI)
+					if peerFamily == nil {
+						continue
 					}
-				case packet.AddPathReceive:
-					peerFamily.addPathReceive = true
-				case packet.AddPathSendReceive:
-					peerFamily.addPathReceive = true
-					peerFamily.addPathSend = routingtable.ClientOptions{
-						MaxPaths: 10,
+					switch addPathCapTuple.SendReceive {
+					case packet.AddPathSend:
+						peerFamily.addPathSend = routingtable.ClientOptions{
+							MaxPaths: 10,
+						}
+					case packet.AddPathReceive:
+						peerFamily.addPathReceive = true
+					case packet.AddPathSendReceive:
+						peerFamily.addPathReceive = true
+						peerFamily.addPathSend = routingtable.ClientOptions{
+							MaxPaths: 10,
+						}
 					}
 				}
 			}
