@@ -88,7 +88,7 @@ const (
 	PeerDeconfigured              = 3
 	AdminReset                    = 4
 	ConnectionRejected            = 5
-	OtherConfigChange             = 8
+	OtherConfigChange             = 6
 	ConnectionCollisionResolution = 7
 	OutOfResources                = 8
 
