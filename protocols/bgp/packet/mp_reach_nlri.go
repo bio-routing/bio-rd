@@ -64,7 +64,12 @@ func deserializeMultiProtocolReachNLRI(b []byte, opt *DecodeOptions) (MultiProto
 			fmt.Errorf("Failed to decode next hop IP: expected %d bytes for NLRI, only %d remaining", nextHopLength, budget)
 	}
 
-	nh, err := bnet.IPFromBytes(variable[:nextHopLength])
+	firstNextHopLength := nextHopLength
+	if nextHopLength == 32 {
+		// second next-hop is lladdr (see rfc2545 sec 3 par 2)
+		firstNextHopLength = 16
+	}
+	nh, err := bnet.IPFromBytes(variable[:firstNextHopLength])
 	if err != nil {
 		return MultiProtocolReachNLRI{}, errors.Wrap(err, "Failed to decode next hop IP")
 	}
