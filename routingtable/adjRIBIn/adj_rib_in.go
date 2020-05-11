@@ -254,6 +254,11 @@ func (a *AdjRIBIn) Register(client routingtable.RouteTableClient) {
 	a.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
 }
 
+// RegisterWithOptions registers a client for updates
+func (a *AdjRIBIn) RegisterWithOptions(client routingtable.RouteTableClient, options routingtable.ClientOptions) {
+	a.clientManager.RegisterWithOptions(client, options)
+}
+
 // Unregister unregisters a client
 func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
 	if !a.clientManager.Unregister(client) {
@@ -270,4 +275,19 @@ func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
 // RefreshRoute is here to fultill an interface
 func (a *AdjRIBIn) RefreshRoute(*net.Prefix, []*route.Path) {
 
+}
+
+// LPM performs a longest prefix match on the routing table
+func (a *AdjRIBIn) LPM(pfx *net.Prefix) (res []*route.Route) {
+	return a.rt.LPM(pfx)
+}
+
+// Get gets a route
+func (a *AdjRIBIn) Get(pfx *net.Prefix) *route.Route {
+	return a.rt.Get(pfx)
+}
+
+// GetLonger gets all more specifics
+func (a *AdjRIBIn) GetLonger(pfx *net.Prefix) (res []*route.Route) {
+	return a.rt.GetLonger(pfx)
 }
