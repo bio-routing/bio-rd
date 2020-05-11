@@ -220,7 +220,7 @@ func (a *AdjRIBIn) removePath(pfx *net.Prefix, p *route.Path) bool {
 	oldPaths := r.Paths()
 	for _, path := range oldPaths {
 		if a.addPathRX {
-			if path.BGPPath.PathIdentifier != p.BGPPath.PathIdentifier {
+			if p != nil && path.BGPPath.PathIdentifier != p.BGPPath.PathIdentifier {
 				continue
 			}
 		}
