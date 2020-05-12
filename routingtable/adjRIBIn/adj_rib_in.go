@@ -162,12 +162,24 @@ func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 		}
 	}
 
+	var oldPaths []*route.Path
 	if a.addPathRX {
+		oldPaths := make([]*route.Path, 0)
+		r := a.rt.Get(pfx)
+		if r != nil {
+			for _, path := range r.Paths() {
+				// RFC7911 sec 5 par 1 states (pfx, PathIdentifier) should be unique
+				if path.BGPPath.PathIdentifier == p.BGPPath.PathIdentifier {
+					a.rt.RemovePath(pfx, path)
+					oldPaths = append(oldPaths, path)
+				}
+			}
+		}
 		a.rt.AddPath(pfx, p)
 	} else {
-		oldPaths := a.rt.ReplacePath(pfx, p)
-		a.removePathsFromClients(pfx, oldPaths)
+		oldPaths = a.rt.ReplacePath(pfx, p)
 	}
+	a.removePathsFromClients(pfx, oldPaths)
 
 	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
