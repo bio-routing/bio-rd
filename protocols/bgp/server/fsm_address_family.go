@@ -155,6 +155,7 @@ func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
 	for r := u.NLRI; r != nil; r = r.Next {
 		path := f.newRoutePath()
 		f.processAttributes(u.PathAttributes, path)
+		path.BGPPath.PathIdentifier = u.NLRI.PathIdentifier
 
 		f.adjRIBIn.AddPath(r.Prefix, path)
 	}
@@ -191,6 +192,7 @@ func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.Mul
 		return
 	}
 
+	path.BGPPath.PathIdentifier = nlri.NLRI.PathIdentifier
 	path.BGPPath.BGPPathA.NextHop = nlri.NextHop
 
 	for n := nlri.NLRI; n != nil; n = n.Next {
@@ -201,6 +203,10 @@ func (f *fsmAddressFamily) multiProtocolUpdate(path *route.Path, nlri packet.Mul
 func (f *fsmAddressFamily) multiProtocolWithdraw(path *route.Path, nlri packet.MultiProtocolUnreachNLRI) {
 	if f.afi != nlri.AFI || f.safi != nlri.SAFI {
 		return
+	}
+
+	if nlri.NLRI != nil {
+		path.BGPPath.PathIdentifier = nlri.NLRI.PathIdentifier
 	}
 
 	for cur := nlri.NLRI; cur != nil; cur = cur.Next {
