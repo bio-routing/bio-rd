@@ -55,7 +55,8 @@ type routerCounters struct {
 	routeMirroringMessages       uint64
 }
 
-type neighbor struct {
+// Neighbor represents a bgp neighbor of a router
+type Neighbor struct {
 	vrfID       uint64
 	peerAddress [16]byte
 	localAS     uint32
@@ -335,7 +336,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	openSent.openMsgReceived(recvOpen)
 
 	fsm.state = newEstablishedState(fsm)
-	n := &neighbor{
+	n := &Neighbor{
 		vrfID:       msg.PerPeerHeader.PeerDistinguisher,
 		localAS:     fsm.peer.localASN,
 		peerAS:      msg.PerPeerHeader.PeerAS,
@@ -357,7 +358,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	return nil
 }
 
-func (n *neighbor) registerClients(clients map[afiClient]struct{}) {
+func (n *Neighbor) registerClients(clients map[afiClient]struct{}) {
 	for ac := range clients {
 		if ac.afi == packet.IPv4AFI {
 			n.fsm.ipv4Unicast.adjRIBIn.Register(ac.client)

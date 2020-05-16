@@ -6,17 +6,17 @@ import (
 )
 
 type neighborManager struct {
-	neighbors   []*neighbor
+	neighbors   []*Neighbor
 	neighborsMu sync.Mutex
 }
 
 func newNeighborManager() *neighborManager {
 	return &neighborManager{
-		neighbors: make([]*neighbor, 0),
+		neighbors: make([]*Neighbor, 0),
 	}
 }
 
-func (nm *neighborManager) addNeighbor(n *neighbor) error {
+func (nm *neighborManager) addNeighbor(n *Neighbor) error {
 	nm.neighborsMu.Lock()
 	defer nm.neighborsMu.Unlock()
 
@@ -30,7 +30,7 @@ func (nm *neighborManager) addNeighbor(n *neighbor) error {
 	return nil
 }
 
-func (nm *neighborManager) getNeighbor(vrfID uint64, addr [16]byte) *neighbor {
+func (nm *neighborManager) getNeighbor(vrfID uint64, addr [16]byte) *Neighbor {
 	nm.neighborsMu.Lock()
 	defer nm.neighborsMu.Unlock()
 
@@ -80,11 +80,11 @@ func (nm *neighborManager) disposeAll() {
 	}
 }
 
-func (nm *neighborManager) list() []*neighbor {
+func (nm *neighborManager) list() []*Neighbor {
 	nm.neighborsMu.Lock()
 	defer nm.neighborsMu.Unlock()
 
-	ret := make([]*neighbor, len(nm.neighbors))
+	ret := make([]*Neighbor, len(nm.neighbors))
 	for i := range nm.neighbors {
 		ret[i] = nm.neighbors[i]
 	}
