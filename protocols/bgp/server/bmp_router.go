@@ -104,6 +104,11 @@ func (r *Router) Address() net.IP {
 	return r.address
 }
 
+// Neighbors lists all neighbors
+func (r *Router) Neighbors() []*Neighbor {
+	return r.neighborManager.list()
+}
+
 func (r *Router) serve(con net.Conn) {
 	r.con = con
 	r.runMu.Lock()
