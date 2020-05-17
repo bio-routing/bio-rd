@@ -64,6 +64,7 @@ func (nifa *netIfa) processPkt(src types.MACAddress, rawPkt []byte) error {
 		return nifa.processP2PHello(src, pkt.Body.(*packet.P2PHello))
 	case packet.L2_LS_PDU_TYPE:
 		log.WithFields(nifa.fields()).Debug("Received L2 LSPDU")
+
 		return nifa.processL2LSPDU(pkt.Body.(*packet.LSPDU))
 	case packet.L2_CSNP_TYPE:
 		log.WithFields(nifa.fields()).Infof("Received L2 CSNP")

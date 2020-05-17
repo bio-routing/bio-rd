@@ -15,12 +15,6 @@ type lsdb struct {
 	wg     sync.WaitGroup
 }
 
-type lsdbEntry struct {
-	lspdu    *packet.LSPDU
-	srmFlags map[*netIfa]struct{}
-	ssnFlags map[*netIfa]struct{}
-}
-
 func newLSDB(s *Server) *lsdb {
 	return &lsdb{
 		srv:  s,
@@ -66,5 +60,11 @@ func (l *lsdb) decrementRemainingLifetimes() {
 		}
 
 		lspdbEntry.lspdu.RemainingLifetime--
+	}
+}
+
+func (l *lsdb) setSRMAllLSPs(ifa *netIfa) {
+	for _, lsp := range l.lsps {
+		lsp.setSRM(ifa)
 	}
 }

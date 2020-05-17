@@ -102,11 +102,11 @@ func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
 	}
 
 	if cfg.Level1 != nil {
-		ret.neighborManagerL1 = newNeighborManager(ret, 1)
+		ret.neighborManagerL1 = newNeighborManager(srv, ret, 1)
 	}
 
 	if cfg.Level2 != nil {
-		ret.neighborManagerL2 = newNeighborManager(ret, 2)
+		ret.neighborManagerL2 = newNeighborManager(srv, ret, 2)
 	}
 
 	if srv.netIfaManager.useMockTicker {

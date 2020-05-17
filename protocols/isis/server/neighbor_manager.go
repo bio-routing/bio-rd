@@ -13,13 +13,14 @@ import (
 )
 
 type neighborManager struct {
+	server      *Server
 	netIfa      *netIfa
 	level       uint8
 	neighbors   map[types.MACAddress]*neighbor
 	neighborsMu sync.RWMutex
 }
 
-func newNeighborManager(netIfa *netIfa, level uint8) *neighborManager {
+func newNeighborManager(server *Server, netIfa *netIfa, level uint8) *neighborManager {
 	return &neighborManager{
 		netIfa:    netIfa,
 		level:     level,

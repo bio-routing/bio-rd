@@ -38,7 +38,6 @@ type neighbor struct {
 func (nm *neighborManager) neighborFromP2PHello(hello *packet.P2PHello) *neighbor {
 	n := &neighbor{
 		sysID:       hello.SystemID,
-		nm:          nm,
 		state:       packet.P2PAdjStateInit,
 		timeout:     time.Now().Add(time.Duration(hello.HoldingTimer) * time.Second),
 		ipAddresses: make([]bnet.IP, 0),
@@ -147,11 +146,21 @@ func (n *neighbor) processP2PHello(hello *packet.P2PHello) error {
 			if n.getState() != packet.P2PAdjStateUp {
 				log.WithFields(n.fields()).Infof("Adjacency reaches up state")
 				n.setState(packet.P2PAdjStateUp)
+
+				n.getLSDB().setSRMAllLSPs(n.nm.netIfa)
 			}
 		}
 	}
 
 	return nil
+}
+
+func (n *neighbor) getLSDB() *lsdb {
+	if n.nm.level == 1 {
+		return n.nm.server.lsdbL1
+	}
+
+	return n.nm.server.lsdbL2
 }
 
 func getP2PAdjTLV(tlvs []packet.TLV) *packet.P2PAdjacencyStateTLV {
