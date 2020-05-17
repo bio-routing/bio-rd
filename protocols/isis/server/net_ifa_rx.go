@@ -65,10 +65,12 @@ func (nifa *netIfa) processPkt(src types.MACAddress, rawPkt []byte) error {
 	case packet.L2_LS_PDU_TYPE:
 		log.WithFields(nifa.fields()).Debug("Received L2 LSPDU")
 
-		return nifa.processL2LSPDU(pkt.Body.(*packet.LSPDU))
+		nifa.processL2LSPDU(pkt.Body.(*packet.LSPDU))
+		return nil
 	case packet.L2_CSNP_TYPE:
 		log.WithFields(nifa.fields()).Infof("Received L2 CSNP")
 
+		nifa.processL2CSNPDU(pkt.Body.(*packet.CSNP))
 		return nil
 	case packet.L2_PSNP_TYPE:
 		log.WithFields(nifa.fields()).Infof("Received L2 PSNP")
@@ -101,9 +103,11 @@ func (nifa *netIfa) processP2PHello(src types.MACAddress, hello *packet.P2PHello
 	return nil
 }
 
-func (nifa *netIfa) processL2LSPDU(pkt *packet.LSPDU) error {
-	if nifa.cfg.PointToPoint {
+func (nifa *netIfa) processL2CSNPDU(pkt *packet.CSNP) {
+	nifa.srv.lsdbL2.processCSNP(pkt, nifa)
+}
 
-	}
+func (nifa *netIfa) processL2LSPDU(pkt *packet.LSPDU) error {
+
 	return nil
 }

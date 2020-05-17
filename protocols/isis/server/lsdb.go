@@ -113,3 +113,42 @@ func (l *lsdb) sendLSPDUs() {
 		}
 	}
 }
+
+func (l *lsdb) processCSNP(csnp *packet.CSNP, from *netIfa) {
+	for _, lspEntry := range csnp.GetLSPEntries() {
+		e := l._getLSPDU(lspEntry.LSPID)
+		if e == nil {
+			// LSP was unknown until now. We need to create an entry with Sequence number = 0
+		}
+
+		if e.sameAsInLSPEntry(lspEntry) {
+			e.clearSRMFlag(from)
+			continue
+		}
+
+		if e.newerInDatabase(lspEntry) {
+			e.clearSSNFlag(from)
+			e.setSRM(from)
+			continue
+		}
+
+		if e.olderInDatabase(lspEntry) {
+			e.clearSRMFlag(from)
+			e.setSSN(from)
+			continue
+		}
+	}
+
+	// TODO: Check LSDB for entries in the range of the CSNP but not listed in it's TLVs.
+	// Set SRM flag so we send the LSP our neighbor doesn't know about.
+}
+
+func (l *lsdb) _getLSPDU(needle packet.LSPID) *lsdbEntry {
+	for _, e := range l.lsps {
+		if e.lspdu.LSPID == needle {
+			return e
+		}
+	}
+
+	return nil
+}

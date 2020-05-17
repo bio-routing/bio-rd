@@ -7,11 +7,10 @@ import (
 )
 
 type lsdbEntry struct {
-	lspdu      *packet.LSPDU
-	srmFlags   map[*netIfa]struct{}
-	srmFlagsMu sync.RWMutex
-	ssnFlags   map[*netIfa]struct{}
-	ssnFlagsMu sync.RWMutex
+	lspdu    *packet.LSPDU
+	srmFlags map[*netIfa]struct{}
+	ssnFlags map[*netIfa]struct{}
+	mutex    sync.RWMutex
 }
 
 func newLSDBEntry(lspdu *packet.LSPDU) *lsdbEntry {
@@ -22,33 +21,34 @@ func newLSDBEntry(lspdu *packet.LSPDU) *lsdbEntry {
 }
 
 func (l *lsdbEntry) dropInterface(ifa *netIfa) {
-	l.srmFlagsMu.Lock()
-	defer l.srmFlagsMu.Unlock()
-
-	l.ssnFlagsMu.Lock()
-	defer l.ssnFlagsMu.Unlock()
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 
 	delete(l.srmFlags, ifa)
 	delete(l.ssnFlags, ifa)
 }
 
 func (l *lsdbEntry) setSRM(ifa *netIfa) {
-	l.srmFlagsMu.Lock()
-	defer l.srmFlagsMu.Unlock()
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	if l.lspdu.SequenceNumber == 0 {
+		return
+	}
 
 	l.srmFlags[ifa] = struct{}{}
 }
 
 func (l *lsdbEntry) setSSN(ifa *netIfa) {
-	l.ssnFlagsMu.Lock()
-	defer l.ssnFlagsMu.Unlock()
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 
 	l.ssnFlags[ifa] = struct{}{}
 }
 
 func (l *lsdbEntry) getInterfacesSRMSet() []*netIfa {
-	l.srmFlagsMu.Lock()
-	defer l.srmFlagsMu.Unlock()
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 
 	if len(l.srmFlags) == 0 {
 		return nil
@@ -63,4 +63,36 @@ func (l *lsdbEntry) getInterfacesSRMSet() []*netIfa {
 	}
 
 	return ret
+}
+
+func (l *lsdbEntry) clearSRMFlag(ifa *netIfa) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	delete(l.srmFlags, ifa)
+}
+
+func (l *lsdbEntry) clearSSNFlag(ifa *netIfa) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	delete(l.ssnFlags, ifa)
+}
+
+func (l *lsdbEntry) sameAsInLSPEntry(needle *packet.LSPEntry) bool {
+	return l.lspdu.LSPID == needle.LSPID && l.lspdu.SequenceNumber == needle.SequenceNumber
+}
+
+func (l *lsdbEntry) newerInDatabase(x *packet.LSPEntry) bool {
+	l.mutex.RLock()
+	defer l.mutex.RUnlock()
+
+	return l.lspdu.SequenceNumber > x.SequenceNumber
+}
+
+func (l *lsdbEntry) olderInDatabase(x *packet.LSPEntry) bool {
+	l.mutex.RLock()
+	defer l.mutex.RUnlock()
+
+	return l.lspdu.SequenceNumber < x.SequenceNumber
 }
