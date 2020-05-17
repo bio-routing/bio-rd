@@ -22,6 +22,7 @@ type neighborManager struct {
 
 func newNeighborManager(server *Server, netIfa *netIfa, level uint8) *neighborManager {
 	return &neighborManager{
+		server:    server,
 		netIfa:    netIfa,
 		level:     level,
 		neighbors: make(map[types.MACAddress]*neighbor),

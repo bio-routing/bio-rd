@@ -10,6 +10,10 @@ import (
 	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
+const (
+	minimumLSPTransmissionIntervalMS = 100
+)
+
 // ISISServer is generic ISIS server interface
 type ISISServer interface {
 	AddInterface(*InterfaceConfig) error
@@ -72,8 +76,8 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 }
 
 func (s *Server) start() {
-	s.lsdbL1.start(btime.NewBIOTicker(time.Second))
-	s.lsdbL2.start(btime.NewBIOTicker(time.Second))
+	s.lsdbL1.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS))
+	s.lsdbL2.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS))
 }
 
 func (s *Server) dispose() {

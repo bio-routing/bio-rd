@@ -38,6 +38,7 @@ type neighbor struct {
 func (nm *neighborManager) neighborFromP2PHello(hello *packet.P2PHello) *neighbor {
 	n := &neighbor{
 		sysID:       hello.SystemID,
+		nm:          nm,
 		state:       packet.P2PAdjStateInit,
 		timeout:     time.Now().Add(time.Duration(hello.HoldingTimer) * time.Second),
 		ipAddresses: make([]bnet.IP, 0),

@@ -5,6 +5,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	btime "github.com/bio-routing/bio-rd/util/time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type lsdb struct {
@@ -22,13 +24,30 @@ func newLSDB(s *Server) *lsdb {
 	}
 }
 
+func (l *lsdb) fields() log.Fields {
+	level := 0
+	if l.srv.lsdbL1 == l {
+		level = 1
+	}
+	if l.srv.lsdbL2 == l {
+		level = 2
+	}
+
+	return log.Fields{
+		"level": level,
+	}
+}
+
 func (l *lsdb) dispose() {
 	l.stop()
 }
 
-func (l *lsdb) start(t btime.Ticker) {
+func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransmissionTicker btime.Ticker) {
 	l.wg.Add(1)
-	go l.decrementRemainingLifetimesRoutine(t)
+	go l.decrementRemainingLifetimesRoutine(decrementTicker)
+
+	l.wg.Add(1)
+	go l.sendLSPDUsRoutine(minLSPTransmissionTicker)
 }
 
 func (l *lsdb) stop() {
@@ -64,7 +83,33 @@ func (l *lsdb) decrementRemainingLifetimes() {
 }
 
 func (l *lsdb) setSRMAllLSPs(ifa *netIfa) {
+	log.WithFields(l.fields()).Debug("Setting SRM flags for interface %s", ifa.name)
+
 	for _, lsp := range l.lsps {
 		lsp.setSRM(ifa)
+	}
+}
+
+func (l *lsdb) sendLSPDUsRoutine(t btime.Ticker) {
+	defer l.wg.Done()
+
+	for {
+		select {
+		case <-t.C():
+			l.sendLSPDUs()
+		case <-l.done:
+			return
+		}
+	}
+}
+
+func (l *lsdb) sendLSPDUs() {
+	l.lspsMu.RLock()
+	defer l.lspsMu.RUnlock()
+
+	for _, entry := range l.lsps {
+		for _, ifa := range entry.getInterfacesSRMSet() {
+			ifa.sendLSPDU(entry.lspdu)
+		}
 	}
 }
