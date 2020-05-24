@@ -15,6 +15,8 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
+	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/tflow2/convert"
@@ -195,6 +197,48 @@ func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
 	}
 
 	r.logger.Info(logMsg)
+}
+
+func (r *Router) getNeighborAddressFamily(addr *bnet.IP, afi uint16, safi uint8) (*fsmAddressFamily, error) {
+	if safi != packet.UnicastSAFI {
+		return nil, fmt.Errorf("Unsupported safi, only unicast is supported")
+	}
+
+	for _, neigh := range r.neighborManager.list() {
+		if *neigh.fsm.peer.addr == *addr {
+			af := neigh.fsm.addressFamily(afi, safi)
+			if af == nil {
+				return nil, fmt.Errorf("Address family not available")
+			}
+			return af, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Could not find neighbor with ip %s", addr.String())
+}
+
+// GetNeighborRIBIn returns the AdjRIBIn of a BMP neighbor
+func (r *Router) GetNeighborRIBIn(addr *bnet.IP, afi uint16, safi uint8) (*adjRIBIn.AdjRIBIn, error) {
+	neighAF, err := r.getNeighborAddressFamily(addr, afi, safi)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not get RIBIn")
+	}
+	if neighAF.adjRIBIn == nil {
+		return nil, fmt.Errorf("RIBIn not available")
+	}
+	return neighAF.adjRIBIn.(*adjRIBIn.AdjRIBIn), nil
+}
+
+// GetNeighborRIBOut returns the AdjRIBOut of a BMP neighbor
+func (r *Router) GetNeighborRIBOut(addr *bnet.IP, afi uint16, safi uint8) (*adjRIBOut.AdjRIBOut, error) {
+	neighAF, err := r.getNeighborAddressFamily(addr, afi, safi)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not get RIBIn")
+	}
+	if neighAF.adjRIBOut == nil {
+		return nil, fmt.Errorf("RIBOut not available")
+	}
+	return neighAF.adjRIBOut.(*adjRIBOut.AdjRIBOut), nil
 }
 
 func (r *Router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
