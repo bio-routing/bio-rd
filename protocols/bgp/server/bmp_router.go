@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/api"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -126,6 +127,48 @@ func (r *Router) serve(con net.Conn) {
 
 		r.processMsg(msg)
 	}
+}
+
+// GetNeighborSessions returns all neighbors as API session objects
+func (r *Router) GetNeighborSessions() []*api.Session {
+	sessions := make([]*api.Session, 0)
+
+	for _, neigh := range r.neighborManager.list() {
+		estSince := neigh.fsm.establishedTime.Unix()
+		if estSince < 0 {
+			estSince = 0
+		}
+
+		// for now get this from adjRibIn/adjRibOut, can be replaced when we
+		// bmp gets its own bgpSrv or Router gets the bmpMetricsService
+		var routesReceived, routesSent uint64
+		for _, afi := range []uint16{packet.IPv4AFI, packet.IPv6AFI} {
+			ribIn, err1 := r.GetNeighborRIBIn(neigh.fsm.peer.addr, afi, packet.UnicastSAFI)
+			if err1 == nil {
+				routesReceived += uint64(ribIn.RouteCount())
+			}
+
+			// adjRIBOut might not work properly with BMP, keeping it here for when it will
+			ribOut, err2 := r.GetNeighborRIBOut(neigh.fsm.peer.addr, afi, packet.UnicastSAFI)
+			if err2 == nil {
+				routesSent += uint64(ribOut.RouteCount())
+			}
+		}
+		session := &api.Session{
+			LocalAddress:    neigh.fsm.peer.localAddr.ToProto(),
+			NeighborAddress: neigh.fsm.peer.addr.ToProto(),
+			LocalAsn:        neigh.localAS,
+			PeerAsn:         neigh.peerAS,
+			Status:          stateToProto(neigh.fsm.state),
+			Stats: &api.SessionStats{
+				RoutesReceived: routesReceived,
+				RoutesExported: routesSent,
+			},
+			EstablishedSince: uint64(estSince),
+		}
+		sessions = append(sessions, session)
+	}
+	return sessions
 }
 
 func (r *Router) processMsg(msg []byte) {
