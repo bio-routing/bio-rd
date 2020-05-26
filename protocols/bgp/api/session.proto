@@ -22,6 +22,7 @@ message Session {
     State status = 5;
     SessionStats stats = 6;
     uint64 established_since = 7;
+    string description = 8;
 }
 
 message SessionStats {

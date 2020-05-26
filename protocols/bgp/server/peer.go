@@ -65,6 +65,7 @@ type PeerConfig struct {
 	IPv4                       *AddressFamilyConfig
 	IPv6                       *AddressFamilyConfig
 	VRF                        *vrf.VRF
+	Description                string
 }
 
 // AddressFamilyConfig represents all configuration parameters specific for an address family
