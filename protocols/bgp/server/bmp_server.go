@@ -74,6 +74,12 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 			r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
 			log.Infof("Connected to %s", r.address.String())
 			r.serve(c)
+			select {
+			case <-r.stop:
+				return
+			default:
+			}
+
 			atomic.StoreUint32(&r.established, 0)
 		}
 	}(r)
