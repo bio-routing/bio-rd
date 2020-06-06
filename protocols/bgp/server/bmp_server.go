@@ -100,9 +100,12 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 			err = r.serve(c)
 			atomic.StoreUint32(&r.established, 0)
 			if err != nil {
-				r.logger.WithError(err).Error("r.serve() failed")
+				r.logger.WithFields(log.Fields{
+					"component": "bmp_server",
+					"address":   conString(r.address.String(), r.port),
+				}).WithError(err).Error("r.serve() failed")
 			} else {
-				log.WithFields(log.Fields{
+				r.logger.WithFields(log.Fields{
 					"component": "bmp_server",
 					"address":   conString(r.address.String(), r.port),
 				}).Info("r.Serve returned without error. Stopping reconnect routine")
