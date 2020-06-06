@@ -103,7 +103,7 @@ func (r *Router) Address() net.IP {
 	return r.address
 }
 
-func (r *Router) serve(con net.Conn) {
+func (r *Router) serve(con net.Conn) error {
 	r.con = con
 	r.runMu.Lock()
 	defer r.con.Close()
@@ -112,14 +112,13 @@ func (r *Router) serve(con net.Conn) {
 	for {
 		select {
 		case <-r.stop:
-			return
+			return nil
 		default:
 		}
 
 		msg, err := recvBMPMsg(r.con)
 		if err != nil {
-			r.logger.Errorf("Unable to get message: %v", err)
-			return
+			return errors.Wrap(err, "Unable to get message")
 		}
 
 		r.processMsg(msg)
