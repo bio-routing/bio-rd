@@ -76,7 +76,10 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 
 			c, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port), r.dialTimeout)
 			if err != nil {
-				log.Infof("Unable to connect to BMP router: %v", err)
+				log.WithError(err).WithFields(log.Fields{
+					"component": "bmp_server",
+					"address":   conString(r.address.String(), r.port),
+				}).Info("Unable to connect to BMP router")
 				if r.reconnectTime == 0 {
 					r.reconnectTime = r.reconnectTimeMin
 				} else if r.reconnectTime < r.reconnectTimeMax {
@@ -89,7 +92,10 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 			atomic.StoreUint32(&r.established, 1)
 			r.reconnectTime = r.reconnectTimeMin
 			r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
-			log.Infof("Connected to %s", r.address.String())
+			log.WithFields(log.Fields{
+				"component": "bmp_server",
+				"address":   conString(r.address.String(), r.port),
+			}).Info("Connected")
 
 			err = r.serve(c)
 			atomic.StoreUint32(&r.established, 0)
