@@ -117,18 +117,19 @@ func TestStartStop(t *testing.T) {
 			},
 		},
 	}
-	ticker := btime.NewMockTicker()
-	db.start(ticker)
+	lifetimeTicker := btime.NewMockTicker()
+	sendTicker := btime.NewMockTicker()
+	db.start(lifetimeTicker, sendTicker)
 
 	expected.decrementRemainingLifetimes()
 	expected.decrementRemainingLifetimes()
 	expected.decrementRemainingLifetimes()
 	expected.decrementRemainingLifetimes()
 
-	ticker.Tick()
-	ticker.Tick()
-	ticker.Tick()
-	ticker.Tick()
+	lifetimeTicker.Tick()
+	lifetimeTicker.Tick()
+	lifetimeTicker.Tick()
+	lifetimeTicker.Tick()
 
 	db.stop()
 	assert.Equal(t, db.lsps, expected.lsps)

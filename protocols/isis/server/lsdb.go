@@ -83,7 +83,7 @@ func (l *lsdb) decrementRemainingLifetimes() {
 }
 
 func (l *lsdb) setSRMAllLSPs(ifa *netIfa) {
-	log.WithFields(l.fields()).Debug("Setting SRM flags for interface %s", ifa.name)
+	log.WithFields(l.fields()).Debugf("Setting SRM flags for interface %s", ifa.name)
 
 	for _, lsp := range l.lsps {
 		lsp.setSRM(ifa)
