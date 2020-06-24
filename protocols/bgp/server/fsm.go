@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/net/tcp"
+	"github.com/bio-routing/bio-rd/protocols/bgp/api"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/pkg/errors"
@@ -234,6 +235,27 @@ func stateName(s state) string {
 		return stateNameEstablished
 	case *ceaseState:
 		return stateNameCease
+	default:
+		panic(fmt.Sprintf("Unknown state: %v", s))
+	}
+}
+
+func stateToProto(s state) api.Session_State {
+	switch s.(type) {
+	case *idleState:
+		return api.Session_Idle
+	case *connectState:
+		return api.Session_Connect
+	case *activeState:
+		return api.Session_Active
+	case *openSentState:
+		return api.Session_OpenSent
+	case *openConfirmState:
+		return api.Session_OpenConfirmed
+	case *establishedState:
+		return api.Session_Established
+	case *ceaseState:
+		return api.Session_Active // substitution
 	default:
 		panic(fmt.Sprintf("Unknown state: %v", s))
 	}
