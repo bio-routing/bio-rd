@@ -71,3 +71,27 @@ func TestUnregister(t *testing.T) {
 	assert.False(t, found, "vrf must not be in global registry")
 
 }
+
+func TestRouteDistinguisherHumanReadable(t *testing.T) {
+	tests := []struct {
+		name     string
+		rdi      uint64
+		expected string
+	}{
+		{
+			name:     "Test #1",
+			rdi:      0,
+			expected: "0:0",
+		},
+		{
+			name:     "Test #2",
+			rdi:      220434901565105,
+			expected: "51324:65201",
+		},
+	}
+
+	for _, test := range tests {
+		res := RouteDistinguisherHumanReadable(test.rdi)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}

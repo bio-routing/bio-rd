@@ -10,6 +10,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -60,7 +61,7 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 
 	v := r.GetVRF(vrfID)
 	if v == nil {
-		return nil, fmt.Errorf("Unable to get VRF %d", vrfID)
+		return nil, fmt.Errorf("Unable to get VRF %s", vrf.RouteDistinguisherHumanReadable(vrfID))
 	}
 
 	var rib *locRIB.LocRIB
