@@ -26,7 +26,6 @@ type BMPServer struct {
 	routers    map[string]*Router
 	routersMu  sync.RWMutex
 	ribClients map[string]map[afiClient]struct{}
-	gloablMu   sync.RWMutex
 	metrics    *bmpMetricsService
 }
 
@@ -52,9 +51,6 @@ func conString(host string, port uint16) string {
 
 // AddRouter adds a router to which we connect with BMP
 func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
-	b.gloablMu.Lock()
-	defer b.gloablMu.Unlock()
-
 	r := newRouter(addr, port)
 	b.addRouter(r)
 
@@ -116,18 +112,26 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 }
 
 func (b *BMPServer) addRouter(r *Router) {
+	b.routersMu.Lock()
+	defer b.routersMu.Unlock()
+
 	b.routers[fmt.Sprintf("%s", r.address.String())] = r
 }
 
-// RemoveRouter removes a BMP monitored router
-func (b *BMPServer) RemoveRouter(addr net.IP, port uint16) {
-	b.gloablMu.Lock()
-	defer b.gloablMu.Unlock()
+func (b *BMPServer) deleteRouter(addr net.IP) {
+	b.routersMu.Lock()
+	defer b.routersMu.Unlock()
 
+	delete(b.routers, addr.String())
+}
+
+// RemoveRouter removes a BMP monitored router
+func (b *BMPServer) RemoveRouter(addr net.IP) {
 	id := addr.String()
 	r := b.routers[id]
 	r.stop <- struct{}{}
-	delete(b.routers, id)
+
+	b.deleteRouter(addr)
 }
 
 func (b *BMPServer) getRouters() []*Router {
@@ -183,12 +187,8 @@ func (b *BMPServer) GetRouter(name string) *Router {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 
-	for x := range b.routers {
-		if x != name {
-			continue
-		}
-
-		return b.routers[x]
+	if _, ok := b.routers[name]; ok {
+		return b.routers[name]
 	}
 
 	return nil

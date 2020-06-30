@@ -241,7 +241,7 @@ func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 	r.logger.WithFields(log.Fields{
 		"address":            r.address.String(),
 		"router":             r.name,
-		"peer_distinguisher": msg.PerPeerHeader.PeerDistinguisher,
+		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
 		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
 	}).Infof("peer down notification received")
 	atomic.AddUint64(&r.counters.peerDownNotificationMessages, 1)
@@ -257,7 +257,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	r.logger.WithFields(log.Fields{
 		"address":            r.address.String(),
 		"router":             r.name,
-		"peer_distinguisher": msg.PerPeerHeader.PeerDistinguisher,
+		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
 		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
 	}).Infof("peer up notification received")
 

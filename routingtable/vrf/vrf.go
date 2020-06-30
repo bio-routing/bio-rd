@@ -137,3 +137,13 @@ func (v *VRF) Dispose() {
 		delete(v.ribNames, ribName)
 	}
 }
+
+// RouteDistinguisherHumanReadable converts 64bit route distinguisher to human readable string form
+func RouteDistinguisherHumanReadable(rdi uint64) string {
+	asn := rdi >> 32
+
+	netIDMask := uint64(0x00000000ffffffff)
+	netID := rdi & netIDMask
+
+	return fmt.Sprintf("%d:%d", asn, netID)
+}
