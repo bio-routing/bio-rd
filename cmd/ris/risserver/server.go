@@ -11,11 +11,13 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/pkg/errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/net/api"
 	netapi "github.com/bio-routing/bio-rd/net/api"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
@@ -53,15 +55,19 @@ func NewServer(b *server.BMPServer) *Server {
 	}
 }
 
+func wrapGetRIBErr(err error, rtr string, vrfID uint64, version api.IP_Version) error {
+	return errors.Wrapf(err, "Unable to get RIB (%s/%s/v%d)", rtr, vrf.RouteDistinguisherHumanReadable(vrfID), version)
+}
+
 func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*locRIB.LocRIB, error) {
 	r := s.bmp.GetRouter(rtr)
 	if r == nil {
-		return nil, fmt.Errorf("Unable to get router %q", rtr)
+		return nil, fmt.Errorf("Unable to get router")
 	}
 
 	v := r.GetVRF(vrfID)
 	if v == nil {
-		return nil, fmt.Errorf("Unable to get VRF %s", vrf.RouteDistinguisherHumanReadable(vrfID))
+		return nil, fmt.Errorf("Unable to get VRF")
 	}
 
 	var rib *locRIB.LocRIB
@@ -85,7 +91,7 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, error) {
 	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
-		return nil, err
+		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
 	}
 
 	routes := rib.LPM(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -103,7 +109,7 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
-		return nil, err
+		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
 	}
 
 	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -124,7 +130,7 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.GetLongerResponse, error) {
 	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
 	if err != nil {
-		return nil, err
+		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
 	}
 
 	routes := rib.GetLonger(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -152,7 +158,7 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 
 	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
 	if err != nil {
-		return err
+		return wrapGetRIBErr(err, req.Router, req.VrfId, ipVersion)
 	}
 
 	risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Inc()
@@ -204,7 +210,7 @@ func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationSer
 
 	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
 	if err != nil {
-		return err
+		return wrapGetRIBErr(err, req.Router, req.VrfId, ipVersion)
 	}
 
 	toSend := &pb.DumpRIBReply{
