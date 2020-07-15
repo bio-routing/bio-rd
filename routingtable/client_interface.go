@@ -6,13 +6,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
-// RouteTable is the interface that every route table must implement
-type RouteTable interface {
-	AddPath(pfx *net.Prefix, path *route.Path) error
-	RemovePath(*net.Prefix, *route.Path) bool
-	UpdateNewClient(RouteTableClient) error
-}
-
 // RouteTableClient is the interface that every route table client must implement
 type RouteTableClient interface {
 	AddPath(pfx *net.Prefix, path *route.Path) error
