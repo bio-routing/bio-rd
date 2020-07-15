@@ -131,7 +131,7 @@ func (b *bgpServer) GetRIBIn(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBIn.
 		return nil
 	}
 
-	return f.adjRIBIn.(*adjRIBIn.AdjRIBIn)
+	return f.adjRIBIn
 }
 
 func (b *bgpServer) GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut {
@@ -150,7 +150,7 @@ func (b *bgpServer) GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOu
 		return nil
 	}
 
-	return f.adjRIBOut.(*adjRIBOut.AdjRIBOut)
+	return f.adjRIBOut
 }
 
 func (b *bgpServer) incomingConnectionWorker() {

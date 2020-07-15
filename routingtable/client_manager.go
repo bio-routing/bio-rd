@@ -27,12 +27,12 @@ func (c *ClientOptions) GetMaxPaths(ecmpPaths uint) uint {
 // ClientManager manages clients of routing tables (observer pattern)
 type ClientManager struct {
 	clients map[RouteTableClient]ClientOptions
-	master  RouteTableClient
+	master  RouteTable
 	mu      sync.RWMutex
 }
 
 // NewClientManager creates and initializes a new client manager
-func NewClientManager(master RouteTableClient) *ClientManager {
+func NewClientManager(master RouteTable) *ClientManager {
 	return &ClientManager{
 		clients: make(map[RouteTableClient]ClientOptions, 0),
 		master:  master,

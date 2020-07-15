@@ -8,7 +8,6 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/pkg/errors"
@@ -295,34 +294,7 @@ func (r *ribClient) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 	return false
 }
 
-func (r *ribClient) UpdateNewClient(routingtable.RouteTableClient) error {
-	return nil
-}
-
-func (r *ribClient) Register(routingtable.RouteTableClient) {
-}
-
-func (r *ribClient) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
-}
-
-func (r *ribClient) Unregister(routingtable.RouteTableClient) {
-}
-
-func (r *ribClient) RouteCount() int64 {
-	return -1
-}
-
-func (r *ribClient) ClientCount() uint64 {
-	return 0
-}
-
-func (r *ribClient) Dump() []*route.Route {
-	return nil
-}
-
 func (r *ribClient) RefreshRoute(*net.Prefix, []*route.Path) {}
-
-func (r *ribClient) ReplaceFilterChain(filter.Chain) {}
 
 // ReplacePath is here to fulfill an interface
 func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
