@@ -4,6 +4,10 @@ import (
 	"sync"
 )
 
+type ClientManagerMaster interface {
+	UpdateNewClient(RouteTableClient) error
+}
+
 // ClientOptions represents options for a client
 type ClientOptions struct {
 	BestOnly bool
@@ -27,12 +31,12 @@ func (c *ClientOptions) GetMaxPaths(ecmpPaths uint) uint {
 // ClientManager manages clients of routing tables (observer pattern)
 type ClientManager struct {
 	clients map[RouteTableClient]ClientOptions
-	master  RouteTable
+	master  ClientManagerMaster
 	mu      sync.RWMutex
 }
 
 // NewClientManager creates and initializes a new client manager
-func NewClientManager(master RouteTable) *ClientManager {
+func NewClientManager(master ClientManagerMaster) *ClientManager {
 	return &ClientManager{
 		clients: make(map[RouteTableClient]ClientOptions, 0),
 		master:  master,
