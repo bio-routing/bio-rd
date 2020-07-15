@@ -20,8 +20,8 @@ type fsmAddressFamily struct {
 	safi uint8
 	fsm  *FSM
 
-	adjRIBIn  *adjRIBIn.AdjRIBIn
-	adjRIBOut *adjRIBOut.AdjRIBOut
+	adjRIBIn  routingtable.AdjRIBIn
+	adjRIBOut routingtable.AdjRIBOut
 	rib       *locRIB.LocRIB
 
 	importFilterChain filter.Chain
@@ -109,7 +109,7 @@ func (f *fsmAddressFamily) bmpInit() {
 func (f *fsmAddressFamily) bmpDispose() {
 	f.rib.GetContributingASNs().Remove(f.fsm.peer.localASN)
 
-	f.adjRIBIn.Flush()
+	f.adjRIBIn.(*adjRIBIn.AdjRIBIn).Flush()
 
 	f.adjRIBIn.Unregister(f.rib)
 
