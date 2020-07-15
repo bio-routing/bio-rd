@@ -21,8 +21,7 @@ type RouteTableClient interface {
 	RefreshRoute(*net.Prefix, []*route.Path)
 }
 
-// AdjRIBIn is the interface any AdjRIBIn must implement
-type AdjRIBIn interface {
+type AdjRIB interface {
 	ReplaceFilterChain(filter.Chain)
 	Dump() []*route.Route
 	Register(client RouteTableClient)
@@ -33,16 +32,14 @@ type AdjRIBIn interface {
 	ClientCount() uint64
 }
 
+// AdjRIBIn is the interface any AdjRIBIn must implement
+type AdjRIBIn interface {
+	AdjRIB
+}
+
 // AdjRIBOut is the interface any AdjRIBOut must implement
 type AdjRIBOut interface {
-	ReplaceFilterChain(filter.Chain)
-	Dump() []*route.Route
-	Register(client RouteTableClient)
-	Unregister(client RouteTableClient)
-	AddPath(pfx *net.Prefix, path *route.Path) error
-	RemovePath(*net.Prefix, *route.Path) bool
+	AdjRIB
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	RefreshRoute(*net.Prefix, []*route.Path)
-	RouteCount() int64
-	ClientCount() uint64
 }
