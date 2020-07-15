@@ -9,9 +9,7 @@ import (
 type RouteTable interface {
 	AddPath(pfx *net.Prefix, path *route.Path) error
 	RemovePath(*net.Prefix, *route.Path) bool
-	//ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	UpdateNewClient(RouteTableClient) error
-	//RefreshRoute(*net.Prefix, []*route.Path)
 }
 
 // RouteTableClient is the interface that every route table client must implement
@@ -19,6 +17,5 @@ type RouteTableClient interface {
 	AddPath(pfx *net.Prefix, path *route.Path) error
 	RemovePath(*net.Prefix, *route.Path) bool
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
-	//UpdateNewClient(RouteTableClient) error
 	RefreshRoute(*net.Prefix, []*route.Path)
 }
