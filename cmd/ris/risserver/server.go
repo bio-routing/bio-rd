@@ -88,9 +88,14 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 
 // LPM provides a longest prefix match service
 func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
+	vrfID, err := getVRF(req)
 	if err != nil {
-		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
+		return nil, err
+	}
+
+	rib, err := s.getRIB(req.Router, vrfID, req.Pfx.Address.Version)
+	if err != nil {
+		return nil, wrapGetRIBErr(err, req.Router, vrfID, req.Pfx.Address.Version)
 	}
 
 	routes := rib.LPM(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -106,9 +111,14 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 
 // Get gets a prefix (exact match)
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
+	vrfID, err := getVRF(req)
 	if err != nil {
-		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
+		return nil, err
+	}
+
+	rib, err := s.getRIB(req.Router, vrfID, req.Pfx.Address.Version)
+	if err != nil {
+		return nil, wrapGetRIBErr(err, req.Router, vrfID, req.Pfx.Address.Version)
 	}
 
 	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -127,9 +137,14 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // GetLonger gets all more specifics of a prefix
 func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.GetLongerResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
+	vrfID, err := getVRF(req)
 	if err != nil {
-		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
+		return nil, err
+	}
+
+	rib, err := s.getRIB(req.Router, vrfID, req.Pfx.Address.Version)
+	if err != nil {
+		return nil, wrapGetRIBErr(err, req.Router, vrfID, req.Pfx.Address.Version)
 	}
 
 	routes := rib.GetLonger(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -145,6 +160,11 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 
 // ObserveRIB implements the ObserveRIB RPC
 func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
+	vrfID, err := getVRF(req)
+	if err != nil {
+		return err
+	}
+
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {
 	case pb.ObserveRIBRequest_IPv4Unicast:
@@ -155,9 +175,9 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 		return fmt.Errorf("Unknown AFI/SAFI")
 	}
 
-	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
+	rib, err := s.getRIB(req.Router, vrfID, ipVersion)
 	if err != nil {
-		return wrapGetRIBErr(err, req.Router, req.VrfId, ipVersion)
+		return wrapGetRIBErr(err, req.Router, vrfID, ipVersion)
 	}
 
 	risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Inc()
@@ -248,6 +268,24 @@ func (s *Server) GetRouters(c context.Context, request *pb.GetRoutersRequest) (*
 		})
 	}
 	return resp, nil
+}
+
+type RequestWithVRF interface {
+	GetVrfId() uint64
+	GetVrf() string
+}
+
+func getVRF(req RequestWithVRF) (uint64, error) {
+	if req.GetVrf() != "" {
+		vrfID, err := vrf.ParseHumanReadableRouteDistinguisher(req.GetVrf())
+		if err != nil {
+			return 0, errors.Wrap(err, "Unable to parse VRF")
+		}
+
+		return vrfID, nil
+	}
+
+	return req.GetVrfId(), nil
 }
 
 type update struct {

@@ -2,9 +2,12 @@ package vrf
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -146,4 +149,29 @@ func RouteDistinguisherHumanReadable(rdi uint64) string {
 	netID := rdi & netIDMask
 
 	return fmt.Sprintf("%d:%d", asn, netID)
+}
+
+// ParseHumanReadableRouteDistinguisher parses a human readable route distinguisher
+func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
+	parts := strings.Split(x, ":")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("Invalid format")
+	}
+
+	asn, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, errors.Wrap(err, "Unable to convert first part to int")
+	}
+
+	netID, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, errors.Wrap(err, "Unable to convert second part to int")
+	}
+
+	ret := uint64(0)
+	ret = uint64(asn)
+	ret = ret << 32
+	ret += uint64(netID)
+
+	return ret, nil
 }
