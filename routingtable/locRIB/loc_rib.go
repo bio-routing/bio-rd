@@ -110,7 +110,7 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 		}
 
 		for _, p := range r.Paths()[:n] {
-			client.AddPath(r.Prefix(), p)
+			client.AddPathInitialDump(r.Prefix(), p)
 		}
 	}
 
@@ -143,6 +143,10 @@ func (a *LocRIB) RefreshClient(client routingtable.RouteTableClient) {
 // RouteCount returns the number of stored routes
 func (a *LocRIB) RouteCount() int64 {
 	return a.rt.GetRouteCount()
+}
+
+func (a *LocRIB) AddPathInitialDump(pfx *net.Prefix, p *route.Path) error {
+	return a.AddPath(pfx, p)
 }
 
 // AddPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.

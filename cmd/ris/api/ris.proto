@@ -57,6 +57,7 @@ message ObserveRIBRequest {
 
 message RIBUpdate {
     bool advertisement = 1;
+    bool is_initial_dump = 3;
     bio.route.Route route = 2;
 }
 

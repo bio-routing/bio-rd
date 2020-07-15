@@ -70,6 +70,10 @@ func (u *UpdateSender) Destroy() {
 	u.destroyCh <- struct{}{}
 }
 
+func (u *UpdateSender) AddPathInitialDump(pfx *bnet.Prefix, p *route.Path) error {
+	return u.AddPath(pfx, p)
+}
+
 // AddPath adds path p for pfx to toSend queue
 func (u *UpdateSender) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 	u.toSendMu.Lock()

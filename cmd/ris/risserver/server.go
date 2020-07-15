@@ -267,8 +267,17 @@ func newRIBClient(fifo *updateFIFO) *ribClient {
 }
 
 func (r *ribClient) AddPath(pfx *net.Prefix, path *route.Path) error {
+	return r.addPath(pfx, path, false)
+}
+
+func (r *ribClient) AddPathInitialDump(pfx *net.Prefix, path *route.Path) error {
+	return r.addPath(pfx, path, true)
+}
+
+func (r *ribClient) addPath(pfx *net.Prefix, path *route.Path, isInitalDump bool) error {
 	r.fifo.queue(&pb.RIBUpdate{
 		Advertisement: true,
+		IsInitialDump: isInitalDump,
 		Route: &routeapi.Route{
 			Pfx: pfx.ToProto(),
 			Paths: []*routeapi.Path{
@@ -297,6 +306,4 @@ func (r *ribClient) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 func (r *ribClient) RefreshRoute(*net.Prefix, []*route.Path) {}
 
 // ReplacePath is here to fulfill an interface
-func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
-
-}
+func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}
