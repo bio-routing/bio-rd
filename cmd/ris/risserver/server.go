@@ -88,7 +88,7 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 
 // LPM provides a longest prefix match service
 func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, error) {
-	vrfID, err := getVRF(req)
+	vrfID, err := getVRFID(req)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 
 // Get gets a prefix (exact match)
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	vrfID, err := getVRF(req)
+	vrfID, err := getVRFID(req)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // GetLonger gets all more specifics of a prefix
 func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.GetLongerResponse, error) {
-	vrfID, err := getVRF(req)
+	vrfID, err := getVRFID(req)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 
 // ObserveRIB implements the ObserveRIB RPC
 func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
-	vrfID, err := getVRF(req)
+	vrfID, err := getVRFID(req)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ type RequestWithVRF interface {
 	GetVrf() string
 }
 
-func getVRF(req RequestWithVRF) (uint64, error) {
+func getVRFID(req RequestWithVRF) (uint64, error) {
 	if req.GetVrf() != "" {
 		vrfID, err := vrf.ParseHumanReadableRouteDistinguisher(req.GetVrf())
 		if err != nil {
