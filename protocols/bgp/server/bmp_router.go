@@ -104,6 +104,9 @@ func (r *Router) Address() net.IP {
 }
 
 func (r *Router) serve(con net.Conn) error {
+	defer r.vrfRegistry.UnregisterAllVRFs()
+	defer r.neighborManager.disposeAll()
+
 	r.con = con
 	r.runMu.Lock()
 	defer r.con.Close()

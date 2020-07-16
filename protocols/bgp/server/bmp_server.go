@@ -129,7 +129,7 @@ func (b *BMPServer) deleteRouter(addr net.IP) {
 func (b *BMPServer) RemoveRouter(addr net.IP) {
 	id := addr.String()
 	r := b.routers[id]
-	r.stop <- struct{}{}
+	close(r.stop)
 
 	b.deleteRouter(addr)
 }

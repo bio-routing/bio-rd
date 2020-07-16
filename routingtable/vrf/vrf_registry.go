@@ -59,6 +59,16 @@ func (r *VRFRegistry) UnregisterVRF(v *VRF) {
 	delete(r.vrfs, v.routeDistinguisher)
 }
 
+// UnregisterAllVRFs unregisters all VRFs
+func (r *VRFRegistry) UnregisterAllVRFs() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for id := range r.vrfs {
+		delete(r.vrfs, id)
+	}
+}
+
 func (r *VRFRegistry) List() []*VRF {
 	r.mu.Lock()
 	defer r.mu.Unlock()
