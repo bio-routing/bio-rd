@@ -31,6 +31,7 @@ func main() {
 
 	app.Commands = []cli.Command{
 		NewDumpLocRIBCommand(),
+		NewLPMCommand(),
 	}
 
 	err := app.Run(os.Args)
