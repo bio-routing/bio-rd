@@ -41,6 +41,10 @@ func (m *RTMockClient) AddPath(pfx *net.Prefix, p *route.Path) error {
 	return nil
 }
 
+func (m *RTMockClient) AddPathInitialDump(pfx *net.Prefix, p *route.Path) error {
+	return nil
+}
+
 func (m *RTMockClient) UpdateNewClient(client RouteTableClient) error {
 	return fmt.Errorf("Not implemented")
 }

@@ -124,7 +124,7 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 				continue
 			}
 
-			err := client.AddPath(route.Prefix(), path)
+			err := client.AddPathInitialDump(route.Prefix(), path)
 			if err != nil {
 				log.WithField("Sender", "AdjRIBOutAddPath").WithError(err).Error("Could not send update to client")
 			}

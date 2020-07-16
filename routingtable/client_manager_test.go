@@ -24,12 +24,19 @@ func (m MockClient) Dump() []*route.Route {
 func (m MockClient) AddPath(*net.Prefix, *route.Path) error {
 	return nil
 }
+
+func (m MockClient) AddPathInitialDump(*net.Prefix, *route.Path) error {
+	return nil
+}
+
 func (m MockClient) RemovePath(*net.Prefix, *route.Path) bool {
 	return false
 }
+
 func (m MockClient) UpdateNewClient(RouteTableClient) error {
 	return nil
 }
+
 func (m MockClient) Register(RouteTableClient) {
 	return
 }
