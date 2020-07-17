@@ -42,7 +42,7 @@ func NewLPMCommand() cli.Command {
 		pfx := bnet.NewPfx(ipAddr, pfxLen)
 
 		client := pb.NewRoutingInformationServiceClient(conn)
-		err = lpm(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), pfx)
+		err = lpm(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), pfx)
 		if err != nil {
 			log.Fatalf("LPM failed: %v", err)
 		}
@@ -53,10 +53,11 @@ func NewLPMCommand() cli.Command {
 	return cmd
 }
 
-func lpm(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, pfx bnet.Prefix) error {
+func lpm(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, vrf string, pfx bnet.Prefix) error {
 	resp, err := c.LPM(context.Background(), &pb.LPMRequest{
 		Router: routerName,
 		VrfId:  vrfID,
+		Vrf:    vrf,
 		Pfx:    pfx.ToProto(),
 	})
 	if err != nil {

@@ -47,7 +47,7 @@ func NewDumpLocRIBCommand() cli.Command {
 		client := pb.NewRoutingInformationServiceClient(conn)
 		for _, afisafi := range afisafis {
 			fmt.Printf(" --- Dump %s ---\n", pb.DumpRIBRequest_AFISAFI_name[int32(afisafi)])
-			err = dumpRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), afisafi)
+			err = dumpRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), afisafi)
 			if err != nil {
 				log.Errorf("DumpRIB failed: %v", err)
 				os.Exit(1)
@@ -60,10 +60,11 @@ func NewDumpLocRIBCommand() cli.Command {
 	return cmd
 }
 
-func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, afisafi pb.DumpRIBRequest_AFISAFI) error {
+func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, vrf string, afisafi pb.DumpRIBRequest_AFISAFI) error {
 	client, err := c.DumpRIB(context.Background(), &pb.DumpRIBRequest{
 		Router:  routerName,
 		VrfId:   vrfID,
+		Vrf:     vrf,
 		Afisafi: afisafi,
 	})
 	if err != nil {
