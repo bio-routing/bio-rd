@@ -69,6 +69,7 @@ message RIBUpdate {
 message DumpRIBRequest {
     string router = 1;
     uint64 vrf_id = 2;
+    string vrf = 4;
     enum AFISAFI {
         IPv4Unicast = 0;
         IPv6Unicast = 1;

@@ -217,6 +217,11 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 
 // DumpRIB implements the DumpRIB RPC
 func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationService_DumpRIBServer) error {
+	vrfID, err := getVRFID(req)
+	if err != nil {
+		return err
+	}
+
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {
 	case pb.DumpRIBRequest_IPv4Unicast:
@@ -227,9 +232,9 @@ func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationSer
 		return fmt.Errorf("Unknown AFI/SAFI")
 	}
 
-	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
+	rib, err := s.getRIB(req.Router, vrfID, ipVersion)
 	if err != nil {
-		return wrapGetRIBErr(err, req.Router, req.VrfId, ipVersion)
+		return wrapGetRIBErr(err, req.Router, vrfID, ipVersion)
 	}
 
 	toSend := &pb.DumpRIBReply{
