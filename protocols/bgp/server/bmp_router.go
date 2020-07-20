@@ -104,6 +104,8 @@ func (r *Router) Address() net.IP {
 }
 
 func (r *Router) serve(con net.Conn) error {
+	defer r.cleanup()
+
 	r.con = con
 	r.runMu.Lock()
 	defer r.con.Close()
@@ -123,6 +125,11 @@ func (r *Router) serve(con net.Conn) error {
 
 		r.processMsg(msg)
 	}
+}
+
+func (r *Router) cleanup() {
+	r.vrfRegistry.UnregisterAll()
+	r.neighborManager.disposeAll()
 }
 
 func (r *Router) processMsg(msg []byte) {
