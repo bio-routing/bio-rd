@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	pathIdentifierLen = 4
+	PathIdentifierLen = 4
 )
 
 // NLRI represents a Network Layer Reachability Information
@@ -63,7 +63,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 			return nil, consumed, errors.Wrap(err, "Unable to decode path identifier")
 		}
 
-		consumed += pathIdentifierLen
+		consumed += PathIdentifierLen
 	}
 
 	pfxLen, err := buf.ReadByte()
