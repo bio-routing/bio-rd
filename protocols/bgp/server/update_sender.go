@@ -117,11 +117,8 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 		}
 
 		u.toSendMu.Lock()
-
-		overhead := u.updateOverhead()
-
 		for key, pathNLRIs := range u.toSend {
-			budget = packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length()) - overhead
+			budget = u.getBudget(pathNLRIs)
 
 			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP, u.rrClient)
 			if err != nil {
@@ -141,7 +138,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 				if budget < 0 {
 					updatesPrefixes = append(updatesPrefixes, prefixes)
 					prefixes = make([]*bnet.Prefix, 0, 1)
-					budget = packet.MaxLen - int(pathNLRIs.path.BGPPath.Length()) - overhead
+					budget = u.getBudget(pathNLRIs)
 				}
 
 				prefixes = append(prefixes, pfx)
@@ -158,6 +155,10 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 		}
 		u.toSendMu.Unlock()
 	}
+}
+
+func (u *UpdateSender) getBudget(pathNLRIs *pathPfxs) int {
+	return packet.MaxLen - packet.HeaderLen - packet.MinUpdateLen - int(pathNLRIs.path.BGPPath.Length()) - u.updateOverhead()
 }
 
 func (u *UpdateSender) updateOverhead() int {
