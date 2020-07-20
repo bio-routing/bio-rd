@@ -132,7 +132,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
 
 				if u.options.UseAddPath {
-					budget -= 4
+					budget -= packet.PathIdentifierLen
 				}
 
 				if budget < 0 {
