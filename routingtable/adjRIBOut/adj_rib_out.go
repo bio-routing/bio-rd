@@ -116,6 +116,10 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 	return p, true
 }
 
+func (a *AdjRIBOut) AddPathInitialDump(pfx *bnet.Prefix, p *route.Path) error {
+	return a.AddPath(pfx, p)
+}
+
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOut) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 	p, propagate := a.bgpChecks(pfx, p)

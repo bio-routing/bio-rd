@@ -8,7 +8,6 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/pkg/errors"
@@ -89,9 +88,14 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 
 // LPM provides a longest prefix match service
 func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
+	vrfID, err := getVRFID(req)
 	if err != nil {
-		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
+		return nil, err
+	}
+
+	rib, err := s.getRIB(req.Router, vrfID, req.Pfx.Address.Version)
+	if err != nil {
+		return nil, wrapGetRIBErr(err, req.Router, vrfID, req.Pfx.Address.Version)
 	}
 
 	routes := rib.LPM(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -107,9 +111,14 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 
 // Get gets a prefix (exact match)
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
+	vrfID, err := getVRFID(req)
 	if err != nil {
-		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
+		return nil, err
+	}
+
+	rib, err := s.getRIB(req.Router, vrfID, req.Pfx.Address.Version)
+	if err != nil {
+		return nil, wrapGetRIBErr(err, req.Router, vrfID, req.Pfx.Address.Version)
 	}
 
 	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -128,9 +137,14 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // GetLonger gets all more specifics of a prefix
 func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.GetLongerResponse, error) {
-	rib, err := s.getRIB(req.Router, req.VrfId, req.Pfx.Address.Version)
+	vrfID, err := getVRFID(req)
 	if err != nil {
-		return nil, wrapGetRIBErr(err, req.Router, req.VrfId, req.Pfx.Address.Version)
+		return nil, err
+	}
+
+	rib, err := s.getRIB(req.Router, vrfID, req.Pfx.Address.Version)
+	if err != nil {
+		return nil, wrapGetRIBErr(err, req.Router, vrfID, req.Pfx.Address.Version)
 	}
 
 	routes := rib.GetLonger(bnet.NewPrefixFromProtoPrefix(req.Pfx))
@@ -146,6 +160,11 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 
 // ObserveRIB implements the ObserveRIB RPC
 func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
+	vrfID, err := getVRFID(req)
+	if err != nil {
+		return err
+	}
+
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {
 	case pb.ObserveRIBRequest_IPv4Unicast:
@@ -156,9 +175,9 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 		return fmt.Errorf("Unknown AFI/SAFI")
 	}
 
-	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
+	rib, err := s.getRIB(req.Router, vrfID, ipVersion)
 	if err != nil {
-		return wrapGetRIBErr(err, req.Router, req.VrfId, ipVersion)
+		return wrapGetRIBErr(err, req.Router, vrfID, ipVersion)
 	}
 
 	risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Inc()
@@ -198,6 +217,11 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 
 // DumpRIB implements the DumpRIB RPC
 func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationService_DumpRIBServer) error {
+	vrfID, err := getVRFID(req)
+	if err != nil {
+		return err
+	}
+
 	ipVersion := netapi.IP_IPv4
 	switch req.Afisafi {
 	case pb.DumpRIBRequest_IPv4Unicast:
@@ -208,9 +232,9 @@ func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationSer
 		return fmt.Errorf("Unknown AFI/SAFI")
 	}
 
-	rib, err := s.getRIB(req.Router, req.VrfId, ipVersion)
+	rib, err := s.getRIB(req.Router, vrfID, ipVersion)
 	if err != nil {
-		return wrapGetRIBErr(err, req.Router, req.VrfId, ipVersion)
+		return wrapGetRIBErr(err, req.Router, vrfID, ipVersion)
 	}
 
 	toSend := &pb.DumpRIBReply{
@@ -251,6 +275,24 @@ func (s *Server) GetRouters(c context.Context, request *pb.GetRoutersRequest) (*
 	return resp, nil
 }
 
+type RequestWithVRF interface {
+	GetVrfId() uint64
+	GetVrf() string
+}
+
+func getVRFID(req RequestWithVRF) (uint64, error) {
+	if req.GetVrf() != "" {
+		vrfID, err := vrf.ParseHumanReadableRouteDistinguisher(req.GetVrf())
+		if err != nil {
+			return 0, errors.Wrap(err, "Unable to parse VRF")
+		}
+
+		return vrfID, nil
+	}
+
+	return req.GetVrfId(), nil
+}
+
 type update struct {
 	advertisement bool
 	prefix        net.Prefix
@@ -268,8 +310,17 @@ func newRIBClient(fifo *updateFIFO) *ribClient {
 }
 
 func (r *ribClient) AddPath(pfx *net.Prefix, path *route.Path) error {
+	return r.addPath(pfx, path, false)
+}
+
+func (r *ribClient) AddPathInitialDump(pfx *net.Prefix, path *route.Path) error {
+	return r.addPath(pfx, path, true)
+}
+
+func (r *ribClient) addPath(pfx *net.Prefix, path *route.Path, isInitalDump bool) error {
 	r.fifo.queue(&pb.RIBUpdate{
 		Advertisement: true,
+		IsInitialDump: isInitalDump,
 		Route: &routeapi.Route{
 			Pfx: pfx.ToProto(),
 			Paths: []*routeapi.Path{
@@ -295,36 +346,7 @@ func (r *ribClient) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 	return false
 }
 
-func (r *ribClient) UpdateNewClient(routingtable.RouteTableClient) error {
-	return nil
-}
-
-func (r *ribClient) Register(routingtable.RouteTableClient) {
-}
-
-func (r *ribClient) RegisterWithOptions(routingtable.RouteTableClient, routingtable.ClientOptions) {
-}
-
-func (r *ribClient) Unregister(routingtable.RouteTableClient) {
-}
-
-func (r *ribClient) RouteCount() int64 {
-	return -1
-}
-
-func (r *ribClient) ClientCount() uint64 {
-	return 0
-}
-
-func (r *ribClient) Dump() []*route.Route {
-	return nil
-}
-
 func (r *ribClient) RefreshRoute(*net.Prefix, []*route.Path) {}
 
-func (r *ribClient) ReplaceFilterChain(filter.Chain) {}
-
 // ReplacePath is here to fulfill an interface
-func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
-
-}
+func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}

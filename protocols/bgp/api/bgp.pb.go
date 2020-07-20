@@ -10,8 +10,6 @@ import (
 	api1 "github.com/bio-routing/bio-rd/route/api"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -247,11 +245,11 @@ var fileDescriptor_2d4ce551e16bb738 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // BgpServiceClient is the client API for BgpService service.
 //
@@ -263,10 +261,10 @@ type BgpServiceClient interface {
 }
 
 type bgpServiceClient struct {
-	cc grpc.ClientConnInterface
+	cc *grpc.ClientConn
 }
 
-func NewBgpServiceClient(cc grpc.ClientConnInterface) BgpServiceClient {
+func NewBgpServiceClient(cc *grpc.ClientConn) BgpServiceClient {
 	return &bgpServiceClient{cc}
 }
 
@@ -348,20 +346,6 @@ type BgpServiceServer interface {
 	ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error)
 	DumpRIBIn(*DumpRIBRequest, BgpService_DumpRIBInServer) error
 	DumpRIBOut(*DumpRIBRequest, BgpService_DumpRIBOutServer) error
-}
-
-// UnimplementedBgpServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedBgpServiceServer struct {
-}
-
-func (*UnimplementedBgpServiceServer) ListSessions(ctx context.Context, req *ListSessionsRequest) (*ListSessionsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListSessions not implemented")
-}
-func (*UnimplementedBgpServiceServer) DumpRIBIn(req *DumpRIBRequest, srv BgpService_DumpRIBInServer) error {
-	return status.Errorf(codes.Unimplemented, "method DumpRIBIn not implemented")
-}
-func (*UnimplementedBgpServiceServer) DumpRIBOut(req *DumpRIBRequest, srv BgpService_DumpRIBOutServer) error {
-	return status.Errorf(codes.Unimplemented, "method DumpRIBOut not implemented")
 }
 
 func RegisterBgpServiceServer(s *grpc.Server, srv BgpServiceServer) {

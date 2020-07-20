@@ -18,6 +18,7 @@ service RoutingInformationService {
 message LPMRequest {
     string router = 1;
     uint64 vrf_id = 2;
+    string vrf = 4;
     bio.net.Prefix pfx = 3;
 }
 
@@ -28,6 +29,7 @@ message LPMResponse {
 message GetRequest {
     string router = 1;
     uint64 vrf_id = 2;
+    string vrf = 4;
     bio.net.Prefix pfx = 3;
 }
 
@@ -38,6 +40,7 @@ message GetResponse {
 message GetLongerRequest {
     string router = 1;
     uint64 vrf_id = 2;
+    string vrf = 4;
     bio.net.Prefix pfx = 3;
 }
 
@@ -48,6 +51,7 @@ message GetLongerResponse {
 message ObserveRIBRequest {
     string router = 1;
     uint64 vrf_id = 2;
+    string vrf = 4;
     enum AFISAFI {
         IPv4Unicast = 0;
         IPv6Unicast = 1;
@@ -57,6 +61,7 @@ message ObserveRIBRequest {
 
 message RIBUpdate {
     bool advertisement = 1;
+    bool is_initial_dump = 3;
     bio.route.Route route = 2;
 }
 
@@ -64,6 +69,7 @@ message RIBUpdate {
 message DumpRIBRequest {
     string router = 1;
     uint64 vrf_id = 2;
+    string vrf = 4;
     enum AFISAFI {
         IPv4Unicast = 0;
         IPv6Unicast = 1;
