@@ -20,6 +20,13 @@ import (
 	"github.com/bio-routing/tflow2/convert"
 )
 
+type RouterInterface interface {
+	Name() string
+	Address() net.IP
+	GetVRF(vrfID uint64) *vrf.VRF
+	GetVRFs() []*vrf.VRF
+}
+
 // Router represents a BMP enabled route in BMP context
 type Router struct {
 	name             string

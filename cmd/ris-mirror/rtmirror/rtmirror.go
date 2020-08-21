@@ -7,10 +7,12 @@ import (
 	"sync"
 
 	risapi "github.com/bio-routing/bio-rd/cmd/ris/api"
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
-	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/gogo/protobuf/proto"
+	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
@@ -20,7 +22,7 @@ import (
 // RTMirror provides an deduplicated mirror of a router/vrf/afi routing table from a multiple RIS instances
 type RTMirror struct {
 	cfg         Config
-	rt          *routingtable.RoutingTable
+	vrf         *vrf.VRF
 	routes      map[[20]byte]*routeContainer
 	routesMu    sync.Mutex
 	grpcClients []*grpc.ClientConn
@@ -30,9 +32,8 @@ type RTMirror struct {
 
 // Config is a route mirror config
 type Config struct {
-	Router    string
-	VRF       string
-	IPVersion uint8
+	Router string
+	VRF    *vrf.VRF
 }
 
 // New creates a new RTMirror and starts it
@@ -40,14 +41,21 @@ func New(clientConns []*grpc.ClientConn, cfg Config) *RTMirror {
 	rtm := &RTMirror{
 		cfg:         cfg,
 		routes:      make(map[[20]byte]*routeContainer),
-		rt:          routingtable.NewRoutingTable(),
+		vrf:         cfg.VRF,
 		grpcClients: clientConns,
 		stop:        make(chan struct{}),
 	}
 
-	for _, ris := range rtm.grpcClients {
-		rtm.wg.Add(1)
-		go rtm.client(ris)
+	afis := []risapi.ObserveRIBRequest_AFISAFI{
+		risapi.ObserveRIBRequest_IPv4Unicast,
+		risapi.ObserveRIBRequest_IPv6Unicast,
+	}
+
+	for _, afi := range afis {
+		for _, ris := range rtm.grpcClients {
+			rtm.wg.Add(1)
+			go rtm.client(ris, afi)
+		}
 	}
 
 	return rtm
@@ -75,18 +83,10 @@ func (rtm *RTMirror) Dispose() {
 	rtm.wg.Wait()
 }
 
-func (rtm *RTMirror) client(cc *grpc.ClientConn) {
+func (rtm *RTMirror) client(cc *grpc.ClientConn, afi risapi.ObserveRIBRequest_AFISAFI) {
 	defer rtm.wg.Done()
 
 	risc := risapi.NewRoutingInformationServiceClient(cc)
-
-	var afisafi risapi.ObserveRIBRequest_AFISAFI
-	switch rtm.cfg.IPVersion {
-	case 4:
-		afisafi = risapi.ObserveRIBRequest_IPv4Unicast
-	case 6:
-		afisafi = risapi.ObserveRIBRequest_IPv6Unicast
-	}
 
 	for {
 		if rtm.stopped() {
@@ -95,8 +95,8 @@ func (rtm *RTMirror) client(cc *grpc.ClientConn) {
 
 		orc, err := risc.ObserveRIB(context.Background(), &risapi.ObserveRIBRequest{
 			Router:  rtm.cfg.Router,
-			Vrf:     rtm.cfg.VRF,
-			Afisafi: afisafi,
+			VrfId:   rtm.cfg.VRF.RD(),
+			Afisafi: afi,
 		}, grpc.WaitForReady(true))
 		if err != nil {
 			log.WithError(err).Error("ObserveRIB call failed")
@@ -165,13 +165,23 @@ func (rtm *RTMirror) addRoute(cc *grpc.ClientConn, r *routeapi.Route) {
 	defer rtm.routesMu.Unlock()
 
 	if _, exists := rtm.routes[h]; !exists {
-		rtm.routes[h] = newRouteContainer(r, cc)
 		s := route.RouteFromProtoRoute(r, true)
-		rtm.rt.AddPath(s.Prefix(), s.Paths()[0])
+		rib := rtm.getRIB(s.Prefix().Addr())
+
+		rtm.routes[h] = newRouteContainer(r, cc)
+		rib.AddPath(s.Prefix(), s.Paths()[0])
 		return
 	}
 
 	rtm.routes[h].addSource(cc)
+}
+
+func (rtm *RTMirror) getRIB(addr *bnet.IP) *locRIB.LocRIB {
+	if addr.IsIPv4() {
+		return rtm.vrf.IPv4UnicastRIB()
+	}
+
+	return rtm.vrf.IPv6UnicastRIB()
 }
 
 func (rtm *RTMirror) delRoute(cc *grpc.ClientConn, r *routeapi.Route) {
@@ -199,13 +209,14 @@ func (rtm *RTMirror) _delRoute(h [20]byte, cc *grpc.ClientConn, r *routeapi.Rout
 	}
 
 	s := route.RouteFromProtoRoute(r, true)
-	rtm.rt.RemovePath(s.Prefix(), s.Paths()[0])
+	rib := rtm.getRIB(s.Prefix().Addr())
+	rib.RemovePath(s.Prefix(), s.Paths()[0])
 	delete(rtm.routes, h)
 }
 
-// GetRoutingTable exposes the routing table mirrored
-func (rtm *RTMirror) GetRoutingTable() *routingtable.RoutingTable {
-	return rtm.rt
+// GetVRF exposes the mirrors VRF
+func (rtm *RTMirror) GetVRF() *vrf.VRF {
+	return rtm.vrf
 }
 
 func hashRoute(route *routeapi.Route) ([20]byte, error) {
