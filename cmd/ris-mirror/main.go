@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
 	"os"
 	"time"
@@ -35,11 +34,7 @@ func main() {
 		log.WithError(err).Fatal("Failed to load config")
 	}
 
-	fmt.Printf("Config loaded\n")
-
 	risInstances := connectAllRISInstances(cfg.GetRISInstances())
-
-	fmt.Printf("Foo: %v\n", risInstances)
 	m := rismirror.New()
 
 	for _, rcfg := range cfg.RIBConfigs {
@@ -59,7 +54,6 @@ func main() {
 				srcs = append(srcs, risInstances[srcInstance])
 			}
 
-			fmt.Printf("Adding Target %v\n", rcfg.Router)
 			m.AddTarget(rcfg.Router, addr, vrfID, srcs)
 		}
 	}
