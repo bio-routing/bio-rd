@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/bio-routing/bio-rd/util/grpc/clientmanager/metrics"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
@@ -49,4 +50,20 @@ func (cm *ClientManager) Add(target string, opts ...grpc.DialOption) error {
 
 	cm.connections[target] = cc
 	return nil
+}
+
+// Metrics gets ClientManager metrics
+func (cm *ClientManager) Metrics() *metrics.ClientManagerMetrics {
+	ret := metrics.New()
+	cm.connectionsMu.RLock()
+	defer cm.connectionsMu.RUnlock()
+
+	for t, c := range cm.connections {
+		ret.Connections = append(ret.Connections, &metrics.GRPCConnectionMetrics{
+			Target: t,
+			State:  int(c.GetState()),
+		})
+	}
+
+	return ret
 }

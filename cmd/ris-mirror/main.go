@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/ris-mirror/rismirror"
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	"github.com/bio-routing/bio-rd/cmd/ris/risserver"
+	prom_grpc_cm "github.com/bio-routing/bio-rd/metrics/grpc/clientmanager/adapter/prom"
 	prom_ris_mirror "github.com/bio-routing/bio-rd/metrics/ris-mirror/adapter/prom"
 	"github.com/bio-routing/bio-rd/util/grpc/clientmanager"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
@@ -49,6 +50,7 @@ func main() {
 
 	m := rismirror.New()
 	prometheus.MustRegister(prom_ris_mirror.NewCollector(m))
+	prometheus.MustRegister(prom_grpc_cm.NewCollector(grpcClientManager))
 
 	for _, rcfg := range cfg.RIBConfigs {
 		for _, vrdRD := range rcfg.GetVRFs() {
