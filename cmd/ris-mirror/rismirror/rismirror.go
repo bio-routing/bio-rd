@@ -4,8 +4,8 @@ import (
 	"net"
 	"sync"
 
+	"github.com/bio-routing/bio-rd/cmd/ris-mirror/rismirror/metrics"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/protocols/ris/metrics"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"google.golang.org/grpc"
 )
