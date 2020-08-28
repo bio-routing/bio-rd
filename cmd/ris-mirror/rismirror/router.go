@@ -3,6 +3,7 @@ package rismirror
 import (
 	"net"
 
+	"github.com/bio-routing/bio-rd/cmd/ris-mirror/rtmirror"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
@@ -11,6 +12,9 @@ type Router struct {
 	name        string
 	address     net.IP
 	vrfRegistry *vrf.VRFRegistry
+
+	// rtMirrors contains RTMirrors organized by VRF route distinguisher
+	rtMirrors map[uint64]*rtmirror.RTMirror
 }
 
 func newRouter(name string, address net.IP) *Router {
@@ -18,6 +22,7 @@ func newRouter(name string, address net.IP) *Router {
 		name:        name,
 		address:     address,
 		vrfRegistry: vrf.NewVRFRegistry(),
+		rtMirrors:   make(map[uint64]*rtmirror.RTMirror),
 	}
 }
 

@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	labels := []string{"vrf", "rib", "afi", "safi"}
+	labels := []string{"vrf_name", "vrf_rd", "rib", "afi", "safi"}
 	routeCountDesc = prometheus.NewDesc(prefix+"route_count", "Number of routes in the RIB", labels, nil)
 	routeCountDescRouter = prometheus.NewDesc(prefix+"route_count", "Number of routes in the RIB", append([]string{"sys_name", "agent_address"}, labels...), nil)
 }
@@ -55,7 +55,7 @@ func (c *vrfCollector) Collect(ch chan<- prometheus.Metric) {
 func (c *vrfCollector) collectForVRF(ch chan<- prometheus.Metric, v *metrics.VRFMetrics) {
 	for _, rib := range v.RIBs {
 		ch <- prometheus.MustNewConstMetric(routeCountDesc, prometheus.GaugeValue, float64(rib.RouteCount),
-			v.Name, rib.Name, strconv.Itoa(int(rib.AFI)), strconv.Itoa(int(rib.SAFI)))
+			v.Name, vrf.RouteDistinguisherHumanReadable(v.RD), rib.Name, strconv.Itoa(int(rib.AFI)), strconv.Itoa(int(rib.SAFI)))
 	}
 }
 
@@ -63,6 +63,6 @@ func (c *vrfCollector) collectForVRF(ch chan<- prometheus.Metric, v *metrics.VRF
 func CollectForVRFRouter(ch chan<- prometheus.Metric, sysName string, agentAddress string, v *metrics.VRFMetrics) {
 	for _, rib := range v.RIBs {
 		ch <- prometheus.MustNewConstMetric(routeCountDescRouter, prometheus.GaugeValue, float64(rib.RouteCount),
-			sysName, agentAddress, v.Name, rib.Name, strconv.Itoa(int(rib.AFI)), strconv.Itoa(int(rib.SAFI)))
+			sysName, agentAddress, v.Name, vrf.RouteDistinguisherHumanReadable(v.RD), rib.Name, strconv.Itoa(int(rib.AFI)), strconv.Itoa(int(rib.SAFI)))
 	}
 }

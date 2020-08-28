@@ -8,14 +8,15 @@ import (
 
 	"github.com/bio-routing/bio-rd/cmd/ris-mirror/config"
 	"github.com/bio-routing/bio-rd/cmd/ris-mirror/rismirror"
+	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	"github.com/bio-routing/bio-rd/cmd/ris/risserver"
+	prom_ris_mirror "github.com/bio-routing/bio-rd/metrics/ris-mirror/adapter/prom"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
-
-	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 )
 
 var (
@@ -36,6 +37,7 @@ func main() {
 
 	risInstances := connectAllRISInstances(cfg.GetRISInstances())
 	m := rismirror.New()
+	prometheus.MustRegister(prom_ris_mirror.NewCollector(m))
 
 	for _, rcfg := range cfg.RIBConfigs {
 		for _, vrfHumanReadable := range rcfg.VRFs {

@@ -2,27 +2,26 @@ package rtmirror
 
 import (
 	routeapi "github.com/bio-routing/bio-rd/route/api"
-	"google.golang.org/grpc"
 )
 
 // routeContainer groups a route with one ore multiple source the route was received from
 type routeContainer struct {
 	route   *routeapi.Route
-	sources []*grpc.ClientConn
+	sources []interface{}
 }
 
-func newRouteContainer(route *routeapi.Route, source *grpc.ClientConn) *routeContainer {
+func newRouteContainer(route *routeapi.Route, source interface{}) *routeContainer {
 	return &routeContainer{
 		route:   route,
-		sources: []*grpc.ClientConn{source},
+		sources: []interface{}{source},
 	}
 }
 
-func (rc *routeContainer) addSource(cc *grpc.ClientConn) {
+func (rc *routeContainer) addSource(cc interface{}) {
 	rc.sources = append(rc.sources, cc)
 }
 
-func (rc *routeContainer) removeSource(cc *grpc.ClientConn) {
+func (rc *routeContainer) removeSource(cc interface{}) {
 	i := rc.getSourceIndex(cc)
 	if i < 0 {
 		return
@@ -32,7 +31,7 @@ func (rc *routeContainer) removeSource(cc *grpc.ClientConn) {
 	rc.sources = rc.sources[:len(rc.sources)-1]
 }
 
-func (rc *routeContainer) getSourceIndex(cc *grpc.ClientConn) int {
+func (rc *routeContainer) getSourceIndex(cc interface{}) int {
 	for i := range rc.sources {
 		if rc.sources[i] == cc {
 			return i
