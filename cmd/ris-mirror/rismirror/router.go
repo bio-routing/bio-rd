@@ -60,11 +60,13 @@ func (r *Router) addVRF(rd uint64, sources []*grpc.ClientConn) {
 }
 
 func (r *Router) connectVRF(rd uint64, src *grpc.ClientConn, afi uint8) {
-	risclient.New(&risclient.Request{
+	rc := risclient.New(&risclient.Request{
 		Router: r.name,
 		VRFRD:  rd,
 		AFI:    apiAFI(afi),
 	}, src, r.vrfs[rd].getRIB(afi))
+
+	rc.Start()
 }
 
 func apiAFI(afi uint8) api.ObserveRIBRequest_AFISAFI {

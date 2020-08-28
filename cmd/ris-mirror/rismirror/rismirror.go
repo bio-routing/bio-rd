@@ -58,6 +58,7 @@ func (rism *RISMirror) GetRouters() []server.RouterInterface {
 	return res
 }
 
+// Metrics gets a RISMirrors metrics
 func (rism *RISMirror) Metrics() *metrics.RISMirrorMetrics {
 	res := &metrics.RISMirrorMetrics{
 		Routers: make([]*metrics.RISMirrorRouterMetrics, 0),
@@ -68,9 +69,18 @@ func (rism *RISMirror) Metrics() *metrics.RISMirrorMetrics {
 
 	for _, r := range rism.routers {
 		rm := &metrics.RISMirrorRouterMetrics{
-			Address:    r.Address(),
-			SysName:    r.Name(),
-			VRFMetrics: vrf.Metrics(r.(*Router).vrfRegistry),
+			Address:            r.Address(),
+			SysName:            r.Name(),
+			VRFMetrics:         vrf.Metrics(r.(*Router).vrfRegistry),
+			InternalVRFMetrics: make([]*metrics.InternalVRFMetrics, 0),
+		}
+
+		for rd, v := range r.(*Router).vrfs {
+			rm.InternalVRFMetrics = append(rm.InternalVRFMetrics, &metrics.InternalVRFMetrics{
+				RD:                             rd,
+				MergedLocRIBMetricsIPv4Unicast: v.ipv4Unicast.Metrics(),
+				MergedLocRIBMetricsIPv6Unicast: v.ipv6Unicast.Metrics(),
+			})
 		}
 
 		res.Routers = append(res.Routers, rm)

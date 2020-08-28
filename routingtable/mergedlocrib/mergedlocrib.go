@@ -7,6 +7,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/mergedlocrib/metrics"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 )
@@ -14,7 +15,7 @@ import (
 // MergedLocRIB provides an deduplicated routing table
 type MergedLocRIB struct {
 	routes   map[[20]byte]*routeContainer
-	routesMu sync.Mutex
+	routesMu sync.RWMutex
 	locRIB   *locRIB.LocRIB
 }
 
@@ -103,4 +104,28 @@ func hashRoute(route *routeapi.Route) ([20]byte, error) {
 	copy(res[:], x)
 
 	return res, nil
+}
+
+// Metrics gets the metrics
+func (rtm *MergedLocRIB) Metrics() *metrics.MergedLocRIBMetrics {
+	rtm.routesMu.RLock()
+	defer rtm.routesMu.RUnlock()
+
+	return &metrics.MergedLocRIBMetrics{
+		RIBName:                     rtm.locRIB.Name(),
+		UniqueRouteCount:            uint64(len(rtm.routes)),
+		RoutesWithSingleSourceCount: rtm._getRoutesWithSingleSourceCount(),
+	}
+}
+
+func (rtm *MergedLocRIB) _getRoutesWithSingleSourceCount() uint64 {
+	n := uint64(0)
+
+	for _, r := range rtm.routes {
+		if len(r.sources) == 1 {
+			n++
+		}
+	}
+
+	return n
 }
