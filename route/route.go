@@ -291,6 +291,11 @@ func RouteFromProtoRoute(ar *api.Route, dedup bool) *Route {
 }
 
 func (r *Route) updateEqualPathCount() {
+	if len(r.paths) == 0 {
+		r.ecmpPaths = 0
+		return
+	}
+
 	count := uint(1)
 	for i := 0; i < len(r.paths)-1; i++ {
 		if !r.paths[i].ECMP(r.paths[i+1]) {

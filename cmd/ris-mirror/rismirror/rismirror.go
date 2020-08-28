@@ -1,11 +1,9 @@
 package rismirror
 
 import (
-	"fmt"
 	"net"
 	"sync"
 
-	"github.com/bio-routing/bio-rd/cmd/ris-mirror/rtmirror"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/protocols/ris/metrics"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
@@ -24,6 +22,7 @@ func New() *RISMirror {
 	}
 }
 
+// AddTarget adds a target to the RISMirror
 func (rism *RISMirror) AddTarget(rtrName string, address net.IP, vrfRD uint64, sources []*grpc.ClientConn) {
 	rism.routersMu.Lock()
 	defer rism.routersMu.Unlock()
@@ -32,16 +31,8 @@ func (rism *RISMirror) AddTarget(rtrName string, address net.IP, vrfRD uint64, s
 		rism.routers[rtrName] = newRouter(rtrName, address)
 	}
 
-	v := rism.routers[rtrName].(*Router).vrfRegistry.GetVRFByRD(vrfRD)
-	if v == nil {
-		v = rism.routers[rtrName].(*Router).vrfRegistry.CreateVRFIfNotExists(fmt.Sprintf("%d", vrfRD), vrfRD)
-		rtm := rtmirror.New(rtmirror.Config{
-			Router: rtrName,
-			VRF:    v,
-		})
-
-		rism.routers[rtrName].(*Router).rtMirrors[vrfRD] = rtm
-	}
+	r := rism.routers[rtrName].(*Router)
+	r.addVRF(vrfRD, sources)
 }
 
 // GetRouter gets a router
@@ -80,7 +71,6 @@ func (rism *RISMirror) Metrics() *metrics.RISMirrorMetrics {
 			Address:    r.Address(),
 			SysName:    r.Name(),
 			VRFMetrics: vrf.Metrics(r.(*Router).vrfRegistry),
-			// TODO: RISUpstreamStatus: Fill In,
 		}
 
 		res.Routers = append(res.Routers, rm)
