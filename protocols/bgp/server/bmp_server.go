@@ -21,6 +21,11 @@ const (
 	defaultBufferLen = 4096
 )
 
+type BMPServerInterface interface {
+	GetRouter(rtr string) RouterInterface
+	GetRouters() []RouterInterface
+}
+
 // BMPServer represents a BMP server
 type BMPServer struct {
 	routers    map[string]*Router
@@ -170,11 +175,11 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 }
 
 // GetRouters gets all routers
-func (b *BMPServer) GetRouters() []*Router {
+func (b *BMPServer) GetRouters() []RouterInterface {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 
-	r := make([]*Router, 0, len(b.routers))
+	r := make([]RouterInterface, 0, len(b.routers))
 	for name := range b.routers {
 		r = append(r, b.routers[name])
 	}
@@ -183,7 +188,7 @@ func (b *BMPServer) GetRouters() []*Router {
 }
 
 // GetRouter gets a router
-func (b *BMPServer) GetRouter(name string) *Router {
+func (b *BMPServer) GetRouter(name string) RouterInterface {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 

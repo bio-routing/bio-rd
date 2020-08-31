@@ -75,7 +75,7 @@ func TestBMPServer(t *testing.T) {
 		return
 	}
 
-	aaaa := srv.GetRouter("10.0.255.1")
+	aaaa := srv.GetRouter("10.0.255.1").(*Router)
 	if aaaa == nil {
 		t.Errorf("Router AAAA not found")
 		return

@@ -151,7 +151,7 @@ func (p *Path) String() string {
 	case FIBPathType:
 		return p.FIBPath.String()
 	default:
-		return "Unknown paty type. Probably not implemented yet"
+		return fmt.Sprintf("Unknown path type. Probably not implemented yet (%d)", p.Type)
 	}
 }
 

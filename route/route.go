@@ -279,6 +279,9 @@ func RouteFromProtoRoute(ar *api.Route, dedup bool) *Route {
 		case api.Path_BGP:
 			p.Type = BGPPathType
 			p.BGPPath = BGPPathFromProtoBGPPath(ar.Paths[i].BgpPath, dedup)
+		case api.Path_Static:
+			p.Type = StaticPathType
+			p.StaticPath = StaticPathFromProtoStaticPath(ar.Paths[i].StaticPath, dedup)
 		}
 
 		r.paths = append(r.paths, p)
@@ -288,6 +291,11 @@ func RouteFromProtoRoute(ar *api.Route, dedup bool) *Route {
 }
 
 func (r *Route) updateEqualPathCount() {
+	if len(r.paths) == 0 {
+		r.ecmpPaths = 0
+		return
+	}
+
 	count := uint(1)
 	for i := 0; i < len(r.paths)-1; i++ {
 		if !r.paths[i].ECMP(r.paths[i+1]) {
