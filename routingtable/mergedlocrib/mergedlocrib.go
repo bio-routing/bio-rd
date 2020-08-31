@@ -14,7 +14,7 @@ import (
 
 // MergedLocRIB provides an deduplicated routing table
 type MergedLocRIB struct {
-	routes   map[[20]byte]*routeContainer
+	routes   map[[sha1.Size]byte]*routeContainer
 	routesMu sync.RWMutex
 	locRIB   *locRIB.LocRIB
 }
@@ -22,7 +22,7 @@ type MergedLocRIB struct {
 // New creates a new MergedLocRIB and starts it
 func New(locRIB *locRIB.LocRIB) *MergedLocRIB {
 	return &MergedLocRIB{
-		routes: make(map[[20]byte]*routeContainer),
+		routes: make(map[[sha1.Size]byte]*routeContainer),
 		locRIB: locRIB,
 	}
 }
@@ -76,7 +76,7 @@ func (rtm *MergedLocRIB) RemoveRoute(cc interface{}, r *routeapi.Route) error {
 	return nil
 }
 
-func (rtm *MergedLocRIB) _delRoute(h [20]byte, src interface{}, r *routeapi.Route) {
+func (rtm *MergedLocRIB) _delRoute(h [sha1.Size]byte, src interface{}, r *routeapi.Route) {
 	rtm.routes[h].removeSource(src)
 
 	if rtm.routes[h].srcCount() > 0 {
@@ -88,18 +88,18 @@ func (rtm *MergedLocRIB) _delRoute(h [20]byte, src interface{}, r *routeapi.Rout
 	delete(rtm.routes, h)
 }
 
-func hashRoute(route *routeapi.Route) ([20]byte, error) {
+func hashRoute(route *routeapi.Route) ([sha1.Size]byte, error) {
 	m, err := proto.Marshal(route)
 	if err != nil {
-		return [20]byte{}, errors.Wrap(err, "Proto marshal failed")
+		return [sha1.Size]byte{}, errors.Wrap(err, "Proto marshal failed")
 	}
 
 	h := sha1.New()
 	_, err = h.Write(m)
 	if err != nil {
-		return [20]byte{}, errors.Wrap(err, "Write failed")
+		return [sha1.Size]byte{}, errors.Wrap(err, "Write failed")
 	}
-	res := [20]byte{}
+	res := [sha1.Size]byte{}
 	x := h.Sum(nil)
 	copy(res[:], x)
 
