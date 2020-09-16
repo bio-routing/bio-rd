@@ -44,10 +44,52 @@ func (a *ASPath) Compare(b *ASPath) bool {
 	return true
 }
 
+// GetFirstSequenceSegment gets the first sequence of an AS path
+func (a *ASPath) GetFirstSequenceSegment() *ASPathSegment {
+	for _, seg := range *a {
+		if seg.Type == ASSequence {
+			return &seg
+		}
+	}
+
+	return nil
+}
+
+// GetLastSequenceSegment gets the last sequence of an AS path
+func (a *ASPath) GetLastSequenceSegment() *ASPathSegment {
+	for i := len(*a) - 1; i >= 0; i-- {
+		if (*a)[i].Type == ASSequence {
+			return &(*a)[i]
+		}
+	}
+
+	return nil
+}
+
 // ASPathSegment represents an AS Path Segment (RFC4271)
 type ASPathSegment struct {
 	Type uint8
 	ASNs []uint32
+}
+
+// GetFirstASN returns the first ASN of an AS path segment
+func (s ASPathSegment) GetFirstASN() *uint32 {
+	if len(s.ASNs) == 0 {
+		return nil
+	}
+
+	ret := s.ASNs[0]
+	return &ret
+}
+
+// GetLastASN returns the last ASN of an AS path segment
+func (s ASPathSegment) GetLastASN() *uint32 {
+	if len(s.ASNs) == 0 {
+		return nil
+	}
+
+	ret := s.ASNs[len(s.ASNs)-1]
+	return &ret
 }
 
 // Compare checks if ASPathSegments are the same
