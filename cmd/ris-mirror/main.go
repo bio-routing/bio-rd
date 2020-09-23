@@ -37,7 +37,7 @@ func main() {
 
 	grpcClientManager := clientmanager.New()
 	for _, instance := range cfg.GetRISInstances() {
-		err := grpcClientManager.Add(instance, grpc.WithInsecure(), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		err := grpcClientManager.AddIfNotExists(instance, grpc.WithInsecure(), grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:                time.Second * 10,
 			Timeout:             time.Second * time.Duration(*risTimeout),
 			PermitWithoutStream: true,
