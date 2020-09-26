@@ -115,18 +115,37 @@ func (l *lsdb) sendLSPDUs() {
 }
 
 func (l *lsdb) processCSNP(csnp *packet.CSNP, from *netIfa) {
+	l.lspsMu.Lock()
+	defer l.lspsMu.Unlock()
+
 	for _, lspEntry := range csnp.GetLSPEntries() {
 		l.processCSNPLSPEntry(lspEntry, from)
 	}
 
-	// TODO: Check LSDB for entries in the range of the CSNP but not listed in it's TLVs.
-	// Set SRM flag so we send the LSP our neighbor doesn't know about.
+	for lspID, lsdbEntry := range l.lsps {
+		// we need to check if we have LSPs the neighbor did not describe.
+		// For any that we have but our neighbor doesn't we set SRM flag so
+		// the entry gets propagated.
+
+		if lsdbEntry.lspdu.RemainingLifetime <= 0 || lsdbEntry.lspdu.SequenceNumber <= 0 {
+			continue
+		}
+
+		if !csnp.RangeContainsLSPID(lspID) {
+			continue
+		}
+
+		if !csnp.ContainsLSPEntry(lspID) {
+			lsdbEntry.setSRM(from)
+		}
+	}
 }
 
 func (l *lsdb) processCSNPLSPEntry(lspEntry *packet.LSPEntry, from *netIfa) {
 	e := l._getLSPDU(lspEntry.LSPID)
 	if e == nil {
-		// LSP was unknown until now. We need to create an entry with Sequence number = 0
+		l.processCSNPLSPEntryUnknown(lspEntry, from)
+		return
 	}
 
 	if e.sameAsInLSPEntry(lspEntry) {
@@ -145,6 +164,11 @@ func (l *lsdb) processCSNPLSPEntry(lspEntry *packet.LSPEntry, from *netIfa) {
 		e.setSSN(from)
 		return
 	}
+}
+
+func (l *lsdb) processCSNPLSPEntryUnknown(lspEntry *packet.LSPEntry, from *netIfa) {
+	l.lsps[lspEntry.LSPID] = newEmptyLSDBEntry(lspEntry)
+	l.lsps[lspEntry.LSPID].setSSN(from)
 }
 
 func (l *lsdb) _getLSPDU(needle packet.LSPID) *lsdbEntry {

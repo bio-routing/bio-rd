@@ -15,6 +15,20 @@ type lsdbEntry struct {
 
 func newLSDBEntry(lspdu *packet.LSPDU) *lsdbEntry {
 	return &lsdbEntry{
+		lspdu:    lspdu,
+		srmFlags: make(map[*netIfa]struct{}),
+		ssnFlags: make(map[*netIfa]struct{}),
+	}
+}
+
+func newEmptyLSDBEntry(lspEntry *packet.LSPEntry) *lsdbEntry {
+	return &lsdbEntry{
+		lspdu: &packet.LSPDU{
+			RemainingLifetime: lspEntry.RemainingLifetime,
+			LSPID:             lspEntry.LSPID,
+			SequenceNumber:    0,
+			Checksum:          lspEntry.LSPChecksum,
+		},
 		srmFlags: make(map[*netIfa]struct{}),
 		ssnFlags: make(map[*netIfa]struct{}),
 	}

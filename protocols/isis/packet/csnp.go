@@ -124,6 +124,22 @@ func (c *CSNP) GetLSPEntries() []*LSPEntry {
 	return nil
 }
 
+// RangeContainsLSPID checks if lspID is within the range of described LSPs of this CSNP
+func (c *CSNP) RangeContainsLSPID(lspID LSPID) bool {
+	return c.StartLSPID.Compare(lspID) <= 0 && c.EndLSPID.Compare(lspID) >= 0
+}
+
+// ContainsLSPEntry checks if c contains lspID
+func (c *CSNP) ContainsLSPEntry(needle LSPID) bool {
+	for _, e := range c.GetLSPEntries() {
+		if e.LSPID == needle {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Serialize serializes CSNPs
 func (c *CSNP) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(c.PDULength))
