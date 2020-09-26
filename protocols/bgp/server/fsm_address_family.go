@@ -20,8 +20,8 @@ type fsmAddressFamily struct {
 	safi uint8
 	fsm  *FSM
 
-	adjRIBIn  routingtable.RouteTableClient
-	adjRIBOut routingtable.RouteTableClient
+	adjRIBIn  routingtable.AdjRIBIn
+	adjRIBOut routingtable.AdjRIBOut
 	rib       *locRIB.LocRIB
 
 	importFilterChain filter.Chain

@@ -2,9 +2,12 @@ package vrf
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -136,4 +139,48 @@ func (v *VRF) Dispose() {
 	for ribName := range v.ribNames {
 		delete(v.ribNames, ribName)
 	}
+}
+
+// RouteDistinguisherHumanReadable converts 64bit route distinguisher to human readable string form
+func RouteDistinguisherHumanReadable(rdi uint64) string {
+	asn := rdi >> 32
+
+	netIDMask := uint64(0x00000000ffffffff)
+	netID := rdi & netIDMask
+
+	return fmt.Sprintf("%d:%d", asn, netID)
+}
+
+// ParseHumanReadableRouteDistinguisher parses a human readable route distinguisher
+func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
+	parts := strings.Split(x, ":")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("Invalid format")
+	}
+
+	asn, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, errors.Wrap(err, "Unable to convert first part to int")
+	}
+
+	maxUint32 := int(^uint32(0))
+	if asn > maxUint32 {
+		return 0, fmt.Errorf("Invalid format: ASN > max uint32")
+	}
+
+	netID, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, errors.Wrap(err, "Unable to convert second part to int")
+	}
+
+	if netID > maxUint32 {
+		return 0, fmt.Errorf("Invalid format: Network ID > max uint32")
+	}
+
+	ret := uint64(0)
+	ret = uint64(asn)
+	ret = ret << 32
+	ret += uint64(netID)
+
+	return ret, nil
 }

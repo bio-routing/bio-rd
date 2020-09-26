@@ -21,12 +21,16 @@ const (
 	defaultBufferLen = 4096
 )
 
+type BMPServerInterface interface {
+	GetRouter(rtr string) RouterInterface
+	GetRouters() []RouterInterface
+}
+
 // BMPServer represents a BMP server
 type BMPServer struct {
 	routers    map[string]*Router
 	routersMu  sync.RWMutex
 	ribClients map[string]map[afiClient]struct{}
-	gloablMu   sync.RWMutex
 	metrics    *bmpMetricsService
 }
 
@@ -46,20 +50,37 @@ func NewServer() *BMPServer {
 	return b
 }
 
+func conString(host string, port uint16) string {
+	return fmt.Sprintf("%s:%d", host, port)
+}
+
 // AddRouter adds a router to which we connect with BMP
 func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
-	b.gloablMu.Lock()
-	defer b.gloablMu.Unlock()
-
 	r := newRouter(addr, port)
 	b.addRouter(r)
 
 	go func(r *Router) {
 		for {
-			<-r.reconnectTimer.C
+			select {
+			case <-r.stop:
+				log.WithFields(log.Fields{
+					"component": "bmp_server",
+					"address":   conString(r.address.String(), r.port),
+				}).Info("Stop event: Stopping reconnect routine")
+				return
+			case <-r.reconnectTimer.C:
+				log.WithFields(log.Fields{
+					"component": "bmp_server",
+					"address":   conString(r.address.String(), r.port),
+				}).Info("Reconnect timer expired: Establishing connection")
+			}
+
 			c, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port), r.dialTimeout)
 			if err != nil {
-				log.Infof("Unable to connect to BMP router: %v", err)
+				log.WithError(err).WithFields(log.Fields{
+					"component": "bmp_server",
+					"address":   conString(r.address.String(), r.port),
+				}).Info("Unable to connect to BMP router")
 				if r.reconnectTime == 0 {
 					r.reconnectTime = r.reconnectTimeMin
 				} else if r.reconnectTime < r.reconnectTimeMax {
@@ -72,26 +93,50 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 			atomic.StoreUint32(&r.established, 1)
 			r.reconnectTime = r.reconnectTimeMin
 			r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
-			log.Infof("Connected to %s", r.address.String())
-			r.serve(c)
+			log.WithFields(log.Fields{
+				"component": "bmp_server",
+				"address":   conString(r.address.String(), r.port),
+			}).Info("Connected")
+
+			err = r.serve(c)
 			atomic.StoreUint32(&r.established, 0)
+			if err != nil {
+				r.logger.WithFields(log.Fields{
+					"component": "bmp_server",
+					"address":   conString(r.address.String(), r.port),
+				}).WithError(err).Error("r.serve() failed")
+			} else {
+				r.logger.WithFields(log.Fields{
+					"component": "bmp_server",
+					"address":   conString(r.address.String(), r.port),
+				}).Info("r.Serve returned without error. Stopping reconnect routine")
+				return
+			}
 		}
 	}(r)
 }
 
 func (b *BMPServer) addRouter(r *Router) {
+	b.routersMu.Lock()
+	defer b.routersMu.Unlock()
+
 	b.routers[fmt.Sprintf("%s", r.address.String())] = r
 }
 
-// RemoveRouter removes a BMP monitored router
-func (b *BMPServer) RemoveRouter(addr net.IP, port uint16) {
-	b.gloablMu.Lock()
-	defer b.gloablMu.Unlock()
+func (b *BMPServer) deleteRouter(addr net.IP) {
+	b.routersMu.Lock()
+	defer b.routersMu.Unlock()
 
+	delete(b.routers, addr.String())
+}
+
+// RemoveRouter removes a BMP monitored router
+func (b *BMPServer) RemoveRouter(addr net.IP) {
 	id := addr.String()
 	r := b.routers[id]
-	r.stop <- struct{}{}
-	delete(b.routers, id)
+	close(r.stop)
+
+	b.deleteRouter(addr)
 }
 
 func (b *BMPServer) getRouters() []*Router {
@@ -130,11 +175,11 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 }
 
 // GetRouters gets all routers
-func (b *BMPServer) GetRouters() []*Router {
+func (b *BMPServer) GetRouters() []RouterInterface {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 
-	r := make([]*Router, 0, len(b.routers))
+	r := make([]RouterInterface, 0, len(b.routers))
 	for name := range b.routers {
 		r = append(r, b.routers[name])
 	}
@@ -143,16 +188,12 @@ func (b *BMPServer) GetRouters() []*Router {
 }
 
 // GetRouter gets a router
-func (b *BMPServer) GetRouter(name string) *Router {
+func (b *BMPServer) GetRouter(name string) RouterInterface {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 
-	for x := range b.routers {
-		if x != name {
-			continue
-		}
-
-		return b.routers[x]
+	if _, ok := b.routers[name]; ok {
+		return b.routers[name]
 	}
 
 	return nil

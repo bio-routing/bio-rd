@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
@@ -16,6 +18,10 @@ func NewDumpLocRIBCommand() cli.Command {
 	cmd := cli.Command{
 		Name:  "dump-loc-rib",
 		Usage: "dump loc RIB",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "4", Usage: "print IPv4 routes"},
+			&cli.BoolFlag{Name: "6", Usage: "print IPv6 routes"},
+		},
 	}
 
 	cmd.Action = func(c *cli.Context) error {
@@ -26,11 +32,26 @@ func NewDumpLocRIBCommand() cli.Command {
 		}
 		defer conn.Close()
 
+		afisafis := make([]pb.DumpRIBRequest_AFISAFI, 0)
+		req_ipv4, req_ipv6 := c.Bool("4"), c.Bool("6")
+		if !req_ipv4 && !req_ipv6 {
+			req_ipv4, req_ipv6 = true, true
+		}
+		if req_ipv4 {
+			afisafis = append(afisafis, pb.DumpRIBRequest_IPv4Unicast)
+		}
+		if req_ipv6 {
+			afisafis = append(afisafis, pb.DumpRIBRequest_IPv6Unicast)
+		}
+
 		client := pb.NewRoutingInformationServiceClient(conn)
-		err = dumpRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"))
-		if err != nil {
-			log.Errorf("DumpRIB failed: %v", err)
-			os.Exit(1)
+		for _, afisafi := range afisafis {
+			fmt.Printf(" --- Dump %s ---\n", pb.DumpRIBRequest_AFISAFI_name[int32(afisafi)])
+			err = dumpRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), afisafi)
+			if err != nil {
+				log.Errorf("DumpRIB failed: %v", err)
+				os.Exit(1)
+			}
 		}
 
 		return nil
@@ -39,11 +60,12 @@ func NewDumpLocRIBCommand() cli.Command {
 	return cmd
 }
 
-func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64) error {
+func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, vrf string, afisafi pb.DumpRIBRequest_AFISAFI) error {
 	client, err := c.DumpRIB(context.Background(), &pb.DumpRIBRequest{
 		Router:  routerName,
 		VrfId:   vrfID,
-		Afisafi: pb.DumpRIBRequest_IPv4Unicast,
+		Vrf:     vrf,
+		Afisafi: afisafi,
 	})
 	if err != nil {
 		return errors.Wrap(err, "Unable to get client")
@@ -52,6 +74,9 @@ func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint
 	for {
 		r, err := client.Recv()
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return errors.Wrap(err, "Received failed")
 		}
 

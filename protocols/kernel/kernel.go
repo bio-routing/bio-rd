@@ -27,6 +27,10 @@ func New() (*Kernel, error) {
 	return k, nil
 }
 
+func (k *Kernel) AddPathInitialDump(pfx *net.Prefix, path *route.Path) error {
+	return k.AddPath(pfx, path)
+}
+
 func (k *Kernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 	return k.osKernel.AddPath(pfx, path)
 }

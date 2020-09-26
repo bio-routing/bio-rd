@@ -124,7 +124,7 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 				continue
 			}
 
-			err := client.AddPath(route.Prefix(), path)
+			err := client.AddPathInitialDump(route.Prefix(), path)
 			if err != nil {
 				log.WithField("Sender", "AdjRIBOutAddPath").WithError(err).Error("Could not send update to client")
 			}
@@ -220,7 +220,7 @@ func (a *AdjRIBIn) removePath(pfx *net.Prefix, p *route.Path) bool {
 	oldPaths := r.Paths()
 	for _, path := range oldPaths {
 		if a.addPathRX {
-			if path.BGPPath.PathIdentifier != p.BGPPath.PathIdentifier {
+			if p != nil && path.BGPPath.PathIdentifier != p.BGPPath.PathIdentifier {
 				continue
 			}
 		}
@@ -254,6 +254,11 @@ func (a *AdjRIBIn) Register(client routingtable.RouteTableClient) {
 	a.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
 }
 
+// RegisterWithOptions registers a client for updates
+func (a *AdjRIBIn) RegisterWithOptions(client routingtable.RouteTableClient, options routingtable.ClientOptions) {
+	a.clientManager.RegisterWithOptions(client, options)
+}
+
 // Unregister unregisters a client
 func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
 	if !a.clientManager.Unregister(client) {
@@ -270,4 +275,19 @@ func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
 // RefreshRoute is here to fultill an interface
 func (a *AdjRIBIn) RefreshRoute(*net.Prefix, []*route.Path) {
 
+}
+
+// LPM performs a longest prefix match on the routing table
+func (a *AdjRIBIn) LPM(pfx *net.Prefix) (res []*route.Route) {
+	return a.rt.LPM(pfx)
+}
+
+// Get gets a route
+func (a *AdjRIBIn) Get(pfx *net.Prefix) *route.Route {
+	return a.rt.Get(pfx)
+}
+
+// GetLonger gets all more specifics
+func (a *AdjRIBIn) GetLonger(pfx *net.Prefix) (res []*route.Route) {
+	return a.rt.GetLonger(pfx)
 }

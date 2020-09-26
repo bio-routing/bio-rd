@@ -21,6 +21,7 @@ func Metrics(r *VRFRegistry) []*metrics.VRFMetrics {
 func MetricsForVRF(v *VRF) *metrics.VRFMetrics {
 	m := &metrics.VRFMetrics{
 		Name: v.Name(),
+		RD:   v.RD(),
 		RIBs: make([]*metrics.RIBMetrics, 0),
 	}
 

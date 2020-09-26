@@ -26,6 +26,7 @@ func TestMetrics(t *testing.T) {
 	expected := []*metrics.VRFMetrics{
 		{
 			Name: "green",
+			RD:   0,
 			RIBs: []*metrics.RIBMetrics{
 				{
 					Name:       "inet.0",
@@ -43,6 +44,7 @@ func TestMetrics(t *testing.T) {
 		},
 		{
 			Name: "red",
+			RD:   1,
 			RIBs: []*metrics.RIBMetrics{
 				{
 					Name:       "inet.0",

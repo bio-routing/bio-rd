@@ -71,3 +71,63 @@ func TestUnregister(t *testing.T) {
 	assert.False(t, found, "vrf must not be in global registry")
 
 }
+
+func TestRouteDistinguisherHumanReadable(t *testing.T) {
+	tests := []struct {
+		name     string
+		rdi      uint64
+		expected string
+	}{
+		{
+			name:     "Test #1",
+			rdi:      0,
+			expected: "0:0",
+		},
+		{
+			name:     "Test #2",
+			rdi:      220434901565105,
+			expected: "51324:65201",
+		},
+	}
+
+	for _, test := range tests {
+		res := RouteDistinguisherHumanReadable(test.rdi)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestParseHumanReadableRouteDistinguisher(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected uint64
+		wantFail bool
+	}{
+		{
+			name:     "Test #1",
+			input:    "51324:65201",
+			expected: 0x0000C87C0000FEB1,
+			wantFail: false,
+		},
+		{
+			name:     "Test #2",
+			input:    "51324",
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		res, err := ParseHumanReadableRouteDistinguisher(test.input)
+		if !test.wantFail && err != nil {
+			t.Errorf("Unexpected failure for test %q", test.name)
+			continue
+		}
+
+		if test.wantFail && err == nil {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}

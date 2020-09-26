@@ -27,10 +27,16 @@ func main() {
 			Usage: "VRF ID",
 			Value: 0,
 		},
+		cli.StringFlag{
+			Name:  "vrf",
+			Usage: "VRF",
+			Value: "",
+		},
 	}
 
 	app.Commands = []cli.Command{
 		NewDumpLocRIBCommand(),
+		NewLPMCommand(),
 	}
 
 	err := app.Run(os.Args)

@@ -956,6 +956,29 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			},
 		},
 		{
+			name: "valid MP_REACH_NLRI with two next-hops",
+			input: []byte{
+				0x00, 0x02, // AFI
+				0x01,                                                                                                 // SAFI
+				0x20, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, // NextHop
+				0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, // Link Local NextHop
+				0x00,                                     // RESERVED
+				0x30, 0x26, 0x00, 0x00, 0x06, 0xff, 0x05, // Prefix
+			},
+			opt: &DecodeOptions{},
+			expected: &PathAttribute{
+				Length: 44,
+				Value: MultiProtocolReachNLRI{
+					AFI:     IPv6AFI,
+					SAFI:    UnicastSAFI,
+					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Ptr(),
+					NLRI: &NLRI{
+						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Ptr(),
+					},
+				},
+			},
+		},
+		{
 			name: "MP_REACH_NLRI with invalid length",
 			input: []byte{
 				0x00, 0x02, // AFI
