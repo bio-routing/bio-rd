@@ -4,24 +4,21 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.13.x, 1.14.x]
-        platform: [ubuntu-latest, macos-latest]
+        go-version: [1.14.x, 1.15.x]
+        platform: [ubuntu-latest, ubuntu-18.04, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go-version }}
+
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Test
         run: go test -v -cover -coverprofile=coverage.txt ./...
-      - name: Vet
-        run: go vet ./...
-      - name: Build examples
-        run: scripts/build_examples.sh
-      - name: Build examples
-        run: scripts/check_gofmt.sh
+
       # Upload Coverage Report
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
@@ -30,3 +27,6 @@ jobs:
           flags: unittests
           name: codecov-${{ matrix.platform }}-${{ matrix.go-version }}
           fail_ci_if_error: true
+
+      - name: Build examples
+        run: scripts/build_examples.sh
