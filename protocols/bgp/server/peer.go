@@ -20,6 +20,7 @@ type peer struct {
 	config    *PeerConfig
 	addr      *bnet.IP
 	localAddr *bnet.IP
+	ttl       uint8
 	passive   bool
 	peerASN   uint32
 	localASN  uint32
@@ -45,12 +46,14 @@ type peer struct {
 
 // PeerConfig defines the configuration for a BGP session
 type PeerConfig struct {
+	AuthenticationKey          string
 	AdminEnabled               bool
 	ReconnectInterval          time.Duration
 	KeepAlive                  time.Duration
 	HoldTime                   time.Duration
 	LocalAddress               *bnet.IP
 	PeerAddress                *bnet.IP
+	TTL                        uint8
 	LocalAS                    uint32
 	PeerAS                     uint32
 	Passive                    bool
@@ -62,6 +65,7 @@ type PeerConfig struct {
 	IPv4                       *AddressFamilyConfig
 	IPv6                       *AddressFamilyConfig
 	VRF                        *vrf.VRF
+	Description                string
 }
 
 // AddressFamilyConfig represents all configuration parameters specific for an address family
@@ -72,7 +76,12 @@ type AddressFamilyConfig struct {
 	AddPathRecv       bool
 }
 
+// NeedsRestart determines if the peer needs a restart on cfg change
 func (pc *PeerConfig) NeedsRestart(x *PeerConfig) bool {
+	if pc.AuthenticationKey != x.AuthenticationKey {
+		return true
+	}
+
 	if pc.LocalAS != x.LocalAS {
 		return true
 	}
@@ -242,6 +251,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		server:               server,
 		config:               &c,
 		addr:                 c.PeerAddress,
+		ttl:                  c.TTL,
 		passive:              c.Passive,
 		peerASN:              c.PeerAS,
 		localASN:             c.LocalAS,
@@ -368,9 +378,11 @@ func addPathCapabilityForFamily(f *AddressFamilyConfig, afi uint16, safi uint8) 
 	return true, packet.Capability{
 		Code: packet.AddPathCapabilityCode,
 		Value: packet.AddPathCapability{
-			AFI:         afi,
-			SAFI:        safi,
-			SendReceive: addPath,
+			packet.AddPathCapabilityTuple{
+				AFI:         afi,
+				SAFI:        safi,
+				SendReceive: addPath,
+			},
 		},
 	}
 }
@@ -400,4 +412,8 @@ func (p *peer) stop() {
 	for _, fsm := range p.fsms {
 		fsm.eventCh <- ManualStop
 	}
+}
+
+func (p *peer) isEBGP() bool {
+	return p.localASN != p.peerASN
 }

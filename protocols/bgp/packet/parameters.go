@@ -43,16 +43,24 @@ func (c Capability) serialize(buf *bytes.Buffer) {
 	buf.Write(payload)
 }
 
-type AddPathCapability struct {
+type AddPathCapabilityTuple struct {
 	AFI         uint16
 	SAFI        uint8
 	SendReceive uint8
 }
 
-func (a AddPathCapability) serialize(buf *bytes.Buffer) {
+func (a AddPathCapabilityTuple) serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint16Byte(a.AFI))
 	buf.WriteByte(a.SAFI)
 	buf.WriteByte(a.SendReceive)
+}
+
+type AddPathCapability []AddPathCapabilityTuple
+
+func (a AddPathCapability) serialize(buf *bytes.Buffer) {
+	for _, cap := range a {
+		cap.serialize(buf)
+	}
 }
 
 type ASN4Capability struct {

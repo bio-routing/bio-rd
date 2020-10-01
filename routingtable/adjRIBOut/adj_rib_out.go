@@ -116,6 +116,10 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 	return p, true
 }
 
+func (a *AdjRIBOut) AddPathInitialDump(pfx *bnet.Prefix, p *route.Path) error {
+	return a.AddPath(pfx, p)
+}
+
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOut) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 	p, propagate := a.bgpChecks(pfx, p)
@@ -185,18 +189,20 @@ func (a *AdjRIBOut) removePath(pfx *bnet.Prefix, p *route.Path) bool {
 
 	sentPath := p
 	if a.addPathTX {
-		for _, sentPath := range r.Paths() {
-			if sentPath.Select(p) != 0 {
-				continue
+		for _, sp := range r.Paths() {
+			if sp.Select(p) == 0 {
+				a.rt.RemovePath(pfx, sp)
+
+				_, err := a.pathIDManager.releasePath(p)
+				if err != nil {
+					log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
+					return true
+				}
+
+				sentPath = sp
+				break
 			}
 
-			a.rt.RemovePath(pfx, sentPath)
-
-			_, err := a.pathIDManager.releasePath(p)
-			if err != nil {
-				log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
-				return true
-			}
 		}
 
 		if sentPath == p {
@@ -273,6 +279,11 @@ func (a *AdjRIBOut) Register(client routingtable.RouteTableClient) {
 	a.clientManager.RegisterWithOptions(client, routingtable.ClientOptions{BestOnly: true})
 }
 
+// RegisterWithOptions registers a client for updates
+func (a *AdjRIBOut) RegisterWithOptions(client routingtable.RouteTableClient, options routingtable.ClientOptions) {
+	a.clientManager.RegisterWithOptions(client, options)
+}
+
 // Unregister unregisters a client
 func (a *AdjRIBOut) Unregister(client routingtable.RouteTableClient) {
 	a.clientManager.Unregister(client)
@@ -327,4 +338,19 @@ func (a *AdjRIBOut) RefreshRoute(pfx *net.Prefix, ribPaths []*route.Path) {
 		}
 
 	}
+}
+
+// LPM performs a longest prefix match on the routing table
+func (a *AdjRIBOut) LPM(pfx *net.Prefix) (res []*route.Route) {
+	return a.rt.LPM(pfx)
+}
+
+// Get gets a route
+func (a *AdjRIBOut) Get(pfx *net.Prefix) *route.Route {
+	return a.rt.Get(pfx)
+}
+
+// GetLonger gets all more specifics
+func (a *AdjRIBOut) GetLonger(pfx *net.Prefix) (res []*route.Route) {
+	return a.rt.GetLonger(pfx)
 }

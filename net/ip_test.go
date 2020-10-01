@@ -141,9 +141,9 @@ func TestIPFromProtoIP(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		res := IPFromProtoIP(test.proto)
-		assert.Equal(t, test.expected, res, test.name)
+	for i := range tests {
+		res := IPFromProtoIP(&tests[i].proto)
+		assert.Equal(t, tests[i].expected, res, tests[i].name)
 	}
 }
 
@@ -587,5 +587,33 @@ func TestSizeBytes(t *testing.T) {
 
 	for _, test := range tests {
 		assert.Equal(t, test.expected, test.input.SizeBytes(), test.name)
+	}
+}
+
+func TestNext(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *IP
+		expected *IP
+	}{
+		{
+			name:     "Test #1",
+			input:    IPv4FromOctets(10, 0, 0, 1).Dedup(),
+			expected: IPv4FromOctets(10, 0, 0, 2).Dedup(),
+		},
+		{
+			name:     "Test #2",
+			input:    IPv6FromBlocks(10, 20, 30, 40, 50, 60, 70, 80).Dedup(),
+			expected: IPv6FromBlocks(10, 20, 30, 40, 50, 60, 70, 81).Dedup(),
+		},
+		{
+			name:     "Test #3",
+			input:    IPv6FromBlocks(10, 20, 30, 40, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF).Dedup(),
+			expected: IPv6FromBlocks(10, 20, 30, 41, 0, 0, 0, 0).Dedup(),
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expected, test.input.Next(), test.name)
 	}
 }

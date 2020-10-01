@@ -54,9 +54,14 @@ func (s *activeState) connectRetryTimerExpired() (state, string) {
 }
 
 func (s *activeState) connectionSuccess(con net.Conn) (state, string) {
+	err := s.fsm.sockSettings(con)
+	if err != nil {
+		return newIdleState(s.fsm), fmt.Sprintf("Unable to set socket options: %v", err)
+	}
+
 	s.fsm.con = con
 	stopTimer(s.fsm.connectRetryTimer)
-	err := s.fsm.sendOpen()
+	err = s.fsm.sendOpen()
 	if err != nil {
 		s.fsm.resetConnectRetryTimer()
 		s.fsm.connectRetryCounter++

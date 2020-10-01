@@ -27,7 +27,7 @@ var (
 )
 
 func init() {
-	labels := []string{"router"}
+	labels := []string{"sys_name", "agent_address"}
 
 	bmpSessionEstablishedDesc = prometheus.NewDesc(prefix+"session_established", "Indicates if a BMP session is established", labels, nil)
 	routeMonitoringMessagesDesc = prometheus.NewDesc(prefix+"route_monitoring_messages", "Returns number of received route monitoring messages", labels, nil)
@@ -78,7 +78,7 @@ func (c *bmpCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *bmpCollector) collectForRouter(ch chan<- prometheus.Metric, rtr *metrics.BMPRouterMetrics) {
-	l := []string{rtr.Name}
+	l := []string{rtr.SysName, rtr.Address.String()}
 
 	established := 0
 	if rtr.Established {
@@ -95,10 +95,10 @@ func (c *bmpCollector) collectForRouter(ch chan<- prometheus.Metric, rtr *metric
 	ch <- prometheus.MustNewConstMetric(routeMirroringMessages, prometheus.CounterValue, float64(rtr.RouteMirroringMessages), l...)
 
 	for _, vrfMetric := range rtr.VRFMetrics {
-		vrf_prom.CollectForVRFRouter(ch, rtr.Name, vrfMetric)
+		vrf_prom.CollectForVRFRouter(ch, rtr.SysName, rtr.Address.String(), vrfMetric)
 	}
 
 	for _, peerMetric := range rtr.PeerMetrics {
-		bgp_prom.CollectForPeerRouter(ch, rtr.Name, peerMetric)
+		bgp_prom.CollectForPeerRouter(ch, rtr.SysName, rtr.Address.String(), peerMetric)
 	}
 }

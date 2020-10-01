@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	ipCachePreAlloc = 1500000
+	ipCachePreAlloc = 0
 )
 
 var (

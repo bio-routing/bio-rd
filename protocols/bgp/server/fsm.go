@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bio-routing/bio-rd/net/tcp"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/pkg/errors"
@@ -242,11 +243,38 @@ func (fsm *FSM) cease() {
 	fsm.eventCh <- Cease
 }
 
+func (fsm *FSM) sockSettings(c net.Conn) error {
+	ttl := fsm.peer.ttl
+	setNoRoute := false
+	if ttl == 0 {
+		if fsm.peer.isEBGP() {
+			ttl = 1
+			setNoRoute = true
+		}
+	}
+
+	if setNoRoute {
+		err := setDontRoute(c)
+		if err != nil {
+			return errors.Wrap(err, "Unable to set DontRoute TCP option")
+		}
+	}
+
+	if ttl != 0 {
+		err := setTTL(c, ttl)
+		if err != nil {
+			return errors.Wrap(err, "Unable to set TTL")
+		}
+	}
+
+	return nil
+}
+
 func (fsm *FSM) tcpConnector(ctx context.Context) {
 	for {
 		select {
 		case <-fsm.initiateCon:
-			c, err := net.DialTCP("tcp", &net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr.ToNetIP(), Port: BGPPORT})
+			c, err := tcp.Dial(&net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr.ToNetIP(), Port: BGPPORT}, fsm.peer.ttl, fsm.peer.config.AuthenticationKey, fsm.peer.ttl == 0)
 			if err != nil {
 				select {
 				case fsm.conErrCh <- err:

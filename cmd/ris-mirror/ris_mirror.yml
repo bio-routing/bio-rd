@@ -1,0 +1,4 @@
+ribs:
+  - router: 10.200.0.1
+    vrfs: [51324:65201]
+    source_ris_instances: ["ncs01.lej01.srv.exaring.net:4321", "ncs02.lej01.srv.exaring.net:4321"]

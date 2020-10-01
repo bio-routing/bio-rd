@@ -20,6 +20,13 @@ import (
 	"github.com/bio-routing/tflow2/convert"
 )
 
+type RouterInterface interface {
+	Name() string
+	Address() net.IP
+	GetVRF(vrfID uint64) *vrf.VRF
+	GetVRFs() []*vrf.VRF
+}
+
 // Router represents a BMP enabled route in BMP context
 type Router struct {
 	name             string
@@ -98,7 +105,14 @@ func (r *Router) Name() string {
 	return r.name
 }
 
-func (r *Router) serve(con net.Conn) {
+// Address gets a routers address
+func (r *Router) Address() net.IP {
+	return r.address
+}
+
+func (r *Router) serve(con net.Conn) error {
+	defer r.cleanup()
+
 	r.con = con
 	r.runMu.Lock()
 	defer r.con.Close()
@@ -107,18 +121,22 @@ func (r *Router) serve(con net.Conn) {
 	for {
 		select {
 		case <-r.stop:
-			return
+			return nil
 		default:
 		}
 
 		msg, err := recvBMPMsg(r.con)
 		if err != nil {
-			r.logger.Errorf("Unable to get message: %v", err)
-			return
+			return errors.Wrap(err, "Unable to get message")
 		}
 
 		r.processMsg(msg)
 	}
+}
+
+func (r *Router) cleanup() {
+	r.vrfRegistry.UnregisterAll()
+	r.neighborManager.disposeAll()
 }
 
 func (r *Router) processMsg(msg []byte) {
@@ -237,7 +255,7 @@ func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 	r.logger.WithFields(log.Fields{
 		"address":            r.address.String(),
 		"router":             r.name,
-		"peer_distinguisher": msg.PerPeerHeader.PeerDistinguisher,
+		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
 		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
 	}).Infof("peer down notification received")
 	atomic.AddUint64(&r.counters.peerDownNotificationMessages, 1)
@@ -253,7 +271,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	r.logger.WithFields(log.Fields{
 		"address":            r.address.String(),
 		"router":             r.name,
-		"peer_distinguisher": msg.PerPeerHeader.PeerDistinguisher,
+		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
 		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
 	}).Infof("peer up notification received")
 
@@ -370,21 +388,23 @@ func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 			switch cap.Code {
 			case packet.AddPathCapabilityCode:
 				addPathCap := cap.Value.(packet.AddPathCapability)
-				peerFamily := p.addressFamily(addPathCap.AFI, addPathCap.SAFI)
-				if peerFamily == nil {
-					continue
-				}
-				switch addPathCap.SendReceive {
-				case packet.AddPathSend:
-					peerFamily.addPathSend = routingtable.ClientOptions{
-						MaxPaths: 10,
+				for _, addPathCapTuple := range addPathCap {
+					peerFamily := p.addressFamily(addPathCapTuple.AFI, addPathCapTuple.SAFI)
+					if peerFamily == nil {
+						continue
 					}
-				case packet.AddPathReceive:
-					peerFamily.addPathReceive = true
-				case packet.AddPathSendReceive:
-					peerFamily.addPathReceive = true
-					peerFamily.addPathSend = routingtable.ClientOptions{
-						MaxPaths: 10,
+					switch addPathCapTuple.SendReceive {
+					case packet.AddPathSend:
+						peerFamily.addPathSend = routingtable.ClientOptions{
+							MaxPaths: 10,
+						}
+					case packet.AddPathReceive:
+						peerFamily.addPathReceive = true
+					case packet.AddPathSendReceive:
+						peerFamily.addPathReceive = true
+						peerFamily.addPathSend = routingtable.ClientOptions{
+							MaxPaths: 10,
+						}
 					}
 				}
 			}

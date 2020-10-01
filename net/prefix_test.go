@@ -153,9 +153,9 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		res := NewPrefixFromProtoPrefix(test.proto)
-		assert.Equal(t, test.expected, *res, test.name)
+	for i := range tests {
+		res := NewPrefixFromProtoPrefix(&tests[i].proto)
+		assert.Equal(t, tests[i].expected, *res, tests[i].name)
 	}
 }
 
@@ -655,5 +655,43 @@ func TestValid(t *testing.T) {
 	for _, test := range tests {
 		p, _ := PrefixFromString(test.input)
 		assert.Equal(t, test.expected, p.Valid(), test.name)
+	}
+}
+
+func TestBaseAddr(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *Prefix
+		expected *IP
+	}{
+		{
+			name:     "Test #1",
+			input:    NewPfx(IPv4FromOctets(10, 1, 1, 0), 23).Dedup(),
+			expected: IPv4FromOctets(10, 1, 0, 0).Dedup(),
+		},
+		{
+			name:     "Test #2",
+			input:    NewPfx(IPv4FromOctets(10, 1, 1, 2), 24).Dedup(),
+			expected: IPv4FromOctets(10, 1, 1, 0).Dedup(),
+		},
+		{
+			name:     "Test #3",
+			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 0, 1), 64).Dedup(),
+			expected: IPv6FromBlocks(10, 10, 20, 20, 0, 0, 0, 0).Dedup(),
+		},
+		{
+			name:     "Test #4",
+			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 0, 1), 48).Dedup(),
+			expected: IPv6FromBlocks(10, 10, 20, 0, 0, 0, 0, 0).Dedup(),
+		},
+		{
+			name:     "Test #5",
+			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 5, 1), 126).Dedup(),
+			expected: IPv6FromBlocks(10, 10, 20, 20, 1, 0, 5, 0).Dedup(),
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expected, test.input.BaseAddr(), test.name)
 	}
 }

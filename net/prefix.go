@@ -29,9 +29,9 @@ func (p Prefix) Ptr() *Prefix {
 }
 
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
-func NewPrefixFromProtoPrefix(pfx api.Prefix) *Prefix {
+func NewPrefixFromProtoPrefix(pfx *api.Prefix) *Prefix {
 	return &Prefix{
-		addr:   IPFromProtoIP(*pfx.Address),
+		addr:   IPFromProtoIP(pfx.Address),
 		pfxlen: uint8(pfx.Pfxlen),
 	}
 }
@@ -264,4 +264,37 @@ func checkLastNBitsUint32(x uint32, n uint8) bool {
 
 func checkLastNBitsUint64(x uint64, n uint8) bool {
 	return x<<(64-n) == 0
+}
+
+// BaseAddr gets the base address of the prefix
+func (p *Prefix) BaseAddr() *IP {
+	if p.addr.isLegacy {
+		return p.baseAddr4()
+	}
+
+	return p.baseAddr6()
+}
+
+func (p *Prefix) baseAddr4() *IP {
+	addr := p.addr.copy()
+
+	addr.lower = addr.lower >> (32 - p.pfxlen)
+	addr.lower = addr.lower << (32 - p.pfxlen)
+
+	return addr
+}
+
+func (p *Prefix) baseAddr6() *IP {
+	addr := p.addr.copy()
+
+	if p.pfxlen <= 64 {
+		addr.lower = 0
+		addr.higher = addr.higher >> (64 - p.pfxlen)
+		addr.higher = addr.higher << (64 - p.pfxlen)
+	} else {
+		addr.lower = addr.lower >> (128 - p.pfxlen)
+		addr.lower = addr.lower << (128 - p.pfxlen)
+	}
+
+	return addr
 }

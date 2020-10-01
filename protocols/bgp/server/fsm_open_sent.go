@@ -203,33 +203,35 @@ func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolC
 }
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
-	if addPathCap.SAFI != packet.UnicastSAFI {
-		return
-	}
-
-	f := s.fsm.addressFamily(addPathCap.AFI, addPathCap.SAFI)
-	if f == nil {
-		return
-	}
-
-	peerAddressFamily := s.fsm.peer.addressFamily(addPathCap.AFI, addPathCap.SAFI)
-
-	switch addPathCap.SendReceive {
-	case packet.AddPathReceive:
-		if !peerAddressFamily.addPathSend.BestOnly {
-			f.addPathTX = peerAddressFamily.addPathSend
-		}
-	case packet.AddPathSend:
-		if peerAddressFamily.addPathReceive {
-			f.addPathRX = true
-		}
-	case packet.AddPathSendReceive:
-		if !peerAddressFamily.addPathSend.BestOnly {
-			f.addPathTX = peerAddressFamily.addPathSend
+	for _, addPathCapTuple := range addPathCap {
+		if addPathCapTuple.SAFI != packet.UnicastSAFI {
+			continue
 		}
 
-		if peerAddressFamily.addPathReceive {
-			f.addPathRX = true
+		f := s.fsm.addressFamily(addPathCapTuple.AFI, addPathCapTuple.SAFI)
+		if f == nil {
+			continue
+		}
+
+		peerAddressFamily := s.fsm.peer.addressFamily(addPathCapTuple.AFI, addPathCapTuple.SAFI)
+
+		switch addPathCapTuple.SendReceive {
+		case packet.AddPathReceive:
+			if !peerAddressFamily.addPathSend.BestOnly {
+				f.addPathTX = peerAddressFamily.addPathSend
+			}
+		case packet.AddPathSend:
+			if peerAddressFamily.addPathReceive {
+				f.addPathRX = true
+			}
+		case packet.AddPathSendReceive:
+			if !peerAddressFamily.addPathSend.BestOnly {
+				f.addPathTX = peerAddressFamily.addPathSend
+			}
+
+			if peerAddressFamily.addPathReceive {
+				f.addPathRX = true
+			}
 		}
 	}
 }

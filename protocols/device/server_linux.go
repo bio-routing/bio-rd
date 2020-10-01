@@ -107,8 +107,6 @@ func (o *osAdapterLinux) monitorLinks(chLU chan netlink.LinkUpdate) {
 			o.processLinkUpdate(&lu)
 		}
 	}
-
-	return
 }
 
 func linkUpdateToDevice(attrs *netlink.LinkAttrs) *Device {

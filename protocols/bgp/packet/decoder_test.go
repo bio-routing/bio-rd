@@ -387,7 +387,7 @@ func TestDecodeNotificationMsg(t *testing.T) {
 		},
 		{
 			name:     "Cease (invalid subcode)",
-			input:    []byte{6, 1},
+			input:    []byte{6, 9},
 			wantFail: true,
 		},
 	}
@@ -1522,14 +1522,72 @@ func TestDecodeOptParams(t *testing.T) {
 							Code:   69,
 							Length: 4,
 							Value: AddPathCapability{
-								AFI:         1,
-								SAFI:        1,
-								SendReceive: 3,
+								AddPathCapabilityTuple{
+									AFI:         1,
+									SAFI:        1,
+									SendReceive: 3,
+								},
 							},
 						},
 					},
 				},
 			},
+		},
+		{
+			name: "Add path capability with multiple entries",
+			input: []byte{
+				2,    // Type
+				6,    // Length
+				69,   // Code
+				8,    // Length
+				0, 1, // AFI
+				1, // SAFI
+				3, // Send/Receive
+
+				0, 2, // AFI
+				1, // SAFI
+				3, // Send/Receive
+			},
+			wantFail: false,
+			expected: []OptParam{
+				{
+					Type:   2,
+					Length: 6,
+					Value: Capabilities{
+						{
+							Code:   69,
+							Length: 8,
+							Value: AddPathCapability{
+								AddPathCapabilityTuple{
+									AFI:         1,
+									SAFI:        1,
+									SendReceive: 3,
+								},
+								AddPathCapabilityTuple{
+									AFI:         2,
+									SAFI:        1,
+									SendReceive: 3,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Add path capability with broken capability length",
+			input: []byte{
+				2,    // Type
+				6,    // Length
+				69,   // Code
+				5,    // Length
+				0, 1, // AFI
+				1, // SAFI
+				3, // Send/Receive
+				1, // broken value
+			},
+			wantFail: true,
+			expected: nil,
 		},
 	}
 
@@ -1568,9 +1626,11 @@ func TestDecodeCapability(t *testing.T) {
 				Code:   69,
 				Length: 4,
 				Value: AddPathCapability{
-					AFI:         1,
-					SAFI:        1,
-					SendReceive: 3,
+					AddPathCapabilityTuple{
+						AFI:         1,
+						SAFI:        1,
+						SendReceive: 3,
+					},
 				},
 			},
 			wantFail: false,
@@ -1627,9 +1687,11 @@ func TestDecodeAddPathCapability(t *testing.T) {
 			input:    []byte{0, 1, 1, 3},
 			wantFail: false,
 			expected: AddPathCapability{
-				AFI:         1,
-				SAFI:        1,
-				SendReceive: 3,
+				AddPathCapabilityTuple{
+					AFI:         1,
+					SAFI:        1,
+					SendReceive: 3,
+				},
 			},
 		},
 		{
@@ -1641,7 +1703,7 @@ func TestDecodeAddPathCapability(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		cap, err := decodeAddPathCapability(buf)
+		cap, err := decodeAddPathCapability(buf, uint8(len(test.input)))
 		if err != nil {
 			if test.wantFail {
 				continue

@@ -108,23 +108,25 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 }
 
 // BGPPathFromProtoBGPPath converts a proto BGPPath to BGPPath
-func BGPPathFromProtoBGPPath(pb *api.BGPPath) *BGPPath {
+func BGPPathFromProtoBGPPath(pb *api.BGPPath, dedup bool) *BGPPath {
 	p := &BGPPath{
 		BGPPathA: &BGPPathA{
-			NextHop:       bnet.IPFromProtoIP(*pb.NextHop),
+			NextHop:       bnet.IPFromProtoIP(pb.NextHop),
 			LocalPref:     pb.LocalPref,
 			OriginatorID:  pb.OriginatorId,
 			Origin:        uint8(pb.Origin),
 			MED:           pb.Med,
 			EBGP:          pb.Ebgp,
 			BGPIdentifier: pb.BgpIdentifier,
-			Source:        bnet.IPFromProtoIP(*pb.Source),
+			Source:        bnet.IPFromProtoIP(pb.Source),
 		},
 		PathIdentifier: pb.PathIdentifier,
 		ASPath:         types.ASPathFromProtoASPath(pb.AsPath),
 	}
 
-	p = p.Dedup()
+	if dedup {
+		p = p.Dedup()
+	}
 
 	communities := make(types.Communities, len(pb.Communities))
 	p.Communities = &communities

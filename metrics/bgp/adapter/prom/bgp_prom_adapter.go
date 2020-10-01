@@ -44,7 +44,7 @@ func init() {
 	updatesReceivedDesc = prometheus.NewDesc(prefix+"update_received_count", "Number of updates received", labels, nil)
 	updatesSentDesc = prometheus.NewDesc(prefix+"update_sent_count", "Number of updates sent", labels, nil)
 
-	labelsRouter := append(labels, "router")
+	labelsRouter := append(labels, "sys_name", "agent_address")
 	upDescRouter = prometheus.NewDesc(prefix+"up", "Returns if the session is up", labelsRouter, nil)
 	stateDescRouter = prometheus.NewDesc(prefix+"state", "State of the BGP session (Down = 0, Idle = 1, Connect = 2, Active = 3, OpenSent = 4, OpenConfirm = 5, Established = 6)", labelsRouter, nil)
 	uptimeDescRouter = prometheus.NewDesc(prefix+"uptime_second", "Time since the session was established in seconds", labelsRouter, nil)
@@ -138,13 +138,14 @@ func collectForPeer(ch chan<- prometheus.Metric, peer *metrics.BGPPeerMetrics) {
 	}
 }
 
-func CollectForPeerRouter(ch chan<- prometheus.Metric, rtr string, peer *metrics.BGPPeerMetrics) {
+func CollectForPeerRouter(ch chan<- prometheus.Metric, sysName string, agentAddress string, peer *metrics.BGPPeerMetrics) {
 	l := []string{
 		peer.IP.String(),
 		strconv.Itoa(int(peer.LocalASN)),
 		strconv.Itoa(int(peer.ASN)),
 		peer.VRF,
-		rtr,
+		sysName,
+		agentAddress,
 	}
 
 	var up float64
