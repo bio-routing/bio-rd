@@ -22,6 +22,9 @@ const (
 	ETH_P_ALL = 0x0300
 
 	maxMTU = 9216
+
+	MAX_LLC_LEN       = 0x5ff
+	ETHERTYPE_EXT_LLC = 0x8870
 )
 
 var (
@@ -39,7 +42,28 @@ var (
 
 	AllISS = [EthALen]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
 	AllESS = [EthALen]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
+
+	localEndianness binary.ByteOrder
+	wordWidth       uint8
+	wordLength      uintptr
 )
+
+func init() {
+	wordWidth = uint8(unsafe.Sizeof(int(0)))
+	wordLength = unsafe.Sizeof(uintptr(0))
+
+	buf := [2]byte{}
+	*(*uint16)(unsafe.Pointer(&buf[0])) = uint16(0xABCD)
+
+	switch buf {
+	case [2]byte{0xCD, 0xAB}:
+		localEndianness = binary.LittleEndian
+	case [2]byte{0xAB, 0xCD}:
+		localEndianness = binary.BigEndian
+	default:
+		panic("Could not determine native endianness.")
+	}
+}
 
 // MACAddr represens a MAC address
 type MACAddr [6]byte
@@ -97,10 +121,10 @@ type sockFilter struct {
 func (s sockFprog) serializeTerms() [48]byte {
 	directives := bytes.NewBuffer(nil)
 	for _, sf := range s.filters {
-		directives.Write(convert.Reverse(convert.Uint16Byte(sf.code)))
+		directives.Write(bigEndianToLocal(convert.Uint16Byte(sf.code)))
 		directives.WriteByte(sf.jt)
 		directives.WriteByte(sf.jf)
-		directives.Write(convert.Reverse(convert.Uint32Byte(sf.k)))
+		directives.Write(bigEndianToLocal(convert.Uint32Byte(sf.k)))
 	}
 
 	ret := [48]byte{}
@@ -109,6 +133,7 @@ func (s sockFprog) serializeTerms() [48]byte {
 }
 
 func getISISFilter() sockFprog {
+	// { 0x6, 0, 0, 0x00040000 },
 	return sockFprog{
 		filters: []sockFilter{
 			{
@@ -150,15 +175,25 @@ func (e *Handler) init() error {
 	f := getISISFilter()
 	terms := f.serializeTerms()
 	buf := bytes.NewBuffer(nil)
-	buf.Write(convert.Reverse(convert.Uint16Byte(6)))
 
-	// Align to next 8 byte word
-	for i := 0; i < 6; i++ {
+	bpfProgTermCount := len(f.filters)
+	buf.Write(bigEndianToLocal(convert.Uint16Byte(uint16(bpfProgTermCount))))
+
+	// Align to next word
+	for i := 0; i < int(wordLength)-int(unsafe.Sizeof(uint16(0))); i++ {
 		buf.WriteByte(0)
 	}
 
 	p := unsafe.Pointer(&terms)
-	buf.Write(convert.Reverse(convert.Uint64Byte(uint64(uintptr(p)))))
+	switch wordWidth {
+	case 4:
+		buf.Write(bigEndianToLocal(convert.Uint32Byte(uint32(uintptr(p)))))
+	case 8:
+		buf.Write(bigEndianToLocal(convert.Uint64Byte(uint64(uintptr(p)))))
+	default:
+		panic("Unknown word width")
+	}
+
 	err = syscall.SetsockoptString(socket, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, string(buf.Bytes()))
 	if err != nil {
 		return errors.Wrap(err, "Setsockopt failed (SO_ATTACH_FILTER)")
@@ -188,9 +223,9 @@ type packetMreq struct {
 
 func (p packetMreq) serialize() []byte {
 	buf := bytes.NewBuffer(nil)
-	buf.Write(convert.Reverse(convert.Uint32Byte(p.mrIfIndex)))
-	buf.Write(convert.Reverse(convert.Uint16Byte(p.mrType)))
-	buf.Write(convert.Reverse(convert.Uint16Byte(p.mrAlen)))
+	buf.Write(bigEndianToLocal(convert.Uint32Byte(p.mrIfIndex)))
+	buf.Write(bigEndianToLocal(convert.Uint16Byte(p.mrType)))
+	buf.Write(bigEndianToLocal(convert.Uint16Byte(p.mrAlen)))
 	buf.Write(p.mrAddress[:])
 	return buf.Bytes()
 }
@@ -227,29 +262,56 @@ func (e *Handler) RecvPacket() (pkt []byte, src types.MACAddress, err error) {
 }
 
 func (e *Handler) sendPacket(pkt []byte, dst [EthALen]byte) error {
-	ll := syscall.SockaddrLinklayer{
-		Ifindex: int(e.ifIndex),
-		Halen:   EthALen,
-	}
-
-	for i := uint8(0); i < ll.Halen; i++ {
-		ll.Addr[i] = dst[i]
-	}
-
 	newPkt := []byte{
-		0xfe, 0xfe, 0x03,
+		0xfe, 0xfe, 0x03, // LLC
 	}
-
 	newPkt = append(newPkt, pkt...)
 
-	length := []byte{0, 0}
-	binary.BigEndian.PutUint16(length, uint16(len(newPkt)))
-	ll.Protocol = convert.Uint16(length)
+	sall := &syscall.SockaddrLinklayer{
+		Protocol: htons(uint16(isisEtherType(len(newPkt)))),
+		Ifindex:  int(e.ifIndex),
+		Halen:    EthALen,
+	}
 
-	err := syscall.Sendto(e.socket, newPkt, 0, &ll)
+	for i := uint8(0); i < sall.Halen; i++ {
+		sall.Addr[i] = dst[i]
+	}
+
+	err := syscall.Sendto(e.socket, newPkt, 0, sall)
 	if err != nil {
 		return fmt.Errorf("sendto failed: %v", err)
 	}
 
 	return nil
+}
+
+func bigEndianToLocal(input []byte) []byte {
+	if localEndianness == binary.BigEndian {
+		return input
+	}
+
+	return convert.Reverse(input)
+}
+
+func isisEtherType(len int) int {
+	if len > MAX_LLC_LEN {
+		return ETHERTYPE_EXT_LLC
+	}
+
+	return len
+}
+
+func htons(x uint16) uint16 {
+	if localEndianness == binary.BigEndian {
+		return x
+	}
+
+	xp := unsafe.Pointer(&x)
+	b := (*[2]byte)(xp)
+
+	tmp := b[0]
+	b[0] = b[1]
+	b[1] = tmp
+
+	return *(*uint16)(xp)
 }

@@ -163,8 +163,8 @@ func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
 		return 0, errors.Wrap(err, "Unable to convert first part to int")
 	}
 
-	maxUint32 := int(^uint32(0))
-	if asn > maxUint32 {
+	maxUint32 := uint32(^uint32(0))
+	if uint32(asn) > maxUint32 {
 		return 0, fmt.Errorf("Invalid format: ASN > max uint32")
 	}
 
@@ -173,7 +173,7 @@ func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
 		return 0, errors.Wrap(err, "Unable to convert second part to int")
 	}
 
-	if netID > maxUint32 {
+	if uint32(netID) > maxUint32 {
 		return 0, fmt.Errorf("Invalid format: Network ID > max uint32")
 	}
 
