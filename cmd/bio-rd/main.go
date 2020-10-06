@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -25,6 +26,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
+
+	"github.com/bio-routing/bio-rd/protocols/bgp/api"
 )
 
 var (
@@ -35,22 +38,23 @@ var (
 	metricsPort          = flag.Uint("metrics_port", 55667, "Metrics HTTP server port")
 	vrfReg               = vrf.NewVRFRegistry()
 	bgpSrv               bgpserver.BGPServer
+	shutdownAddr         string
 )
 
 func init() {
 	hostname, _ := os.Hostname()
-	if hostname == "A" {
-		configFilePath = flag.String("config.file", "bio-rd-A.yml", "bio-rd config file")
-	} else if hostname == "B" {
-		configFilePath = flag.String("config.file", "bio-rd-B.yml", "bio-rd config file")
-	} else {
-		configFilePath = flag.String("config.file", "bio-rd.yml", "bio-rd config file")
-	}
+
+	// load config by hostname
+	cname := "bio-rd-" + hostname + ".yml"
+	log.Infof("Loading config " + cname)
+
+	configFilePath = flag.String("config.file", cname, "bio-rd config file")
 }
 
 func main() {
 	flag.Parse()
 
+	// config
 	startCfg, err := config.GetConfig(*configFilePath)
 	if err != nil {
 		log.Errorf("Unable to get config: %v", err)
@@ -87,7 +91,7 @@ func main() {
 
 	rib.Register(k)
 
-	s := bgpserver.NewBGPAPIServer(bgpSrv)
+	s := bgpserver.NewBGPAPIServer(bgpSrv, &sigCh, &shutdownAddr)
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
 	streamInterceptors := []grpc.StreamServerInterceptor{}
 	srv, err := servicewrapper.New(
@@ -120,17 +124,55 @@ func installSignalHandler() {
 
 func signalChecker() {
 	for sig := range sigCh {
-		if sig != syscall.SIGHUP {
-			log.Infof("Received signal to STOP")
-			// TO DO: send grpc message to the peer to shut it down
-			os.Exit(1)
-		}
-
-		log.Infof("Reloading configuration")
+		log.Infof("Loading configuration")
 		newCfg, err := config.GetConfig(*configFilePath)
 		if err != nil {
 			log.Errorf("Failed to get config: %v", err)
 			continue
+		}
+
+		if sig != syscall.SIGHUP {
+			log.Infof("Received signal to STOP")
+			// create a client and connect to peers and notify them of shutting down
+			for _, p := range bgpSrv.GetPeers() {
+				bgpConf := bgpSrv.GetPeerConfig(p)
+				var opts []grpc.DialOption
+				opts = append(opts, grpc.WithInsecure())
+				addr := bgpConf.PeerAddress.String()
+				localA := bgpConf.LocalAddress.String()
+
+				log.Info("Shutdown addr : ", shutdownAddr)
+				if addr == shutdownAddr {
+					// peer which shut down -> no sense to send a signal to him
+					continue
+				}
+				fmt.Println("Peer addr : ", addr)
+				// TO DO: send grpc message to the peer to shut it down
+
+				conn, err := grpc.Dial(fmt.Sprintf("%s:5566", addr), opts...)
+				if err != nil {
+					log.Fatalf("fail to dial: %v", err)
+				}
+				defer conn.Close()
+
+				client := api.NewBgpServiceClient(conn)
+
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+
+				stream, err := client.SignalChat(ctx)
+				if err != nil {
+					log.Fatalf("%v.RouteChat(_) = _, %v", client, err)
+				}
+
+				msg := api.SignalNotification{Addr: localA, Signal: int32(syscall.SIGINT)}
+
+				stream.Send(&msg)
+				stream.CloseSend()
+			}
+
+			deleteKernelRoutes(newCfg.RoutingOptions)
+			os.Exit(1)
 		}
 
 		err = loadConfig(newCfg)
@@ -272,13 +314,65 @@ func createBGPPath(bgpConf *bgpserver.PeerConfig) *route.Path {
 	}
 }
 
+func deleteKernelRoutes(ro *config.RoutingOptions) {
+	rib, _ := vrfReg.GetVRFByName("master").RIBByName("inet.0")
+	var paths []*route.Path
+	addressPrefixPairs := make(map[string]string)
+	var err error
+
+	for _, p := range bgpSrv.GetPeers() {
+		bgpConf := bgpSrv.GetPeerConfig(p)
+		paths = append(paths, createBGPPath(bgpConf))
+	}
+
+	for _, sr := range ro.StaticRoutes {
+		addressPrefix := strings.Split(sr.Prefix, "/")
+		addressPrefixPairs[addressPrefix[0]] = addressPrefix[1]
+	}
+
+	for _, path := range paths {
+		for a, p := range addressPrefixPairs {
+			var address bnet.IP
+			address, err = bnet.IPFromString(a)
+			if err != nil {
+				log.Errorf("error getting IP from a string", err)
+			}
+			var pref uint64
+			pref, err = strconv.ParseUint(p, 10, 8)
+			if err != nil {
+				log.Errorf("error parsing prefix string to uint", err)
+			}
+
+			prefix := bnet.NewPfx(address, uint8(pref))
+			if rib.ContainsPfxPath(&prefix, path) {
+				// fmt.Println("Removing path ", *path)
+				rib.RemovePath(&prefix, path)
+			}
+		}
+
+		in := bgpSrv.GetRIBIn(path.NextHop(), 1, 1)
+		if in == nil {
+			fmt.Println("RIB-In is nil, continuing")
+			continue
+		}
+
+		routes := in.Dump()
+		for _, r := range routes {
+			if rib.ContainsPfxPath(r.Prefix(), path) {
+				// fmt.Println("Removing path ", *path)
+				rib.RemovePath(r.Prefix(), path)
+			}
+		}
+	}
+}
+
 func configureRoutingOptions(ro *config.RoutingOptions) {
 	rib, _ := vrfReg.GetVRFByName("master").RIBByName("inet.0")
 	var paths []*route.Path
 	addressPrefixPairs := make(map[string]string)
 	var err error
 
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	for range ticker.C {
 		for _, p := range bgpSrv.GetPeers() {
 			bgpConf := bgpSrv.GetPeerConfig(p)

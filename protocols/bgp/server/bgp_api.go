@@ -7,23 +7,51 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/api"
 	"github.com/bio-routing/bio-rd/route"
 
+	"io"
+	"os"
+	"syscall"
+
 	bnet "github.com/bio-routing/bio-rd/net"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
 
 type BGPAPIServer struct {
-	srv BGPServer
+	srv          BGPServer
+	sigCh        *chan os.Signal
+	shutdownAddr *string
 }
 
 // NewBGPAPIServer creates a new BGP API Server
-func NewBGPAPIServer(s BGPServer) *BGPAPIServer {
+func NewBGPAPIServer(s BGPServer, sc *chan os.Signal, sa *string) *BGPAPIServer {
 	return &BGPAPIServer{
-		srv: s,
+		srv:          s,
+		sigCh:        sc,
+		shutdownAddr: sa,
 	}
 }
 
 func (s *BGPAPIServer) ListSessions(ctx context.Context, in *api.ListSessionsRequest) (*api.ListSessionsResponse, error) {
 	return nil, fmt.Errorf("Not implemented yet")
+}
+
+func (s *BGPAPIServer) SignalChat(stream api.BgpService_SignalChatServer) error {
+	for {
+		in, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		signal := in.Signal
+		if int(signal) == int(syscall.SIGINT) {
+			// interrupt -> shut down and delete kernel routes
+			*s.sigCh <- syscall.SIGINT
+			*s.shutdownAddr = in.Addr
+			break
+		}
+	}
+	return nil
 }
 
 // DumpRIBIn dumps the RIB in of a peer for a given AFI/SAFI

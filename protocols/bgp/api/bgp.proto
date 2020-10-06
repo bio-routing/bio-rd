@@ -26,8 +26,14 @@ message DumpRIBRequest {
     uint32 safi = 3;
 }
 
+message SignalNotification {
+    int32 signal = 1;
+    string addr = 2;
+}
+
 service BgpService {
     rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
     rpc DumpRIBIn(DumpRIBRequest) returns (stream bio.route.Route) {}
     rpc DumpRIBOut(DumpRIBRequest) returns (stream bio.route.Route) {}
+    rpc SignalChat(stream SignalNotification) returns (stream SignalNotification) {}
 }
