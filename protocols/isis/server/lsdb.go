@@ -189,3 +189,16 @@ func (l *lsdb) _exists(pkt *packet.LSPDU) bool {
 func (l *lsdb) _isNewer(pkt *packet.LSPDU) bool {
 	return pkt.SequenceNumber > l.lsps[pkt.LSPID].lspdu.SequenceNumber
 }
+
+func (l *lsdb) processPSNP(psnp *packet.CSNP, from *netIfa) {
+	l.lspsMu.Lock()
+	defer l.lspsMu.Unlock()
+
+	for _, lspEntry := range psnp.GetLSPEntries() {
+		if _, exists := l.lsps[lspEntry.LSPID]; !exists {
+			continue
+		}
+
+		l.lsps[lspEntry.LSPID].clearSRMFlag(from)
+	}
+}

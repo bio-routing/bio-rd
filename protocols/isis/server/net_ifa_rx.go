@@ -57,6 +57,7 @@ func (nifa *netIfa) processPkt(src types.MACAddress, rawPkt []byte) error {
 	case packet.L2_PSNP_TYPE:
 		log.WithFields(nifa.fields()).Infof("Received L2 PSNP")
 
+		nifa.processL2PSNPDU(pkt.Body.(*packet.CSNP))
 		return nil
 	}
 
@@ -109,6 +110,10 @@ func (nifa *netIfa) processP2PHello(src types.MACAddress, hello *packet.P2PHello
 	return nil
 }
 
+func (nifa *netIfa) processL2PSNPDU(pkt *packet.CSNP) {
+	nifa.srv.lsdbL2.processPSNP(pkt, nifa)
+}
+
 func (nifa *netIfa) processL2CSNPDU(pkt *packet.CSNP) {
 	nifa.srv.lsdbL2.processCSNP(pkt, nifa)
 }
@@ -146,5 +151,6 @@ func (nifa *netIfa) _processL2LSPDUNewOrNewerLSP(pkt *packet.LSPDU) error {
 	}
 
 	nifa.srv.lsdbL2.lsps[pkt.LSPID].setSSN(nifa)
+	// TODO: Trigger SPF run
 	return nil
 }
