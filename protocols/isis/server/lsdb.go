@@ -172,13 +172,7 @@ func (l *lsdb) processCSNPLSPEntryUnknown(lspEntry *packet.LSPEntry, from *netIf
 }
 
 func (l *lsdb) _getLSPDU(needle packet.LSPID) *lsdbEntry {
-	for _, e := range l.lsps {
-		if e.lspdu.LSPID == needle {
-			return e
-		}
-	}
-
-	return nil
+	return l.lsps[needle]
 }
 
 func (l *lsdb) _exists(pkt *packet.LSPDU) bool {
