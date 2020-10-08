@@ -62,3 +62,15 @@ func (nima *netIfaManager) getAllInterfacesExcept(exception *netIfa) []*netIfa {
 
 	return res
 }
+
+func (nima *netIfaManager) getAllInterfaces() []*netIfa {
+	nima.netIfasMu.Lock()
+	defer nima.netIfasMu.Unlock()
+
+	res := make([]*netIfa, 0)
+	for _, ifa := range nima.netIfas {
+		res = append(res, ifa)
+	}
+
+	return res
+}

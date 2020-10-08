@@ -167,3 +167,13 @@ func DecodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 	pdu.TLVs = TLVs
 	return pdu, nil
 }
+
+// ToLSPEntry creates an LSPEntry out of an LSPDU
+func (l *LSPDU) ToLSPEntry() *LSPEntry {
+	return &LSPEntry{
+		RemainingLifetime: l.RemainingLifetime,
+		LSPID:             l.LSPID,
+		SequenceNumber:    l.SequenceNumber,
+		LSPChecksum:       l.Checksum,
+	}
+}

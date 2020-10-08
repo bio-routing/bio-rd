@@ -60,6 +60,14 @@ func (l *lsdbEntry) setSSN(ifa *netIfa) {
 	l.ssnFlags[ifa] = struct{}{}
 }
 
+func (l *lsdbEntry) getSSN(ifa *netIfa) bool {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	_, exists := l.ssnFlags[ifa]
+	return exists
+}
+
 func (l *lsdbEntry) getInterfacesSRMSet() []*netIfa {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()

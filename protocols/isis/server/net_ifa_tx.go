@@ -21,6 +21,14 @@ func (nifa *netIfa) sendLSPDU(lsp *packet.LSPDU) {
 	fmt.Printf("Sending PDU: %v\n", hdrBuf.Bytes())
 }
 
+func (nifa *netIfa) sendPSNP(psnp *packet.PSNP) {
+	// TODO: Implement sending PSNPs
+}
+
+func (nifa *netIfa) sendCSNP(csnp *packet.CSNP) {
+	// TODO: Implement sending CSNPs
+}
+
 func getHeader(pduType uint8, lengthIndicator uint8) packet.ISISHeader {
 	return packet.ISISHeader{
 		ProtoDiscriminator:  0x83,

@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btime "github.com/bio-routing/bio-rd/util/time"
 
 	log "github.com/sirupsen/logrus"
@@ -48,6 +49,9 @@ func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransmissionTicker btim
 
 	l.wg.Add(1)
 	go l.sendLSPDUsRoutine(minLSPTransmissionTicker)
+
+	l.wg.Add(1)
+	go l.sendPSNPsRoutine(minLSPTransmissionTicker)
 }
 
 func (l *lsdb) stop() {
@@ -195,4 +199,48 @@ func (l *lsdb) processPSNP(psnp *packet.CSNP, from *netIfa) {
 
 		l.lsps[lspEntry.LSPID].clearSRMFlag(from)
 	}
+}
+
+func (l *lsdb) sendPSNPsRoutine(t btime.Ticker) {
+	defer l.wg.Done()
+
+	for {
+		select {
+		case <-t.C():
+			l.sendPSNPss()
+		case <-l.done:
+			return
+		}
+	}
+}
+
+func (l *lsdb) sendPSNPss() {
+	l.lspsMu.Lock()
+	defer l.lspsMu.Unlock()
+
+	srcID := types.SourceID{
+		SystemID: l.srv.nets[0].SystemID,
+	}
+
+	for _, ifa := range l.srv.netIfaManager.getAllInterfaces() {
+		lspdus := l._getLSPWithSSNSet(ifa)
+		maxPDULen := 1492 // FIXME: Detect this automatically
+		for _, psnp := range packet.NewPSNPs(srcID, lspdus, maxPDULen) {
+			ifa.sendPSNP(&psnp)
+		}
+
+	}
+}
+
+func (l *lsdb) _getLSPWithSSNSet(ifa *netIfa) []*packet.LSPEntry {
+	ret := make([]*packet.LSPEntry, 0)
+	for _, lsp := range l.lsps {
+		if !lsp.getSSN(ifa) {
+			continue
+		}
+
+		ret = append(ret, lsp.lspdu.ToLSPEntry())
+	}
+
+	return ret
 }
