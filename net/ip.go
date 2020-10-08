@@ -2,9 +2,11 @@ package net
 
 import (
 	"fmt"
+	"math"
 	"net"
 
 	api "github.com/bio-routing/bio-rd/net/api"
+	bmath "github.com/bio-routing/bio-rd/util/math"
 )
 
 // IP represents an IPv4 or IPv6 address
@@ -308,4 +310,33 @@ func (ip *IP) Next() *IP {
 	}
 
 	return newIP
+}
+
+// MaskLastNBits masks the last n bits of an IP address
+func (ip *IP) MaskLastNBits(n uint8) *IP {
+	ip = ip.copy()
+
+	if ip.isLegacy {
+		ip.maskLastNBitsIPv4(n)
+		return ip
+	}
+
+	ip.maskLastNBitsIPv6(n)
+	return ip
+}
+
+func (ip *IP) maskLastNBitsIPv4(n uint8) {
+	mask := uint64((math.MaxUint64 << (n)))
+	ip.lower = ip.lower & mask
+}
+
+func (ip *IP) maskLastNBitsIPv6(n uint8) {
+	maskBitsLow := uint8(bmath.Min(int(n), 64))
+	maskBitsHigh := uint8(bmath.Max(int(n)-64, 0))
+
+	maskLow := uint64((math.MaxUint64 << (maskBitsLow)))
+	maskHigh := uint64((math.MaxUint64 << (maskBitsHigh)))
+
+	ip.lower = ip.lower & maskLow
+	ip.higher = ip.higher & maskHigh
 }

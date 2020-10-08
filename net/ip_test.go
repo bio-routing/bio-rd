@@ -617,3 +617,60 @@ func TestNext(t *testing.T) {
 		assert.Equal(t, test.expected, test.input.Next(), test.name)
 	}
 }
+
+func TestMaskLastNBits(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *IP
+		maskBits uint8
+		expected *IP
+	}{
+		{
+			name:     "Test #1",
+			input:    IPv4FromOctets(10, 1, 1, 1).Dedup(),
+			maskBits: 8,
+			expected: IPv4FromOctets(10, 1, 1, 0).Dedup(),
+		},
+		{
+			name:     "Test #2",
+			input:    IPv4FromOctets(185, 65, 241, 123).Dedup(),
+			maskBits: 9,
+			expected: IPv4FromOctets(185, 65, 240, 0).Dedup(),
+		},
+		{
+			name:     "Test #3",
+			input:    IPv4FromOctets(185, 65, 241, 123).Dedup(),
+			maskBits: 32,
+			expected: IPv4FromOctets(0, 0, 0, 0).Dedup(),
+		},
+		{
+			name:     "Test #4",
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			maskBits: 16,
+			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0x0000).Dedup(),
+		},
+		{
+			name:     "Test #5",
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			maskBits: 64,
+			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x0000, 0x0000, 0x0000, 0x0000).Dedup(),
+		},
+		{
+			name:     "Test #6",
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			maskBits: 80,
+			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000).Dedup(),
+		},
+		{
+			name:     "Test #7",
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			maskBits: 128,
+			expected: IPv6FromBlocks(0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000).Dedup(),
+		},
+	}
+
+	for _, test := range tests {
+		res := test.input.MaskLastNBits(test.maskBits)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
