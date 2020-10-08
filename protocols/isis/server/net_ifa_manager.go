@@ -48,3 +48,17 @@ func (nima *netIfaManager) getInterface(name string) *netIfa {
 
 	return nima.netIfas[name]
 }
+
+func (nima *netIfaManager) getAllInterfacesExcept(exception *netIfa) []*netIfa {
+	nima.netIfasMu.Lock()
+	defer nima.netIfasMu.Unlock()
+
+	res := make([]*netIfa, 0)
+	for _, ifa := range nima.netIfas {
+		if ifa != exception {
+			res = append(res, ifa)
+		}
+	}
+
+	return res
+}

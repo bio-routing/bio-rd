@@ -114,6 +114,37 @@ func (nifa *netIfa) processL2CSNPDU(pkt *packet.CSNP) {
 }
 
 func (nifa *netIfa) processL2LSPDU(pkt *packet.LSPDU) error {
+	nifa.srv.lsdbL2.lspsMu.Lock()
+	defer nifa.srv.lsdbL2.lspsMu.Unlock()
 
+	if nifa.srv.lsdbL2._exists(pkt) {
+		return nifa._processL2LSPDULSPExists(pkt)
+	}
+
+	return nifa._processL2LSPDUNewOrNewerLSP(pkt)
+}
+
+func (nifa *netIfa) _processL2LSPDULSPExists(pkt *packet.LSPDU) error {
+	if nifa.srv.lsdbL2._isNewer(pkt) {
+		return nifa._processL2LSPDUNewOrNewerLSP(pkt)
+	}
+
+	return nifa._processL2LSPDULSPIsOlder(pkt)
+}
+
+func (nifa *netIfa) _processL2LSPDULSPIsOlder(pkt *packet.LSPDU) error {
+	nifa.srv.lsdbL2.lsps[pkt.LSPID].setSRM(nifa)
+	nifa.srv.lsdbL2.lsps[pkt.LSPID].clearSSNFlag(nifa)
+	return nil
+}
+
+func (nifa *netIfa) _processL2LSPDUNewOrNewerLSP(pkt *packet.LSPDU) error {
+	nifa.srv.lsdbL2.lsps[pkt.LSPID].lspdu = pkt
+
+	for _, ifa := range nifa.srv.netIfaManager.getAllInterfacesExcept(nifa) {
+		nifa.srv.lsdbL2.lsps[pkt.LSPID].setSRM(ifa)
+	}
+
+	nifa.srv.lsdbL2.lsps[pkt.LSPID].setSSN(nifa)
 	return nil
 }

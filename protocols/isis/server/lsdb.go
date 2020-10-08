@@ -180,3 +180,12 @@ func (l *lsdb) _getLSPDU(needle packet.LSPID) *lsdbEntry {
 
 	return nil
 }
+
+func (l *lsdb) _exists(pkt *packet.LSPDU) bool {
+	_, exists := l.lsps[pkt.LSPID]
+	return exists
+}
+
+func (l *lsdb) _isNewer(pkt *packet.LSPDU) bool {
+	return pkt.SequenceNumber > l.lsps[pkt.LSPID].lspdu.SequenceNumber
+}
