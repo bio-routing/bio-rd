@@ -20,6 +20,7 @@
 
 # 'go build' binary
 /cmd/bio-rd/bio-rd
+/cmd/bio-rdc/bio-rdc
 examples/bgp
 examples/bmp
 examples/fib/fib

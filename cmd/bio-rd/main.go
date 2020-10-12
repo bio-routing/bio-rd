@@ -141,14 +141,11 @@ func signalChecker() {
 				addr := bgpConf.PeerAddress.String()
 				localA := bgpConf.LocalAddress.String()
 
-				log.Info("Shutdown addr : ", shutdownAddr)
 				if addr == shutdownAddr {
 					// peer which shut down -> no sense to send a signal to him
 					continue
 				}
-				fmt.Println("Peer addr : ", addr)
-				// TO DO: send grpc message to the peer to shut it down
-
+				// fmt.Println("Peer addr : ", addr)
 				conn, err := grpc.Dial(fmt.Sprintf("%s:5566", addr), opts...)
 				if err != nil {
 					log.Fatalf("fail to dial: %v", err)
@@ -332,6 +329,7 @@ func deleteKernelRoutes(ro *config.RoutingOptions) {
 
 	for _, path := range paths {
 		for a, p := range addressPrefixPairs {
+			log.Infof("Addres/Prefix: %s/%s", a, p)
 			var address bnet.IP
 			address, err = bnet.IPFromString(a)
 			if err != nil {
@@ -345,7 +343,6 @@ func deleteKernelRoutes(ro *config.RoutingOptions) {
 
 			prefix := bnet.NewPfx(address, uint8(pref))
 			if rib.ContainsPfxPath(&prefix, path) {
-				// fmt.Println("Removing path ", *path)
 				rib.RemovePath(&prefix, path)
 			}
 		}
@@ -359,7 +356,7 @@ func deleteKernelRoutes(ro *config.RoutingOptions) {
 		routes := in.Dump()
 		for _, r := range routes {
 			if rib.ContainsPfxPath(r.Prefix(), path) {
-				// fmt.Println("Removing path ", *path)
+				log.Info("Prefix: ", r.Prefix())
 				rib.RemovePath(r.Prefix(), path)
 			}
 		}
@@ -372,7 +369,7 @@ func configureRoutingOptions(ro *config.RoutingOptions) {
 	addressPrefixPairs := make(map[string]string)
 	var err error
 
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
 	for range ticker.C {
 		for _, p := range bgpSrv.GetPeers() {
 			bgpConf := bgpSrv.GetPeerConfig(p)
