@@ -7,6 +7,12 @@ import (
 	api "github.com/bio-routing/bio-rd/net/api"
 )
 
+var (
+	loopbackIPv6Addr = IP{
+		lower: 1,
+	}
+)
+
 // IP represents an IPv4 or IPv6 address
 type IP struct {
 	higher   uint64
@@ -308,4 +314,21 @@ func (ip *IP) Next() *IP {
 	}
 
 	return newIP
+}
+
+// IsLoopback returns true then ip is a loopback addr (127.0.0.0/8, ::1/128)
+func (ip *IP) IsLoopback() bool {
+	if ip.IsIPv4() {
+		return ip.isLoopbackIPv4()
+	}
+
+	return ip.isLoopbackIPv6()
+}
+
+func (ip *IP) isLoopbackIPv4() bool {
+	return loopbackIPv4Prefix.containsIPv4(NewPfx(*ip, 32).Ptr())
+}
+
+func (ip *IP) isLoopbackIPv6() bool {
+	return *ip == loopbackIPv6Addr
 }

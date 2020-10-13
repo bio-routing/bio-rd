@@ -11,6 +11,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	loopbackIPv4Prefix Prefix
+)
+
+func init() {
+	loopbackIPv4Prefix = Prefix{
+		addr:   IPv4FromOctets(127, 0, 0, 0).Ptr(),
+		pfxlen: 8,
+	}
+}
+
 // Prefix represents an IPv4 prefix
 type Prefix struct {
 	addr   *IP

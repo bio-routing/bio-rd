@@ -1,6 +1,7 @@
 package server
 
 import (
+	"math"
 	"unsafe"
 
 	"github.com/bio-routing/bio-rd/protocols/device"
@@ -15,8 +16,15 @@ func (s *Server) regenerateL2LSP() {
 	defer log.Info("Generating L2 LSP: Done")
 
 	s.sequenceNumberL2++
+	if s.sequenceNumberL2 == math.MaxUint32 {
+		// TODO: We need to handle a sequence number overflow
+		// According to "OSPF and IS-IS Page 145 we have to stop originating LSPs
+		// for MaxAge + 60 seconds in order to age out existing LSPs out of LSDBs"
+		panic("Sequence Number Overrun!")
+	}
+
 	lsp := &packet.LSPDU{
-		RemainingLifetime: 3600,
+		RemainingLifetime: 1200, // TODO: Make this configurable
 		LSPID: packet.LSPID{
 			SystemID:     s.nets[0].SystemID,
 			PseudonodeID: 0,
@@ -44,7 +52,6 @@ func (s *Server) regenerateL2LSP() {
 	s.lsdbL2.lsps[lsp.LSPID] = newLSDBEntry(lsp)
 
 	// TODO: Set SRM?
-
 }
 
 func (s *Server) getAreaAddressTLV() *packet.AreaAddressesTLV {
@@ -151,6 +158,10 @@ func (s *Server) getExtendedIPReachabilityTLV() *packet.ExtendedIPReachabilityTL
 		for _, pfx := range ifa.devStatus.GetAddrs() {
 			if !pfx.Addr().IsIPv4() {
 				// TODO: What about IPv6?
+				continue
+			}
+
+			if pfx.Addr().IsLoopback() {
 				continue
 			}
 

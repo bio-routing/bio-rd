@@ -82,7 +82,7 @@ type netIfa struct {
 	name              string
 	srv               *Server
 	cfg               *InterfaceConfig
-	active            uint64
+	running           uint64
 	devStatus         device.DeviceInterface
 	done              chan struct{}
 	wg                sync.WaitGroup
@@ -123,12 +123,14 @@ func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
 func (nifa *netIfa) DeviceUpdate(dev device.DeviceInterface) {
 	oldState := uint8(device.IfOperUnknown)
 	if nifa.devStatus != nil {
+
 		oldState = nifa.devStatus.GetOperState()
 	}
 
+	nifa.devStatus = dev
 	if oldState != device.IfOperUp && dev.GetOperState() == device.IfOperUp {
 		log.WithFields(nifa.fields()).Info("Interface changed state to operational. Enabling IS-IS")
-		nifa.devStatus = dev
+
 		err := nifa.start()
 		if err != nil {
 			log.Errorf("Unable to start ISIS on interface %s: %v", nifa.name, err)
@@ -147,8 +149,12 @@ func (nifa *netIfa) fields() log.Fields {
 func (nifa *netIfa) start() error {
 	log.WithFields(nifa.fields()).Info("Starting ISIS")
 
-	if !atomic.CompareAndSwapUint64(&nifa.active, 0, 1) {
-		return fmt.Errorf("already active")
+	if !atomic.CompareAndSwapUint64(&nifa.running, 0, 1) {
+		return fmt.Errorf("already running")
+	}
+
+	if nifa.cfg.Passive {
+		return nil
 	}
 
 	if nifa.cfg.mock {

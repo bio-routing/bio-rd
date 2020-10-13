@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type netIfaManager struct {
@@ -21,6 +23,7 @@ func newNetIfaManager(srv *Server) *netIfaManager {
 
 // AddInterface adds an interface to the ISIS server
 func (s *Server) AddInterface(cfg *InterfaceConfig) error {
+	log.Debugf("Adding interface %s", cfg.Name)
 	return s.netIfaManager.addInterface(cfg)
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	minimumLSPTransmissionIntervalMS = 100
+	minimumLSPTransmissionIntervalMS = 5000
 )
 
 // ISISServer is generic ISIS server interface

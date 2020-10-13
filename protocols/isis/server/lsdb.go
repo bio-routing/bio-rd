@@ -225,6 +225,10 @@ func (l *lsdb) sendPSNPss() {
 	}
 
 	for _, ifa := range l.srv.netIfaManager.getAllInterfaces() {
+		if ifa.cfg.Passive {
+			continue
+		}
+
 		lspdus := l._getLSPWithSSNSet(ifa)
 		for _, psnp := range packet.NewPSNPs(srcID, lspdus, ifa.ethHandler.GetMTU()) {
 			ifa.sendPSNP(&psnp, l.level())

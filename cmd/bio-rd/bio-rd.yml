@@ -85,3 +85,7 @@ protocols:
       - name: "tap0"
         level2:
           metric: 10
+      - name: "lo"
+        passive: true
+        level2:
+          metric: 0
