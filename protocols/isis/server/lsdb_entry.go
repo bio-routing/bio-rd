@@ -101,6 +101,13 @@ func (l *lsdbEntry) clearSSNFlag(ifa *netIfa) {
 	delete(l.ssnFlags, ifa)
 }
 
+func (l *lsdbEntry) clearAllSSNFlags() {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	l.ssnFlags = make(map[*netIfa]struct{})
+}
+
 func (l *lsdbEntry) sameAsInLSPEntry(needle *packet.LSPEntry) bool {
 	return l.lspdu.LSPID == needle.LSPID && l.lspdu.SequenceNumber == needle.SequenceNumber
 }

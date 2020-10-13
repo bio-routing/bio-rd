@@ -49,6 +49,10 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 	left := len(lspEntries)
 	lspsPerCSNP := (maxPDULen - CSNPMinLen) / LSPEntryLen
 	numCSNPs := int(math.Ceil(float64(left) / float64(lspsPerCSNP)))
+	if numCSNPs == 0 {
+		return nil
+	}
+
 	res := make([]CSNP, numCSNPs)
 
 	sort.Slice(lspEntries, func(a, b int) bool {

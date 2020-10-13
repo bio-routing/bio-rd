@@ -12,7 +12,7 @@ import (
 
 const (
 	LSPIDLen    = 8
-	LSPDUMinLen = 19
+	LSPDUMinLen = 27
 	MODX        = 5802
 )
 
@@ -69,8 +69,8 @@ type LSPDU struct {
 }
 
 // UpdateLength updates the length of the LSPDU
-func (l *LSPDU) updateLength() {
-	l.Length = LSPDUMinLen + HeaderLen
+func (l *LSPDU) UpdateLength() {
+	l.Length = LSPDUMinLen
 	for i := range l.TLVs {
 		l.Length += 2 + uint16(l.TLVs[i].Length())
 	}

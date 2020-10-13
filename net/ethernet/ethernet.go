@@ -10,8 +10,6 @@ import (
 
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/pkg/errors"
-
-	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
 const (
@@ -81,9 +79,11 @@ type Handler struct {
 
 // HandlerInterface is an handler interface
 type HandlerInterface interface {
-	NewConn(dest [EthALen]byte) net.Conn
-	RecvPacket() (pkt []byte, src types.MACAddress, err error)
+	NewConn(dest MACAddr) net.Conn
+	RecvPacket() (pkt []byte, src MACAddr, err error)
+	SendPacket(pkt []byte, dst MACAddr) error
 	MCastJoin(addr MACAddr) error
+	GetMTU() int
 }
 
 // NewHandler creates a new Ethernet handler
@@ -248,11 +248,11 @@ func (e *Handler) MCastJoin(addr MACAddr) error {
 }
 
 // RecvPacket receives a packet on the ethernet handler
-func (e *Handler) RecvPacket() (pkt []byte, src types.MACAddress, err error) {
+func (e *Handler) RecvPacket() (pkt []byte, src MACAddr, err error) {
 	buf := make([]byte, maxMTU)
 	nBytes, from, err := syscall.Recvfrom(e.socket, buf, 0)
 	if err != nil {
-		return nil, types.MACAddress{}, fmt.Errorf("recvfrom failed: %v", err)
+		return nil, MACAddr{}, fmt.Errorf("recvfrom failed: %v", err)
 	}
 
 	ll := from.(*syscall.SockaddrLinklayer)
@@ -261,7 +261,8 @@ func (e *Handler) RecvPacket() (pkt []byte, src types.MACAddress, err error) {
 	return buf[:nBytes], src, nil
 }
 
-func (e *Handler) sendPacket(pkt []byte, dst [EthALen]byte) error {
+// SendPacket sends a packet
+func (e *Handler) SendPacket(pkt []byte, dst MACAddr) error {
 	newPkt := []byte{
 		0xfe, 0xfe, 0x03, // LLC
 	}
@@ -314,4 +315,14 @@ func htons(x uint16) uint16 {
 	b[1] = tmp
 
 	return *(*uint16)(xp)
+}
+
+// GetMTU gets the interfaces MTU
+func (e *Handler) GetMTU() int {
+	netIfa, err := net.InterfaceByIndex(int(e.ifIndex))
+	if err != nil {
+		return -1
+	}
+
+	return netIfa.MTU
 }

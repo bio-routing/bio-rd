@@ -119,7 +119,8 @@ func TestStartStop(t *testing.T) {
 	}
 	lifetimeTicker := btime.NewMockTicker()
 	sendTicker := btime.NewMockTicker()
-	db.start(lifetimeTicker, sendTicker)
+	psnpTicker := btime.NewMockTicker()
+	db.start(lifetimeTicker, sendTicker, psnpTicker)
 
 	expected.decrementRemainingLifetimes()
 	expected.decrementRemainingLifetimes()

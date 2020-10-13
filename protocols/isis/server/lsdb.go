@@ -21,29 +21,31 @@ type lsdb struct {
 func newLSDB(s *Server) *lsdb {
 	return &lsdb{
 		srv:  s,
+		lsps: make(map[packet.LSPID]*lsdbEntry),
 		done: make(chan struct{}),
 	}
 }
 
-func (l *lsdb) fields() log.Fields {
-	level := 0
+func (l *lsdb) level() int {
 	if l.srv.lsdbL1 == l {
-		level = 1
-	}
-	if l.srv.lsdbL2 == l {
-		level = 2
+		return 1
 	}
 
+	return 2
+}
+
+func (l *lsdb) fields() log.Fields {
 	return log.Fields{
-		"level": level,
+		"level": l.level(),
 	}
 }
 
 func (l *lsdb) dispose() {
 	l.stop()
+	l.srv = nil
 }
 
-func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransmissionTicker btime.Ticker) {
+func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransmissionTicker btime.Ticker, psnpTransmissionTicker btime.Ticker) {
 	l.wg.Add(1)
 	go l.decrementRemainingLifetimesRoutine(decrementTicker)
 
@@ -51,7 +53,7 @@ func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransmissionTicker btim
 	go l.sendLSPDUsRoutine(minLSPTransmissionTicker)
 
 	l.wg.Add(1)
-	go l.sendPSNPsRoutine(minLSPTransmissionTicker)
+	go l.sendPSNPsRoutine(psnpTransmissionTicker)
 }
 
 func (l *lsdb) stop() {
@@ -113,7 +115,7 @@ func (l *lsdb) sendLSPDUs() {
 
 	for _, entry := range l.lsps {
 		for _, ifa := range entry.getInterfacesSRMSet() {
-			ifa.sendLSPDU(entry.lspdu)
+			ifa.sendLSPDU(entry.lspdu, l.level())
 		}
 	}
 }
@@ -224,12 +226,12 @@ func (l *lsdb) sendPSNPss() {
 
 	for _, ifa := range l.srv.netIfaManager.getAllInterfaces() {
 		lspdus := l._getLSPWithSSNSet(ifa)
-		maxPDULen := 1492 // FIXME: Detect this automatically
-		for _, psnp := range packet.NewPSNPs(srcID, lspdus, maxPDULen) {
-			ifa.sendPSNP(&psnp)
+		for _, psnp := range packet.NewPSNPs(srcID, lspdus, ifa.ethHandler.GetMTU()) {
+			ifa.sendPSNP(&psnp, l.level())
 		}
-
 	}
+
+	l._clearAllSSNFlags()
 }
 
 func (l *lsdb) _getLSPWithSSNSet(ifa *netIfa) []*packet.LSPEntry {
@@ -243,4 +245,37 @@ func (l *lsdb) _getLSPWithSSNSet(ifa *netIfa) []*packet.LSPEntry {
 	}
 
 	return ret
+}
+
+func (l *lsdb) _clearAllSSNFlags() {
+	for _, e := range l.lsps {
+		e.clearAllSSNFlags()
+	}
+}
+
+func (l *lsdb) getLSPEntries() []*packet.LSPEntry {
+	l.lspsMu.Lock()
+	defer l.lspsMu.Unlock()
+
+	ret := make([]*packet.LSPEntry, 0, len(l.lsps))
+	for _, e := range l.lsps {
+		ret = append(ret, e.lspdu.ToLSPEntry())
+	}
+
+	return ret
+}
+
+func (l *lsdb) getCSNPs(ifa *netIfa) []packet.CSNP {
+	srcID := types.SourceID{
+		SystemID: l.srv.nets[0].SystemID,
+	}
+
+	return packet.NewCSNPs(srcID, l.getLSPEntries(), ifa.ethHandler.GetMTU())
+
+}
+
+func (l *lsdb) sendCSNPs(ifa *netIfa) {
+	for _, c := range l.getCSNPs(ifa) {
+		ifa.sendCSNP(&c, l.level())
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/pkg/errors"
@@ -16,7 +17,7 @@ type neighborManager struct {
 	server      *Server
 	netIfa      *netIfa
 	level       uint8
-	neighbors   map[types.MACAddress]*neighbor
+	neighbors   map[ethernet.MACAddr]*neighbor
 	neighborsMu sync.RWMutex
 }
 
@@ -25,7 +26,7 @@ func newNeighborManager(server *Server, netIfa *netIfa, level uint8) *neighborMa
 		server:    server,
 		netIfa:    netIfa,
 		level:     level,
-		neighbors: make(map[types.MACAddress]*neighbor),
+		neighbors: make(map[ethernet.MACAddr]*neighbor),
 	}
 }
 
@@ -50,7 +51,7 @@ func (nm *neighborManager) getNeighbors() []*neighbor {
 	return ret
 }
 
-func (nm *neighborManager) neighborUp(src types.MACAddress) bool {
+func (nm *neighborManager) neighborUp(src ethernet.MACAddr) bool {
 	nm.neighborsMu.RLock()
 	defer nm.neighborsMu.RUnlock()
 
@@ -62,7 +63,7 @@ func (nm *neighborManager) neighborUp(src types.MACAddress) bool {
 }
 
 // TODO: Catch if P2P Adj. State is DOWN. What to do then? Drop the neighbor?
-func (nm *neighborManager) processP2PHello(src types.MACAddress, hello *packet.P2PHello) error {
+func (nm *neighborManager) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello) error {
 	nm.neighborsMu.Lock()
 	defer nm.neighborsMu.Unlock()
 

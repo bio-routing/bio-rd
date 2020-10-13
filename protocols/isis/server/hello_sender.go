@@ -21,16 +21,7 @@ func (nifa *netIfa) p2pHelloSender() {
 			helloBuf := bytes.NewBuffer(nil)
 			hello.Serialize(helloBuf)
 
-			hdr := packet.ISISHeader{
-				ProtoDiscriminator:  0x83,
-				LengthIndicator:     packet.P2PHelloMinLen,
-				ProtocolIDExtension: 1,
-				IDLength:            0,
-				PDUType:             packet.P2P_HELLO,
-				Version:             1,
-				MaxAreaAddresses:    0,
-			}
-
+			hdr := getHeader(packet.P2P_HELLO)
 			hdrBuf := bytes.NewBuffer(nil)
 			hdr.Serialize(hdrBuf)
 			hdrBuf.Write(helloBuf.Bytes())

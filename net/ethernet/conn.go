@@ -24,11 +24,11 @@ func (ea EthAddr) Network() string {
 // Conn is a wrapper that implements net.Conn and sents packets to a particular destination
 type Conn struct {
 	eth      *Handler
-	destAddr [EthALen]byte
+	destAddr MACAddr
 }
 
 // NewConn creates a new ethernet conn
-func (e *Handler) NewConn(dest [EthALen]byte) net.Conn {
+func (e *Handler) NewConn(dest MACAddr) net.Conn {
 	return &Conn{
 		eth:      e,
 		destAddr: dest,
@@ -42,7 +42,7 @@ func (c *Conn) Read(b []byte) (n int, err error) {
 
 // Write sends b on the Conn
 func (c *Conn) Write(b []byte) (n int, err error) {
-	err = c.eth.sendPacket(b, c.destAddr)
+	err = c.eth.SendPacket(b, c.destAddr)
 	if err != nil {
 		return 0, err
 	}

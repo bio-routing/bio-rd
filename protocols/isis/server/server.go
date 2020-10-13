@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/device"
+	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
 const (
 	minimumLSPTransmissionIntervalMS = 100
+	initialLSPSequenceNumber         = 1
 )
 
 // ISISServer is generic ISIS server interface
@@ -76,8 +78,10 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 }
 
 func (s *Server) start() {
-	s.lsdbL1.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS))
-	s.lsdbL2.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS))
+	s.generateL2LSP(initialLSPSequenceNumber)
+	// TODO: Start L1 LSDBs and create their LSPs
+	s.lsdbL1.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS/3))
+	s.lsdbL2.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS/3))
 }
 
 func (s *Server) dispose() {
@@ -99,4 +103,27 @@ func netsCompatible(nets []*types.NET) bool {
 	}
 
 	return true
+}
+
+func (s *Server) generateL2LSP(sequenceNumber uint32) {
+	lsp := &packet.LSPDU{
+		RemainingLifetime: 3600,
+		LSPID: packet.LSPID{
+			SystemID:     s.nets[0].SystemID,
+			PseudonodeID: 0,
+			LSPNumber:    0,
+		},
+		SequenceNumber: sequenceNumber,
+	}
+
+	lsp.TypeBlock |= 0x3 // level2, last two bits
+	lsp.UpdateLength()
+	lsp.SetChecksum()
+
+	s.lsdbL2.lspsMu.Lock()
+	defer s.lsdbL2.lspsMu.Unlock()
+
+	s.lsdbL2.lsps[lsp.LSPID] = newLSDBEntry(lsp)
+
+	// TODO: Set SRM?
 }

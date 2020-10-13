@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
-	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,7 +28,7 @@ func (nifa *netIfa) receive() error {
 	return nifa.processPkt(src, pkt)
 }
 
-func (nifa *netIfa) processPkt(src types.MACAddress, rawPkt []byte) error {
+func (nifa *netIfa) processPkt(src ethernet.MACAddr, rawPkt []byte) error {
 	buf := bytes.NewBuffer(rawPkt)
 	pkt, err := packet.Decode(buf)
 	if err != nil {
@@ -57,14 +57,14 @@ func (nifa *netIfa) processPkt(src types.MACAddress, rawPkt []byte) error {
 	case packet.L2_PSNP_TYPE:
 		log.WithFields(nifa.fields()).Infof("Received L2 PSNP")
 
-		nifa.processL2PSNPDU(pkt.Body.(*packet.CSNP))
+		nifa.processL2PSNPDU(pkt.Body.(*packet.CSNP)) // FIX ME: This type assertion panics
 		return nil
 	}
 
 	return fmt.Errorf("Unknown PDU type %d", pkt.Header.PDUType)
 }
 
-func (nifa *netIfa) validatePkt(src types.MACAddress, pkt *packet.ISISPacket) error {
+func (nifa *netIfa) validatePkt(src ethernet.MACAddr, pkt *packet.ISISPacket) error {
 	if pkt.Header.PDUType == packet.L2_LS_PDU_TYPE || pkt.Header.PDUType == packet.L2_CSNP_TYPE || pkt.Header.PDUType == packet.L2_PSNP_TYPE {
 		if nifa.neighborManagerL2 == nil {
 			return fmt.Errorf("Received L2 PDU on L2 disabled interface")
@@ -88,7 +88,7 @@ func (nifa *netIfa) validatePkt(src types.MACAddress, pkt *packet.ISISPacket) er
 	return nil
 }
 
-func (nifa *netIfa) processP2PHello(src types.MACAddress, hello *packet.P2PHello) error {
+func (nifa *netIfa) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello) error {
 	if hello.CircuitType == 1 || hello.CircuitType == 3 {
 		if nifa.neighborManagerL1 != nil {
 			err := nifa.neighborManagerL1.processP2PHello(src, hello)
@@ -126,12 +126,12 @@ func (nifa *netIfa) processL2LSPDU(pkt *packet.LSPDU) error {
 		return nifa._processL2LSPDULSPExists(pkt)
 	}
 
-	return nifa._processL2LSPDUNewOrNewerLSP(pkt)
+	return nifa._processL2LSPDUNew(pkt)
 }
 
 func (nifa *netIfa) _processL2LSPDULSPExists(pkt *packet.LSPDU) error {
 	if nifa.srv.lsdbL2._isNewer(pkt) {
-		return nifa._processL2LSPDUNewOrNewerLSP(pkt)
+		return nifa._processL2LSPDUNewerLSP(pkt)
 	}
 
 	return nifa._processL2LSPDULSPIsOlder(pkt)
@@ -143,14 +143,31 @@ func (nifa *netIfa) _processL2LSPDULSPIsOlder(pkt *packet.LSPDU) error {
 	return nil
 }
 
-func (nifa *netIfa) _processL2LSPDUNewOrNewerLSP(pkt *packet.LSPDU) error {
-	nifa.srv.lsdbL2.lsps[pkt.LSPID].lspdu = pkt
+func (nifa *netIfa) _processL2LSPDUNew(pkt *packet.LSPDU) error {
+	entry := newLSDBEntry(pkt)
+	nifa.srv.lsdbL2.lsps[pkt.LSPID] = entry
+	nifa._setFlagsAfterNewerLSP(pkt)
 
+	return nil
+}
+
+func (nifa *netIfa) _processL2LSPDUNewerLSP(pkt *packet.LSPDU) error {
+	nifa.srv.lsdbL2.lsps[pkt.LSPID].lspdu = pkt
+	nifa._setFlagsAfterNewerLSP(pkt)
+
+	return nil
+}
+
+func (nifa *netIfa) _setFlagsAfterNewerLSP(pkt *packet.LSPDU) {
+	nifa._setSRMAllInterfacesExcept(pkt)
+	nifa.srv.lsdbL2.lsps[pkt.LSPID].setSSN(nifa)
+
+	fmt.Printf("Time for an SPF run!\n")
+	// TODO: SPF
+}
+
+func (nifa *netIfa) _setSRMAllInterfacesExcept(pkt *packet.LSPDU) {
 	for _, ifa := range nifa.srv.netIfaManager.getAllInterfacesExcept(nifa) {
 		nifa.srv.lsdbL2.lsps[pkt.LSPID].setSRM(ifa)
 	}
-
-	nifa.srv.lsdbL2.lsps[pkt.LSPID].setSSN(nifa)
-	// TODO: Trigger SPF run
-	return nil
 }

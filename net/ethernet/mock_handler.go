@@ -3,7 +3,6 @@ package ethernet
 import (
 	"net"
 
-	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btesting "github.com/bio-routing/bio-rd/testing"
 )
 
@@ -14,7 +13,7 @@ func NewMockHandler() HandlerInterface {
 	return &MockHandler{}
 }
 
-func (m *MockHandler) NewConn(dest [EthALen]byte) net.Conn {
+func (m *MockHandler) NewConn(dest MACAddr) net.Conn {
 	return &MockConn{
 		eth:      m,
 		destAddr: dest,
@@ -23,10 +22,18 @@ func (m *MockHandler) NewConn(dest [EthALen]byte) net.Conn {
 }
 
 // RecvPacket to be implemented
-func (m *MockHandler) RecvPacket() (pkt []byte, src types.MACAddress, err error) {
-	return nil, types.MACAddress{}, nil
+func (m *MockHandler) RecvPacket() (pkt []byte, src MACAddr, err error) {
+	return nil, MACAddr{}, nil
 }
 
 func (m *MockHandler) MCastJoin(addr MACAddr) error {
+	return nil
+}
+
+func (m *MockHandler) GetMTU() int {
+	return 1500
+}
+
+func (m *MockHandler) SendPacket(pkt []byte, dst MACAddr) error {
 	return nil
 }
