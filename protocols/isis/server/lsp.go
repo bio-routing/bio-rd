@@ -140,9 +140,9 @@ func (s *Server) getExtendedISReachabilityTLV() *packet.ExtendedISReachabilityTL
 }
 
 func metricToThreeBytes(m uint32) [3]byte {
-	// TODO: Check if this is affected by endian issues
+	// TODO: Fix endian assumption (little)
 	x := (*[4]byte)(unsafe.Pointer(&m))
-	return [3]byte{x[1], x[2], x[3]}
+	return [3]byte{x[2], x[1], x[0]}
 }
 
 func (s *Server) getExtendedIPReachabilityTLV() *packet.ExtendedIPReachabilityTLV {
