@@ -33,6 +33,7 @@ func (s *Server) regenerateL2LSP() {
 	lsp.TLVs = append(lsp.TLVs, s.getProtocolsSupportedTLV())
 	lsp.TLVs = append(lsp.TLVs, s.getIPInterfaceAddressesTLV())
 	lsp.TLVs = append(lsp.TLVs, s.getExtendedISReachabilityTLV())
+	lsp.TLVs = append(lsp.TLVs, s.getExtendedIPReachabilityTLV())
 
 	lsp.UpdateLength()
 	lsp.SetChecksum()
@@ -106,7 +107,7 @@ func (s *Server) getExtendedISReachabilityTLV() *packet.ExtendedISReachabilityTL
 	for _, ifa := range s.netIfaManager.getAllInterfaces() {
 		for _, n := range ifa.neighborManagerL2.getNeighbors() {
 			m := metricToThreeBytes(ifa.cfg.Level2.Metric)
-			ntlv := packet.NewExtendedISReachabilityNeighbor(n.sysID.ToSourceID(0), m)
+			eirNeigh := packet.NewExtendedISReachabilityNeighbor(n.sysID.ToSourceID(0), m)
 
 			for _, addr := range ifa.devStatus.GetAddrs() {
 				if !addr.Addr().IsIPv4() {
@@ -115,7 +116,7 @@ func (s *Server) getExtendedISReachabilityTLV() *packet.ExtendedISReachabilityTL
 				}
 
 				ipv4LocalTLV := packet.NewIPv4InterfaceAddressSubTLV(addr.Addr().ToUint32())
-				ntlv.AddSubTLV(ipv4LocalTLV)
+				eirNeigh.AddSubTLV(ipv4LocalTLV)
 			}
 
 			for _, nAddr := range n.ipAddresses {
@@ -125,17 +126,16 @@ func (s *Server) getExtendedISReachabilityTLV() *packet.ExtendedISReachabilityTL
 				}
 
 				ipv4RemoteTLV := packet.NewIPv4NeighborAddressSubTLV(nAddr.ToUint32())
-				ntlv.AddSubTLV(ipv4RemoteTLV)
+				eirNeigh.AddSubTLV(ipv4RemoteTLV)
 			}
 
 			llriTLV := packet.NewLinkLocalRemoteIdentifiersSubTLV(uint32(ifa.devStatus.GetIndex()), n.extendedLocalCircuitID)
-			ntlv.AddSubTLV(llriTLV)
+			eirNeigh.AddSubTLV(llriTLV)
 
-			t.Neighbors = append(t.Neighbors, ntlv)
+			t.AddNeighbor(eirNeigh)
 		}
 	}
 
-	t.UpdateLength()
 	return t
 }
 
@@ -143,4 +143,22 @@ func metricToThreeBytes(m uint32) [3]byte {
 	// TODO: Check if this is affected by endian issues
 	x := (*[4]byte)(unsafe.Pointer(&m))
 	return [3]byte{x[1], x[2], x[3]}
+}
+
+func (s *Server) getExtendedIPReachabilityTLV() *packet.ExtendedIPReachabilityTLV {
+	t := packet.NewExtendedIPReachabilityTLV()
+	for _, ifa := range s.netIfaManager.getAllInterfaces() {
+		for _, pfx := range ifa.devStatus.GetAddrs() {
+			if !pfx.Addr().IsIPv4() {
+				// TODO: What about IPv6?
+				continue
+			}
+
+			eipr := packet.NewExtendedIPReachability(ifa.cfg.Level2.Metric, pfx.Pfxlen(), pfx.Addr().ToUint32())
+			t.AddExtendedIPReachability(eipr)
+		}
+
+	}
+
+	return t
 }

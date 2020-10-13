@@ -88,6 +88,22 @@ type ExtendedIPReachability struct {
 	SubTLVs        []TLV
 }
 
+// NewExtendedIPReachability creates a new ExtendedIPReachability
+func NewExtendedIPReachability(metric uint32, pfxLen uint8, addr uint32) *ExtendedIPReachability {
+	return &ExtendedIPReachability{
+		Metric:         metric,
+		UDSubBitPfxLen: pfxLen,
+		Address:        addr,
+	}
+}
+
+// AddExtendedIPReachability adds an extended IP reachability
+func (e *ExtendedIPReachabilityTLV) AddExtendedIPReachability(eipr *ExtendedIPReachability) {
+	e.ExtendedIPReachabilities = append(e.ExtendedIPReachabilities, eipr)
+	e.TLVLength += ExtendedIPReachabilityLength
+	// TODO: Add length of sub TLVs. They will be added as soon as we support for TE
+}
+
 // Serialize serializes an ExtendedIPReachability
 func (e *ExtendedIPReachability) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint32Byte(e.Metric))

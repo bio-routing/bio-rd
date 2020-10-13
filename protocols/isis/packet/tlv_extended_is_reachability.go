@@ -46,15 +46,21 @@ func (e *ExtendedISReachabilityTLV) Value() interface{} {
 	return e
 }
 
-// UpdateLength updates the TLVs length information
-func (e *ExtendedISReachabilityTLV) UpdateLength() {
+// AddNeighbor adds a neighbor to the extended IS Reach. TLV
+func (e *ExtendedISReachabilityTLV) AddNeighbor(n *ExtendedISReachabilityNeighbor) {
+	e.TLVLength += ExtendedISReachabilityNeighborMinLen + n.SubTLVLength
+	e.Neighbors = append(e.Neighbors, n)
+}
+
+/*func (e *ExtendedISReachabilityTLV) updateLength() {
 	for _, n := range e.Neighbors {
 		e.TLVLength += ExtendedISReachabilityNeighborMinLen + n.SubTLVLength
 	}
-}
+}*/
 
 // Serialize serializes an ExtendedISReachabilityTLV
 func (e *ExtendedISReachabilityTLV) Serialize(buf *bytes.Buffer) {
+	//e.updateLength()
 	buf.WriteByte(e.TLVType)
 	buf.WriteByte(e.TLVLength)
 	for i := range e.Neighbors {
@@ -92,8 +98,8 @@ func NewExtendedISReachabilityNeighbor(neighborID types.SourceID, metric [3]byte
 // NewExtendedISReachabilityTLV creates a new Extended IS Reachability TLV
 func NewExtendedISReachabilityTLV() *ExtendedISReachabilityTLV {
 	e := &ExtendedISReachabilityTLV{
-		TLVType: ExtendedISReachabilityType,
-
+		TLVType:   ExtendedISReachabilityType,
+		TLVLength: 0,
 		Neighbors: make([]*ExtendedISReachabilityNeighbor, 0),
 	}
 
