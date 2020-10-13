@@ -12,7 +12,6 @@ import (
 
 const (
 	minimumLSPTransmissionIntervalMS = 100
-	initialLSPSequenceNumber         = 1
 )
 
 // ISISServer is generic ISIS server interface
@@ -77,7 +76,7 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 }
 
 func (s *Server) start() {
-	s.generateL2LSP(initialLSPSequenceNumber)
+	s.regenerateL2LSP()
 	// TODO: Start L1 LSDBs and create their LSPs
 	s.lsdbL1.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS/3))
 	s.lsdbL2.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS/3))

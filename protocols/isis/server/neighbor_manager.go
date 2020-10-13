@@ -41,8 +41,8 @@ func (nm *neighborManager) fields() log.Fields {
 
 func (nm *neighborManager) getNeighbors() []*neighbor {
 	ret := make([]*neighbor, 0)
-	nm.neighborsMu.Lock()
-	defer nm.neighborsMu.Unlock()
+	nm.neighborsMu.RLock()
+	defer nm.neighborsMu.RUnlock()
 
 	for _, v := range nm.neighbors {
 		ret = append(ret, v)
@@ -64,9 +64,6 @@ func (nm *neighborManager) neighborUp(src ethernet.MACAddr) bool {
 
 // TODO: Catch if P2P Adj. State is DOWN. What to do then? Drop the neighbor?
 func (nm *neighborManager) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello) error {
-	nm.neighborsMu.Lock()
-	defer nm.neighborsMu.Unlock()
-
 	err := nm.validateP2PHello(hello)
 	if err != nil {
 		return errors.Wrap(err, "Invalid p2p hello msg")
@@ -83,6 +80,18 @@ func (nm *neighborManager) processP2PHello(src ethernet.MACAddr, hello *packet.P
 		}
 	}
 
+	n := nm.addNeighborIfNotExists(src, hello)
+	if n == nil {
+		return nil
+	}
+
+	return n.processP2PHello(hello)
+}
+
+func (nm *neighborManager) addNeighborIfNotExists(src ethernet.MACAddr, hello *packet.P2PHello) *neighbor {
+	nm.neighborsMu.Lock()
+	defer nm.neighborsMu.Unlock()
+
 	if _, found := nm.neighbors[src]; !found {
 		n := nm.neighborFromP2PHello(hello)
 		nm.neighbors[src] = n
@@ -94,8 +103,7 @@ func (nm *neighborManager) processP2PHello(src ethernet.MACAddr, hello *packet.P
 		return nil
 	}
 
-	n := nm.neighbors[src]
-	return n.processP2PHello(hello)
+	return nm.neighbors[src]
 }
 
 // validateP2PHello validates p2p hello messages

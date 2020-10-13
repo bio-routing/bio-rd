@@ -64,10 +64,7 @@ func (nifa *netIfa) p2pHello() *packet.P2PHello {
 		h.TLVs = append(h.TLVs, p2pAdjTLV)
 	}
 
-	h.TLVs = append(h.TLVs, packet.NewProtocolsSupportedTLV([]uint8{
-		packet.NLPIDIPv4,
-		packet.NLPIDIPv6,
-	}))
+	h.TLVs = append(h.TLVs, nifa.srv.getProtocolsSupportedTLV())
 
 	ipv4Addrs := make([]uint32, 0)
 	for _, a := range nifa.devStatus.GetAddrs() {

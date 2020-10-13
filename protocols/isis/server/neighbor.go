@@ -148,6 +148,7 @@ func (n *neighbor) processP2PHello(hello *packet.P2PHello) error {
 				log.WithFields(n.fields()).Infof("Adjacency reaches up state")
 				n.setState(packet.P2PAdjStateUp)
 
+				n.nm.server.regenerateL2LSP()
 				n.getLSDB().sendCSNPs(n.nm.netIfa)
 				n.getLSDB().setSRMAllLSPs(n.nm.netIfa)
 			}
