@@ -7,6 +7,14 @@ import (
 // SystemID is an ISIS System ID
 type SystemID [6]byte
 
+// ToSourceID converts a SystemID into a SourceID
+func (s SystemID) ToSourceID(cktID uint8) SourceID {
+	return SourceID{
+		SystemID:  s,
+		CircuitID: cktID,
+	}
+}
+
 // SourceID is a source ID
 type SourceID struct {
 	SystemID  SystemID

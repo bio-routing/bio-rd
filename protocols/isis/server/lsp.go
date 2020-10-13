@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"unsafe"
 
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
@@ -29,9 +29,10 @@ func (s *Server) regenerateL2LSP() {
 	lsp.TypeBlock |= 0x3 // level2, last two bits
 
 	lsp.TLVs = append(lsp.TLVs, s.getAreaAddressTLV())
-	lsp.TLVs = append(lsp.TLVs, s.getIPInternalReachabilityInformationTLV())
+	lsp.TLVs = append(lsp.TLVs, s.getISReachabilityTLV())
 	lsp.TLVs = append(lsp.TLVs, s.getProtocolsSupportedTLV())
 	lsp.TLVs = append(lsp.TLVs, s.getIPInterfaceAddressesTLV())
+	lsp.TLVs = append(lsp.TLVs, s.getExtendedISReachabilityTLV())
 
 	lsp.UpdateLength()
 	lsp.SetChecksum()
@@ -85,23 +86,61 @@ func (s *Server) getIPInterfaceAddressesTLV() *packet.IPInterfaceAddressesTLV {
 	return packet.NewIPInterfaceAddressesTLV(addrs)
 }
 
-func (s *Server) getIPInternalReachabilityInformationTLV() *packet.ISReachabilityTLV {
-	neighbors := make([][7]byte, 0)
+func (s *Server) getISReachabilityTLV() *packet.ISReachabilityTLV {
+	neighbors := make([]types.SourceID, 0)
 	for _, ifa := range s.netIfaManager.getAllInterfaces() {
-		fmt.Printf("Getting neighbors\n")
-		for _, n := range ifa.neighborManagerL2.getNeighbors() {
-			neighbors = append(neighbors, [7]byte{
-				n.sysID[0],
-				n.sysID[1],
-				n.sysID[2],
-				n.sysID[3],
-				n.sysID[4],
-				n.sysID[5],
-				0,
-			})
+		if ifa.devStatus.GetOperState() != device.IfOperUp {
+			continue
 		}
-		fmt.Printf("Getting neighbors: Done\n")
+
+		for _, n := range ifa.neighborManagerL2.getNeighbors() {
+			neighbors = append(neighbors, n.sysID.ToSourceID(0))
+		}
 	}
 
 	return packet.NewISReachabilityTLV(neighbors)
+}
+
+func (s *Server) getExtendedISReachabilityTLV() *packet.ExtendedISReachabilityTLV {
+	t := packet.NewExtendedISReachabilityTLV()
+	for _, ifa := range s.netIfaManager.getAllInterfaces() {
+		for _, n := range ifa.neighborManagerL2.getNeighbors() {
+			m := metricToThreeBytes(ifa.cfg.Level2.Metric)
+			ntlv := packet.NewExtendedISReachabilityNeighbor(n.sysID.ToSourceID(0), m)
+
+			for _, addr := range ifa.devStatus.GetAddrs() {
+				if !addr.Addr().IsIPv4() {
+					// TODO: What about IPv6?
+					continue
+				}
+
+				ipv4LocalTLV := packet.NewIPv4InterfaceAddressSubTLV(addr.Addr().ToUint32())
+				ntlv.AddSubTLV(ipv4LocalTLV)
+			}
+
+			for _, nAddr := range n.ipAddresses {
+				if !nAddr.IsIPv4() {
+					// TODO: What about IPv6?
+					continue
+				}
+
+				ipv4RemoteTLV := packet.NewIPv4NeighborAddressSubTLV(nAddr.ToUint32())
+				ntlv.AddSubTLV(ipv4RemoteTLV)
+			}
+
+			llriTLV := packet.NewLinkLocalRemoteIdentifiersSubTLV(uint32(ifa.devStatus.GetIndex()), n.extendedLocalCircuitID)
+			ntlv.AddSubTLV(llriTLV)
+
+			t.Neighbors = append(t.Neighbors, ntlv)
+		}
+	}
+
+	t.UpdateLength()
+	return t
+}
+
+func metricToThreeBytes(m uint32) [3]byte {
+	// TODO: Check if this is affected by endian issues
+	x := (*[4]byte)(unsafe.Pointer(&m))
+	return [3]byte{x[1], x[2], x[3]}
 }

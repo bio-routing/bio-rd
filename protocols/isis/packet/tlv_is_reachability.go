@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"unsafe"
+
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 )
 
 // ISReachabilityTLVType is the type value of an IS reachability TLV
@@ -23,11 +25,11 @@ type ISNeighbor struct {
 	SIEDelayMetric   uint8
 	SIEExpenseMetric uint8
 	SIEErrorMetric   uint8
-	NeighborID       [7]byte
+	NeighborID       types.SourceID
 }
 
 // NewISReachabilityTLV creates a new IS Reachability TLV (type 2)
-func NewISReachabilityTLV(neighbors [][7]byte) *ISReachabilityTLV {
+func NewISReachabilityTLV(neighbors []types.SourceID) *ISReachabilityTLV {
 	isrtlv := &ISReachabilityTLV{
 		TLVType:   ISReachabilityTLVType,
 		TLVLength: uint8(len(neighbors))*uint8(unsafe.Sizeof(ISNeighbor{})) + 1,
@@ -41,7 +43,7 @@ func NewISReachabilityTLV(neighbors [][7]byte) *ISReachabilityTLV {
 	return isrtlv
 }
 
-func newISNeighbor(neighborID [7]byte) ISNeighbor {
+func newISNeighbor(neighborID types.SourceID) ISNeighbor {
 	return ISNeighbor{
 		RIEDefaultMetric: defaultLegacyMetric,
 		SIEDelayMetric:   defaultLegacyMetric,
@@ -77,6 +79,6 @@ func (isrtlv *ISReachabilityTLV) Serialize(buf *bytes.Buffer) {
 		buf.WriteByte(n.SIEDelayMetric)
 		buf.WriteByte(n.SIEExpenseMetric)
 		buf.WriteByte(n.SIEErrorMetric)
-		buf.Write(n.NeighborID[:])
+		buf.Write(n.NeighborID.Serialize())
 	}
 }
