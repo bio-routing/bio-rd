@@ -45,15 +45,18 @@ func (l *lsdb) dispose() {
 	l.srv = nil
 }
 
-func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransmissionTicker btime.Ticker, psnpTransmissionTicker btime.Ticker) {
+func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransTicker btime.Ticker, psnpTransTicker btime.Ticker, csnpTransTicker btime.Ticker) {
 	l.wg.Add(1)
 	go l.decrementRemainingLifetimesRoutine(decrementTicker)
 
 	l.wg.Add(1)
-	go l.sendLSPDUsRoutine(minLSPTransmissionTicker)
+	go l.sendLSPDUsRoutine(minLSPTransTicker)
 
 	l.wg.Add(1)
-	go l.sendPSNPsRoutine(psnpTransmissionTicker)
+	go l.sendPSNPsRoutine(psnpTransTicker)
+
+	l.wg.Add(1)
+	go l.sendCSNPsRoutine(csnpTransTicker)
 }
 
 func (l *lsdb) stop() {
@@ -115,6 +118,10 @@ func (l *lsdb) sendLSPDUs() {
 
 	for _, entry := range l.lsps {
 		for _, ifa := range entry.getInterfacesSRMSet() {
+			if ifa.cfg.Passive {
+				continue
+			}
+
 			ifa.sendLSPDU(entry.lspdu, l.level())
 		}
 	}
@@ -190,7 +197,7 @@ func (l *lsdb) _isNewer(pkt *packet.LSPDU) bool {
 	return pkt.SequenceNumber > l.lsps[pkt.LSPID].lspdu.SequenceNumber
 }
 
-func (l *lsdb) processPSNP(psnp *packet.CSNP, from *netIfa) {
+func (l *lsdb) processPSNP(psnp *packet.PSNP, from *netIfa) {
 	l.lspsMu.Lock()
 	defer l.lspsMu.Unlock()
 
@@ -200,6 +207,29 @@ func (l *lsdb) processPSNP(psnp *packet.CSNP, from *netIfa) {
 		}
 
 		l.lsps[lspEntry.LSPID].clearSRMFlag(from)
+	}
+}
+
+func (l *lsdb) sendCSNPsRoutine(t btime.Ticker) {
+	defer l.wg.Done()
+
+	for {
+		select {
+		case <-t.C():
+			l.sendCSNPss()
+		case <-l.done:
+			return
+		}
+	}
+}
+
+func (l *lsdb) sendCSNPss() {
+	for _, ifa := range l.srv.netIfaManager.getAllInterfaces() {
+		if len(ifa.neighborManagerL2.getNeighborsUp()) < 1 {
+			continue
+		}
+
+		l.sendCSNPs(ifa)
 	}
 }
 
@@ -275,7 +305,6 @@ func (l *lsdb) getCSNPs(ifa *netIfa) []packet.CSNP {
 	}
 
 	return packet.NewCSNPs(srcID, l.getLSPEntries(), ifa.ethHandler.GetMTU())
-
 }
 
 func (l *lsdb) sendCSNPs(ifa *netIfa) {

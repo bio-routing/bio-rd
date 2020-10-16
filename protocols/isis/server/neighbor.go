@@ -149,7 +149,7 @@ func (n *neighbor) processP2PHello(hello *packet.P2PHello) error {
 				n.setState(packet.P2PAdjStateUp)
 
 				n.nm.server.regenerateL2LSP()
-				n.getLSDB().sendCSNPs(n.nm.netIfa)
+				n.getLSDB().sendCSNPs(n.nm.netIfa) // TODO: Make this a go routinge that sends periodically
 				n.getLSDB().setSRMAllLSPs(n.nm.netIfa)
 			}
 		}

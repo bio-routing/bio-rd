@@ -101,7 +101,7 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 func newCSNP(sourceID types.SourceID, startLSPID LSPID, endLSPID LSPID, tlvs []TLV) *CSNP {
 	tlvsLen := uint16(0)
 	for i := range tlvs {
-		tlvsLen += uint16(tlvs[i].Length())
+		tlvsLen += uint16(tlvs[i].Length()) + 2
 	}
 
 	csnp := CSNP{
@@ -117,7 +117,11 @@ func newCSNP(sourceID types.SourceID, startLSPID LSPID, endLSPID LSPID, tlvs []T
 
 // GetLSPEntries returns LSP Entries from the LSP Entries TLV
 func (c *CSNP) GetLSPEntries() []*LSPEntry {
-	for _, tlv := range c.TLVs {
+	return getLSPEntries(c.TLVs)
+}
+
+func getLSPEntries(tlvs []TLV) []*LSPEntry {
+	for _, tlv := range tlvs {
 		if tlv.Type() != LSPEntriesTLVType {
 			continue
 		}

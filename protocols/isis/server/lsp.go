@@ -24,7 +24,7 @@ func (s *Server) regenerateL2LSP() {
 	}
 
 	lsp := &packet.LSPDU{
-		RemainingLifetime: 1200, // TODO: Make this configurable
+		RemainingLifetime: s.lspLifetime,
 		LSPID: packet.LSPID{
 			SystemID:     s.nets[0].SystemID,
 			PseudonodeID: 0,

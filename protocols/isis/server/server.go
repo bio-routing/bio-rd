@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	minimumLSPTransmissionIntervalMS = 5000
+	minimumLSPTransmissionIntervalS = 5
+	csnpTransmissionIntervalS       = 40
 )
 
 // ISISServer is generic ISIS server interface
@@ -27,6 +28,7 @@ type Server struct {
 	running          bool
 	runningMu        sync.Mutex
 	nets             []*types.NET
+	lspLifetime      uint16
 	sequenceNumberL1 uint32
 	sequenceNumberL2 uint32
 	netIfaManager    *netIfaManager
@@ -50,7 +52,7 @@ func (s *Server) Start() error {
 }
 
 // New creates a new ISIS server
-func New(nets []*types.NET, ds device.Updater) (*Server, error) {
+func New(nets []*types.NET, ds device.Updater, lspLifetime uint16) (*Server, error) {
 	if len(nets) == 0 {
 		return nil, fmt.Errorf("No NETs given. One is minimum")
 	}
@@ -61,6 +63,7 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 
 	s := &Server{
 		nets:             nets,
+		lspLifetime:      lspLifetime,
 		ds:               ds,
 		sequenceNumberL1: 1,
 		sequenceNumberL2: 1,
@@ -77,9 +80,19 @@ func New(nets []*types.NET, ds device.Updater) (*Server, error) {
 
 func (s *Server) start() {
 	s.regenerateL2LSP()
-	// TODO: Start L1 LSDBs and create their LSPs
-	s.lsdbL1.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS/3))
-	s.lsdbL2.start(btime.NewBIOTicker(time.Second), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS), btime.NewBIOTicker(time.Millisecond*minimumLSPTransmissionIntervalMS/3))
+
+	// TODO: Start L1 LSDB and create their LSP
+	lifetimeDecrementTickerL1 := btime.NewBIOTicker(time.Second)
+	lspTransmissionTickerL1 := btime.NewBIOTicker(time.Second * minimumLSPTransmissionIntervalS)
+	psnpTransmissionTickerL1 := btime.NewBIOTicker(time.Second * minimumLSPTransmissionIntervalS / 3)
+	csnpTransmissionTickerL1 := btime.NewBIOTicker(time.Second * csnpTransmissionIntervalS)
+	s.lsdbL1.start(lifetimeDecrementTickerL1, lspTransmissionTickerL1, psnpTransmissionTickerL1, csnpTransmissionTickerL1)
+
+	lifetimeDecrementTickerL2 := btime.NewBIOTicker(time.Second)
+	lspTransmissionTickerL2 := btime.NewBIOTicker(time.Second * minimumLSPTransmissionIntervalS)
+	psnpTransmissionTickerL2 := btime.NewBIOTicker(time.Second * minimumLSPTransmissionIntervalS / 3)
+	csnpTransmissionTickerL2 := btime.NewBIOTicker(time.Second * csnpTransmissionIntervalS)
+	s.lsdbL2.start(lifetimeDecrementTickerL2, lspTransmissionTickerL2, psnpTransmissionTickerL2, csnpTransmissionTickerL2)
 }
 
 func (s *Server) dispose() {

@@ -3,14 +3,16 @@ package config
 const (
 	defaultHelloInterval = 9
 	defaultHoldTime      = 27
+	lspMinLifetime       = 350
 )
 
 // ISIS config
 type ISIS struct {
-	NETs       []string         `yaml:"NETs"`
-	Level1     *ISISLevel       `yaml:"level1"`
-	Level2     *ISISLevel       `yaml:"level2"`
-	Interfaces []*ISISInterface `yaml:"interfaces"`
+	NETs        []string         `yaml:"NETs"`
+	Level1      *ISISLevel       `yaml:"level1"`
+	Level2      *ISISLevel       `yaml:"level2"`
+	Interfaces  []*ISISInterface `yaml:"interfaces"`
+	LSPLifetime uint16           `yaml:"lsp_lifetime"`
 }
 
 //ISISLevel level config
@@ -43,6 +45,10 @@ type ISISInterfaceLevel struct {
 }
 
 func (i *ISIS) loadDefaults() {
+	if i.LSPLifetime < lspMinLifetime {
+		i.LSPLifetime = lspMinLifetime
+	}
+
 	for _, ifa := range i.Interfaces {
 		ifa.loadDefaults()
 	}

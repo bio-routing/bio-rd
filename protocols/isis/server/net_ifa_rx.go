@@ -57,7 +57,7 @@ func (nifa *netIfa) processPkt(src ethernet.MACAddr, rawPkt []byte) error {
 	case packet.L2_PSNP_TYPE:
 		log.WithFields(nifa.fields()).Infof("Received L2 PSNP")
 
-		nifa.processL2PSNPDU(pkt.Body.(*packet.CSNP)) // FIX ME: This type assertion panics
+		nifa.processL2PSNPDU(pkt.Body.(*packet.PSNP))
 		return nil
 	}
 
@@ -110,7 +110,7 @@ func (nifa *netIfa) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello
 	return nil
 }
 
-func (nifa *netIfa) processL2PSNPDU(pkt *packet.CSNP) {
+func (nifa *netIfa) processL2PSNPDU(pkt *packet.PSNP) {
 	nifa.srv.lsdbL2.processPSNP(pkt, nifa)
 }
 

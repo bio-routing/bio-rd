@@ -51,6 +51,22 @@ func (nm *neighborManager) getNeighbors() []*neighbor {
 	return ret
 }
 
+func (nm *neighborManager) getNeighborsUp() []*neighbor {
+	ret := make([]*neighbor, 0)
+	nm.neighborsMu.RLock()
+	defer nm.neighborsMu.RUnlock()
+
+	for _, v := range nm.neighbors {
+		if v.getState() != packet.P2PAdjStateUp {
+			continue
+		}
+
+		ret = append(ret, v)
+	}
+
+	return ret
+}
+
 func (nm *neighborManager) neighborUp(src ethernet.MACAddr) bool {
 	nm.neighborsMu.RLock()
 	defer nm.neighborsMu.RUnlock()
