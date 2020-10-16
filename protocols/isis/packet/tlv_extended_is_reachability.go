@@ -54,7 +54,6 @@ func (e *ExtendedISReachabilityTLV) AddNeighbor(n *ExtendedISReachabilityNeighbo
 
 // Serialize serializes an ExtendedISReachabilityTLV
 func (e *ExtendedISReachabilityTLV) Serialize(buf *bytes.Buffer) {
-	//e.updateLength()
 	buf.WriteByte(e.TLVType)
 	buf.WriteByte(e.TLVLength)
 	for i := range e.Neighbors {
