@@ -22,7 +22,6 @@ type PSNP struct {
 	PDULength uint16
 	SourceID  types.SourceID
 	TLVs      []TLV
-	//LSPEntries []*LSPEntry
 }
 
 // NewPSNPs creates the necessary number of PSNP PDUs to carry all LSPEntries
