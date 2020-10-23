@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/util/decode"
 	umath "github.com/bio-routing/bio-rd/util/math"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -18,9 +19,10 @@ const (
 
 // PSNP represents a Partial Sequence Number PDU
 type PSNP struct {
-	PDULength  uint16
-	SourceID   types.SourceID
-	LSPEntries []*LSPEntry
+	PDULength uint16
+	SourceID  types.SourceID
+	TLVs      []TLV
+	//LSPEntries []*LSPEntry
 }
 
 // NewPSNPs creates the necessary number of PSNP PDUs to carry all LSPEntries
@@ -52,19 +54,28 @@ func newPSNP(sourceID types.SourceID, lspEntries []*LSPEntry) *PSNP {
 	}
 
 	psnp := PSNP{
-		PDULength:  PSNPMinLen + 2 + uint16(len(lspEntries))*LSPEntryLen,
-		SourceID:   sourceID,
-		LSPEntries: lspEntries,
+		PDULength: PSNPMinLen + 2 + uint16(len(lspEntries))*LSPEntryLen,
+		SourceID:  sourceID,
+		TLVs: []TLV{
+			NewLSPEntriesTLV(lspEntries),
+		},
 	}
 
 	return &psnp
 }
 
+// GetLSPEntries returns LSP Entries from the LSP Entries TLV
+func (p *PSNP) GetLSPEntries() []*LSPEntry {
+	return getLSPEntries(p.TLVs)
+}
+
 // Serialize serializes PSNPs
-func (c *PSNP) Serialize(buf *bytes.Buffer) {
-	buf.Write(convert.Uint16Byte(c.PDULength))
-	buf.Write(c.SourceID.Serialize())
-	NewLSPEntriesTLV(c.LSPEntries).Serialize(buf)
+func (p *PSNP) Serialize(buf *bytes.Buffer) {
+	buf.Write(convert.Uint16Byte(p.PDULength))
+	buf.Write(p.SourceID.Serialize())
+	for _, tlv := range p.TLVs {
+		tlv.Serialize(buf)
+	}
 }
 
 // DecodePSNP decodes a Partion Sequence Number PDU
@@ -81,15 +92,11 @@ func DecodePSNP(buf *bytes.Buffer) (*PSNP, error) {
 		return nil, fmt.Errorf("Unable to decode fields: %v", err)
 	}
 
-	nEntries := (psnp.PDULength - PSNPMinLen) / LSPEntryLen
-	psnp.LSPEntries = make([]*LSPEntry, nEntries)
-	for i := uint16(0); i < nEntries; i++ {
-		lspEntry, err := decodeLSPEntry(buf)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to get LSPEntries: %v", err)
-		}
-		psnp.LSPEntries[i] = lspEntry
+	tlvs, err := readTLVs(buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to read TLVs")
 	}
 
+	psnp.TLVs = tlvs
 	return psnp, nil
 }

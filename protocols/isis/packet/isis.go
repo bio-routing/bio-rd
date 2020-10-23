@@ -29,6 +29,11 @@ var (
 	AllESS    = [6]byte{0x09, 0x00, 0x2B, 0x00, 0x00, 0x04}
 )
 
+// Serializable is used as a generic interface for PDUs
+type Serializable interface {
+	Serialize(*bytes.Buffer)
+}
+
 // ISISPacket represents an ISIS packet
 type ISISPacket struct {
 	Header *ISISHeader

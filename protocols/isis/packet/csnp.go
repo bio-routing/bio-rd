@@ -49,6 +49,10 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 	left := len(lspEntries)
 	lspsPerCSNP := (maxPDULen - CSNPMinLen) / LSPEntryLen
 	numCSNPs := int(math.Ceil(float64(left) / float64(lspsPerCSNP)))
+	if numCSNPs == 0 {
+		return nil
+	}
+
 	res := make([]CSNP, numCSNPs)
 
 	sort.Slice(lspEntries, func(a, b int) bool {
@@ -97,7 +101,7 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 func newCSNP(sourceID types.SourceID, startLSPID LSPID, endLSPID LSPID, tlvs []TLV) *CSNP {
 	tlvsLen := uint16(0)
 	for i := range tlvs {
-		tlvsLen += uint16(tlvs[i].Length())
+		tlvsLen += uint16(tlvs[i].Length()) + 2
 	}
 
 	csnp := CSNP{
@@ -113,7 +117,11 @@ func newCSNP(sourceID types.SourceID, startLSPID LSPID, endLSPID LSPID, tlvs []T
 
 // GetLSPEntries returns LSP Entries from the LSP Entries TLV
 func (c *CSNP) GetLSPEntries() []*LSPEntry {
-	for _, tlv := range c.TLVs {
+	return getLSPEntries(c.TLVs)
+}
+
+func getLSPEntries(tlvs []TLV) []*LSPEntry {
+	for _, tlv := range tlvs {
 		if tlv.Type() != LSPEntriesTLVType {
 			continue
 		}
@@ -122,6 +130,22 @@ func (c *CSNP) GetLSPEntries() []*LSPEntry {
 	}
 
 	return nil
+}
+
+// RangeContainsLSPID checks if lspID is within the range of described LSPs of this CSNP
+func (c *CSNP) RangeContainsLSPID(lspID LSPID) bool {
+	return c.StartLSPID.Compare(lspID) <= 0 && c.EndLSPID.Compare(lspID) >= 0
+}
+
+// ContainsLSPEntry checks if c contains lspID
+func (c *CSNP) ContainsLSPEntry(needle LSPID) bool {
+	for _, e := range c.GetLSPEntries() {
+		if e.LSPID == needle {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Serialize serializes CSNPs

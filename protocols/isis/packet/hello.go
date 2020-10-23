@@ -89,6 +89,12 @@ func (h *P2PHello) GetIPInterfaceAddressesesTLV() *IPInterfaceAddressesTLV {
 
 // Serialize serializes a P2P Hello
 func (h *P2PHello) Serialize(buf *bytes.Buffer) {
+	tlvsLen := uint16(0)
+	for _, TLV := range h.TLVs {
+		tlvsLen += uint16(TLV.Length()) + tlvBaseLen
+	}
+	h.PDULength = P2PHelloMinLen + tlvsLen
+
 	buf.WriteByte(h.CircuitType)
 	buf.Write(h.SystemID[:])
 	buf.Write(convert.Uint16Byte(h.HoldingTimer))
