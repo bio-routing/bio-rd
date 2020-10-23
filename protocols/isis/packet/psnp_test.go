@@ -397,14 +397,14 @@ func TestDecodePSNP(t *testing.T) {
 		wantFail bool
 		expected *PSNP
 	}{
-		/*{
+		{
 			name: "Incomplete PSNP",
 			input: []byte{
 				0, 33, // Length
-				10, 20, 30, 40, 50, 60, 0, // Source ID
+				10, 20, 30, 40, 50, 60, // Source ID
 			},
 			wantFail: true,
-		},*/
+		},
 		{
 			name: "Incomplete PSNP LSPEntry",
 			input: []byte{
