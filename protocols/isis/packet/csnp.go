@@ -101,7 +101,7 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 func newCSNP(sourceID types.SourceID, startLSPID LSPID, endLSPID LSPID, tlvs []TLV) *CSNP {
 	tlvsLen := uint16(0)
 	for i := range tlvs {
-		tlvsLen += uint16(tlvs[i].Length()) + 2
+		tlvsLen += uint16(tlvs[i].Length()) + tlvBaseLen
 	}
 
 	csnp := CSNP{
