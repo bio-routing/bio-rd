@@ -1,0 +1,73 @@
+package ethernet
+
+import (
+	"bytes"
+	"syscall"
+	"unsafe"
+
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
+)
+
+// BPF represents a Berkeley Packet Filter
+type BPF struct {
+	len   uint16
+	terms []BPFTerm
+}
+
+// BPFTerm is a BPF Term
+type BPFTerm struct {
+	code uint16
+	jt   uint8
+	jf   uint8
+	k    uint32
+}
+
+func (b *BPF) serializeTerms() [48]byte {
+	directives := bytes.NewBuffer(nil)
+	for _, t := range b.terms {
+		directives.Write(bnet.BigEndianToLocal(convert.Uint16Byte(t.code)))
+		directives.WriteByte(t.jt)
+		directives.WriteByte(t.jf)
+		directives.Write(bnet.BigEndianToLocal(convert.Uint32Byte(t.k)))
+	}
+
+	ret := [48]byte{}
+	copy(ret[:], directives.Bytes())
+	return ret
+}
+
+func (e *Handler) loadBPF(b *BPF) error {
+	if b == nil {
+		return nil
+	}
+
+	terms := b.serializeTerms()
+	buf := bytes.NewBuffer(nil)
+
+	bpfProgTermCount := len(b.terms)
+	buf.Write(bnet.BigEndianToLocal(convert.Uint16Byte(uint16(bpfProgTermCount))))
+
+	// Align to next word
+	for i := 0; i < int(wordLength)-int(unsafe.Sizeof(uint16(0))); i++ {
+		buf.WriteByte(0)
+	}
+
+	p := unsafe.Pointer(&terms)
+	switch wordWidth {
+	case 4:
+		buf.Write(bnet.BigEndianToLocal(convert.Uint32Byte(uint32(uintptr(p)))))
+	case 8:
+		buf.Write(bnet.BigEndianToLocal(convert.Uint64Byte(uint64(uintptr(p)))))
+	default:
+		panic("Unknown word width")
+	}
+
+	err := syscall.SetsockoptString(e.socket, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, string(buf.Bytes()))
+	if err != nil {
+		return errors.Wrap(err, "Setsockopt failed (SO_ATTACH_FILTER)")
+	}
+
+	return nil
+}
