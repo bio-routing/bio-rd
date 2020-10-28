@@ -34,6 +34,6 @@ func (m *MockHandler) GetMTU() int {
 	return 1500
 }
 
-func (m *MockHandler) SendPacket(pkt []byte, dst MACAddr) error {
+func (m *MockHandler) SendPacket(dst MACAddr, pkt []byte) error {
 	return nil
 }

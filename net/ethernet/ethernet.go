@@ -1,6 +1,7 @@
 package ethernet
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"syscall"
@@ -40,19 +41,20 @@ type Handler struct {
 	socket  int
 	devName string
 	ifIndex uint32
+	llc     LLC
 }
 
 // HandlerInterface is an handler interface
 type HandlerInterface interface {
 	NewConn(dest MACAddr) net.Conn
 	RecvPacket() (pkt []byte, src MACAddr, err error)
-	SendPacket(pkt []byte, dst MACAddr) error
+	SendPacket(dst MACAddr, pkt []byte) error
 	MCastJoin(addr MACAddr) error
 	GetMTU() int
 }
 
 // NewHandler creates a new Ethernet handler
-func NewHandler(devName string, bpf *BPF) (*Handler, error) {
+func NewHandler(devName string, bpf *BPF, llc LLC) (*Handler, error) {
 	ifa, err := net.InterfaceByName(devName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "net.InterfaceByName failed")
@@ -61,6 +63,7 @@ func NewHandler(devName string, bpf *BPF) (*Handler, error) {
 	h := &Handler{
 		devName: devName,
 		ifIndex: uint32(ifa.Index),
+		llc:     llc,
 	}
 
 	err = h.init(bpf)
@@ -112,15 +115,28 @@ func (e *Handler) RecvPacket() (pkt []byte, src MACAddr, err error) {
 	return buf[:nBytes], src, nil
 }
 
-// SendPacket sends a packet
-func (e *Handler) SendPacket(pkt []byte, dst MACAddr) error {
-	newPkt := []byte{
-		0xfe, 0xfe, 0x03, // LLC
-	}
-	newPkt = append(newPkt, pkt...)
+// SendPacket sends an 802.3 ethernet packet (LLC)
+func (e *Handler) SendPacket(dst MACAddr, pkt []byte) error {
+	pkt = craftLLCPacket(e.llc, pkt)
 
+	err := syscall.Sendto(e.socket, pkt, 0, e.getSockaddrLinklayer(len(pkt), dst))
+	if err != nil {
+		return fmt.Errorf("sendto failed: %v", err)
+	}
+
+	return nil
+}
+
+func craftLLCPacket(llc LLC, pkt []byte) []byte {
+	buf := bytes.NewBuffer(nil)
+	llc.serialize(buf)
+	buf.Write(pkt)
+	return buf.Bytes()
+}
+
+func (e *Handler) getSockaddrLinklayer(pktLen int, dst MACAddr) *syscall.SockaddrLinklayer {
 	sall := &syscall.SockaddrLinklayer{
-		Protocol: bnet.Htons(uint16(ethertype802dot3(len(newPkt)))),
+		Protocol: bnet.Htons(ethertype802dot3(pktLen)),
 		Ifindex:  int(e.ifIndex),
 		Halen:    ethALen,
 	}
@@ -129,20 +145,15 @@ func (e *Handler) SendPacket(pkt []byte, dst MACAddr) error {
 		sall.Addr[i] = dst[i]
 	}
 
-	err := syscall.Sendto(e.socket, newPkt, 0, sall)
-	if err != nil {
-		return fmt.Errorf("sendto failed: %v", err)
-	}
-
-	return nil
+	return sall
 }
 
-func ethertype802dot3(len int) int {
+func ethertype802dot3(len int) uint16 {
 	if len > maxLLCLen {
 		return ethertypeExtLLC
 	}
 
-	return len
+	return uint16(len)
 }
 
 // GetMTU gets the interfaces MTU

@@ -42,7 +42,7 @@ func (c *Conn) Read(b []byte) (n int, err error) {
 
 // Write sends b on the Conn
 func (c *Conn) Write(b []byte) (n int, err error) {
-	err = c.eth.SendPacket(b, c.destAddr)
+	err = c.eth.SendPacket(c.destAddr, b)
 	if err != nil {
 		return 0, err
 	}
