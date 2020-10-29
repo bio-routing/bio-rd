@@ -2,6 +2,7 @@ package ethernet
 
 import (
 	"bytes"
+	"reflect"
 	"syscall"
 	"unsafe"
 
@@ -10,10 +11,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+const bpfTermSize = 8
+
 // BPF represents a Berkeley Packet Filter
 type BPF struct {
 	len   uint16
 	terms []BPFTerm
+}
+
+func (b BPF) termCount() int {
+	return len(b.terms)
 }
 
 // BPFTerm is a BPF Term
@@ -24,7 +31,7 @@ type BPFTerm struct {
 	k    uint32
 }
 
-func (b *BPF) serializeTerms() [48]byte {
+func (b *BPF) serializeTerms() []byte {
 	directives := bytes.NewBuffer(nil)
 	for _, t := range b.terms {
 		directives.Write(bnet.BigEndianToLocal(convert.Uint16Byte(t.code)))
@@ -33,9 +40,7 @@ func (b *BPF) serializeTerms() [48]byte {
 		directives.Write(bnet.BigEndianToLocal(convert.Uint32Byte(t.k)))
 	}
 
-	ret := [48]byte{}
-	copy(ret[:], directives.Bytes())
-	return ret
+	return directives.Bytes()
 }
 
 func (e *Handler) loadBPF(b *BPF) error {
@@ -43,10 +48,10 @@ func (e *Handler) loadBPF(b *BPF) error {
 		return nil
 	}
 
-	terms := b.serializeTerms()
+	prog := b.serializeTerms()
 	buf := bytes.NewBuffer(nil)
 
-	bpfProgTermCount := len(b.terms)
+	bpfProgTermCount := b.termCount()
 	buf.Write(bnet.BigEndianToLocal(convert.Uint16Byte(uint16(bpfProgTermCount))))
 
 	// Align to next word
@@ -54,7 +59,7 @@ func (e *Handler) loadBPF(b *BPF) error {
 		buf.WriteByte(0)
 	}
 
-	p := unsafe.Pointer(&terms)
+	p := (*reflect.SliceHeader)(unsafe.Pointer(&prog)).Data
 	switch wordWidth {
 	case 4:
 		buf.Write(bnet.BigEndianToLocal(convert.Uint32Byte(uint32(uintptr(p)))))
