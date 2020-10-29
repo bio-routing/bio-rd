@@ -11,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const bpfTermSize = 8
-
 var (
 	wordWidth uint8
 )
