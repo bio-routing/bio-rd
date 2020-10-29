@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"syscall"
-	"unsafe"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/pkg/errors"
@@ -18,16 +17,6 @@ const (
 	maxLLCLen       = 0x5ff
 	ethertypeExtLLC = 0x8870
 )
-
-var (
-	wordWidth  uint8
-	wordLength uintptr
-)
-
-func init() {
-	wordWidth = uint8(unsafe.Sizeof(int(0)))
-	wordLength = unsafe.Sizeof(uintptr(0))
-}
 
 // MACAddr represens a MAC address
 type MACAddr [ethALen]byte

@@ -13,6 +13,14 @@ import (
 
 const bpfTermSize = 8
 
+var (
+	wordWidth uint8
+)
+
+func init() {
+	wordWidth = uint8(unsafe.Sizeof(int(0)))
+}
+
 // BPF represents a Berkeley Packet Filter
 type BPF struct {
 	len   uint16
@@ -55,7 +63,7 @@ func (e *Handler) loadBPF(b *BPF) error {
 	buf.Write(bnet.BigEndianToLocal(convert.Uint16Byte(uint16(bpfProgTermCount))))
 
 	// Align to next word
-	for i := 0; i < int(wordLength)-int(unsafe.Sizeof(uint16(0))); i++ {
+	for i := 0; i < int(wordWidth)-int(unsafe.Sizeof(uint16(0))); i++ {
 		buf.WriteByte(0)
 	}
 
