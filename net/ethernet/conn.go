@@ -21,7 +21,7 @@ func (ea EthAddr) Network() string {
 	return "ethernet"
 }
 
-// Conn is a wrapper that implements net.Conn and sents packets to a particular destination
+// Conn is a wrapper that implements net.Conn and sents packets to a particular destination (write only)
 type Conn struct {
 	eth      *Handler
 	destAddr MACAddr

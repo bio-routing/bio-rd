@@ -72,7 +72,7 @@ func (e *Handler) loadBPF(b *BPF) error {
 	case 8:
 		buf.Write(bnet.BigEndianToLocal(convert.Uint64Byte(uint64(uintptr(p)))))
 	default:
-		panic("Unknown word width")
+		return errors.Wrap(err, "Unknown word width")
 	}
 
 	err := syscall.SetsockoptString(e.socket, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, string(buf.Bytes()))
