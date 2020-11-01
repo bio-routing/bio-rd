@@ -39,6 +39,11 @@ func (m *MockHandler) GetMTU() int {
 	return 1500
 }
 
+// Close is here to fulfill an interface
+func (m *MockHandler) Close() {
+
+}
+
 // SendPacket is here to fulfill an interface
 func (m *MockHandler) SendPacket(dst MACAddr, pkt []byte) error {
 	return nil

@@ -40,6 +40,7 @@ type HandlerInterface interface {
 	SendPacket(dst MACAddr, pkt []byte) error
 	MCastJoin(addr MACAddr) error
 	GetMTU() int
+	Close()
 }
 
 // NewHandler creates a new Ethernet handler
@@ -86,8 +87,9 @@ func (e *Handler) init(b *BPF) error {
 	return nil
 }
 
-func (e *Handler) closePacketSocket() error {
-	return syscall.Close(e.socket)
+// Close closes the handler
+func (e *Handler) Close() {
+	syscall.Close(e.socket)
 }
 
 // RecvPacket receives a packet on the ethernet handler

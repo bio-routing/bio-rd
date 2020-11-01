@@ -4,12 +4,15 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Updater is a device updater interface
 type Updater interface {
 	Subscribe(Client, string)
 	Unsubscribe(Client, string)
+	Start() error
 }
 
 // Server represents a device server
@@ -24,7 +27,7 @@ type Server struct {
 
 // Client represents a client of the device server
 type Client interface {
-	DeviceUpdate(*Device)
+	DeviceUpdate(DeviceInterface)
 }
 
 type osAdapter interface {
@@ -68,6 +71,8 @@ func (ds *Server) Stop() {
 
 // Subscribe allows a client to subscribe for status updates on interface `devName`
 func (ds *Server) Subscribe(client Client, devName string) {
+	log.Infof("Device: Registering client for interface %s", devName)
+
 	d := ds.getLinkState(devName)
 	if d != nil {
 		client.DeviceUpdate(d)
@@ -106,7 +111,7 @@ func (ds *Server) addDevice(d *Device) {
 	ds.devicesMu.Lock()
 	defer ds.devicesMu.Unlock()
 
-	ds.devices[d.Index] = d
+	ds.devices[d.index] = d
 }
 
 func (ds *Server) delDevice(index uint64) {
@@ -118,7 +123,7 @@ func (ds *Server) getLinkState(name string) *Device {
 	defer ds.devicesMu.RUnlock()
 
 	for _, d := range ds.devices {
-		if d.Name != name {
+		if d.name != name {
 			continue
 		}
 
@@ -137,7 +142,7 @@ func (ds *Server) notify(index uint64) {
 			continue
 		}
 
-		for _, c := range ds.clientsByDevice[d.Name] {
+		for _, c := range ds.clientsByDevice[d.name] {
 			c.DeviceUpdate(d.copy())
 		}
 	}
