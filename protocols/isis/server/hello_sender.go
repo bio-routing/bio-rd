@@ -30,7 +30,7 @@ func (nifa *netIfa) p2pHelloSender() {
 
 			_, err := nifa.isP2PHelloCon.Write(hdrBuf.Bytes())
 			if err != nil {
-				panic(err) // TODO takt: Check if we really really want this?
+				log.WithFields(nifa.fields()).WithError(err).Error("Unable to send hello packet")
 			}
 		}
 
