@@ -91,7 +91,7 @@ func (nm *neighborManager) neighborUp(src ethernet.MACAddr) bool {
 func (nm *neighborManager) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello) error {
 	err := nm.validateP2PHello(hello)
 	if err != nil {
-		return errors.Wrap(err, "Invalid p2p hello msg")
+		return errors.Wrapf(err, "Invalid p2p hello msg from %s", src.String())
 	}
 
 	if nm.level == 1 {
