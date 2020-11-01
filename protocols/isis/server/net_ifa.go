@@ -196,6 +196,7 @@ func (nifa *netIfa) _start() error {
 
 	err := nifa.ethHandler.MCastJoin(allISNetworkEntitiesAddr)
 	if err != nil {
+		nifa._stop()
 		return errors.Wrap(err, "Unable to join IS p2p hello multicast group")
 	}
 
@@ -216,6 +217,7 @@ func (nifa *netIfa) _stop() {
 	}
 
 	close(nifa.done)
+	nifa.ethHandler.Close()
 	nifa.wg.Wait()
 }
 
