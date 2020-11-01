@@ -221,14 +221,6 @@ func (nifa *netIfa) _stop() {
 	nifa.wg.Wait()
 }
 
-func (nifa *netIfa) broadCastL1() error {
-	return fmt.Errorf("L1 Hello not supported yet")
-}
-
-func (nifa *netIfa) broadCastL2() error {
-	return fmt.Errorf("broadcast networks not supported yet")
-}
-
 func getISISLLC() ethernet.LLC {
 	return ethernet.LLC{
 		DSAP:         0xfe,
