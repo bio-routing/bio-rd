@@ -17,35 +17,35 @@ type NET struct {
 
 // ParseNET parses an network entity title
 func ParseNET(addr []byte) (*NET, error) {
-	l := len(addr)
+	addrLen := len(addr)
 
-	if l < minNETLen {
+	if addrLen < minNETLen {
 		return nil, fmt.Errorf("NET too short")
 	}
 
-	if l > maxNETLen {
+	if addrLen > maxNETLen {
 		return nil, fmt.Errorf("NET too long")
 	}
 
 	areaID := []byte{}
 
-	for i := 0; i < l-8; i++ {
+	for i := 0; i < addrLen-systemIDLen-2; i++ { // -2 for SEL and "off by one"
 		areaID = append(areaID, addr[i+1])
 	}
 
 	systemID := SystemID{
-		addr[l-7],
-		addr[l-6],
-		addr[l-5],
-		addr[l-4],
-		addr[l-3],
-		addr[l-2],
+		addr[addrLen-7],
+		addr[addrLen-6],
+		addr[addrLen-5],
+		addr[addrLen-4],
+		addr[addrLen-3],
+		addr[addrLen-2],
 	}
 
 	return &NET{
 		AFI:      addr[0],
 		AreaID:   areaID,
 		SystemID: systemID,
-		SEL:      addr[l-1],
+		SEL:      addr[addrLen-1],
 	}, nil
 }

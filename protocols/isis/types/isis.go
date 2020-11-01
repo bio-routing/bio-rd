@@ -2,8 +2,12 @@ package types
 
 import "fmt"
 
+const (
+	systemIDLen = 6
+)
+
 // SystemID is an ISIS System ID
-type SystemID [6]byte
+type SystemID [systemIDLen]byte
 
 // SourceID is a source ID
 type SourceID struct {
