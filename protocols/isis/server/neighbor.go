@@ -117,17 +117,17 @@ func (n *neighbor) adjChecker() {
 			return
 		case <-n.adjCheckTicker.C():
 			state, change := n.getStateAndTime()
+			if state == packet.P2PAdjStateUp {
+				if n.timedOut() {
+					n.down()
+					state, change = n.getStateAndTime()
+				}
+			}
+
 			if state == packet.P2PAdjStateDown {
 				if time.Now().Sub(change) > time.Second*time.Duration(neighborDownTimeoutS) {
 					n.dispose()
 					return
-				}
-			}
-
-			if state == packet.P2PAdjStateUp {
-				if n.timedOut() {
-					n.down()
-					continue
 				}
 			}
 		}
