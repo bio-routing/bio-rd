@@ -175,15 +175,19 @@ func (n *neighbor) processP2PHello(hello *packet.P2PHello) error {
 	n.updateTimeout(time.Now().Add(time.Second * time.Duration(hello.HoldingTimer)))
 
 	p2pAdjState := getP2PAdjTLV(hello.TLVs)
-	if p2pAdjState != nil {
-		if n.p2pAdjTLVContainsSelf(p2pAdjState) {
-			if n.getState() != packet.P2PAdjStateUp {
-				log.WithFields(n.fields()).Infof("Adjacency reaches up state")
-				n.setState(packet.P2PAdjStateUp)
+	if p2pAdjState == nil {
+		return nil
+	}
 
-				// TODO: Generate LSP, send CSNP, etc, pp.
-			}
-		}
+	if !n.p2pAdjTLVContainsSelf(p2pAdjState) {
+		return nil
+	}
+
+	if n.getState() != packet.P2PAdjStateUp {
+		log.WithFields(n.fields()).Infof("Adjacency reaches up state")
+		n.setState(packet.P2PAdjStateUp)
+
+		// TODO: Generate LSP, send CSNP, etc, pp.
 	}
 
 	return nil
