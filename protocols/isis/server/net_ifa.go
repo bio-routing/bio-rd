@@ -199,7 +199,7 @@ func (nifa *netIfa) _start() error {
 		return errors.Wrap(err, "Unable to join IS p2p hello multicast group")
 	}
 
-	nifa.wg.Add(2)
+	nifa.wg.Add(1)
 	go nifa.receiver()
 
 	nifa.initialized = true
