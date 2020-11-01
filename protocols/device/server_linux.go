@@ -70,15 +70,14 @@ func (o *osAdapterLinux) init() error {
 	for _, l := range links {
 		d := linkUpdateToDevice(l.Attrs())
 
-		for _, f := range []int{4, 6} {
-			addrs, err := o.handle.AddrList(l, f)
-			if err != nil {
-				return errors.Wrapf(err, "Unable to get addresses for interface %s", d.Name)
-			}
+		addrs, err := o.handle.AddrList(l, 0)
+		if err != nil {
+			panic(err)
+			return errors.Wrapf(err, "Unable to get addresses for interface %s", d.name)
+		}
 
-			for _, addr := range addrs {
-				d.Addrs = append(d.Addrs, bnet.NewPfxFromIPNet(addr.IPNet))
-			}
+		for _, addr := range addrs {
+			d.addrs = append(d.addrs, bnet.NewPfxFromIPNet(addr.IPNet))
 		}
 
 		o.srv.addDevice(d)
@@ -111,12 +110,12 @@ func (o *osAdapterLinux) monitorLinks(chLU chan netlink.LinkUpdate) {
 
 func linkUpdateToDevice(attrs *netlink.LinkAttrs) *Device {
 	return &Device{
-		Index:        uint64(attrs.Index),
-		MTU:          uint16(attrs.MTU),
-		Name:         attrs.Name,
+		index:        uint64(attrs.Index),
+		mtu:          uint16(attrs.MTU),
+		name:         attrs.Name,
 		HardwareAddr: attrs.HardwareAddr,
-		Flags:        attrs.Flags,
-		OperState:    uint8(attrs.OperState),
+		flags:        attrs.Flags,
+		operState:    uint8(attrs.OperState),
 	}
 }
 
@@ -146,7 +145,7 @@ func (o *osAdapterLinux) processLinkUpdate(lu *netlink.LinkUpdate) {
 
 	if _, ok := o.srv.devices[uint64(attrs.Index)]; !ok {
 		d := newDevice()
-		d.Index = uint64(attrs.Index)
+		d.index = uint64(attrs.Index)
 		o.srv.addDevice(d)
 	}
 
