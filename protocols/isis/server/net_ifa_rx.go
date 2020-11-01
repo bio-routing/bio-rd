@@ -12,9 +12,14 @@ import (
 
 func (nifa *netIfa) receiver() {
 	for {
-		err := nifa.receive()
-		if err != nil {
-			log.WithFields(nifa.fields()).WithError(err).Error("Error")
+		select {
+		case <-nifa.done:
+			return
+		default:
+			err := nifa.receive()
+			if err != nil {
+				log.WithFields(nifa.fields()).WithError(err).Error("Error")
+			}
 		}
 	}
 }
