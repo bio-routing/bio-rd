@@ -70,10 +70,6 @@ func New(nets []*types.NET, ds device.Updater, lspLifetime uint16) (*Server, err
 
 // netsCompatible verifies if the system id is equal in all NETs
 func netsCompatible(nets []*types.NET) bool {
-	if len(nets) <= 1 {
-		return true
-	}
-
 	first := nets[0].SystemID
 	for _, net := range nets {
 		if first != net.SystemID {
