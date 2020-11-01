@@ -72,7 +72,6 @@ func (o *osAdapterLinux) init() error {
 
 		addrs, err := o.handle.AddrList(l, 0)
 		if err != nil {
-			panic(err)
 			return errors.Wrapf(err, "Unable to get addresses for interface %s", d.name)
 		}
 
