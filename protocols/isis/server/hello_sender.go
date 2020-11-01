@@ -40,10 +40,10 @@ func (nifa *netIfa) p2pHelloSender() {
 func (nifa *netIfa) p2pHello() *packet.P2PHello {
 	circuitType := uint8(0)
 	if nifa.cfg.Level1 != nil {
-		circuitType++
+		circuitType += types.CircuitTypeL1
 	}
 	if nifa.cfg.Level2 != nil {
-		circuitType += 2
+		circuitType += types.CircuitTypeL2
 	}
 
 	h := &packet.P2PHello{

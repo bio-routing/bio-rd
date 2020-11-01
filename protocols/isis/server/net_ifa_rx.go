@@ -6,6 +6,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
+	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -79,7 +80,7 @@ func (nifa *netIfa) validatePkt(src ethernet.MACAddr, pkt *packet.ISISPacket) er
 }
 
 func (nifa *netIfa) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello) error {
-	if hello.CircuitType == 1 || hello.CircuitType == 3 {
+	if hello.CircuitType == types.CircuitTypeL1 || hello.CircuitType == types.CircuitTypeL1L2 {
 		if nifa.neighborManagerL1 != nil {
 			err := nifa.neighborManagerL1.processP2PHello(src, hello)
 			if err != nil {
@@ -88,7 +89,7 @@ func (nifa *netIfa) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello
 		}
 	}
 
-	if hello.CircuitType == 2 || hello.CircuitType == 3 {
+	if hello.CircuitType == types.CircuitTypeL2 || hello.CircuitType == types.CircuitTypeL1L2 {
 		if nifa.neighborManagerL2 != nil {
 			err := nifa.neighborManagerL2.processP2PHello(src, hello)
 			if err != nil {
