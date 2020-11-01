@@ -101,7 +101,7 @@ func (nm *neighborManager) processP2PHello(src ethernet.MACAddr, hello *packet.P
 		}
 
 		if !nm.netIfa.validateAreasL1(areaAddrsTLV.AreaIDs) {
-			log.WithFields(nm.fields()).Debug("Rejecting L1 adjacency due to area mismatch")
+			log.WithFields(nm.fields()).Info("Rejecting L1 adjacency from %s due to area mismatch", src.String())
 			return nil
 		}
 	}
