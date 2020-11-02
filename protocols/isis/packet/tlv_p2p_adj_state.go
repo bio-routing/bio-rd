@@ -16,6 +16,10 @@ const (
 	P2PAdjacencyStateTLVLenWithoutNeighbor = 5
 	//P2PAdjacencyStateTLVLenWithNeighbor is the length of this TLV including a neighbor
 	P2PAdjacencyStateTLVLenWithNeighbor = 15
+
+	P2PAdjStateUp   = 0
+	P2PAdjStateInit = 1
+	P2PAdjStateDown = 2
 )
 
 // P2PAdjacencyStateTLV represents an P2P adjacency state TLV

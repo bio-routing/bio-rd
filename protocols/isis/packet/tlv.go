@@ -8,6 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	tlvBaseLen = 2 // Type + Length field
+)
+
 // TLV is an interface that all TLVs must fulfill
 type TLV interface {
 	Type() uint8

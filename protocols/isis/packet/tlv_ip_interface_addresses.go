@@ -22,7 +22,7 @@ type IPInterfaceAddressesTLV struct {
 func NewIPInterfaceAddressesTLV(addrs []uint32) *IPInterfaceAddressesTLV {
 	return &IPInterfaceAddressesTLV{
 		TLVType:       IPInterfaceAddressesTLVType,
-		TLVLength:     4,
+		TLVLength:     uint8(len(addrs) * 4),
 		IPv4Addresses: addrs,
 	}
 }

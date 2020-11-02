@@ -19,6 +19,9 @@ const (
 
 	// IPv4NeighborAddressSubTLVType is the type value of an IPv4 neighbor address sub TLV
 	IPv4NeighborAddressSubTLVType = 8
+
+	//ExtendedISReachabilityNeighborMinLen is the IS Rech. Neigh. min length
+	ExtendedISReachabilityNeighborMinLen = 11
 )
 
 // ExtendedISReachabilityTLV is an Extended IS Reachability TLV
@@ -41,6 +44,12 @@ func (e *ExtendedISReachabilityTLV) Length() uint8 {
 // Value returns the TLV itself
 func (e *ExtendedISReachabilityTLV) Value() interface{} {
 	return e
+}
+
+// AddNeighbor adds a neighbor to the extended IS Reach. TLV
+func (e *ExtendedISReachabilityTLV) AddNeighbor(n *ExtendedISReachabilityNeighbor) {
+	e.TLVLength += ExtendedISReachabilityNeighborMinLen + n.SubTLVLength
+	e.Neighbors = append(e.Neighbors, n)
 }
 
 // Serialize serializes an ExtendedISReachabilityTLV
@@ -82,7 +91,9 @@ func NewExtendedISReachabilityNeighbor(neighborID types.SourceID, metric [3]byte
 // NewExtendedISReachabilityTLV creates a new Extended IS Reachability TLV
 func NewExtendedISReachabilityTLV() *ExtendedISReachabilityTLV {
 	e := &ExtendedISReachabilityTLV{
-		TLVType: ExtendedISReachabilityType,
+		TLVType:   ExtendedISReachabilityType,
+		TLVLength: 0,
+		Neighbors: make([]*ExtendedISReachabilityNeighbor, 0),
 	}
 
 	return e

@@ -2,20 +2,18 @@ package types
 
 import "fmt"
 
+const (
+	systemIDLen = 6
+)
+
 // SystemID is an ISIS System ID
-type SystemID [6]byte
+type SystemID [systemIDLen]byte
 
 // SourceID is a source ID
 type SourceID struct {
 	SystemID  SystemID
 	CircuitID uint8
 }
-
-// MACAddress is an Ethernet MAC address
-type MACAddress [6]byte
-
-// AreaID is an ISIS Area ID
-type AreaID []byte
 
 func (sysID *SystemID) String() string {
 	return fmt.Sprintf("%d%d.%d%d.%d%d", sysID[0], sysID[1], sysID[2], sysID[3], sysID[4], sysID[5])
