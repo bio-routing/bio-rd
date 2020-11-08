@@ -6,6 +6,33 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 )
 
+func (nifa *netIfa) sendLSPDU(lsp *packet.LSPDU, level int) error {
+	if level == 1 {
+		panic("L1 is not supported yet")
+		return nil
+	}
+
+	return nifa.sendPDU(lsp, packet.L2_LS_PDU_TYPE)
+}
+
+func (nifa *netIfa) sendPSNP(psnp *packet.PSNP, level int) error {
+	if level == 1 {
+		panic("L1 is not supported yet")
+		return nil
+	}
+
+	return nifa.sendPDU(psnp, packet.L2_PSNP_TYPE)
+}
+
+func (nifa *netIfa) sendCSNP(csnp *packet.CSNP, level int) error {
+	if level == 1 {
+		panic("L1 is not supported yet")
+		return nil
+	}
+
+	return nifa.sendPDU(csnp, packet.L2_CSNP_TYPE)
+}
+
 func (nifa *netIfa) sendPDU(pkt packet.Serializable, pduType uint8) error {
 	buf := bytes.NewBuffer(nil)
 	pkt.Serialize(buf)
