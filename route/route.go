@@ -296,9 +296,18 @@ func (r *Route) updateEqualPathCount() {
 		return
 	}
 
+	if r.paths[0].Hidden {
+		r.ecmpPaths = 1
+		return
+	}
+
 	count := uint(1)
 	for i := 0; i < len(r.paths)-1; i++ {
 		if !r.paths[i].ECMP(r.paths[i+1]) {
+			break
+		}
+
+		if r.paths[i].Hidden {
 			break
 		}
 		count++
@@ -332,4 +341,15 @@ func (r *Route) Print() string {
 	}
 
 	return ret
+}
+
+// Hidden returns true when all paths of the route are hidden
+func (r *Route) Hidden() bool {
+	for _, p := range r.paths {
+		if !p.Hidden {
+			return false
+		}
+	}
+
+	return true
 }

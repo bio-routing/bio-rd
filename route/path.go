@@ -13,6 +13,7 @@ type Path struct {
 	StaticPath *StaticPath
 	BGPPath    *BGPPath
 	FIBPath    *FIBPath
+	Hidden     bool
 }
 
 // Select returns negative if p < q, 0 if paths are equal, positive if p > q
@@ -25,6 +26,14 @@ func (p *Path) Select(q *Path) int8 {
 	case q == nil:
 		return 1
 	default:
+	}
+
+	if p.Hidden && !q.Hidden {
+		return 1
+	}
+
+	if !p.Hidden && q.Hidden {
+		return -1
 	}
 
 	if p.Type > q.Type {

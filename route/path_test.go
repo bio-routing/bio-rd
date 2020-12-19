@@ -176,6 +176,42 @@ func TestSelect(t *testing.T) {
 			},
 			expected: 0,
 		},
+		{
+			name: "Hidden path #1",
+			p: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: NewBGPPathA(),
+				},
+				Hidden: true,
+			},
+			q: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: NewBGPPathA(),
+				},
+				Hidden: false,
+			},
+			expected: 1,
+		},
+		{
+			name: "Hidden path #2",
+			p: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: NewBGPPathA(),
+				},
+				Hidden: false,
+			},
+			q: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: NewBGPPathA(),
+				},
+				Hidden: true,
+			},
+			expected: -1,
+		},
 	}
 
 	for _, test := range tests {
