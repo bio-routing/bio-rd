@@ -9,6 +9,106 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
+func TestPathSelection(t *testing.T) {
+	tests := []struct {
+		name     string
+		r        *Route
+		expected []*Path
+	}{
+		{
+			name: "Test Localpref",
+			r: &Route{
+				paths: []*Path{
+					{
+						Type: BGPPathType,
+						BGPPath: &BGPPath{
+							BGPPathA: &BGPPathA{
+								LocalPref: 1000,
+							},
+						},
+					},
+					{
+						Type: BGPPathType,
+						BGPPath: &BGPPath{
+							BGPPathA: &BGPPathA{
+								LocalPref: 100,
+							},
+						},
+					},
+				},
+			},
+			expected: []*Path{
+				{
+					Type: BGPPathType,
+					BGPPath: &BGPPath{
+						BGPPathA: &BGPPathA{
+							LocalPref: 1000,
+						},
+					},
+				},
+				{
+					Type: BGPPathType,
+					BGPPath: &BGPPath{
+						BGPPathA: &BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Test ASPath",
+			r: &Route{
+				paths: []*Path{
+					{
+						Type: BGPPathType,
+						BGPPath: &BGPPath{
+							BGPPathA: &BGPPathA{
+								LocalPref: 1000,
+							},
+							ASPathLen: 3,
+						},
+					},
+					{
+						Type: BGPPathType,
+						BGPPath: &BGPPath{
+							BGPPathA: &BGPPathA{
+								LocalPref: 1000,
+							},
+							ASPathLen: 1,
+						},
+					},
+				},
+			},
+			expected: []*Path{
+				{
+					Type: BGPPathType,
+					BGPPath: &BGPPath{
+						BGPPathA: &BGPPathA{
+							LocalPref: 1000,
+						},
+						ASPathLen: 1,
+					},
+				},
+				{
+					Type: BGPPathType,
+					BGPPath: &BGPPath{
+						BGPPathA: &BGPPathA{
+							LocalPref: 1000,
+						},
+						ASPathLen: 3,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.r.PathSelection()
+		assert.Equal(t, test.expected, test.r.paths, test.name)
+	}
+}
+
 func TestNewRoute(t *testing.T) {
 	tests := []struct {
 		name     string
