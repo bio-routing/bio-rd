@@ -30,6 +30,8 @@ type Server struct {
 	sequenceNumberL2   uint32
 	sequenceNumberL2Mu sync.Mutex
 	netIfaManager      *netIfaManager
+	lsdbL1             *lsdb
+	lsdbL2             *lsdb
 	stop               chan struct{}
 	ds                 device.Updater
 }
