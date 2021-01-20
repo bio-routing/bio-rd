@@ -81,3 +81,5 @@ func (m *RTMockClient) RefreshRoute(*net.Prefix, []*route.Path) {}
 func (m *RTMockClient) ReplaceFilterChain(filter.Chain) {}
 
 func (m *RTMockClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}
+
+func (m *RTMockClient) Destroy() {}

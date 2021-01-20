@@ -61,6 +61,10 @@ func (m MockClient) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }
 
+func (m MockClient) Destroy() {
+
+}
+
 func TestClients(t *testing.T) {
 	tests := []struct {
 		name     string
