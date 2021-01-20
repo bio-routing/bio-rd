@@ -11,6 +11,8 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -162,7 +164,7 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
 	vrfID, err := getVRFID(req)
 	if err != nil {
-		return err
+		return status.New(codes.Unavailable, err.Error()).Err()
 	}
 
 	ipVersion := netapi.IP_IPv4
@@ -172,12 +174,12 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	case pb.ObserveRIBRequest_IPv6Unicast:
 		ipVersion = netapi.IP_IPv6
 	default:
-		return fmt.Errorf("Unknown AFI/SAFI")
+		return status.New(codes.InvalidArgument, "Unknown AFI/SAFI").Err()
 	}
 
 	rib, err := s.getRIB(req.Router, vrfID, ipVersion)
 	if err != nil {
-		return wrapGetRIBErr(err, req.Router, vrfID, ipVersion)
+		return status.New(codes.Unavailable, wrapGetRIBErr(err, req.Router, vrfID, ipVersion).Error()).Err()
 	}
 
 	risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Inc()
@@ -209,7 +211,7 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 
 	err = <-ret
 	if err != nil {
-		return fmt.Errorf("Stream ended: %v", err)
+		return status.New(codes.Unknown, fmt.Sprintf("Stream ended: %v", err)).Err()
 	}
 
 	return nil
