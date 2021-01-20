@@ -13,6 +13,7 @@ type RouteTableClient interface {
 	RemovePath(*net.Prefix, *route.Path) bool
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	RefreshRoute(*net.Prefix, []*route.Path)
+	Destroy()
 }
 
 type AdjRIB interface {
@@ -37,4 +38,5 @@ type AdjRIBOut interface {
 	AddPathInitialDump(pfx *net.Prefix, path *route.Path) error
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	RefreshRoute(*net.Prefix, []*route.Path)
+	Destroy()
 }

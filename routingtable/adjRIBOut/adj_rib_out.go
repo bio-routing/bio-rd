@@ -354,3 +354,8 @@ func (a *AdjRIBOut) Get(pfx *net.Prefix) *route.Route {
 func (a *AdjRIBOut) GetLonger(pfx *net.Prefix) (res []*route.Route) {
 	return a.rt.GetLonger(pfx)
 }
+
+// Destroy is here to fulfill an interface
+func (a *AdjRIBOut) Destroy() {
+
+}

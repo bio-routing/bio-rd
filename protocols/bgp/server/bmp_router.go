@@ -135,7 +135,7 @@ func (r *Router) serve(con net.Conn) error {
 }
 
 func (r *Router) cleanup() {
-	r.vrfRegistry.UnregisterAll()
+	r.vrfRegistry.DisposeAll()
 	r.neighborManager.disposeAll()
 }
 
