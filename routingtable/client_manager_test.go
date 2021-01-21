@@ -61,7 +61,7 @@ func (m MockClient) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }
 
-func (m MockClient) Destroy() {
+func (m MockClient) Dispose() {
 
 }
 
