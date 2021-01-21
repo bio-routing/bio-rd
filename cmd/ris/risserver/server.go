@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -162,7 +162,7 @@ func (s *Server) GetLonger(ctx context.Context, req *pb.GetLongerRequest) (*pb.G
 func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformationService_ObserveRIBServer) error {
 	vrfID, err := getVRFID(req)
 	if err != nil {
-		return err
+		return status.New(codes.Unavailable, err.Error()).Err()
 	}
 
 	ipVersion := netapi.IP_IPv4
@@ -172,12 +172,12 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	case pb.ObserveRIBRequest_IPv6Unicast:
 		ipVersion = netapi.IP_IPv6
 	default:
-		return fmt.Errorf("Unknown AFI/SAFI")
+		return status.New(codes.InvalidArgument, "Unknown AFI/SAFI").Err()
 	}
 
 	rib, err := s.getRIB(req.Router, vrfID, ipVersion)
 	if err != nil {
-		return wrapGetRIBErr(err, req.Router, vrfID, ipVersion)
+		return status.New(codes.Unavailable, wrapGetRIBErr(err, req.Router, vrfID, ipVersion).Error()).Err()
 	}
 
 	risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Inc()
@@ -207,9 +207,13 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	})
 	defer rib.Unregister(rc)
 
-	err = <-ret
-	if err != nil {
-		return fmt.Errorf("Stream ended: %v", err)
+	select {
+	case <-rc.stopped:
+		return status.New(codes.Aborted, "ribClient got stopped (probably RIB disappeared)").Err()
+	case err = <-ret:
+		if err != nil {
+			return status.New(codes.Unknown, fmt.Sprintf("Stream ended: %v", err)).Err()
+		}
 	}
 
 	return nil
@@ -292,61 +296,3 @@ func getVRFID(req RequestWithVRF) (uint64, error) {
 
 	return req.GetVrfId(), nil
 }
-
-type update struct {
-	advertisement bool
-	prefix        net.Prefix
-	path          *route.Path
-}
-
-type ribClient struct {
-	fifo *updateFIFO
-}
-
-func newRIBClient(fifo *updateFIFO) *ribClient {
-	return &ribClient{
-		fifo: fifo,
-	}
-}
-
-func (r *ribClient) AddPath(pfx *net.Prefix, path *route.Path) error {
-	return r.addPath(pfx, path, false)
-}
-
-func (r *ribClient) AddPathInitialDump(pfx *net.Prefix, path *route.Path) error {
-	return r.addPath(pfx, path, true)
-}
-
-func (r *ribClient) addPath(pfx *net.Prefix, path *route.Path, isInitalDump bool) error {
-	r.fifo.queue(&pb.RIBUpdate{
-		Advertisement: true,
-		IsInitialDump: isInitalDump,
-		Route: &routeapi.Route{
-			Pfx: pfx.ToProto(),
-			Paths: []*routeapi.Path{
-				path.ToProto(),
-			},
-		},
-	})
-
-	return nil
-}
-
-func (r *ribClient) RemovePath(pfx *net.Prefix, path *route.Path) bool {
-	r.fifo.queue(&pb.RIBUpdate{
-		Advertisement: false,
-		Route: &routeapi.Route{
-			Pfx: pfx.ToProto(),
-			Paths: []*routeapi.Path{
-				path.ToProto(),
-			},
-		},
-	})
-
-	return false
-}
-
-func (r *ribClient) RefreshRoute(*net.Prefix, []*route.Path) {}
-
-// ReplacePath is here to fulfill an interface
-func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}

@@ -344,3 +344,10 @@ func (a *LocRIB) ReplaceFilterChain(filter.Chain) {
 func (a *LocRIB) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }
+
+// Dispose tells all clients that this LocRIB is not to be used anymore (this can happen when RIS loses a BMP connection)
+func (a *LocRIB) Dispose() {
+	for _, c := range a.clientManager.Clients() {
+		c.Dispose()
+	}
+}

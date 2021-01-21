@@ -13,6 +13,8 @@ type RouteTableClient interface {
 	RemovePath(*net.Prefix, *route.Path) bool
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	RefreshRoute(*net.Prefix, []*route.Path)
+	// A call to Dispose() signals that no more updates are to be expected from the RIB the client is registered to.
+	Dispose()
 }
 
 type AdjRIB interface {
@@ -37,4 +39,6 @@ type AdjRIBOut interface {
 	AddPathInitialDump(pfx *net.Prefix, path *route.Path) error
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	RefreshRoute(*net.Prefix, []*route.Path)
+	// A call to Dispose() signals that no more updates are to be expected from the RIB the client is registered to.
+	Dispose()
 }
