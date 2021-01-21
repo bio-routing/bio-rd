@@ -67,7 +67,7 @@ func (r *ribClient) RefreshRoute(*net.Prefix, []*route.Path) {}
 // ReplacePath is here to fulfill an interface
 func (r *ribClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}
 
-// Destroy stopps the ribClient. This is triggered when a BMP connection is lost so we can drop subscribed clients.
-func (r *ribClient) Destroy() {
+// Dispose stopps the ribClient. This is triggered when a BMP connection is lost so we can drop subscribed clients.
+func (r *ribClient) Dispose() {
 	close(r.stopped)
 }

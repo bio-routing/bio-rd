@@ -66,7 +66,7 @@ func (r *VRFRegistry) DisposeAll() {
 
 	for id := range r.vrfs {
 		for _, rib := range r.vrfs[id].ribs {
-			rib.Destroy()
+			rib.Dispose()
 		}
 		delete(r.vrfs, id)
 	}

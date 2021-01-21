@@ -82,6 +82,3 @@ func (k *Kernel) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
 func (k *Kernel) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }
-
-// Destroy is here to fulfill an interface (needed for BMP use case)
-func (k *Kernel) Destroy() {}
