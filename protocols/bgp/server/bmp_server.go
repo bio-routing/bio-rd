@@ -92,10 +92,12 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 				continue
 			}
 
-			err = c.(*net.TCPConn).SetKeepAlivePeriod(b.keepalivePeriod)
-			if err != nil {
-				log.WithError(err).Error("Unable to set keepalive period")
-				return
+			if b.keepalivePeriod != 0 {
+				err = c.(*net.TCPConn).SetKeepAlivePeriod(b.keepalivePeriod)
+				if err != nil {
+					log.WithError(err).Error("Unable to set keepalive period")
+					return
+				}
 			}
 
 			atomic.StoreUint32(&r.established, 1)
