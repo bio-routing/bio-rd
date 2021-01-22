@@ -28,10 +28,11 @@ type BMPServerInterface interface {
 
 // BMPServer represents a BMP server
 type BMPServer struct {
-	routers    map[string]*Router
-	routersMu  sync.RWMutex
-	ribClients map[string]map[afiClient]struct{}
-	metrics    *bmpMetricsService
+	routers         map[string]*Router
+	routersMu       sync.RWMutex
+	ribClients      map[string]map[afiClient]struct{}
+	keepalivePeriod time.Duration
+	metrics         *bmpMetricsService
 }
 
 type afiClient struct {
@@ -40,10 +41,11 @@ type afiClient struct {
 }
 
 // NewServer creates a new BMP server
-func NewServer() *BMPServer {
+func NewServer(keepalivePeriod time.Duration) *BMPServer {
 	b := &BMPServer{
-		routers:    make(map[string]*Router),
-		ribClients: make(map[string]map[afiClient]struct{}),
+		routers:         make(map[string]*Router),
+		ribClients:      make(map[string]map[afiClient]struct{}),
+		keepalivePeriod: keepalivePeriod,
 	}
 
 	b.metrics = &bmpMetricsService{b}
@@ -88,6 +90,14 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
 				}
 				r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
 				continue
+			}
+
+			if b.keepalivePeriod != 0 {
+				err = c.(*net.TCPConn).SetKeepAlivePeriod(b.keepalivePeriod)
+				if err != nil {
+					log.WithError(err).Error("Unable to set keepalive period")
+					return
+				}
 			}
 
 			atomic.StoreUint32(&r.established, 1)
