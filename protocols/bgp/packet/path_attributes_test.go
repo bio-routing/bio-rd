@@ -2383,3 +2383,37 @@ func TestDecode4ByteASN(t *testing.T) {
 		assert.Equal(t, test.expected, res, test.name)
 	}
 }
+
+func TestPathAttributeCopy(t *testing.T) {
+	attr := &PathAttribute{
+		TypeCode: 2,
+		Length:   4,
+		Value:    uint8(12),
+		Next: &PathAttribute{
+			TypeCode: 2,
+			Length:   8,
+			Value: &types.ASPath{
+				{
+					Type: 1,
+					ASNs: []uint32{100, 222, 240},
+				},
+			},
+			Next: &PathAttribute{
+				TypeCode: 3,
+				Length:   4,
+				Value:    bnet.IPv4FromOctets(10, 20, 30, 40).Ptr(),
+			},
+		},
+	}
+
+	expected := &PathAttribute{
+		TypeCode: 2,
+		Length:   4,
+		Value:    uint8(12),
+		Next:     nil,
+	}
+
+	copy := attr.Copy()
+	assert.Equal(t, *expected, *copy)
+	assert.False(t, attr == copy)
+}
