@@ -674,3 +674,24 @@ func TestMaskLastNBits(t *testing.T) {
 		assert.Equal(t, test.expected, res, test.name)
 	}
 }
+
+func TestIPv4FromBytes(t *testing.T) {
+	resultZero := IPv4FromBytes([]byte{})
+	assert.Equal(t, "0.0.0.0", resultZero.String())
+
+	resultOneOctet := IPv4FromBytes([]byte{13})
+	assert.Equal(t, "13.0.0.0", resultOneOctet.String())
+
+	resultTwoOctets := IPv4FromBytes([]byte{13, 37})
+	assert.Equal(t, "13.37.0.0", resultTwoOctets.String())
+
+	resultThreeOctets := IPv4FromBytes([]byte{13, 37, 123})
+	assert.Equal(t, "13.37.123.0", resultThreeOctets.String())
+
+	resultFourOctets := IPv4FromBytes([]byte{13, 37, 123, 254})
+	assert.Equal(t, "13.37.123.254", resultFourOctets.String())
+
+	expectedInvalid := IP{}
+	resultInvalid := IPv4FromBytes([]byte{1, 2, 3, 4, 5})
+	assert.Equal(t, expectedInvalid, resultInvalid)
+}
