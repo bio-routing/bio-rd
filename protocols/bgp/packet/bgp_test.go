@@ -18,10 +18,10 @@ func TestAFIName(t *testing.T) {
 }
 
 func TestBGPErrorError(t *testing.T) {
-	e := BGPError {
-		ErrorCode: 2,
+	e := BGPError{
+		ErrorCode:    2,
 		ErrorSubCode: 3,
-		ErrorStr: "Unknown Error TestBGPErrorError",
+		ErrorStr:     "Unknown Error TestBGPErrorError",
 	}
 
 	actual := e.Error()
