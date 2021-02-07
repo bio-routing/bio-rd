@@ -2386,9 +2386,13 @@ func TestDecode4ByteASN(t *testing.T) {
 
 func TestPathAttributeCopy(t *testing.T) {
 	attr := &PathAttribute{
-		TypeCode: 2,
-		Length:   4,
-		Value:    uint8(12),
+		TypeCode:       2,
+		Length:         4,
+		Value:          uint8(12),
+		Optional:       true,
+		Transitive:     true,
+		Partial:        true,
+		ExtendedLength: true,
 		Next: &PathAttribute{
 			TypeCode: 2,
 			Length:   8,
@@ -2407,10 +2411,14 @@ func TestPathAttributeCopy(t *testing.T) {
 	}
 
 	expected := &PathAttribute{
-		TypeCode: 2,
-		Length:   4,
-		Value:    uint8(12),
-		Next:     nil,
+		TypeCode:       2,
+		Length:         4,
+		Optional:       true,
+		Transitive:     true,
+		Partial:        true,
+		ExtendedLength: true,
+		Value:          uint8(12),
+		Next:           nil,
 	}
 
 	copy := attr.Copy()
