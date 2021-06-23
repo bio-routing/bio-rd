@@ -77,3 +77,15 @@ protocols:
             peer_as: 65300
             import: ["PeerB-In"]
             export: ["ACCEPT_ALL"]
+  isis:
+    NETs: ["49.0001.0100.0000.0002.00"]
+    level1:
+      disable: true
+    interfaces:
+      - name: "tap0"
+        level2:
+          metric: 10
+      - name: "lo"
+        passive: true
+        level2:
+          metric: 0
