@@ -1,9 +1,10 @@
 package config
 
 const (
-	defaultHelloInterval = 9
-	defaultHoldTime      = 27
-	lspMinLifetime       = 350
+	defaultHelloInterval      = 9
+	defaultHoldTime           = 27
+	lspMinLifetime            = 350
+	lspDefaultLifetimeSeconds = 1200
 )
 
 // ISIS config
@@ -45,6 +46,10 @@ type ISISInterfaceLevel struct {
 }
 
 func (i *ISIS) loadDefaults() {
+	if i.LSPLifetime == 0 {
+		i.LSPLifetime = lspDefaultLifetimeSeconds
+	}
+
 	if i.LSPLifetime < lspMinLifetime {
 		i.LSPLifetime = lspMinLifetime
 	}
