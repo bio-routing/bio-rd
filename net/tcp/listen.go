@@ -31,7 +31,7 @@ func Listen(laddr *net.TCPAddr, ttl uint8) (*Listener, error) {
 	l.fd = fd
 
 	if afi == syscall.AF_INET6 {
-		err = syscall.SetsockoptInt(fd, syscall.SOL_IPV6, syscall.IPV6_V6ONLY, 1)
+		err = syscall.SetsockoptInt(fd, syscall.IPPROTO_IPV6, syscall.IPV6_V6ONLY, 1)
 		if err != nil {
 			syscall.Close(fd)
 			return nil, errors.Wrap(err, "Unable to set IPV6_V6ONLY")
@@ -45,7 +45,7 @@ func Listen(laddr *net.TCPAddr, ttl uint8) (*Listener, error) {
 	}
 
 	if ttl != 0 {
-		err = syscall.SetsockoptInt(fd, syscall.SOL_IP, syscall.IP_TTL, int(ttl))
+		err = syscall.SetsockoptInt(fd, syscall.IPPROTO_IP, syscall.IP_TTL, int(ttl))
 		if err != nil {
 			syscall.Close(fd)
 			return nil, errors.Wrap(err, "Unable to set IP_TTL")

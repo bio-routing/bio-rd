@@ -90,7 +90,7 @@ func (c *Conn) SetWriteDeadline(t time.Time) error {
 // SetTTL sets the TTL on a TCP connection
 func (c *Conn) SetTTL(ttl uint8) error {
 	if c.raddr.IP.To4() != nil {
-		return syscall.SetsockoptInt(c.fd, syscall.SOL_IP, syscall.IP_TTL, int(ttl))
+		return syscall.SetsockoptInt(c.fd, syscall.IPPROTO_IP, syscall.IP_TTL, int(ttl))
 	}
 
 	return syscall.SetsockoptInt(c.fd, syscall.IPPROTO_IPV6, syscall.IPV6_UNICAST_HOPS, int(ttl))
