@@ -3,12 +3,13 @@ package server
 import (
 	"net"
 	"testing"
+	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func TestBMPServer(t *testing.T) {
-	srv := NewServer()
+	srv := NewServer(time.Second)
 
 	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119)
 	_, pipe := net.Pipe()

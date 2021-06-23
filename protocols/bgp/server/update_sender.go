@@ -388,3 +388,6 @@ func (a *UpdateSender) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
 func (a *UpdateSender) RefreshRoute(*net.Prefix, []*route.Path) {
 
 }
+
+// Dispose is here to fulfill an interface
+func (u *UpdateSender) Dispose() {}

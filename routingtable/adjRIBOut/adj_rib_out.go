@@ -354,3 +354,7 @@ func (a *AdjRIBOut) Get(pfx *net.Prefix) *route.Route {
 func (a *AdjRIBOut) GetLonger(pfx *net.Prefix) (res []*route.Route) {
 	return a.rt.GetLonger(pfx)
 }
+
+// Dispose is here to fulfill an interface. We don't care if the RIB we're registred to
+// as a client is gone as this only happens in the BMP use case where AdjRIBOut is not used.
+func (a *AdjRIBOut) Dispose() {}

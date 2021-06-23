@@ -25,6 +25,7 @@ var (
 	httpPort             = flag.Uint("http_port", 4320, "HTTP server port")
 	grpcKeepaliveMinTime = flag.Uint("grpc_keepalive_min_time", 1, "Minimum time (seconds) for a client to wait between GRPC keepalive pings")
 	configFilePath       = flag.String("config.file", "ris_config.yml", "Configuration file")
+	tcpKeepaliveInterval = flag.Uint("tcp-keepalive-interval", 1, "TCP keepalive interval (seconds)")
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	b := server.NewServer()
+	b := server.NewServer(time.Duration(*tcpKeepaliveInterval) * time.Second)
 	prometheus.MustRegister(prom_bmp.NewCollector(b))
 
 	for _, r := range cfg.BMPServers {

@@ -84,7 +84,7 @@ type mockClient struct {
 	name               string
 }
 
-func (m *mockClient) DeviceUpdate(d *Device) {
+func (m *mockClient) DeviceUpdate(DeviceInterface) {
 	m.deviceUpdateCalled++
 }
 
@@ -94,16 +94,16 @@ func TestNotify(t *testing.T) {
 	s := newWithAdapter(a)
 
 	s.addDevice(&Device{
-		Name:  "eth0",
-		Index: 100,
+		name:  "eth0",
+		index: 100,
 	})
 	s.addDevice(&Device{
-		Name:  "eth1",
-		Index: 101,
+		name:  "eth1",
+		index: 101,
 	})
 	s.addDevice(&Device{
-		Name:  "eth2",
-		Index: 102,
+		name:  "eth2",
+		index: 102,
 	})
 
 	s.Subscribe(mc, "eth1")

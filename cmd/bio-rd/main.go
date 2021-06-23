@@ -10,6 +10,8 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
 	bgpapi "github.com/bio-routing/bio-rd/protocols/bgp/api"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/protocols/device"
+	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
@@ -27,6 +29,8 @@ var (
 	sigHUP               = make(chan os.Signal)
 	vrfReg               = vrf.NewVRFRegistry()
 	bgpSrv               bgpserver.BGPServer
+	isisSrv              isisserver.ISISServer
+	ds                   device.Updater
 	runCfg               *config.Config
 )
 
@@ -37,6 +41,16 @@ func main() {
 	if err != nil {
 		log.Errorf("Unable to get config: %v", err)
 		os.Exit(1)
+	}
+
+	ds, err = device.New()
+	if err != nil {
+		log.Fatalf("Unable to create device server: %v", err)
+	}
+
+	err = ds.Start()
+	if err != nil {
+		log.Fatalf("Unable to start device server: %v", err)
 	}
 
 	bgpSrv = bgpserver.NewBGPServer(
@@ -122,6 +136,13 @@ func loadConfig(cfg *config.Config) error {
 			err := configureProtocolsBGP(cfg.Protocols.BGP)
 			if err != nil {
 				return errors.Wrap(err, "Unable to configure BGP")
+			}
+		}
+
+		if cfg.Protocols.ISIS != nil {
+			err := configureProtocolsISIS(cfg.Protocols.ISIS)
+			if err != nil {
+				return errors.Wrap(err, "Unable to configure ISIS")
 			}
 		}
 	}

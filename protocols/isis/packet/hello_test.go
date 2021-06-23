@@ -106,7 +106,7 @@ func TestP2PHelloSerialize(t *testing.T) {
 				2,                // Circuit Type
 				1, 2, 3, 4, 5, 6, // SystemID
 				0, 27, // Holding Timer
-				0, 19, // PDU Length
+				0, 0x1a, // PDU Length
 				1,       // Local Circuits ID
 				1,       // Area addresses TLV
 				4,       // TLV Length

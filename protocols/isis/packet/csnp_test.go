@@ -77,7 +77,7 @@ func TestNewCSNPs(t *testing.T) {
 			maxPDULength: 1492,
 			expected: []CSNP{
 				{
-					PDULength: 49,
+					PDULength: 51,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -134,10 +134,10 @@ func TestNewCSNPs(t *testing.T) {
 					},
 				},
 			},
-			maxPDULength: 49,
+			maxPDULength: 51,
 			expected: []CSNP{
 				{
-					PDULength: 49,
+					PDULength: 51,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -166,7 +166,7 @@ func TestNewCSNPs(t *testing.T) {
 					},
 				},
 				{
-					PDULength: 49,
+					PDULength: 51,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -230,7 +230,7 @@ func TestNewCSNPs(t *testing.T) {
 			maxPDULength: 55,
 			expected: []CSNP{
 				{
-					PDULength: 49,
+					PDULength: 51,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,
@@ -259,7 +259,7 @@ func TestNewCSNPs(t *testing.T) {
 					},
 				},
 				{
-					PDULength: 49,
+					PDULength: 51,
 					SourceID: types.SourceID{
 						SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 						CircuitID: 0,

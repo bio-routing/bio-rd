@@ -13,20 +13,34 @@ A re-implementation of BGP, IS-IS and OSPF in go. We value respect and robustnes
 
 #### BGP
 
-    cd examples/bgp/ && go build
+```
+cd examples/bgp/ && go build
+```
 
 #### BMP
 
-    cd examples/bmp/ && go build
+```
+cd examples/bmp/ && go build
+```
 
 #### Device
 
-    cd examples/device && go build
+```
+cd examples/device && go build
+```
 
 ### Run Tests
 
-    go test -v -cover ./...
+```
+go test -v -cover ./...
+```
 
 ### Update modules
 
-    go mod tidy
+```
+go mod tidy
+```
+
+## Benchmarks
+
+The benchmarks can be found in the [bio-rd-benchmarks](/bio-routing/bio-rd-benchmarks) repository.

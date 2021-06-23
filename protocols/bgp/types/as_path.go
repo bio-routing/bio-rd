@@ -1,7 +1,8 @@
 package types
 
 import (
-	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/bio-routing/bio-rd/route/api"
 )
@@ -154,28 +155,32 @@ func ASPathFromProtoASPath(segments []*api.ASPathSegment) *ASPath {
 }
 
 // String converts an ASPath to it's human redable representation
-func (pa *ASPath) String() (ret string) {
-	if pa == nil {
+func (a *ASPath) String() string {
+	if a == nil {
 		return ""
 	}
-	for _, p := range *pa {
-		if p.Type == ASSet {
-			ret += " ("
-		}
-		n := len(p.ASNs)
-		for i, asn := range p.ASNs {
-			if i < n-1 {
-				ret += fmt.Sprintf("%d ", asn)
-				continue
+
+	parts := make([]string, 0)
+
+	for _, p := range *a {
+		if p.Type == ASSequence {
+			for _, asn := range p.ASNs {
+				parts = append(parts, strconv.Itoa(int(asn)))
 			}
-			ret += fmt.Sprintf("%d", asn)
+
+			continue
 		}
+
 		if p.Type == ASSet {
-			ret += ")"
+			setParts := make([]string, len(p.ASNs))
+			for i, asn := range p.ASNs {
+				setParts[i] = strconv.Itoa(int(asn))
+			}
+			parts = append(parts, "("+strings.Join(setParts, " ")+")")
 		}
 	}
 
-	return
+	return strings.Join(parts, " ")
 }
 
 // Length returns the AS path length as used by path selection
