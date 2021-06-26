@@ -136,16 +136,22 @@ func TestAddPath(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						PathIdentifier: 10,
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						PathIdentifier: 20,
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 200,
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 						},
 					},
 				}),
@@ -157,16 +163,67 @@ func TestAddPath(t *testing.T) {
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
+							PathIdentifier: 10,
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 100,
+								NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+								Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 							},
 						},
 					},
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
+							PathIdentifier: 20,
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 200,
+								NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+								Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							},
+						},
+					},
+				}),
+			},
+		},
+		{
+			name:    "Add route (with BGP add path) twice",
+			addPath: false,
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						PathIdentifier: 10,
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						},
+					},
+				}),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						PathIdentifier: 10,
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 200,
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						},
+					},
+				}),
+			},
+			removePfx:  nil,
+			removePath: nil,
+			expected: []*route.Route{
+				route.NewRouteAddPath(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), []*route.Path{
+					{
+						Type: route.BGPPathType,
+						BGPPath: &route.BGPPath{
+							PathIdentifier: 10,
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 200,
+								NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+								Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
 							},
 						},
 					},
