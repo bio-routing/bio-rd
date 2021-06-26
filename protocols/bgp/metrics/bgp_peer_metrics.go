@@ -1,9 +1,11 @@
 package metrics
 
 import (
+	"fmt"
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/api"
 )
 
 const (
@@ -47,4 +49,26 @@ type BGPPeerMetrics struct {
 
 	// AddressFamilies provides metrics on AFI/SAFI level
 	AddressFamilies []*BGPAddressFamilyMetrics
+}
+
+// GetStateAsProto returns the state of this peer to be used by the BGP API
+func (m *BGPPeerMetrics) GetStateAsProto() api.Session_State {
+	switch m.State {
+	case StateDown:
+		return api.Session_Active // substitution
+	case StateIdle:
+		return api.Session_Idle
+	case StateConnect:
+		return api.Session_Connect
+	case StateActive:
+		return api.Session_Active
+	case StateOpenSent:
+		return api.Session_OpenSent
+	case StateOpenConfirm:
+		return api.Session_OpenConfirmed
+	case StateEstablished:
+		return api.Session_Established
+	default:
+		panic(fmt.Sprintf("Unknown state: %v", m.State))
+	}
 }
