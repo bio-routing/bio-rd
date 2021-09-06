@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"net"
 	"runtime"
-	"syscall"
 
-	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 )
 
 func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string, noRoute bool) (*Conn, error) {
-	fd, err := syscall.Socket(int(afi), syscall.SOCK_STREAM, syscall.IPPROTO_TCP)
+	fd, err := unix.Socket(int(afi), unix.SOCK_STREAM, unix.IPPROTO_TCP)
 	if err != nil {
-		return nil, errors.Wrap(err, "socket() failed")
+		return nil, fmt.Errorf("socket() failed: %w", err)
 	}
 
 	c := &Conn{
@@ -23,42 +22,42 @@ func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string,
 
 	err = c.SetNoDelay()
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to set TCP_NODELAY")
+		return nil, fmt.Errorf("unable to set TCP_NODELAY: %w", err)
 	}
 
 	if ttl != 0 {
 		err = c.SetTTL(ttl)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to set IP_TTL")
+			return nil, fmt.Errorf("unable to set IP_TTL: %w", err)
 		}
 	}
 
 	if noRoute {
 		err = c.SetDontRoute()
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to set SO_DONTROUTE")
+			return nil, fmt.Errorf("unable to set SO_DONTROUTE: %w", err)
 		}
 	}
 
 	if laddr != nil && laddr.IP != nil {
-		var bindSA syscall.Sockaddr
+		var bindSA unix.Sockaddr
 		if laddr.IP.To4() != nil {
 			la := ipv4AddrToArray(laddr.IP)
-			bindSA = &syscall.SockaddrInet4{
+			bindSA = &unix.SockaddrInet4{
 				Port: laddr.Port,
 				Addr: la,
 			}
 		} else {
 			la := ipv6AddrToArray(laddr.IP)
-			bindSA = &syscall.SockaddrInet6{
+			bindSA = &unix.SockaddrInet6{
 				Port: laddr.Port,
 				Addr: la,
 			}
 		}
 
-		err := syscall.Bind(fd, bindSA)
+		err := unix.Bind(fd, bindSA)
 		if err != nil {
-			return nil, errors.Wrap(err, "bind() failed")
+			return nil, fmt.Errorf("bind() failed: %w", err)
 		}
 	}
 
@@ -68,26 +67,26 @@ func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string,
 		}
 		err := setTCPMD5Option(fd, raddr.IP, md5secret)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to set TCP MD5 secret")
+			return nil, fmt.Errorf("unable to set TCP MD5 secret: %w", err)
 		}
 	}
 
-	var connectSA syscall.Sockaddr
+	var connectSA unix.Sockaddr
 	if raddr.IP.To4() != nil {
-		connectSA = &syscall.SockaddrInet4{
+		connectSA = &unix.SockaddrInet4{
 			Port: raddr.Port,
 			Addr: ipv4AddrToArray(raddr.IP),
 		}
 	} else {
-		connectSA = &syscall.SockaddrInet6{
+		connectSA = &unix.SockaddrInet6{
 			Port: raddr.Port,
 			Addr: ipv6AddrToArray(raddr.IP),
 		}
 	}
 
-	err = syscall.Connect(fd, connectSA)
+	err = unix.Connect(fd, connectSA)
 	if err != nil {
-		return nil, errors.Wrap(err, "connect() failed")
+		return nil, fmt.Errorf("connect() failed: %w", err)
 	}
 
 	return &Conn{
