@@ -16,6 +16,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -357,4 +358,321 @@ func TestDumpRIBInOut(t *testing.T) {
 		}
 		assert.Equal(t, expected, results, test.name)
 	}
+}
+
+func TestListSessions(t *testing.T) {
+	vrf1, _ := vrf.New("majestic-cat", 0)
+	vrf2, _ := vrf.New("glorious-seagull", 1)
+
+	tests := []struct {
+		name     string
+		apisrv   *BGPAPIServer
+		req      *api.ListSessionsRequest
+		expected *api.ListSessionsResponse
+		wantFail bool
+	}{
+		{
+			name: "Simple ListSessions, without filter",
+			apisrv: &BGPAPIServer{
+				srv: &bgpServer{
+					peers: &peerManager{
+						peers: map[bnet.IP]*peer{
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
+								config: &PeerConfig{
+									PeerAS:       65100,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								},
+								peerASN:  65100,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								vrf:      vrf1,
+							},
+						},
+					},
+				},
+			},
+			req: &api.ListSessionsRequest{},
+			expected: &api.ListSessionsResponse{
+				Sessions: []*api.Session{
+					{
+						LocalAddress:    bnet.IPv4FromOctets(172, 0, 0, 0).ToProto(),
+						NeighborAddress: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+						PeerAsn:         65100,
+						LocalAsn:        65000,
+						Status:          api.Session_Active,
+						Stats:           &api.SessionStats{},
+						VrfName:         "majestic-cat",
+					},
+				},
+			},
+			wantFail: false,
+		},
+		{
+			name: "ListSessions with two peers without filter",
+			apisrv: &BGPAPIServer{
+				srv: &bgpServer{
+					peers: &peerManager{
+						peers: map[bnet.IP]*peer{
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
+								config: &PeerConfig{
+									PeerAS:       65100,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								},
+								peerASN:  65100,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								vrf:      vrf1,
+							},
+							bnet.IPv4FromOctets(192, 168, 0, 0): {
+								config: &PeerConfig{
+									PeerAS:       64999,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(),
+								},
+								peerASN:  64999,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(),
+								vrf:      vrf1,
+							},
+						},
+					},
+				},
+			},
+			req: &api.ListSessionsRequest{},
+			expected: &api.ListSessionsResponse{
+				Sessions: []*api.Session{
+					{
+						LocalAddress:    bnet.IPv4FromOctets(172, 0, 0, 0).ToProto(),
+						NeighborAddress: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+						PeerAsn:         65100,
+						LocalAsn:        65000,
+						Status:          api.Session_Active,
+						Stats:           &api.SessionStats{},
+						VrfName:         "majestic-cat",
+					},
+					{
+						LocalAddress:    bnet.IPv4FromOctets(172, 0, 0, 0).ToProto(),
+						NeighborAddress: bnet.IPv4FromOctets(192, 168, 0, 0).ToProto(),
+						PeerAsn:         64999,
+						LocalAsn:        65000,
+						Status:          api.Session_Active,
+						Stats:           &api.SessionStats{},
+						VrfName:         "majestic-cat",
+					},
+				},
+			},
+			wantFail: false,
+		},
+		{
+			name: "ListSession with two peers and filter for vrf",
+			apisrv: &BGPAPIServer{
+				srv: &bgpServer{
+					peers: &peerManager{
+						peers: map[bnet.IP]*peer{
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
+								config: &PeerConfig{
+									PeerAS:       65100,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								},
+								peerASN:  65100,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								vrf:      vrf2,
+							},
+							bnet.IPv4FromOctets(192, 168, 0, 0): {
+								config: &PeerConfig{
+									PeerAS:       64999,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(),
+								},
+								peerASN:  64999,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(),
+								vrf:      vrf1,
+							},
+						},
+					},
+				},
+			},
+			req: &api.ListSessionsRequest{
+				Filter: &api.SessionFilter{
+					VrfName: "glorious-seagull",
+				},
+			},
+			expected: &api.ListSessionsResponse{
+				Sessions: []*api.Session{
+					{
+						LocalAddress:    bnet.IPv4FromOctets(172, 0, 0, 0).ToProto(),
+						NeighborAddress: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+						PeerAsn:         65100,
+						LocalAsn:        65000,
+						Status:          api.Session_Active,
+						Stats:           &api.SessionStats{},
+						VrfName:         "glorious-seagull",
+					},
+				},
+			},
+			wantFail: false,
+		},
+		{
+			name: "ListSession with two peers and filter for neighbor",
+			apisrv: &BGPAPIServer{
+				srv: &bgpServer{
+					peers: &peerManager{
+						peers: map[bnet.IP]*peer{
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
+								config: &PeerConfig{
+									PeerAS:       65100,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								},
+								peerASN:  65100,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								vrf:      vrf1,
+							},
+							bnet.IPv4FromOctets(192, 168, 0, 0): {
+								config: &PeerConfig{
+									PeerAS:       64999,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(),
+								},
+								peerASN:  64999,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(192, 168, 0, 0).Ptr(),
+								vrf:      vrf1,
+							},
+						},
+					},
+				},
+			},
+			req: &api.ListSessionsRequest{
+				Filter: &api.SessionFilter{
+					NeighborIp: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+				},
+			},
+			expected: &api.ListSessionsResponse{
+				Sessions: []*api.Session{
+					{
+						LocalAddress:    bnet.IPv4FromOctets(172, 0, 0, 0).ToProto(),
+						NeighborAddress: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+						PeerAsn:         65100,
+						LocalAsn:        65000,
+						Status:          api.Session_Active,
+						Stats:           &api.SessionStats{},
+						VrfName:         "majestic-cat",
+					},
+				},
+			},
+			wantFail: false,
+		},
+		{
+			name: "ListSession with routes for stats",
+			apisrv: &BGPAPIServer{
+				srv: &bgpServer{
+					peers: &peerManager{
+						peers: map[bnet.IP]*peer{
+							bnet.IPv4FromOctets(10, 0, 0, 0): {
+								ipv4: &peerAddressFamily{},
+								ipv6: &peerAddressFamily{},
+								fsms: []*FSM{
+									0: {
+										ribsInitialized: true,
+										ipv4Unicast: &fsmAddressFamily{
+											adjRIBIn:  &routingtable.RTMockClient{FakeRouteCount: 3},
+											adjRIBOut: &routingtable.RTMockClient{FakeRouteCount: 2},
+										},
+										ipv6Unicast: &fsmAddressFamily{
+											adjRIBIn:  &routingtable.RTMockClient{FakeRouteCount: 10},
+											adjRIBOut: &routingtable.RTMockClient{FakeRouteCount: 12},
+										},
+										counters: fsmCounters{
+											updatesReceived: 23,
+											updatesSent:     42,
+										},
+									},
+								},
+								config: &PeerConfig{
+									PeerAS:       65100,
+									LocalAS:      65000,
+									LocalAddress: bnet.IPv4FromOctets(172, 0, 0, 0).Ptr(),
+									PeerAddress:  bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								},
+								peerASN:  65100,
+								localASN: 65000,
+								addr:     bnet.IPv4FromOctets(10, 0, 0, 0).Ptr(),
+								vrf:      vrf1,
+							},
+						},
+					},
+				},
+			},
+			req: &api.ListSessionsRequest{},
+			expected: &api.ListSessionsResponse{
+				Sessions: []*api.Session{
+					{
+						LocalAddress:    bnet.IPv4FromOctets(172, 0, 0, 0).ToProto(),
+						NeighborAddress: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+						PeerAsn:         65100,
+						LocalAsn:        65000,
+						Status:          api.Session_Active,
+						Stats: &api.SessionStats{
+							RoutesReceived: 13,
+							RoutesExported: 14,
+							MessagesIn:     23,
+							MessagesOut:    42,
+						},
+						VrfName: "majestic-cat",
+					},
+				},
+			},
+			wantFail: false,
+		},
+	}
+
+	for _, test := range tests {
+		testSrv := test.apisrv.srv.(*bgpServer)
+		testSrv.metrics = &metricsService{testSrv}
+		bufSize := 1024 * 1024
+		lis := bufconn.Listen(bufSize)
+		s := grpc.NewServer()
+		api.RegisterBgpServiceServer(s, test.apisrv)
+		go func() {
+			if err := s.Serve(lis); err != nil {
+				log.Fatalf("Server exited with error: %v", err)
+			}
+		}()
+
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(func(string, time.Duration) (net.Conn, error) {
+			return lis.Dial()
+		}), grpc.WithInsecure())
+		if err != nil {
+			t.Fatalf("Failed to dial bufnet: %v", err)
+		}
+		defer conn.Close()
+
+		client := api.NewBgpServiceClient(conn)
+		neighborResp, err := client.ListSessions(ctx, test.req)
+		if err != nil {
+			t.Fatalf("ListSessions call failed: %v", err)
+		}
+		assert.Equal(t, test.expected, neighborResp)
+	}
+
+	// As tests seem to share state we need to clean up the vrf here
+	vrf1.Unregister()
+	vrf1.Dispose()
+	vrf2.Unregister()
+	vrf2.Dispose()
 }
