@@ -2,8 +2,9 @@ package tcp
 
 import (
 	"net"
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -23,9 +24,9 @@ type tcpMD5sig struct {
 }
 
 func buildTCPMD5Sig(addr net.IP, key string) tcpMD5sig {
-	family := syscall.AF_INET
+	family := unix.AF_INET
 	if addr.To4() == nil {
-		family = syscall.AF_INET6
+		family = unix.AF_INET6
 	}
 
 	t := tcpMD5sig{
@@ -35,13 +36,13 @@ func buildTCPMD5Sig(addr net.IP, key string) tcpMD5sig {
 		keylen:    uint16(len(key)),
 	}
 
-	if family == syscall.AF_INET {
+	if family == unix.AF_INET {
 		copy(t.ss[2:], addr.To4())
 	} else {
 		copy(t.ss[2:], addr.To16())
 	}
 
-	copy(t.key[0:], []byte(key))
+	copy(t.key[0:], key)
 
 	return t
 }
@@ -49,5 +50,5 @@ func buildTCPMD5Sig(addr net.IP, key string) tcpMD5sig {
 func setTCPMD5Option(fd int, addr net.IP, md5secret string) error {
 	sig := buildTCPMD5Sig(addr, md5secret)
 	b := *(*[unsafe.Sizeof(sig)]byte)(unsafe.Pointer(&sig))
-	return syscall.SetsockoptString(fd, syscall.IPPROTO_TCP, tcpMD5SIG, string(b[:]))
+	return unix.SetsockoptString(fd, unix.IPPROTO_TCP, tcpMD5SIG, string(b[:]))
 }
