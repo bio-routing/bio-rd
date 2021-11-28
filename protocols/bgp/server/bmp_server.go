@@ -54,6 +54,7 @@ func NewServer(keepalivePeriod time.Duration) *BMPServer {
 }
 
 // Listen starts a listener for routers to start the BMP connection
+// the listener needs to be closed by calling Close() on the BMPServer
 func (b *BMPServer) Listen(addr string) error {
 	tcp, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
@@ -72,7 +73,6 @@ func (b *BMPServer) Listen(addr string) error {
 		return err
 	}
 	b.listener = l
-	defer l.Close()
 
 	for {
 		c, err := l.Accept()
@@ -81,35 +81,24 @@ func (b *BMPServer) Listen(addr string) error {
 				"component": "bmp_server",
 				"address":   addr,
 			}).Infof("Unable to accept on %s", tcp.String())
-			continue
+			return err
 		}
-		go b.handleConnection(c)
+		if r, ok := b.validateConnection(c); ok {
+			go b.handleConnection(c, r, true)
+		}
 	}
 }
 
-func (b *BMPServer) handleConnection(c net.Conn) {
-	var remoteIP net.IP
-	switch addr := c.RemoteAddr().(type) {
-	case *net.TCPAddr:
-		remoteIP = addr.IP
-	default:
-		c.Close()
-		return
-	}
+func (b *BMPServer) validateConnection(c net.Conn) (*Router, bool) {
+	r := b.getRouter(c.RemoteAddr().(*net.TCPAddr).IP.String())
 
-	var r *Router
-	for _, router := range b.getRouters() {
-		if router.passive && remoteIP.Equal(router.address) {
-			r = router
-		}
-	}
-	if r == nil {
+	if !r.passive {
 		log.WithFields(log.Fields{
 			"component":      "bmp_server",
 			"remote_address": c.RemoteAddr(),
 		}).Error("dropping unconfigured connection")
 		c.Close()
-		return
+		return nil, false
 	}
 
 	if atomic.LoadUint32(&r.established) == 1 {
@@ -119,26 +108,41 @@ func (b *BMPServer) handleConnection(c net.Conn) {
 			"router":         r.Name(),
 		}).Error("router already connected, dropping connection")
 		c.Close()
-		return
+		return nil, false
 	}
 
-	atomic.StoreUint32(&r.established, 1)
+	return r, true
+}
+
+func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool) error {
+	if b.keepalivePeriod != 0 {
+		if err := c.(*net.TCPConn).SetKeepAlivePeriod(b.keepalivePeriod); err != nil {
+			log.WithError(err).Error("Unable to set keepalive period")
+			return err
+		}
+	}
+
 	log.WithFields(log.Fields{
 		"component": "bmp_server",
 		"address":   c.RemoteAddr().String(),
-		"router":    r.Name(),
-		"passive":   true,
+		"passive":   passive,
 	}).Info("Connected")
 
+	atomic.StoreUint32(&r.established, 1)
 	err := r.serve(c)
 	atomic.StoreUint32(&r.established, 0)
+
 	if err != nil {
 		r.logger.WithFields(log.Fields{
 			"component": "bmp_server",
 			"address":   c.RemoteAddr().String(),
-			"passive":   true,
+			"router":    r.Name(),
+			"passive":   passive,
 		}).WithError(err).Error("r.serve() failed")
+		return err
 	}
+
+	return nil
 }
 
 func conString(host string, port uint16) string {
@@ -186,36 +190,10 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool) {
 				continue
 			}
 
-			if b.keepalivePeriod != 0 {
-				err = c.(*net.TCPConn).SetKeepAlivePeriod(b.keepalivePeriod)
-				if err != nil {
-					log.WithError(err).Error("Unable to set keepalive period")
-					return
-				}
-			}
-
-			atomic.StoreUint32(&r.established, 1)
 			r.reconnectTime = r.reconnectTimeMin
 			r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
-			log.WithFields(log.Fields{
-				"component": "bmp_server",
-				"address":   conString(r.address.String(), r.port),
-			}).Info("Connected")
 
-			err = r.serve(c)
-			atomic.StoreUint32(&r.established, 0)
-			if err != nil {
-				r.logger.WithFields(log.Fields{
-					"component": "bmp_server",
-					"address":   conString(r.address.String(), r.port),
-				}).WithError(err).Error("r.serve() failed")
-			} else {
-				r.logger.WithFields(log.Fields{
-					"component": "bmp_server",
-					"address":   conString(r.address.String(), r.port),
-				}).Info("r.Serve returned without error. Stopping reconnect routine")
-				return
-			}
+			b.handleConnection(c, r, false)
 		}
 	}(r)
 }
@@ -253,6 +231,17 @@ func (b *BMPServer) getRouters() []*Router {
 	}
 
 	return ret
+}
+
+func (b *BMPServer) getRouter(name string) *Router {
+	b.routersMu.RLock()
+	defer b.routersMu.RUnlock()
+
+	if _, ok := b.routers[name]; ok {
+		return b.routers[name]
+	}
+
+	return nil
 }
 
 func recvBMPMsg(c net.Conn) (msg []byte, err error) {
@@ -293,13 +282,9 @@ func (b *BMPServer) GetRouters() []RouterInterface {
 
 // GetRouter gets a router
 func (b *BMPServer) GetRouter(name string) RouterInterface {
-	b.routersMu.RLock()
-	defer b.routersMu.RUnlock()
-
-	if _, ok := b.routers[name]; ok {
-		return b.routers[name]
+	if r := b.getRouter(name); r != nil {
+		return r
 	}
-
 	return nil
 }
 
