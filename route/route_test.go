@@ -7,6 +7,7 @@ import (
 
 	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 )
 
 func TestPathSelection(t *testing.T) {
@@ -587,7 +588,8 @@ func TestRouteEqual(t *testing.T) {
 				},
 			},
 			equal: true,
-		}, {
+		},
+		{
 			a: &Route{
 				pfx:       net.NewPfx(net.IPv4(0), 0).Ptr(),
 				ecmpPaths: 2,
@@ -664,5 +666,59 @@ func TestRouteEqual(t *testing.T) {
 	for _, tc := range tests {
 		res := tc.a.Equal(tc.b)
 		assert.Equal(t, tc.equal, res)
+	}
+}
+
+func TestRouteIsBGPOriginatedBy(t *testing.T) {
+	tests := []struct {
+		r      *Route
+		origBy uint32
+		isOrig bool
+	}{
+		{
+			r: &Route{
+				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						BGPPath: &BGPPath{
+							ASPath: &types.ASPath{
+								types.ASPathSegment{
+									Type: types.ASSequence,
+									ASNs: []uint32{65000, 65001, 65002, 65003},
+								},
+							},
+						},
+					},
+				},
+			},
+			origBy: 65000,
+			isOrig: false,
+		},
+		{
+			r: &Route{
+				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						BGPPath: &BGPPath{
+							ASPath: &types.ASPath{
+								types.ASPathSegment{
+									Type: types.ASSequence,
+									ASNs: []uint32{65003, 65002, 65001, 65000},
+								},
+							},
+						},
+					},
+				},
+			},
+			origBy: 65000,
+			isOrig: true,
+		},
+	}
+
+	for _, tc := range tests {
+		res := tc.r.IsBGPOriginatedBy(tc.origBy)
+		assert.Equal(t, tc.isOrig, res)
 	}
 }
