@@ -8,6 +8,7 @@ Please keep this list ordered.
  * 4456 BGP Route Reflection
  * 4760 Multiprotocol Extensions for BGP-4
  * 6793 32bit ASNs
+ * 7854 BGP Monitoring Protocol (BMP)
  * 7911 BGP AddPath
  * 7947 BGP Route Server
  * 8092 BGP Large Communities Attribute

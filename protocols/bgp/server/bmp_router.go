@@ -33,6 +33,7 @@ type Router struct {
 	nameMu           sync.RWMutex
 	address          net.IP
 	port             uint16
+	passive          bool
 	con              net.Conn
 	established      uint32
 	reconnectTimeMin int
@@ -72,10 +73,11 @@ type neighbor struct {
 	opt         *packet.DecodeOptions
 }
 
-func newRouter(addr net.IP, port uint16) *Router {
+func newRouter(addr net.IP, port uint16, passive bool) *Router {
 	return &Router{
 		address:          addr,
 		port:             port,
+		passive:          passive,
 		reconnectTimeMin: 30,  // Suggested by RFC 7854
 		reconnectTimeMax: 720, // Suggested by RFC 7854
 		reconnectTimer:   time.NewTimer(time.Duration(0)),

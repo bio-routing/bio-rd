@@ -33,6 +33,7 @@ type BMPServer struct {
 	ribClients      map[string]map[afiClient]struct{}
 	keepalivePeriod time.Duration
 	metrics         *bmpMetricsService
+	listener        net.Listener
 }
 
 type afiClient struct {
@@ -52,14 +53,107 @@ func NewServer(keepalivePeriod time.Duration) *BMPServer {
 	return b
 }
 
+// Listen starts a listener for routers to start the BMP connection
+func (b *BMPServer) Listen(addr string) error {
+	tcp, err := net.ResolveTCPAddr("tcp", addr)
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"component": "bmp_server",
+			"address":   addr,
+		}).Info("Unable to resolve address")
+		return err
+	}
+	l, err := net.ListenTCP("tcp", tcp)
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"component": "bmp_server",
+			"address":   addr,
+		}).Infof("Unable to listen on %s", tcp.String())
+		return err
+	}
+	b.listener = l
+	defer l.Close()
+
+	for {
+		c, err := l.Accept()
+		if err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"component": "bmp_server",
+				"address":   addr,
+			}).Infof("Unable to accept on %s", tcp.String())
+			continue
+		}
+		go b.handleConnection(c)
+	}
+}
+
+func (b *BMPServer) handleConnection(c net.Conn) {
+	var remoteIP net.IP
+	switch addr := c.RemoteAddr().(type) {
+	case *net.TCPAddr:
+		remoteIP = addr.IP
+	default:
+		c.Close()
+		return
+	}
+
+	var r *Router
+	for _, router := range b.getRouters() {
+		if router.passive && remoteIP.Equal(router.address) {
+			r = router
+		}
+	}
+	if r == nil {
+		log.WithFields(log.Fields{
+			"component":      "bmp_server",
+			"remote_address": c.RemoteAddr(),
+		}).Error("dropping unconfigured connection")
+		c.Close()
+		return
+	}
+
+	if atomic.LoadUint32(&r.established) == 1 {
+		log.WithFields(log.Fields{
+			"component":      "bmp_server",
+			"remote_address": c.RemoteAddr(),
+			"router":         r.Name(),
+		}).Error("router already connected, dropping connection")
+		c.Close()
+		return
+	}
+
+	atomic.StoreUint32(&r.established, 1)
+	log.WithFields(log.Fields{
+		"component": "bmp_server",
+		"address":   c.RemoteAddr().String(),
+		"router":    r.Name(),
+		"passive":   true,
+	}).Info("Connected")
+
+	err := r.serve(c)
+	atomic.StoreUint32(&r.established, 0)
+	if err != nil {
+		r.logger.WithFields(log.Fields{
+			"component": "bmp_server",
+			"address":   c.RemoteAddr().String(),
+			"passive":   true,
+		}).WithError(err).Error("r.serve() failed")
+	}
+}
+
 func conString(host string, port uint16) string {
 	return fmt.Sprintf("%s:%d", host, port)
 }
 
 // AddRouter adds a router to which we connect with BMP
-func (b *BMPServer) AddRouter(addr net.IP, port uint16) {
-	r := newRouter(addr, port)
+func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool) {
+	r := newRouter(addr, port, passive)
 	b.addRouter(r)
+
+	if r.passive {
+		// router initializes the connection
+		return
+	}
 
 	go func(r *Router) {
 		for {
@@ -216,4 +310,9 @@ func (b *BMPServer) Metrics() (*metrics.BMPMetrics, error) {
 	}
 
 	return b.metrics.metrics(), nil
+}
+
+// Close tears down all open connections
+func (b *BMPServer) Close() error {
+	return b.listener.Close()
 }
