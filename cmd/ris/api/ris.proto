@@ -59,6 +59,12 @@ message ObserveRIBRequest {
     AFISAFI afisafi = 3;
 }
 
+message RIBFilter {
+    uint32 originating_asn = 1;
+    uint32 min_length = 2;
+    uint32 max_length = 3;
+}
+
 message RIBUpdate {
     bool advertisement = 1;
     bool is_initial_dump = 3;
@@ -75,6 +81,7 @@ message DumpRIBRequest {
         IPv6Unicast = 1;
     }
     AFISAFI afisafi = 3;
+    RIBFilter filter = 5;
 }
 
 message DumpRIBReply {
