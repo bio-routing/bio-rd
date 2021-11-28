@@ -116,6 +116,10 @@ func (b *BMPServer) validateConnection(c net.Conn) (*Router, bool) {
 
 func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool) error {
 	if b.keepalivePeriod != 0 {
+		if err := c.(*net.TCPConn).SetKeepAlive(true); err != nil {
+			log.WithError(err).Error("Unable to enable keepalive")
+			return err
+		}
 		if err := c.(*net.TCPConn).SetKeepAlivePeriod(b.keepalivePeriod); err != nil {
 			log.WithError(err).Error("Unable to set keepalive period")
 			return err
