@@ -671,11 +671,13 @@ func TestRouteEqual(t *testing.T) {
 
 func TestRouteIsBGPOriginatedBy(t *testing.T) {
 	tests := []struct {
+		name   string
 		r      *Route
 		origBy uint32
 		isOrig bool
 	}{
 		{
+			name: "Single AS Path, correct originating AS",
 			r: &Route{
 				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
 				paths: []*Path{
@@ -696,6 +698,7 @@ func TestRouteIsBGPOriginatedBy(t *testing.T) {
 			isOrig: false,
 		},
 		{
+			name: "Single AS Path, wrong originating AS",
 			r: &Route{
 				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
 				paths: []*Path{
@@ -715,10 +718,31 @@ func TestRouteIsBGPOriginatedBy(t *testing.T) {
 			origBy: 65000,
 			isOrig: true,
 		},
+		{
+			name: "Empty AS Path",
+			r: &Route{
+				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
+				paths: []*Path{
+					{
+						Type: StaticPathType,
+						BGPPath: &BGPPath{
+							ASPath: &types.ASPath{
+								types.ASPathSegment{
+									Type: types.ASSequence,
+									ASNs: []uint32{},
+								},
+							},
+						},
+					},
+				},
+			},
+			origBy: 65000,
+			isOrig: false,
+		},
 	}
 
 	for _, tc := range tests {
 		res := tc.r.IsBGPOriginatedBy(tc.origBy)
-		assert.Equal(t, tc.isOrig, res)
+		assert.Equal(t, tc.isOrig, res, tc.name)
 	}
 }
