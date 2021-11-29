@@ -252,6 +252,24 @@ func compareItemExists(needle *Path, haystack []*Path) bool {
 	return false
 }
 
+func (r *Route) GetBGPOriginatingAS() *uint32 {
+	lastASPathSeg := r.BestPath().BGPPath.ASPath.GetLastSequenceSegment()
+	if lastASPathSeg != nil {
+		origASN := lastASPathSeg.GetLastASN()
+		if origASN != nil {
+			return origASN
+		}
+	}
+	return nil
+}
+
+func (r *Route) IsBGPOriginatedBy(asn uint32) bool {
+	if orig := r.GetBGPOriginatingAS(); orig != nil {
+		return *r.GetBGPOriginatingAS() == asn
+	}
+	return false
+}
+
 // ToProto converts route to proto route
 func (r *Route) ToProto() *api.Route {
 	a := &api.Route{
