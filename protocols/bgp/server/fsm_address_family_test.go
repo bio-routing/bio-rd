@@ -1,7 +1,6 @@
 package server
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -47,11 +46,6 @@ func TestFSMAFIInitDispose(t *testing.T) {
 
 	assert.Equal(t, uint64(1), f.adjRIBIn.ClientCount())
 	assert.Equal(t, uint64(1), f.rib.ClientCount())
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	assert.EqualValues(t, &wg, &f.updateSender.wg)
-
 	assert.Equal(t, uint64(1), f.adjRIBOut.ClientCount())
 
 	assert.Equal(t, true, f.initialized)
