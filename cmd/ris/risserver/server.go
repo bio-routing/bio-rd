@@ -43,6 +43,7 @@ func init() {
 
 // Server represents an RoutingInformationService server
 type Server struct {
+	pb.UnimplementedRoutingInformationServiceServer
 	bmp server.BMPServerInterface
 }
 
