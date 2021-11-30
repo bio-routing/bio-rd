@@ -16,6 +16,7 @@ type RISConfig struct {
 type BMPServer struct {
 	Address string `yaml:"address"`
 	Port    uint16 `yaml:"port"`
+	Passive bool   `yaml:"passive"`
 }
 
 // LoadConfig loads a RIS config

@@ -1,3 +1,5 @@
 bmp_servers:
   - address: 10.0.255.1
     port: 30119
+  - address: 127.0.0.1
+    passive: true

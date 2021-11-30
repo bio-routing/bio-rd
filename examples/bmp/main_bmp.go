@@ -15,7 +15,7 @@ func main() {
 	logrus.Printf("This is a BMP speaker\n")
 
 	b := server.NewServer(time.Second)
-	b.AddRouter(net.IP{10, 0, 255, 1}, 30119)
+	b.AddRouter(net.IP{10, 0, 255, 1}, 30119, false)
 
 	go func() {
 		for {
