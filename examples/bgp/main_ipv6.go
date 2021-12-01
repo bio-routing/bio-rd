@@ -1,3 +1,4 @@
+//go:build ipv6
 // +build ipv6
 
 package main

@@ -1,3 +1,4 @@
+//go:build go || fuzz
 // +build go fuzz
 
 package packet
