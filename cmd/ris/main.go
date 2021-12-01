@@ -49,14 +49,24 @@ func main() {
 	defer b.Close()
 
 	prometheus.MustRegister(prom_bmp.NewCollector(b))
-
+	lAddr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
+	if err != nil {
+		log.WithError(err).Fatal("Failed to resolve TCP address")
+	}
+	if cfg.LocalAddr != "" {
+		log.Info("Local address configured")
+		lAddr, err = net.ResolveTCPAddr("tcp", cfg.LocalAddr+":0")
+		if err != nil {
+			log.WithError(err).Fatal("Failed to resolve TCP address " + cfg.LocalAddr)
+		}
+	}
 	for _, r := range cfg.BMPServers {
 		ip := net.ParseIP(r.Address)
 		if ip == nil {
 			log.Errorf("Unable to convert %q to net.IP", r.Address)
 			os.Exit(1)
 		}
-		b.AddRouter(ip, r.Port, r.Passive)
+		b.AddRouter(lAddr, ip, r.Port, r.Passive)
 	}
 
 	s := risserver.NewServer(b)

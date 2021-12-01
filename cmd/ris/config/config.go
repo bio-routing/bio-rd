@@ -10,6 +10,7 @@ import (
 // RISConfig is the config of RIS instance
 type RISConfig struct {
 	BMPServers []BMPServer `yaml:"bmp_servers"`
+	LocalAddr  string      `yaml:"local_addr"`
 }
 
 // BMPServer represent a BMP enable Router

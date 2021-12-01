@@ -154,7 +154,7 @@ func conString(host string, port uint16) string {
 }
 
 // AddRouter adds a router to which we connect with BMP
-func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool) {
+func (b *BMPServer) AddRouter(lAddr net.Addr, addr net.IP, port uint16, passive bool) {
 	r := newRouter(addr, port, passive)
 	b.addRouter(r)
 
@@ -178,8 +178,11 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool) {
 					"address":   conString(r.address.String(), r.port),
 				}).Info("Reconnect timer expired: Establishing connection")
 			}
-
-			c, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port), r.dialTimeout)
+			d := net.Dialer{
+				LocalAddr: lAddr,
+				Timeout:   r.dialTimeout,
+			}
+			c, err := d.Dial("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port))
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
 					"component": "bmp_server",
