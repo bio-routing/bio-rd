@@ -1,15 +1,15 @@
 syntax = "proto3";
- 
+
 package bio.route;
- 
-import "github.com/bio-routing/bio-rd/net/api/net.proto";
+
+import "net/api/net.proto";
 option go_package = "github.com/bio-routing/bio-rd/route/api";
- 
+
 message Route {
     bio.net.Prefix pfx = 1;
     repeated Path paths = 2;
 }
- 
+
 message Path {
     enum Type {
         Static = 0;
@@ -19,11 +19,11 @@ message Path {
     StaticPath static_path = 2;
     BGPPath bgp_path = 3;
 }
- 
+
 message StaticPath {
     bio.net.IP next_hop = 1;
 }
- 
+
 message BGPPath {
     uint32 path_identifier = 1;
     bio.net.IP next_hop = 2;
@@ -40,18 +40,18 @@ message BGPPath {
     repeated uint32 cluster_list = 13;
     repeated UnknownPathAttribute unknown_attributes = 14;
 }
- 
+
 message ASPathSegment {
     bool as_sequence = 1;
     repeated uint32 asns = 2;
 }
- 
+
 message LargeCommunity {
     uint32 global_administrator = 1;
     uint32 data_part1 = 2;
     uint32 data_part2 = 3;
 }
- 
+
 message UnknownPathAttribute {
     bool optional = 1;
     bool transitive = 2;

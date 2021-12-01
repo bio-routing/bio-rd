@@ -1,10 +1,10 @@
 package tcp
 
 import (
+	"fmt"
 	"net"
-	"syscall"
 
-	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 )
 
 // Listener listens for TCP clients
@@ -19,59 +19,59 @@ func Listen(laddr *net.TCPAddr, ttl uint8) (*Listener, error) {
 		laddr: laddr,
 	}
 
-	afi := syscall.AF_INET
+	afi := unix.AF_INET
 	if laddr.IP.To4() == nil {
-		afi = syscall.AF_INET6
+		afi = unix.AF_INET6
 	}
 
-	fd, err := syscall.Socket(afi, syscall.SOCK_STREAM, syscall.IPPROTO_TCP)
+	fd, err := unix.Socket(afi, unix.SOCK_STREAM, unix.IPPROTO_TCP)
 	if err != nil {
-		return nil, errors.Wrap(err, "socket() failed")
+		return nil, fmt.Errorf("socket() failed: %w", err)
 	}
 	l.fd = fd
 
-	if afi == syscall.AF_INET6 {
-		err = syscall.SetsockoptInt(fd, syscall.IPPROTO_IPV6, syscall.IPV6_V6ONLY, 1)
+	if afi == unix.AF_INET6 {
+		err = unix.SetsockoptInt(fd, SOL_IPV6, unix.IPV6_V6ONLY, 1)
 		if err != nil {
-			syscall.Close(fd)
-			return nil, errors.Wrap(err, "Unable to set IPV6_V6ONLY")
+			unix.Close(fd)
+			return nil, fmt.Errorf("unable to set IPV6_V6ONLY: %w", err)
 		}
 	}
 
-	err = syscall.SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+	err = unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
 	if err != nil {
-		syscall.Close(fd)
-		return nil, errors.Wrap(err, "Unable to get SO_REUSEADDR")
+		unix.Close(fd)
+		return nil, fmt.Errorf("unable to get SO_REUSEADDR %w", err)
 	}
 
 	if ttl != 0 {
-		err = syscall.SetsockoptInt(fd, syscall.IPPROTO_IP, syscall.IP_TTL, int(ttl))
+		err = unix.SetsockoptInt(fd, SOL_IP, unix.IP_TTL, int(ttl))
 		if err != nil {
-			syscall.Close(fd)
-			return nil, errors.Wrap(err, "Unable to set IP_TTL")
+			unix.Close(fd)
+			return nil, fmt.Errorf("unable to set IP_TTL: %w", err)
 		}
 	}
 
 	if laddr.IP.To4() != nil {
-		err = syscall.Bind(fd, &syscall.SockaddrInet4{
+		err = unix.Bind(fd, &unix.SockaddrInet4{
 			Port: laddr.Port,
 			Addr: ipv4AddrToArray(laddr.IP),
 		})
 	} else {
-		err = syscall.Bind(fd, &syscall.SockaddrInet6{
+		err = unix.Bind(fd, &unix.SockaddrInet6{
 			Port: laddr.Port,
 			Addr: ipv6AddrToArray(laddr.IP),
 		})
 	}
 	if err != nil {
-		syscall.Close(fd)
-		return nil, errors.Wrap(err, "bind failed")
+		unix.Close(fd)
+		return nil, fmt.Errorf("bind failed: %w", err)
 	}
 
-	err = syscall.Listen(fd, 128)
+	err = unix.Listen(fd, 128)
 	if err != nil {
-		syscall.Close(fd)
-		return nil, errors.Wrap(err, "listen failed")
+		unix.Close(fd)
+		return nil, fmt.Errorf("listen failed: %w", err)
 	}
 
 	return l, nil
@@ -94,7 +94,7 @@ func (l *Listener) SetTCPMD5(peerAddr net.IP, secret string) error {
 
 // AcceptTCP accepts a new TCP connection
 func (l *Listener) AcceptTCP() (*Conn, error) {
-	fd, sa, err := syscall.Accept(l.fd)
+	fd, sa, err := unix.Accept(l.fd)
 	if err != nil {
 		return nil, err
 	}
@@ -104,13 +104,13 @@ func (l *Listener) AcceptTCP() (*Conn, error) {
 	}
 
 	switch sa.(type) {
-	case *syscall.SockaddrInet4:
-		x := sa.(*syscall.SockaddrInet4)
-		raddr.IP = net.IP(x.Addr[:])
+	case *unix.SockaddrInet4:
+		x := sa.(*unix.SockaddrInet4)
+		raddr.IP = x.Addr[:]
 		raddr.Port = x.Port
-	case *syscall.SockaddrInet6:
-		x := sa.(*syscall.SockaddrInet4)
-		raddr.IP = net.IP(x.Addr[:])
+	case *unix.SockaddrInet6:
+		x := sa.(*unix.SockaddrInet4)
+		raddr.IP = x.Addr[:]
 		raddr.Port = x.Port
 	}
 

@@ -2,13 +2,13 @@ package mergedlocrib
 
 import (
 	"crypto/sha1"
+	"google.golang.org/protobuf/proto"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/route"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/mergedlocrib/metrics"
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 )
 

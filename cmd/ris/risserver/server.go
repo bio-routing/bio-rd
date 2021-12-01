@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
@@ -21,9 +22,7 @@ import (
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
 
-var (
-	risObserveFIBClients *prometheus.GaugeVec
-)
+var risObserveFIBClients *prometheus.GaugeVec
 
 func init() {
 	risObserveFIBClients = prometheus.NewGaugeVec(
@@ -44,6 +43,7 @@ func init() {
 
 // Server represents an RoutingInformationService server
 type Server struct {
+	pb.UnimplementedRoutingInformationServiceServer
 	bmp server.BMPServerInterface
 }
 
@@ -198,7 +198,6 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 					return
 				}
 			}
-
 		}
 	}(fifo)
 
@@ -249,6 +248,9 @@ func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationSer
 
 	routes := rib.Dump()
 	for i := range routes {
+		if !s.filterRIB(req.GetFilter(), routes[i]) {
+			continue
+		}
 		toSend.Route = routes[i].ToProto()
 
 		err = stream.Send(toSend)
@@ -258,6 +260,25 @@ func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationSer
 	}
 
 	return nil
+}
+
+// filterRIB returns true for routes passing the filter or if the filter is nil
+func (s *Server) filterRIB(rf *pb.RIBFilter, route *route.Route) bool {
+	if rf == nil {
+		return true
+	}
+
+	rfOrig := rf.GetOriginatingAsn()
+	if rfOrig != 0 && !route.IsBGPOriginatedBy(rfOrig) {
+		return false
+	}
+	if rf.GetMinLength() != 0 && uint32(route.Pfxlen()) < rf.GetMinLength() {
+		return false
+	}
+	if rf.GetMaxLength() != 0 && uint32(route.Pfxlen()) > rf.GetMaxLength() {
+		return false
+	}
+	return true
 }
 
 // GetRouters implements the GetRouters RPC

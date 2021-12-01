@@ -23,6 +23,7 @@ import (
 var (
 	grpcPort             = flag.Uint("grpc_port", 4321, "gRPC server port")
 	httpPort             = flag.Uint("http_port", 4320, "HTTP server port")
+	bmpListenAddr        = flag.String("bmp_addr", "0.0.0.0:30119", "BMP listen addr (set empty to disable listening)")
 	grpcKeepaliveMinTime = flag.Uint("grpc_keepalive_min_time", 1, "Minimum time (seconds) for a client to wait between GRPC keepalive pings")
 	configFilePath       = flag.String("config.file", "ris_config.yml", "Configuration file")
 	tcpKeepaliveInterval = flag.Uint("tcp-keepalive-interval", 1, "TCP keepalive interval (seconds)")
@@ -38,6 +39,15 @@ func main() {
 	}
 
 	b := server.NewServer(time.Duration(*tcpKeepaliveInterval) * time.Second)
+	if *bmpListenAddr != "" {
+		go func() {
+			if err := b.Listen(*bmpListenAddr); err != nil {
+				log.WithError(err).Error("error while starting listener")
+			}
+		}()
+	}
+	defer b.Close()
+
 	prometheus.MustRegister(prom_bmp.NewCollector(b))
 
 	for _, r := range cfg.BMPServers {
@@ -46,7 +56,7 @@ func main() {
 			log.Errorf("Unable to convert %q to net.IP", r.Address)
 			os.Exit(1)
 		}
-		b.AddRouter(ip, r.Port)
+		b.AddRouter(ip, r.Port, r.Passive)
 	}
 
 	s := risserver.NewServer(b)
