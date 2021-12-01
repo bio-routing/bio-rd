@@ -12,6 +12,7 @@ import (
 )
 
 type BGPAPIServer struct {
+	api.UnimplementedBgpServiceServer
 	srv BGPServer
 }
 
