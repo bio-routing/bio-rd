@@ -21,6 +21,9 @@ func NewDumpLocRIBCommand() cli.Command {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "4", Usage: "print IPv4 routes"},
 			&cli.BoolFlag{Name: "6", Usage: "print IPv6 routes"},
+			&cli.Uint64Flag{Name: "origin", Usage: "print routes originated by ASN"},
+			&cli.Uint64Flag{Name: "min", Usage: "print routes having at least this prefix length"},
+			&cli.Uint64Flag{Name: "max", Usage: "print routes having at most this prefix length"},
 		},
 	}
 
@@ -44,10 +47,16 @@ func NewDumpLocRIBCommand() cli.Command {
 			afisafis = append(afisafis, pb.DumpRIBRequest_IPv6Unicast)
 		}
 
+		filter := &pb.RIBFilter{
+			OriginatingAsn: uint32(c.Uint64("origin")),
+			MinLength:      uint32(c.Uint64("min")),
+			MaxLength:      uint32(c.Uint64("max")),
+		}
+
 		client := pb.NewRoutingInformationServiceClient(conn)
 		for _, afisafi := range afisafis {
 			fmt.Printf(" --- Dump %s ---\n", pb.DumpRIBRequest_AFISAFI_name[int32(afisafi)])
-			err = dumpRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), afisafi)
+			err = dumpRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), afisafi, filter)
 			if err != nil {
 				log.Errorf("DumpRIB failed: %v", err)
 				os.Exit(1)
@@ -60,12 +69,13 @@ func NewDumpLocRIBCommand() cli.Command {
 	return cmd
 }
 
-func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, vrf string, afisafi pb.DumpRIBRequest_AFISAFI) error {
+func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, vrf string, afisafi pb.DumpRIBRequest_AFISAFI, filter *pb.RIBFilter) error {
 	client, err := c.DumpRIB(context.Background(), &pb.DumpRIBRequest{
 		Router:  routerName,
 		VrfId:   vrfID,
 		Vrf:     vrf,
 		Afisafi: afisafi,
+		Filter:  filter,
 	})
 	if err != nil {
 		return errors.Wrap(err, "Unable to get client")
