@@ -91,6 +91,9 @@ func (b *BMPServer) Listen(addr string) error {
 
 func (b *BMPServer) validateConnection(c net.Conn) (*Router, bool) {
 	r := b.getRouter(c.RemoteAddr().(*net.TCPAddr).IP.String())
+	if r == nil {
+		return nil, false
+	}
 
 	if !r.passive {
 		log.WithFields(log.Fields{
