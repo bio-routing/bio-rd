@@ -16,6 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Check format (gofmt)
+        run: .github/check-gofmt.sh
+
       - name: Test
         run: go test -v -cover -coverprofile=coverage.txt ./...
 
