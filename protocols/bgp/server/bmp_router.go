@@ -409,6 +409,10 @@ func (p *peer) configureBySentOpen(msg *packet.BGPOpen) {
 						}
 					}
 				}
+			case packet.ASN4CapabilityCode:
+				if p.localASN == packet.ASTransASN {
+					p.localASN = cap.Value.(packet.ASN4Capability).ASN4
+				}
 			}
 		}
 	}
