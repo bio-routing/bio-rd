@@ -530,11 +530,11 @@ func (b *BGPPath) String() string {
 	origin := ""
 	switch b.BGPPathA.Origin {
 	case 0:
-		origin = "Incomplete"
+		origin = "IGP"
 	case 1:
 		origin = "EGP"
 	case 2:
-		origin = "IGP"
+		origin = "Incomplete"
 	}
 
 	bgpType := "internal"
@@ -575,11 +575,11 @@ func (b *BGPPath) Print() string {
 	origin := ""
 	switch b.BGPPathA.Origin {
 	case 0:
-		origin = "Incomplete"
+		origin = "IGP"
 	case 1:
 		origin = "EGP"
 	case 2:
-		origin = "IGP"
+		origin = "Incomplete"
 	}
 
 	bgpType := "internal"
