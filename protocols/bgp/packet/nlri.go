@@ -13,11 +13,14 @@ import (
 
 const (
 	PathIdentifierLen = 4
+	BytesPerLabel     = 3
+	BitsPerLabel      = BytesPerLabel * 8
 )
 
 // NLRI represents a Network Layer Reachability Information
 type NLRI struct {
 	PathIdentifier uint32
+	LabelStack     []Label
 	Prefix         *bnet.Prefix
 	Next           *NLRI
 }
@@ -90,7 +93,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 	return nlri, consumed, nil
 }
 
-func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool) uint8 {
+func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, withLabeledUnicast bool) uint8 {
 	numBytes := uint8(0)
 
 	if addPath {
@@ -98,8 +101,21 @@ func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool) uint8 {
 		numBytes += 4
 	}
 
-	buf.WriteByte(n.Prefix.Pfxlen())
+	pfxLen := n.Prefix.Pfxlen()
+	if withLabeledUnicast {
+		pfxLen += uint8(len(n.LabelStack) * BitsPerLabel)
+	}
+
+	buf.WriteByte(pfxLen)
 	numBytes++
+
+	if withLabeledUnicast {
+		labelCount := len(n.LabelStack)
+		for i, l := range n.LabelStack {
+			l.serialize(buf, i == labelCount-1)
+			numBytes += BytesPerLabel
+		}
+	}
 
 	pfxNumBytes := BytesInAddr(n.Prefix.Pfxlen())
 	buf.Write(n.Prefix.Addr().Bytes()[:pfxNumBytes])

@@ -254,10 +254,11 @@ func TestBytesInAddr(t *testing.T) {
 
 func TestNLRISerialize(t *testing.T) {
 	tests := []struct {
-		name     string
-		nlri     *NLRI
-		addPath  bool
-		expected []byte
+		name           string
+		nlri           *NLRI
+		addPath        bool
+		labeledUnicast bool
+		expected       []byte
 	}{
 		{
 			name: "Test #1",
@@ -311,7 +312,7 @@ func TestNLRISerialize(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(nil)
-		test.nlri.serialize(buf, test.addPath)
+		test.nlri.serialize(buf, test.addPath, test.labeledUnicast)
 		res := buf.Bytes()
 		assert.Equal(t, test.expected, res)
 	}
