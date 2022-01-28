@@ -46,7 +46,7 @@ func TestDecodeNLRIs(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, err := decodeNLRIs(buf, uint16(len(test.input)), IPv4AFI, false)
+		res, err := decodeNLRIs(buf, uint16(len(test.input)), IPv4AFI, UnicastSAFI, false)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -82,7 +82,7 @@ func TestDecodeNLRIv6(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, _, err := decodeNLRI(buf, IPv6AFI, test.addPath)
+		res, _, err := decodeNLRI(buf, IPv6AFI, UnicastSAFI, test.addPath)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -99,11 +99,46 @@ func TestDecodeNLRIv6(t *testing.T) {
 func TestDecodeNLRI(t *testing.T) {
 	tests := []struct {
 		name     string
+		safi     uint8
 		input    []byte
 		addPath  bool
 		wantFail bool
 		expected *NLRI
 	}{
+		{
+			name: "LU NLRI #1",
+			safi: LabeledUnicastSAFI,
+			input: []byte{
+				42,               // prefix + label stack length
+				0x49, 0x33, 0x01, // MPLS label
+				5, 193, 0, 0, // 5.193.0.0/18 (42 - 24 = 18)
+			},
+			wantFail: false,
+			expected: &NLRI{
+				LabelStack: []Label{
+					0x00493301,
+				},
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(5, 193, 0, 0), 18).Dedup(),
+			},
+		},
+		{
+			name: "LU NLRI #2",
+			safi: LabeledUnicastSAFI,
+			input: []byte{
+				66,               // prefix + label stack length
+				0x49, 0x33, 0x00, // MPLS label
+				0x49, 0x33, 0x01, // MPLS label
+				5, 193, 0, 0, // 5.193.0.0/18 (66 - 48 = 18)
+			},
+			wantFail: false,
+			expected: &NLRI{
+				LabelStack: []Label{
+					0x00493300,
+					0x00493301,
+				},
+				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(5, 193, 0, 0), 18).Dedup(),
+			},
+		},
 		{
 			name: "Valid NRLI #1",
 			input: []byte{
@@ -187,7 +222,6 @@ func TestDecodeNLRI(t *testing.T) {
 			addPath:  true,
 			wantFail: true,
 		},
-
 		{
 			name:     "Empty input",
 			input:    []byte{},
@@ -197,7 +231,7 @@ func TestDecodeNLRI(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, _, err := decodeNLRI(buf, IPv4AFI, test.addPath)
+		res, _, err := decodeNLRI(buf, IPv4AFI, test.safi, test.addPath)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -207,7 +241,7 @@ func TestDecodeNLRI(t *testing.T) {
 			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
 		}
 
-		assert.Equal(t, test.expected, res)
+		assert.Equal(t, test.expected, res, test.name)
 	}
 }
 

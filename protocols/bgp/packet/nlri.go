@@ -25,7 +25,7 @@ type NLRI struct {
 	Next           *NLRI
 }
 
-func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*NLRI, error) {
+func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, safi uint8, addPath bool) (*NLRI, error) {
 	var ret *NLRI
 	var eol *NLRI
 	var nlri *NLRI
@@ -34,7 +34,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*N
 	p := uint16(0)
 
 	for p < length {
-		nlri, consumed, err = decodeNLRI(buf, afi, addPath)
+		nlri, consumed, err = decodeNLRI(buf, afi, safi, addPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to decode NLRI")
 		}
@@ -53,7 +53,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*N
 	return ret, nil
 }
 
-func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, error) {
+func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI, uint8, error) {
 	nlri := &NLRI{}
 
 	consumed := uint8(0)
@@ -74,6 +74,24 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 		return nil, consumed, err
 	}
 	consumed++
+
+	if safi == LabeledUnicastSAFI {
+		nlri.LabelStack = make([]Label, 0, 1)
+		for {
+			label, err := decodeLabel(buf)
+			if err != nil {
+				return nil, consumed, errors.Wrap(err, "decode label failed")
+			}
+
+			consumed += BytesPerLabel
+			pfxLen -= BitsPerLabel
+			nlri.LabelStack = append(nlri.LabelStack, label)
+
+			if label.isBottomOfStack() {
+				break
+			}
+		}
+	}
 
 	numBytes := uint8(BytesInAddr(pfxLen))
 	bytes := make([]byte, numBytes)

@@ -53,7 +53,7 @@ func deserializeMultiProtocolUnreachNLRI(b []byte, opt *DecodeOptions) (MultiPro
 	}
 
 	buf := bytes.NewBuffer(nlris)
-	nlri, err := decodeNLRIs(buf, uint16(buf.Len()), n.AFI, opt.addPath(int(n.AFI), int(n.SAFI)))
+	nlri, err := decodeNLRIs(buf, uint16(buf.Len()), n.AFI, n.SAFI, opt.addPath(int(n.AFI), int(n.SAFI)))
 	if err != nil {
 		return MultiProtocolUnreachNLRI{}, err
 	}
