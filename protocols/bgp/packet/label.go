@@ -7,20 +7,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+const bottomOfStackBit = 0x01
+
 type Label uint32
 
 func (l Label) serialize(buf *bytes.Buffer, bottomOfStack bool) {
 	x := convert.Uint32Byte(uint32(l << 12))
 
 	if bottomOfStack {
-		x[2] |= 0x01
+		x[2] |= bottomOfStackBit
 	}
 
 	buf.Write(x[0:3])
 }
 
 func (l Label) isBottomOfStack() bool {
-	return l&0x01 == 0x01
+	return l&bottomOfStackBit == bottomOfStackBit
 }
 
 func decodeLabel(buf *bytes.Buffer) (Label, error) {
