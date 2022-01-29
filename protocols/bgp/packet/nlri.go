@@ -78,7 +78,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 	if safi == LabeledUnicastSAFI {
 		nlri.LabelStack = make([]LabelStackEntry, 0, 1)
 		for {
-			label, err := decodeLabel(buf)
+			label, err := decodeLabelStackEntry(buf)
 			if err != nil {
 				return nil, consumed, errors.Wrap(err, "decode label failed")
 			}

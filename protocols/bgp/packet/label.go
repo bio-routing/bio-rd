@@ -36,7 +36,7 @@ func (l LabelStackEntry) GetLabel() uint32 {
 	return uint32(l) >> lengthEXPAndBottomOfStack
 }
 
-func decodeLabel(buf *bytes.Buffer) (LabelStackEntry, error) {
+func decodeLabelStackEntry(buf *bytes.Buffer) (LabelStackEntry, error) {
 	label := make([]byte, BytesPerLabel)
 	_, err := buf.Read(label)
 	if err != nil {

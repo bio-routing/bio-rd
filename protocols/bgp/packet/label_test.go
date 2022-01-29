@@ -52,7 +52,7 @@ func TestDecodeLabel(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, err := decodeLabel(buf)
+		res, err := decodeLabelStackEntry(buf)
 		if err != nil {
 			t.Errorf("decodeLabel failed with %v", err)
 		}
