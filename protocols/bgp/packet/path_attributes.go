@@ -507,7 +507,7 @@ func dumpNBytes(buf *bytes.Buffer, n uint16) error {
 }
 
 // Serialize serializes a path attribute
-func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *EncodeOptions, safi uint8) uint16 {
+func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	pathAttrLen := uint16(0)
 
 	switch pa.TypeCode {
@@ -532,7 +532,7 @@ func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *EncodeOptions, safi u
 	case MultiProtocolReachNLRICode:
 		pathAttrLen = pa.serializeMultiProtocolReachNLRI(buf, opt)
 	case MultiProtocolUnreachNLRICode:
-		pathAttrLen = pa.serializeMultiProtocolUnreachNLRI(buf, opt, safi)
+		pathAttrLen = pa.serializeMultiProtocolUnreachNLRI(buf, opt)
 	case OriginatorIDAttr:
 		pathAttrLen = uint16(pa.serializeOriginatorID(buf))
 	case ClusterListAttr:
@@ -804,7 +804,7 @@ func (pa *PathAttribute) serializeMultiProtocolReachNLRI(buf *bytes.Buffer, opt 
 	return pa.serializeGeneric(tempBuf.Bytes(), buf)
 }
 
-func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer, opt *EncodeOptions, safi uint8) uint16 {
+func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	v := pa.Value.(MultiProtocolUnreachNLRI)
 	pa.Optional = true
 
