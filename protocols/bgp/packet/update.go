@@ -13,6 +13,7 @@ type BGPUpdate struct {
 	TotalPathAttrLen   uint16
 	PathAttributes     *PathAttribute
 	NLRI               *NLRI
+	SAFI               uint8
 }
 
 // SerializeUpdate serializes an BGPUpdate to wire format
@@ -22,7 +23,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 
 	withdrawBuf := bytes.NewBuffer(nil)
 	for withdraw := b.WithdrawnRoutes; withdraw != nil; withdraw = withdraw.Next {
-		budget -= int(withdraw.serialize(withdrawBuf, opt.UseAddPath))
+		budget -= int(withdraw.serialize(withdrawBuf, opt.UseAddPath, b.SAFI))
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
 		}
@@ -39,7 +40,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 
 	nlriBuf := bytes.NewBuffer(nil)
 	for nlri := b.NLRI; nlri != nil; nlri = nlri.Next {
-		budget -= int(nlri.serialize(nlriBuf, opt.UseAddPath))
+		budget -= int(nlri.serialize(nlriBuf, opt.UseAddPath, b.SAFI))
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
 		}
@@ -79,7 +80,7 @@ func (b *BGPUpdate) SerializeUpdateAddPath(opt *EncodeOptions) ([]byte, error) {
 
 	withdrawBuf := bytes.NewBuffer(nil)
 	for withdraw := b.WithdrawnRoutes; withdraw != nil; withdraw = withdraw.Next {
-		budget -= int(withdraw.serialize(withdrawBuf, opt.UseAddPath))
+		budget -= int(withdraw.serialize(withdrawBuf, opt.UseAddPath, b.SAFI))
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
 		}
@@ -96,7 +97,7 @@ func (b *BGPUpdate) SerializeUpdateAddPath(opt *EncodeOptions) ([]byte, error) {
 
 	nlriBuf := bytes.NewBuffer(nil)
 	for nlri := b.NLRI; nlri != nil; nlri = nlri.Next {
-		budget -= int(nlri.serialize(nlriBuf, opt.UseAddPath))
+		budget -= int(nlri.serialize(nlriBuf, opt.UseAddPath, b.SAFI))
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
 		}

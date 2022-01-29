@@ -54,6 +54,30 @@ func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 			},
 			addPath: true,
 		},
+		{
+			name: "IPv4 BGP Labeled Unicast",
+			nlri: MultiProtocolReachNLRI{
+				AFI:     IPv4AFI,
+				SAFI:    LabeledUnicastSAFI,
+				NextHop: bnet.IPv4FromOctets(192, 0, 2, 0).Dedup(),
+				NLRI: &NLRI{
+					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 0, 2, 0), 24).Dedup(),
+					LabelStack: []LabelStackEntry{
+						NewLabelStackEntry(299824),
+					},
+				},
+			},
+			expected: []byte{
+				0x00, 0x01, // AFI
+				0x04,         // SAFI
+				0x04,         // NextHop length
+				192, 0, 2, 0, // NextHop
+				0x00,             // Reserved
+				48,               // Prefix Length + Label Stack size (/24 + 24 bytes MPLS)
+				0x49, 0x33, 0x01, // Label (bottom of stack)
+				192, 0, 2, // Prefix
+			},
+		},
 	}
 
 	for _, test := range tests {

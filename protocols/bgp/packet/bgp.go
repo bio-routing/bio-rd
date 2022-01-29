@@ -95,6 +95,7 @@ const (
 	IPv4AFI                      = 1
 	IPv6AFI                      = 2
 	UnicastSAFI                  = 1
+	LabeledUnicastSAFI           = 4
 	CapabilitiesParamType        = 2
 	MultiProtocolCapabilityCode  = 1
 	MultiProtocolReachNLRICode   = 14

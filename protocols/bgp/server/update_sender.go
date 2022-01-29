@@ -207,6 +207,7 @@ func (u *UpdateSender) updateMessageForPrefixes(pfxs []*bnet.Prefix, pa *packet.
 func (u *UpdateSender) bgpUpdate(pfxs []*bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
 	update := &packet.BGPUpdate{
 		PathAttributes: pa,
+		SAFI:           u.addressFamily.safi,
 	}
 
 	var nlri *packet.NLRI
@@ -238,6 +239,7 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []*bnet.Prefix, pa *packet.Pa
 
 	return &packet.BGPUpdate{
 		PathAttributes: attrs,
+		SAFI:           u.addressFamily.safi,
 	}
 }
 
@@ -315,6 +317,7 @@ func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx *bnet.Prefix, p *route.
 
 func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
 	update := &packet.BGPUpdate{
+		SAFI: packet.UnicastSAFI,
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
 			Prefix:         pfx,

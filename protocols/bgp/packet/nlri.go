@@ -13,16 +13,19 @@ import (
 
 const (
 	PathIdentifierLen = 4
+	BytesPerLabel     = 3
+	BitsPerLabel      = BytesPerLabel * 8
 )
 
 // NLRI represents a Network Layer Reachability Information
 type NLRI struct {
 	PathIdentifier uint32
+	LabelStack     []LabelStackEntry
 	Prefix         *bnet.Prefix
 	Next           *NLRI
 }
 
-func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*NLRI, error) {
+func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, safi uint8, addPath bool) (*NLRI, error) {
 	var ret *NLRI
 	var eol *NLRI
 	var nlri *NLRI
@@ -31,7 +34,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*N
 	p := uint16(0)
 
 	for p < length {
-		nlri, consumed, err = decodeNLRI(buf, afi, addPath)
+		nlri, consumed, err = decodeNLRI(buf, afi, safi, addPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to decode NLRI")
 		}
@@ -50,7 +53,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, addPath bool) (*N
 	return ret, nil
 }
 
-func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, error) {
+func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI, uint8, error) {
 	nlri := &NLRI{}
 
 	consumed := uint8(0)
@@ -72,6 +75,24 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 	}
 	consumed++
 
+	if safi == LabeledUnicastSAFI {
+		nlri.LabelStack = make([]LabelStackEntry, 0, 1)
+		for {
+			lse, err := decodeLabelStackEntry(buf)
+			if err != nil {
+				return nil, consumed, errors.Wrap(err, "decode label stack entry failed")
+			}
+
+			consumed += BytesPerLabel
+			pfxLen -= BitsPerLabel
+			nlri.LabelStack = append(nlri.LabelStack, lse)
+
+			if lse.isBottomOfStack() {
+				break
+			}
+		}
+	}
+
 	numBytes := uint8(BytesInAddr(pfxLen))
 	bytes := make([]byte, numBytes)
 
@@ -90,7 +111,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, addPath bool) (*NLRI, uint8, erro
 	return nlri, consumed, nil
 }
 
-func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool) uint8 {
+func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, safi uint8) uint8 {
 	numBytes := uint8(0)
 
 	if addPath {
@@ -98,8 +119,21 @@ func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool) uint8 {
 		numBytes += 4
 	}
 
-	buf.WriteByte(n.Prefix.Pfxlen())
+	pfxLen := n.Prefix.Pfxlen()
+	if safi == LabeledUnicastSAFI {
+		pfxLen += uint8(len(n.LabelStack) * BitsPerLabel)
+	}
+
+	buf.WriteByte(pfxLen)
 	numBytes++
+
+	if safi == LabeledUnicastSAFI {
+		labelCount := len(n.LabelStack)
+		for i, l := range n.LabelStack {
+			l.serialize(buf, i == labelCount-1)
+			numBytes += BytesPerLabel
+		}
+	}
 
 	pfxNumBytes := BytesInAddr(n.Prefix.Pfxlen())
 	buf.Write(n.Prefix.Addr().Bytes()[:pfxNumBytes])
