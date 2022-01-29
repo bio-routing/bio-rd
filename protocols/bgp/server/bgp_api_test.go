@@ -44,8 +44,8 @@ func TestDumpRIBInOut(t *testing.T) {
 			addRoutes: []*route.Route{},
 			req: &api.DumpRIBRequest{
 				Peer: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
-				Afi:  packet.IPv4AFI,
-				Safi: packet.UnicastSAFI,
+				Afi:  packet.AFIIPv4,
+				Safi: packet.SAFIUnicast,
 			},
 			expected: []*routeapi.Route{},
 			wantFail: false,
@@ -73,8 +73,8 @@ func TestDumpRIBInOut(t *testing.T) {
 			addRoutes: []*route.Route{},
 			req: &api.DumpRIBRequest{
 				Peer: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
-				Afi:  packet.IPv4AFI,
-				Safi: packet.UnicastSAFI,
+				Afi:  packet.AFIIPv4,
+				Safi: packet.SAFIUnicast,
 			},
 			expected: []*routeapi.Route{},
 			wantFail: false,
@@ -114,8 +114,8 @@ func TestDumpRIBInOut(t *testing.T) {
 			},
 			req: &api.DumpRIBRequest{
 				Peer: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
-				Afi:  packet.IPv4AFI,
-				Safi: packet.UnicastSAFI,
+				Afi:  packet.AFIIPv4,
+				Safi: packet.SAFIUnicast,
 			},
 			expected: []*routeapi.Route{
 				{
@@ -200,8 +200,8 @@ func TestDumpRIBInOut(t *testing.T) {
 			},
 			req: &api.DumpRIBRequest{
 				Peer: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
-				Afi:  packet.IPv4AFI,
-				Safi: packet.UnicastSAFI,
+				Afi:  packet.AFIIPv4,
+				Safi: packet.SAFIUnicast,
 			},
 			expected: []*routeapi.Route{
 				{

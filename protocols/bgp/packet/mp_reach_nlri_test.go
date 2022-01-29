@@ -18,8 +18,8 @@ func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 		{
 			name: "Simple IPv6 prefix",
 			nlri: MultiProtocolReachNLRI{
-				AFI:     IPv6AFI,
-				SAFI:    UnicastSAFI,
+				AFI:     AFIIPv6,
+				SAFI:    SAFIUnicast,
 				NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Dedup(),
 				NLRI: &NLRI{
 					Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Dedup(),
@@ -36,8 +36,8 @@ func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 		{
 			name: "IPv6 prefix with ADD-PATH",
 			nlri: MultiProtocolReachNLRI{
-				AFI:     IPv6AFI,
-				SAFI:    UnicastSAFI,
+				AFI:     AFIIPv6,
+				SAFI:    SAFIUnicast,
 				NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Dedup(),
 				NLRI: &NLRI{
 					Prefix:         bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Dedup(),
@@ -57,8 +57,8 @@ func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 		{
 			name: "IPv4 BGP Labeled Unicast",
 			nlri: MultiProtocolReachNLRI{
-				AFI:     IPv4AFI,
-				SAFI:    LabeledUnicastSAFI,
+				AFI:     AFIIPv4,
+				SAFI:    SAFILabeledUnicast,
 				NextHop: bnet.IPv4FromOctets(192, 0, 2, 0).Dedup(),
 				NLRI: &NLRI{
 					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 0, 2, 0), 24).Dedup(),

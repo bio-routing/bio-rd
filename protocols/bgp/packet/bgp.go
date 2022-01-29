@@ -20,11 +20,13 @@ const (
 	IPv6Len           = 16
 	ClusterIDLen      = 4
 
+	// BGP message types
 	OpenMsg         = 1
 	UpdateMsg       = 2
 	NotificationMsg = 3
 	KeepaliveMsg    = 4
 
+	// BGP errors
 	MessageHeaderError      = 1
 	OpenMessageError        = 2
 	UpdateMessageError      = 3
@@ -92,20 +94,28 @@ const (
 	ConnectionCollisionResolution = 7
 	OutOfResources                = 8
 
-	IPv4AFI                      = 1
-	IPv6AFI                      = 2
-	UnicastSAFI                  = 1
-	LabeledUnicastSAFI           = 4
+	// Address Familiy Identifiers
+	AFIIPv4 = 1
+	AFIIPv6 = 2
+
+	// Sub-Address Familiy Identifiers
+	SAFIUnicast        = 1
+	SAFILabeledUnicast = 4
+
+	// Capabilities
 	CapabilitiesParamType        = 2
 	MultiProtocolCapabilityCode  = 1
 	MultiProtocolReachNLRICode   = 14
 	MultiProtocolUnreachNLRICode = 15
 	AddPathCapabilityCode        = 69
 	ASN4CapabilityCode           = 65
-	AddPathReceive               = 1
-	AddPathSend                  = 2
-	AddPathSendReceive           = 3
-	ASTransASN                   = 23456
+
+	// AddPath capabilities
+	AddPathReceive     = 1
+	AddPathSend        = 2
+	AddPathSendReceive = 3
+
+	ASTransASN = 23456
 )
 
 var (
@@ -163,9 +173,9 @@ type PathAttribute struct {
 // AFIName returns the name of an address family
 func AFIName(afi uint16) string {
 	switch afi {
-	case IPv4AFI:
+	case AFIIPv4:
 		return "IPv4"
-	case IPv6AFI:
+	case AFIIPv6:
 		return "IPv6"
 	default:
 		return "Unknown AFI"

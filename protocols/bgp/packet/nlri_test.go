@@ -46,7 +46,7 @@ func TestDecodeNLRIs(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, err := decodeNLRIs(buf, uint16(len(test.input)), IPv4AFI, UnicastSAFI, false)
+		res, err := decodeNLRIs(buf, uint16(len(test.input)), AFIIPv4, SAFIUnicast, false)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -82,7 +82,7 @@ func TestDecodeNLRIv6(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, _, err := decodeNLRI(buf, IPv6AFI, UnicastSAFI, test.addPath)
+		res, _, err := decodeNLRI(buf, AFIIPv6, SAFIUnicast, test.addPath)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -107,7 +107,7 @@ func TestDecodeNLRI(t *testing.T) {
 	}{
 		{
 			name: "LU NLRI #1",
-			safi: LabeledUnicastSAFI,
+			safi: SAFILabeledUnicast,
 			input: []byte{
 				42,               // prefix + label stack length
 				0x49, 0x33, 0x01, // MPLS label
@@ -123,7 +123,7 @@ func TestDecodeNLRI(t *testing.T) {
 		},
 		{
 			name: "LU NLRI #2",
-			safi: LabeledUnicastSAFI,
+			safi: SAFILabeledUnicast,
 			input: []byte{
 				66,               // prefix + label stack length
 				0x49, 0x33, 0x00, // MPLS label
@@ -231,7 +231,7 @@ func TestDecodeNLRI(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
-		res, _, err := decodeNLRI(buf, IPv4AFI, test.safi, test.addPath)
+		res, _, err := decodeNLRI(buf, AFIIPv4, test.safi, test.addPath)
 
 		if test.wantFail && err == nil {
 			t.Errorf("Expected error did not happen for test %q", test.name)
@@ -299,7 +299,7 @@ func TestNLRISerialize(t *testing.T) {
 			nlri: &NLRI{
 				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25).Dedup(),
 			},
-			safi:     UnicastSAFI,
+			safi:     SAFIUnicast,
 			expected: []byte{25, 1, 2, 3, 0},
 		},
 		{
@@ -307,7 +307,7 @@ func TestNLRISerialize(t *testing.T) {
 			nlri: &NLRI{
 				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24).Dedup(),
 			},
-			safi:     UnicastSAFI,
+			safi:     SAFIUnicast,
 			expected: []byte{24, 1, 2, 3},
 		},
 		{
@@ -315,7 +315,7 @@ func TestNLRISerialize(t *testing.T) {
 			nlri: &NLRI{
 				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17).Dedup(),
 			},
-			safi:     UnicastSAFI,
+			safi:     SAFIUnicast,
 			expected: []byte{17, 100, 200, 128},
 		},
 		{
@@ -325,7 +325,7 @@ func TestNLRISerialize(t *testing.T) {
 				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 25).Dedup(),
 			},
 			addPath:  true,
-			safi:     UnicastSAFI,
+			safi:     SAFIUnicast,
 			expected: []byte{0, 0, 0, 100, 25, 1, 2, 3, 0},
 		},
 		{
@@ -335,7 +335,7 @@ func TestNLRISerialize(t *testing.T) {
 				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(1, 2, 3, 0), 24).Dedup(),
 			},
 			addPath:  true,
-			safi:     UnicastSAFI,
+			safi:     SAFIUnicast,
 			expected: []byte{0, 0, 0, 100, 24, 1, 2, 3},
 		},
 		{
@@ -345,7 +345,7 @@ func TestNLRISerialize(t *testing.T) {
 				Prefix:         bnet.NewPfx(bnet.IPv4FromOctets(100, 200, 128, 0), 17).Dedup(),
 			},
 			addPath:  true,
-			safi:     UnicastSAFI,
+			safi:     SAFIUnicast,
 			expected: []byte{0, 0, 0, 100, 17, 100, 200, 128},
 		},
 		{
@@ -356,7 +356,7 @@ func TestNLRISerialize(t *testing.T) {
 					NewLabelStackEntry(299824),
 				},
 			},
-			safi:     LabeledUnicastSAFI,
+			safi:     SAFILabeledUnicast,
 			expected: []byte{17 + 24, 0x49, 0x33, 0x01, 100, 200, 128},
 		},
 		{
@@ -368,7 +368,7 @@ func TestNLRISerialize(t *testing.T) {
 					NewLabelStackEntry(299825),
 				},
 			},
-			safi:     LabeledUnicastSAFI,
+			safi:     SAFILabeledUnicast,
 			expected: []byte{17 + 24 + 24, 0x49, 0x33, 0x00, 0x49, 0x33, 0x11, 100, 200, 128},
 		},
 	}

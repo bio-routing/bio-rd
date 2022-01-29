@@ -63,14 +63,14 @@ func TestMetrics(t *testing.T) {
 						Since:           establishedTime,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{
 							{
-								AFI:            packet.IPv4AFI,
-								SAFI:           packet.UnicastSAFI,
+								AFI:            packet.AFIIPv4,
+								SAFI:           packet.SAFIUnicast,
 								RoutesReceived: 5,
 								RoutesSent:     6,
 							},
 							{
-								AFI:            packet.IPv6AFI,
-								SAFI:           packet.UnicastSAFI,
+								AFI:            packet.AFIIPv6,
+								SAFI:           packet.SAFIUnicast,
 								RoutesReceived: 7,
 								RoutesSent:     8,
 							},

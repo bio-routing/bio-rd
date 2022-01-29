@@ -14,8 +14,8 @@ import (
 
 func TestFSMAFIInitDispose(t *testing.T) {
 	f := &fsmAddressFamily{
-		afi:               packet.IPv4AFI,
-		safi:              packet.UnicastSAFI,
+		afi:               packet.AFIIPv4,
+		safi:              packet.SAFIUnicast,
 		rib:               locRIB.New("inet.0"),
 		importFilterChain: filter.NewAcceptAllFilterChain(),
 		exportFilterChain: filter.NewAcceptAllFilterChain(),

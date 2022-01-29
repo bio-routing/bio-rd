@@ -180,14 +180,14 @@ func (p *peer) dumpRIBOut(afi uint16, safi uint8) []*route.Route {
 }
 
 func (p *peer) addressFamily(afi uint16, safi uint8) *peerAddressFamily {
-	if safi != packet.UnicastSAFI {
+	if safi != packet.SAFIUnicast {
 		return nil
 	}
 
 	switch afi {
-	case packet.IPv4AFI:
+	case packet.AFIIPv4:
 		return p.ipv4
-	case packet.IPv6AFI:
+	case packet.AFIIPv6:
 		return p.ipv6
 	default:
 		return nil
@@ -292,7 +292,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 	caps = append(caps, asn4Capability(c))
 
 	if c.IPv4 != nil && c.AdvertiseIPv4MultiProtocol {
-		caps = append(caps, multiProtocolCapability(packet.IPv4AFI))
+		caps = append(caps, multiProtocolCapability(packet.AFIIPv4))
 		p.ipv4MultiProtocolAdvertised = true
 	}
 
@@ -304,7 +304,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 			addPathReceive:    c.IPv6.AddPathRecv,
 			addPathSend:       c.IPv6.AddPathSend,
 		}
-		caps = append(caps, multiProtocolCapability(packet.IPv6AFI))
+		caps = append(caps, multiProtocolCapability(packet.AFIIPv6))
 
 		if p.ipv6.rib == nil {
 			return nil, fmt.Errorf("No RIB for IPv6 unicast configured")
@@ -337,7 +337,7 @@ func multiProtocolCapability(afi uint16) packet.Capability {
 		Code: packet.MultiProtocolCapabilityCode,
 		Value: packet.MultiProtocolCapability{
 			AFI:  afi,
-			SAFI: packet.UnicastSAFI,
+			SAFI: packet.SAFIUnicast,
 		},
 	}
 }
@@ -345,12 +345,12 @@ func multiProtocolCapability(afi uint16) packet.Capability {
 func addPathCapabilities(c PeerConfig) []packet.Capability {
 	caps := make([]packet.Capability, 0)
 
-	enabled, cap := addPathCapabilityForFamily(c.IPv4, packet.IPv4AFI, packet.UnicastSAFI)
+	enabled, cap := addPathCapabilityForFamily(c.IPv4, packet.AFIIPv4, packet.SAFIUnicast)
 	if enabled {
 		caps = append(caps, cap)
 	}
 
-	enabled, cap = addPathCapabilityForFamily(c.IPv6, packet.IPv6AFI, packet.UnicastSAFI)
+	enabled, cap = addPathCapabilityForFamily(c.IPv6, packet.AFIIPv6, packet.SAFIUnicast)
 	if enabled {
 		caps = append(caps, cap)
 	}

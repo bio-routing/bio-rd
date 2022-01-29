@@ -328,7 +328,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	if !found {
 		return fmt.Errorf("Unable to get inet RIB")
 	}
-	fsm.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &peerAddressFamily{
+	fsm.ipv4Unicast = newFSMAddressFamily(packet.AFIIPv4, packet.SAFIUnicast, &peerAddressFamily{
 		rib:               rib4,
 		importFilterChain: filter.NewAcceptAllFilterChain(),
 	}, fsm)
@@ -339,7 +339,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 		return fmt.Errorf("Unable to get inet6 RIB")
 	}
 
-	fsm.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
+	fsm.ipv6Unicast = newFSMAddressFamily(packet.AFIIPv6, packet.SAFIUnicast, &peerAddressFamily{
 		rib:               rib6,
 		importFilterChain: filter.NewAcceptAllFilterChain(),
 	}, fsm)
@@ -374,10 +374,10 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 func (n *neighbor) registerClients(clients map[afiClient]struct{}) {
 	for ac := range clients {
-		if ac.afi == packet.IPv4AFI {
+		if ac.afi == packet.AFIIPv4 {
 			n.fsm.ipv4Unicast.adjRIBIn.Register(ac.client)
 		}
-		if ac.afi == packet.IPv6AFI {
+		if ac.afi == packet.AFIIPv6 {
 			n.fsm.ipv6Unicast.adjRIBIn.Register(ac.client)
 		}
 	}

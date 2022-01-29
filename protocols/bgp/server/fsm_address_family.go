@@ -134,12 +134,12 @@ func (f *fsmAddressFamily) dispose() {
 }
 
 func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
-	if f.safi != packet.UnicastSAFI {
+	if f.safi != packet.SAFIUnicast {
 		return
 	}
 
 	f.multiProtocolUpdates(u)
-	if f.afi == packet.IPv4AFI {
+	if f.afi == packet.AFIIPv4 {
 		f.withdraws(u)
 		f.updates(u)
 	}

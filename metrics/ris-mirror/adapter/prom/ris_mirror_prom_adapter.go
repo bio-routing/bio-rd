@@ -66,22 +66,22 @@ func (c *risCollector) collectForRouter(ch chan<- prometheus.Metric, rtr *metric
 
 func (c *risCollector) collectMergedLocRIBMetrics(ch chan<- prometheus.Metric, rtr *metrics.RISMirrorRouterMetrics, v *metrics.InternalVRFMetrics) {
 	ch <- prometheus.MustNewConstMetric(mergedLocalRIBRouteCount, prometheus.GaugeValue, float64(v.MergedLocRIBMetricsIPv4Unicast.UniqueRouteCount),
-		getMergedLocRIBMetricsLabels(rtr, v, packet.IPv4AFI)...)
+		getMergedLocRIBMetricsLabels(rtr, v, packet.AFIIPv4)...)
 
 	ch <- prometheus.MustNewConstMetric(mergedLocalRIBRouteCount, prometheus.GaugeValue, float64(v.MergedLocRIBMetricsIPv6Unicast.UniqueRouteCount),
-		getMergedLocRIBMetricsLabels(rtr, v, packet.IPv6AFI)...)
+		getMergedLocRIBMetricsLabels(rtr, v, packet.AFIIPv6)...)
 
 	ch <- prometheus.MustNewConstMetric(mergedLocalRIBSingleSourceRouteCount, prometheus.GaugeValue, float64(v.MergedLocRIBMetricsIPv4Unicast.RoutesWithSingleSourceCount),
-		getMergedLocRIBMetricsLabels(rtr, v, packet.IPv4AFI)...)
+		getMergedLocRIBMetricsLabels(rtr, v, packet.AFIIPv4)...)
 
 	ch <- prometheus.MustNewConstMetric(mergedLocalRIBSingleSourceRouteCount, prometheus.GaugeValue, float64(v.MergedLocRIBMetricsIPv6Unicast.RoutesWithSingleSourceCount),
-		getMergedLocRIBMetricsLabels(rtr, v, packet.IPv6AFI)...)
+		getMergedLocRIBMetricsLabels(rtr, v, packet.AFIIPv6)...)
 }
 
 func getMergedLocRIBMetricsLabels(rtr *metrics.RISMirrorRouterMetrics, v *metrics.InternalVRFMetrics, afi uint8) []string {
 	ret := []string{rtr.SysName, rtr.Address.String(), vrf.RouteDistinguisherHumanReadable(v.RD), fmt.Sprintf("%d", afi)}
 
-	if afi == packet.IPv4AFI {
+	if afi == packet.AFIIPv4 {
 		return append(ret, v.MergedLocRIBMetricsIPv4Unicast.RIBName)
 	}
 
