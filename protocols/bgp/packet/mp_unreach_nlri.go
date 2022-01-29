@@ -15,13 +15,13 @@ type MultiProtocolUnreachNLRI struct {
 	NLRI *NLRI
 }
 
-func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions, safi uint8) uint16 {
+func (n *MultiProtocolUnreachNLRI) serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16 {
 	tempBuf := bytes.NewBuffer(nil)
 	tempBuf.Write(convert.Uint16Byte(n.AFI))
 	tempBuf.WriteByte(n.SAFI)
 
 	for cur := n.NLRI; cur != nil; cur = cur.Next {
-		cur.serialize(tempBuf, opt.UseAddPath, safi)
+		cur.serialize(tempBuf, opt.UseAddPath, n.SAFI)
 	}
 
 	buf.Write(tempBuf.Bytes())

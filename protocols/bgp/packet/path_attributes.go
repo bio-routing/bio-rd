@@ -809,7 +809,7 @@ func (pa *PathAttribute) serializeMultiProtocolUnreachNLRI(buf *bytes.Buffer, op
 	pa.Optional = true
 
 	tempBuf := bytes.NewBuffer(nil)
-	v.serialize(tempBuf, opt, safi)
+	v.serialize(tempBuf, opt)
 
 	return pa.serializeGeneric(tempBuf.Bytes(), buf)
 }

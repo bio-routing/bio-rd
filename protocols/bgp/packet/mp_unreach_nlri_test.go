@@ -55,7 +55,7 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 			buf := &bytes.Buffer{}
 			test.nlri.serialize(buf, &EncodeOptions{
 				UseAddPath: test.addPath,
-			}, UnicastSAFI)
+			})
 			assert.Equal(t, test.expected, buf.Bytes())
 		})
 	}
