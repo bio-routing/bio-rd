@@ -111,7 +111,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 	return nlri, consumed, nil
 }
 
-func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, withLabeledUnicast bool) uint8 {
+func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, safi uint8) uint8 {
 	numBytes := uint8(0)
 
 	if addPath {
@@ -120,14 +120,14 @@ func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, withLabeledUnicast boo
 	}
 
 	pfxLen := n.Prefix.Pfxlen()
-	if withLabeledUnicast {
+	if safi == LabeledUnicastSAFI {
 		pfxLen += uint8(len(n.LabelStack) * BitsPerLabel)
 	}
 
 	buf.WriteByte(pfxLen)
 	numBytes++
 
-	if withLabeledUnicast {
+	if safi == LabeledUnicastSAFI {
 		labelCount := len(n.LabelStack)
 		for i, l := range n.LabelStack {
 			l.serialize(buf, i == labelCount-1)

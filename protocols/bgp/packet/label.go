@@ -12,14 +12,19 @@ const lengthEXPAndBottomOfStack = 0x04
 
 type LabelStackEntry uint32
 
+// NewLabelStackEntry creates a new label stack entry
+func NewLabelStackEntry(labelValue uint32) LabelStackEntry {
+	return LabelStackEntry(labelValue << lengthEXPAndBottomOfStack)
+}
+
 func (l LabelStackEntry) serialize(buf *bytes.Buffer, bottomOfStack bool) {
-	x := convert.Uint32Byte(uint32(l << 12))
+	x := convert.Uint32Byte(uint32(l))
 
 	if bottomOfStack {
-		x[2] |= bottomOfStackBit
+		x[3] |= bottomOfStackBit
 	}
 
-	buf.Write(x[0:3])
+	buf.Write(x[1:4])
 }
 
 func (l LabelStackEntry) isBottomOfStack() bool {
