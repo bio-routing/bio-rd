@@ -9,8 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *packet.EncodeOptions) error {
-	updateBytes, err := update.SerializeUpdate(opt)
+func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *packet.EncodeOptions, safi uint8) error {
+	updateBytes, err := update.SerializeUpdate(opt, safi)
 	if err != nil {
 		log.Errorf("Unable to serialize BGP Update: %v", err)
 		return nil
@@ -24,5 +24,5 @@ func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *pack
 }
 
 type serializeAbleUpdate interface {
-	SerializeUpdate(opt *packet.EncodeOptions) ([]byte, error)
+	SerializeUpdate(opt *packet.EncodeOptions, safi uint8) ([]byte, error)
 }

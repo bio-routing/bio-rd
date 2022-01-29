@@ -184,7 +184,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 			return
 		}
 
-		err = serializeAndSendUpdate(u.fsm.con, update, u.options)
+		err = serializeAndSendUpdate(u.fsm.con, update, u.options, u.addressFamily.safi)
 		if err != nil {
 			log.Errorf("Failed to serialize and send: %v", err)
 		}
@@ -321,7 +321,7 @@ func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx *bnet.Prefix, p *ro
 		},
 	}
 
-	return serializeAndSendUpdate(out, update, u.options)
+	return serializeAndSendUpdate(out, update, u.options, u.addressFamily.safi)
 }
 
 func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
@@ -344,7 +344,7 @@ func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx *bnet.Pref
 		},
 	}
 
-	return serializeAndSendUpdate(out, update, u.options)
+	return serializeAndSendUpdate(out, update, u.options, u.addressFamily.safi)
 }
 
 // UpdateNewClient does nothing

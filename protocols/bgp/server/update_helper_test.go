@@ -13,7 +13,7 @@ import (
 
 type failingUpdate struct{}
 
-func (f *failingUpdate) SerializeUpdate(opt *packet.EncodeOptions) ([]byte, error) {
+func (f *failingUpdate) SerializeUpdate(opt *packet.EncodeOptions, safi uint8) ([]byte, error) {
 	return nil, errors.New("general error")
 }
 
@@ -88,7 +88,7 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			opt := &packet.EncodeOptions{}
-			err := serializeAndSendUpdate(test.buf, test.testUpdate, opt)
+			err := serializeAndSendUpdate(test.buf, test.testUpdate, opt, packet.UnicastSAFI)
 
 			if test.err == nil {
 				assert.NoError(t, err)

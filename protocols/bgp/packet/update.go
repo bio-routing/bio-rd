@@ -16,7 +16,7 @@ type BGPUpdate struct {
 }
 
 // SerializeUpdate serializes an BGPUpdate to wire format
-func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
+func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions, safi uint8) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
 
@@ -30,7 +30,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 
 	pathAttributesBuf := bytes.NewBuffer(nil)
 	for pa := b.PathAttributes; pa != nil; pa = pa.Next {
-		paLen := int(pa.Serialize(pathAttributesBuf, opt))
+		paLen := int(pa.Serialize(pathAttributesBuf, opt, safi))
 		budget -= paLen
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
@@ -73,7 +73,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (b *BGPUpdate) SerializeUpdateAddPath(opt *EncodeOptions) ([]byte, error) {
+func (b *BGPUpdate) SerializeUpdateAddPath(opt *EncodeOptions, safi uint8) ([]byte, error) {
 	budget := MaxLen - MinLen
 	buf := bytes.NewBuffer(nil)
 
@@ -87,7 +87,7 @@ func (b *BGPUpdate) SerializeUpdateAddPath(opt *EncodeOptions) ([]byte, error) {
 
 	pathAttributesBuf := bytes.NewBuffer(nil)
 	for pa := b.PathAttributes; pa != nil; pa = pa.Next {
-		paLen := int(pa.Serialize(pathAttributesBuf, opt))
+		paLen := int(pa.Serialize(pathAttributesBuf, opt, safi))
 		budget -= paLen
 		if budget < 0 {
 			return nil, fmt.Errorf("update too long")
