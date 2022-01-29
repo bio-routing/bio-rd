@@ -188,11 +188,11 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 }
 
 func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolCapability) {
-	if cap.SAFI != packet.UnicastSAFI {
+	if cap.SAFI != packet.SAFIUnicast {
 		return
 	}
 
-	if cap.AFI == packet.IPv4AFI && !s.fsm.peer.ipv4MultiProtocolAdvertised {
+	if cap.AFI == packet.AFIIPv4 && !s.fsm.peer.ipv4MultiProtocolAdvertised {
 		return
 	}
 
@@ -204,7 +204,7 @@ func (s *openSentState) processMultiProtocolCapability(cap packet.MultiProtocolC
 
 func (s *openSentState) processAddPathCapability(addPathCap packet.AddPathCapability) {
 	for _, addPathCapTuple := range addPathCap {
-		if addPathCapTuple.SAFI != packet.UnicastSAFI {
+		if addPathCapTuple.SAFI != packet.SAFIUnicast {
 			continue
 		}
 

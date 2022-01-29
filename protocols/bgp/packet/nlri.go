@@ -75,7 +75,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 	}
 	consumed++
 
-	if safi == LabeledUnicastSAFI {
+	if safi == SAFILabeledUnicast {
 		nlri.LabelStack = make([]LabelStackEntry, 0, 1)
 		for {
 			lse, err := decodeLabelStackEntry(buf)
@@ -120,14 +120,14 @@ func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, safi uint8) uint8 {
 	}
 
 	pfxLen := n.Prefix.Pfxlen()
-	if safi == LabeledUnicastSAFI {
+	if safi == SAFILabeledUnicast {
 		pfxLen += uint8(len(n.LabelStack) * BitsPerLabel)
 	}
 
 	buf.WriteByte(pfxLen)
 	numBytes++
 
-	if safi == LabeledUnicastSAFI {
+	if safi == SAFILabeledUnicast {
 		labelCount := len(n.LabelStack)
 		for i, l := range n.LabelStack {
 			l.serialize(buf, i == labelCount-1)

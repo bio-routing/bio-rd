@@ -213,18 +213,18 @@ func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 
 	afi, safi := s.updateAddressFamily(u)
 
-	if safi != packet.UnicastSAFI {
+	if safi != packet.SAFIUnicast {
 		// only unicast support, so other SAFIs are ignored
 		return newEstablishedState(s.fsm), s.fsm.reason
 	}
 
 	switch afi {
-	case packet.IPv4AFI:
+	case packet.AFIIPv4:
 		if s.fsm.ipv4Unicast == nil {
 			log.Warnf("Received update for family IPv4 unicast, but this family is not configured.")
 		}
 
-	case packet.IPv6AFI:
+	case packet.AFIIPv6:
 		if s.fsm.ipv6Unicast == nil {
 			log.Warnf("Received update for family IPv6 unicast, but this family is not configured.")
 		}
@@ -236,7 +236,7 @@ func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 
 func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16, safi uint8) {
 	if u.WithdrawnRoutes != nil || u.NLRI != nil {
-		return packet.IPv4AFI, packet.UnicastSAFI
+		return packet.AFIIPv4, packet.SAFIUnicast
 	}
 
 	for cur := u.PathAttributes; cur != nil; cur = cur.Next {

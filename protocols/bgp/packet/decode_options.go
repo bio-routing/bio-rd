@@ -9,14 +9,14 @@ type DecodeOptions struct {
 
 func (d *DecodeOptions) addPath(afi uint16, safi uint8) bool {
 	switch afi {
-	case IPv4AFI:
+	case AFIIPv4:
 		switch safi {
-		case UnicastSAFI:
+		case SAFIUnicast:
 			return d.AddPathIPv4Unicast
 		}
-	case IPv6AFI:
+	case AFIIPv6:
 		switch safi {
-		case UnicastSAFI:
+		case SAFIUnicast:
 			return d.AddPathIPv6Unicast
 		}
 	}

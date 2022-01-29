@@ -946,8 +946,8 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			expected: &PathAttribute{
 				Length: 28,
 				Value: MultiProtocolReachNLRI{
-					AFI:     IPv6AFI,
-					SAFI:    UnicastSAFI,
+					AFI:     AFIIPv6,
+					SAFI:    SAFIUnicast,
 					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Ptr(),
 					NLRI: &NLRI{
 						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Ptr(),
@@ -969,8 +969,8 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			expected: &PathAttribute{
 				Length: 44,
 				Value: MultiProtocolReachNLRI{
-					AFI:     IPv6AFI,
-					SAFI:    UnicastSAFI,
+					AFI:     AFIIPv6,
+					SAFI:    SAFIUnicast,
 					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Ptr(),
 					NLRI: &NLRI{
 						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2600, 0x6, 0xff05, 0, 0, 0, 0, 0), 48).Ptr(),
@@ -1008,8 +1008,8 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			expected: &PathAttribute{
 				Length: 21,
 				Value: MultiProtocolReachNLRI{
-					AFI:     IPv6AFI,
-					SAFI:    UnicastSAFI,
+					AFI:     AFIIPv6,
+					SAFI:    SAFIUnicast,
 					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Ptr(),
 				},
 			},
@@ -1042,8 +1042,8 @@ func TestDecodeMultiProtocolReachNLRI(t *testing.T) {
 			expected: &PathAttribute{
 				Length: 32,
 				Value: MultiProtocolReachNLRI{
-					AFI:     IPv6AFI,
-					SAFI:    UnicastSAFI,
+					AFI:     AFIIPv6,
+					SAFI:    SAFIUnicast,
 					NextHop: bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0x2).Ptr(),
 					NLRI: &NLRI{
 						PathIdentifier: 1,
@@ -1108,8 +1108,8 @@ func TestDecodeMultiProtocolUnreachNLRI(t *testing.T) {
 			expected: &PathAttribute{
 				Length: 10,
 				Value: MultiProtocolUnreachNLRI{
-					AFI:  IPv6AFI,
-					SAFI: UnicastSAFI,
+					AFI:  AFIIPv6,
+					SAFI: SAFIUnicast,
 					NLRI: &NLRI{
 						Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44).Ptr(),
 					},

@@ -27,7 +27,7 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (*bnet.Prefix, error)
 		return nil, fmt.Errorf("could not parse prefix of length %d. Expected %d bytes, got %d", pfxLen, numBytes, len(b))
 	}
 
-	if afi == IPv4AFI {
+	if afi == AFIIPv4 {
 		return bnet.NewPfx(bnet.IPv4FromBytes(b), pfxLen).Dedup(), nil
 	}
 
@@ -46,3 +46,5 @@ func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (*bnet.Prefix, error)
 
 	return pfx.Dedup(), nil
 }
+
+// REMOVE

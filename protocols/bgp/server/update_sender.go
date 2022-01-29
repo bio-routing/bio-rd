@@ -162,12 +162,12 @@ func (u *UpdateSender) getBudget(pathNLRIs *pathPfxs) int {
 }
 
 func (u *UpdateSender) updateOverhead() int {
-	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
+	if u.addressFamily.afi == packet.AFIIPv4 && !u.addressFamily.multiProtocol {
 		return 0
 	}
 
-	addrLen := packet.IPv4AFI
-	if u.addressFamily.afi == packet.IPv6AFI {
+	addrLen := packet.AFIIPv4
+	if u.addressFamily.afi == packet.AFIIPv6 {
 		addrLen = packet.IPv6Len
 	}
 
@@ -193,7 +193,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 }
 
 func (u *UpdateSender) updateMessageForPrefixes(pfxs []*bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
-	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
+	if u.addressFamily.afi == packet.AFIIPv4 && !u.addressFamily.multiProtocol {
 		return u.bgpUpdate(pfxs, pa, pathID)
 	}
 
@@ -304,7 +304,7 @@ func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx *bnet.Prefix, p *route.
 		return errors.New("got nil BGPPath")
 	}
 
-	if u.addressFamily.afi == packet.IPv4AFI && !u.addressFamily.multiProtocol {
+	if u.addressFamily.afi == packet.AFIIPv4 && !u.addressFamily.multiProtocol {
 		return u.withdrawPrefixIPv4(out, pfx, p)
 	}
 
@@ -317,7 +317,7 @@ func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx *bnet.Prefix, p *route.
 
 func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
 	update := &packet.BGPUpdate{
-		SAFI: packet.UnicastSAFI,
+		SAFI: packet.SAFIUnicast,
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
 			Prefix:         pfx,

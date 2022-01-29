@@ -29,7 +29,7 @@ func TestSender(t *testing.T) {
 	}{
 		{
 			name:    "Two paths with 3 NLRIs each",
-			afi:     packet.IPv4AFI,
+			afi:     packet.AFIIPv4,
 			addPath: routingtable.ClientOptions{BestOnly: true},
 			paths: []pathPfxs{
 				{
@@ -102,7 +102,7 @@ func TestSender(t *testing.T) {
 		},
 		{
 			name:    "Two paths with 3 NLRIs each with BGP Add Path",
-			afi:     packet.IPv4AFI,
+			afi:     packet.AFIIPv4,
 			addPath: routingtable.ClientOptions{MaxPaths: 10},
 			paths: []pathPfxs{
 				{
@@ -191,7 +191,7 @@ func TestSender(t *testing.T) {
 		},
 		{
 			name:    "Overflow. Too many NLRIs.",
-			afi:     packet.IPv4AFI,
+			afi:     packet.AFIIPv4,
 			addPath: routingtable.ClientOptions{BestOnly: true},
 			paths: []pathPfxs{
 				{
@@ -365,7 +365,7 @@ func TestSender(t *testing.T) {
 		},
 		{
 			name:    "Overflow with IPv6. Too many NLRIs.",
-			afi:     packet.IPv6AFI,
+			afi:     packet.AFIIPv6,
 			addPath: routingtable.ClientOptions{BestOnly: true},
 			paths: []pathPfxs{
 				{
@@ -905,8 +905,8 @@ func TestSender(t *testing.T) {
 		})
 
 		rib := locRIB.New("inet6.0")
-		if test.afi == packet.IPv6AFI {
-			fsmA.ipv6Unicast = newFSMAddressFamily(packet.IPv6AFI, packet.UnicastSAFI, &peerAddressFamily{
+		if test.afi == packet.AFIIPv6 {
+			fsmA.ipv6Unicast = newFSMAddressFamily(packet.AFIIPv6, packet.SAFIUnicast, &peerAddressFamily{
 				rib:               rib,
 				importFilterChain: filter.NewAcceptAllFilterChain(),
 				exportFilterChain: filter.NewAcceptAllFilterChain(),
@@ -914,7 +914,7 @@ func TestSender(t *testing.T) {
 			fsmA.ipv6Unicast.multiProtocol = true
 			fsmA.ipv6Unicast.addPathTX = test.addPath
 		} else {
-			fsmA.ipv4Unicast = newFSMAddressFamily(packet.IPv4AFI, packet.UnicastSAFI, &peerAddressFamily{
+			fsmA.ipv4Unicast = newFSMAddressFamily(packet.AFIIPv4, packet.SAFIUnicast, &peerAddressFamily{
 				rib:               rib,
 				importFilterChain: filter.NewAcceptAllFilterChain(),
 				exportFilterChain: filter.NewAcceptAllFilterChain(),
@@ -927,7 +927,7 @@ func TestSender(t *testing.T) {
 		fsmA.state = newEstablishedState(fsmA)
 		fsmA.con = btest.NewMockConn()
 
-		updateSender := newUpdateSender(fsmA.addressFamily(test.afi, packet.UnicastSAFI))
+		updateSender := newUpdateSender(fsmA.addressFamily(test.afi, packet.SAFIUnicast))
 
 		for _, pathPfx := range test.paths {
 			for _, pfx := range pathPfx.pfxs {
@@ -939,7 +939,7 @@ func TestSender(t *testing.T) {
 					y := i - x
 
 					var pfx *bnet.Prefix
-					if test.afi == packet.IPv6AFI {
+					if test.afi == packet.AFIIPv6 {
 						pfx = bnet.NewPfx(bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0), 48).Ptr()
 					} else {
 						pfx = bnet.NewPfx(bnet.IPv4FromOctets(10, 0, uint8(x), uint8(y)), 32).Ptr()
@@ -987,7 +987,7 @@ func TestWithdrawPrefix(t *testing.T) {
 	}{
 		{
 			name:          "Non bgp withdraw with ADD-PATH",
-			afi:           packet.IPv4AFI,
+			afi:           packet.AFIIPv4,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
@@ -999,7 +999,7 @@ func TestWithdrawPrefix(t *testing.T) {
 		},
 		{
 			name:          "Nil BGPPathType with ADD-PATH",
-			afi:           packet.IPv4AFI,
+			afi:           packet.AFIIPv4,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
@@ -1011,7 +1011,7 @@ func TestWithdrawPrefix(t *testing.T) {
 		},
 		{
 			name:          "Normal withdraw with ADD-PATH",
-			afi:           packet.IPv4AFI,
+			afi:           packet.AFIIPv4,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
@@ -1035,7 +1035,7 @@ func TestWithdrawPrefix(t *testing.T) {
 		},
 		{
 			name:          "Normal withdraw without ADD-PATH",
-			afi:           packet.IPv4AFI,
+			afi:           packet.AFIIPv4,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{BestOnly: true},
 			prefix:        bnet.NewPfx(bnet.IPv4(1413010532), 24).Ptr(),
@@ -1058,7 +1058,7 @@ func TestWithdrawPrefix(t *testing.T) {
 		},
 		{
 			name:          "IPv6 MP_UNREACH_NLRI",
-			afi:           packet.IPv6AFI,
+			afi:           packet.AFIIPv6,
 			multiProtocol: true,
 			addPathTX:     routingtable.ClientOptions{BestOnly: true},
 			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32).Ptr(),
@@ -1082,7 +1082,7 @@ func TestWithdrawPrefix(t *testing.T) {
 		},
 		{
 			name:          "IPv6 MP_UNREACH_NLRI with ADD-PATH",
-			afi:           packet.IPv6AFI,
+			afi:           packet.AFIIPv6,
 			multiProtocol: true,
 			addPathTX:     routingtable.ClientOptions{MaxPaths: 10},
 			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32).Ptr(),
@@ -1109,7 +1109,7 @@ func TestWithdrawPrefix(t *testing.T) {
 		},
 		{
 			name:          "IPv6 MP_UNREACH_NLRI without multi protocol being negotiated",
-			afi:           packet.IPv6AFI,
+			afi:           packet.AFIIPv6,
 			multiProtocol: false,
 			addPathTX:     routingtable.ClientOptions{BestOnly: true},
 			prefix:        bnet.NewPfx(bnet.IPv6FromBlocks(0x2804, 0x148c, 0, 0, 0, 0, 0, 0), 32).Ptr(),
@@ -1136,7 +1136,7 @@ func TestWithdrawPrefix(t *testing.T) {
 					addPathTX:     tc.addPathTX,
 					multiProtocol: tc.multiProtocol,
 					afi:           tc.afi,
-					safi:          packet.UnicastSAFI,
+					safi:          packet.SAFIUnicast,
 				},
 				options: &packet.EncodeOptions{
 					UseAddPath: !tc.addPathTX.BestOnly,

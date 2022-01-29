@@ -18,8 +18,8 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 		{
 			name: "Simple IPv6 prefix",
 			nlri: MultiProtocolUnreachNLRI{
-				AFI:  IPv6AFI,
-				SAFI: UnicastSAFI,
+				AFI:  AFIIPv6,
+				SAFI: SAFIUnicast,
 				NLRI: &NLRI{
 					Prefix: bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44).Dedup(),
 				},
@@ -33,8 +33,8 @@ func TestSerializeMultiProtocolUnreachNLRI(t *testing.T) {
 		{
 			name: "IPv6 prefix with ADD-PATH",
 			nlri: MultiProtocolUnreachNLRI{
-				AFI:  IPv6AFI,
-				SAFI: UnicastSAFI,
+				AFI:  AFIIPv6,
+				SAFI: SAFIUnicast,
 				NLRI: &NLRI{
 					PathIdentifier: 100,
 					Prefix:         bnet.NewPfx(bnet.IPv6FromBlocks(0x2620, 0x110, 0x9000, 0, 0, 0, 0, 0), 44).Dedup(),

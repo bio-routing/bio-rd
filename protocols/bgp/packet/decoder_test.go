@@ -1642,8 +1642,8 @@ func TestDecodeCapability(t *testing.T) {
 				Code:   MultiProtocolCapabilityCode,
 				Length: 4,
 				Value: MultiProtocolCapability{
-					AFI:  IPv6AFI,
-					SAFI: UnicastSAFI,
+					AFI:  AFIIPv6,
+					SAFI: SAFIUnicast,
 				},
 			},
 			wantFail: false,
