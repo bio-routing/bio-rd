@@ -20,7 +20,7 @@ const (
 // NLRI represents a Network Layer Reachability Information
 type NLRI struct {
 	PathIdentifier uint32
-	LabelStack     []Label
+	LabelStack     []LabelStackEntry
 	Prefix         *bnet.Prefix
 	Next           *NLRI
 }
@@ -76,7 +76,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 	consumed++
 
 	if safi == LabeledUnicastSAFI {
-		nlri.LabelStack = make([]Label, 0, 1)
+		nlri.LabelStack = make([]LabelStackEntry, 0, 1)
 		for {
 			label, err := decodeLabel(buf)
 			if err != nil {

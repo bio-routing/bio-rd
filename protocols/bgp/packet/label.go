@@ -8,10 +8,11 @@ import (
 )
 
 const bottomOfStackBit = 0x01
+const lengthEXPAndBottomOfStack = 0x04
 
-type Label uint32
+type LabelStackEntry uint32
 
-func (l Label) serialize(buf *bytes.Buffer, bottomOfStack bool) {
+func (l LabelStackEntry) serialize(buf *bytes.Buffer, bottomOfStack bool) {
 	x := convert.Uint32Byte(uint32(l << 12))
 
 	if bottomOfStack {
@@ -21,16 +22,21 @@ func (l Label) serialize(buf *bytes.Buffer, bottomOfStack bool) {
 	buf.Write(x[0:3])
 }
 
-func (l Label) isBottomOfStack() bool {
+func (l LabelStackEntry) isBottomOfStack() bool {
 	return l&bottomOfStackBit == bottomOfStackBit
 }
 
-func decodeLabel(buf *bytes.Buffer) (Label, error) {
+// GetLabel gets the label
+func (l LabelStackEntry) GetLabel() uint32 {
+	return uint32(l) >> lengthEXPAndBottomOfStack
+}
+
+func decodeLabel(buf *bytes.Buffer) (LabelStackEntry, error) {
 	label := make([]byte, BytesPerLabel)
 	_, err := buf.Read(label)
 	if err != nil {
-		return Label(0), errors.Wrap(err, "read failed")
+		return LabelStackEntry(0), errors.Wrap(err, "read failed")
 	}
 
-	return Label(convert.Uint32b([]byte{0, label[0], label[1], label[2]})), nil
+	return LabelStackEntry(convert.Uint32b([]byte{0, label[0], label[1], label[2]})), nil
 }

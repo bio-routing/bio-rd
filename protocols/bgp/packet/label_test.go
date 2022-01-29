@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/bio-routing/tflow2/convert"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLabelIsBottomOfStack(t *testing.T) {
 	tests := []struct {
 		name     string
-		label    Label
+		label    LabelStackEntry
 		expected bool
 	}{
 		{
@@ -40,12 +41,12 @@ func TestDecodeLabel(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    []byte
-		expected Label
+		expected LabelStackEntry
 	}{
 		{
 			name:     "Test #1",
 			input:    []byte{0x49, 0x33, 0x01},
-			expected: Label(0x00493301),
+			expected: LabelStackEntry(0x00493301),
 		},
 	}
 
@@ -56,6 +57,34 @@ func TestDecodeLabel(t *testing.T) {
 			t.Errorf("decodeLabel failed with %v", err)
 		}
 
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
+func TestGetLabel(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    LabelStackEntry
+		expected uint32
+	}{
+		{
+			name: "Test #1",
+			input: LabelStackEntry(convert.Uint32b([]byte{
+				0x00, 0x49, 0x33, 0x01,
+			})),
+			expected: 299824,
+		},
+		{
+			name: "Test #2",
+			input: LabelStackEntry(convert.Uint32b([]byte{
+				0x00, 0x49, 0x33, 0x00,
+			})),
+			expected: 299824,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.input.GetLabel()
 		assert.Equal(t, test.expected, res, test.name)
 	}
 }

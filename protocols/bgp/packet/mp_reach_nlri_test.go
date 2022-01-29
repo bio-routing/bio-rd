@@ -62,7 +62,7 @@ func TestSerializeMultiProtocolReachNLRI(t *testing.T) {
 				NextHop: bnet.IPv4FromOctets(192, 0, 2, 0).Dedup(),
 				NLRI: &NLRI{
 					Prefix: bnet.NewPfx(bnet.IPv4FromOctets(192, 0, 2, 0), 24).Dedup(),
-					LabelStack: []Label{
+					LabelStack: []LabelStackEntry{
 						299824,
 					},
 				},

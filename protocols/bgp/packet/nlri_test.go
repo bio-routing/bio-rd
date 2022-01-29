@@ -115,7 +115,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				LabelStack: []Label{
+				LabelStack: []LabelStackEntry{
 					0x00493301,
 				},
 				Prefix: bnet.NewPfx(bnet.IPv4FromOctets(5, 193, 0, 0), 18).Dedup(),
@@ -132,7 +132,7 @@ func TestDecodeNLRI(t *testing.T) {
 			},
 			wantFail: false,
 			expected: &NLRI{
-				LabelStack: []Label{
+				LabelStack: []LabelStackEntry{
 					0x00493300,
 					0x00493301,
 				},
