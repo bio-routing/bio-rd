@@ -7,7 +7,7 @@ type DecodeOptions struct {
 	Use32BitASN        bool
 }
 
-func (d *DecodeOptions) addPath(afi int, safi int) bool {
+func (d *DecodeOptions) addPath(afi uint16, safi uint8) bool {
 	switch afi {
 	case IPv4AFI:
 		switch safi {
