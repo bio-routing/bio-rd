@@ -2108,7 +2108,7 @@ func TestSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := test.msg.SerializeUpdate(&EncodeOptions{}, UnicastSAFI)
+		res, err := test.msg.SerializeUpdate(&EncodeOptions{})
 		if err != nil {
 			if test.wantFail {
 				continue
@@ -2315,7 +2315,7 @@ func TestSerializeAddPath(t *testing.T) {
 		opt := &EncodeOptions{
 			UseAddPath: true,
 		}
-		res, err := test.msg.SerializeUpdate(opt, UnicastSAFI)
+		res, err := test.msg.SerializeUpdate(opt)
 		if err != nil {
 			if test.wantFail {
 				continue

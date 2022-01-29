@@ -184,7 +184,7 @@ func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefix
 			return
 		}
 
-		err = serializeAndSendUpdate(u.fsm.con, update, u.options, u.addressFamily.safi)
+		err = serializeAndSendUpdate(u.fsm.con, update, u.options)
 		if err != nil {
 			log.Errorf("Failed to serialize and send: %v", err)
 		}
@@ -207,6 +207,7 @@ func (u *UpdateSender) updateMessageForPrefixes(pfxs []*bnet.Prefix, pa *packet.
 func (u *UpdateSender) bgpUpdate(pfxs []*bnet.Prefix, pa *packet.PathAttribute, pathID uint32) *packet.BGPUpdate {
 	update := &packet.BGPUpdate{
 		PathAttributes: pa,
+		SAFI:           u.addressFamily.safi,
 	}
 
 	var nlri *packet.NLRI
@@ -238,6 +239,7 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []*bnet.Prefix, pa *packet.Pa
 
 	return &packet.BGPUpdate{
 		PathAttributes: attrs,
+		SAFI:           u.addressFamily.safi,
 	}
 }
 
@@ -315,13 +317,14 @@ func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx *bnet.Prefix, p *route.
 
 func (u *UpdateSender) withdrawPrefixIPv4(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
 	update := &packet.BGPUpdate{
+		SAFI: packet.UnicastSAFI,
 		WithdrawnRoutes: &packet.NLRI{
 			PathIdentifier: p.BGPPath.PathIdentifier,
 			Prefix:         pfx,
 		},
 	}
 
-	return serializeAndSendUpdate(out, update, u.options, u.addressFamily.safi)
+	return serializeAndSendUpdate(out, update, u.options)
 }
 
 func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx *bnet.Prefix, p *route.Path) error {
@@ -344,7 +347,7 @@ func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx *bnet.Pref
 		},
 	}
 
-	return serializeAndSendUpdate(out, update, u.options, u.addressFamily.safi)
+	return serializeAndSendUpdate(out, update, u.options)
 }
 
 // UpdateNewClient does nothing
