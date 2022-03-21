@@ -6,7 +6,6 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/filter/actions"
-	"github.com/pkg/errors"
 )
 
 type PolicyOptions struct {
@@ -62,7 +61,7 @@ type NextHop struct {
 func (rf *RouteFilter) toFilterRouteFilter() (*filter.RouteFilter, error) {
 	pfx, err := bnet.PrefixFromString(rf.Prefix)
 	if err != nil {
-		return nil, errors.Wrap(err, "Invalid prefix")
+		return nil, fmt.Errorf("Invalid prefix: %w", err)
 	}
 
 	var m filter.PrefixMatcher
@@ -97,7 +96,7 @@ func (po *PolicyOptions) load() error {
 	for _, ps := range po.PolicyStatements {
 		f, err := ps.toFilter()
 		if err != nil {
-			return errors.Wrap(err, "Failed to convert policy_statement")
+			return fmt.Errorf("Failed to convert policy_statement: %w", err)
 		}
 
 		po.PolicyStatementsFilter = append(po.PolicyStatementsFilter, f)
@@ -112,7 +111,7 @@ func (ps *PolicyStatement) toFilter() (*filter.Filter, error) {
 	for _, t := range ps.Terms {
 		ft, err := t.toFilterTerm()
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to process filter term")
+			return nil, fmt.Errorf("Unable to process filter term: %w", err)
 		}
 
 		terms = append(terms, ft)
@@ -129,7 +128,7 @@ func (pst *PolicyStatementTerm) toFilterTerm() (*filter.Term, error) {
 	for i := range pst.From.RouteFilters {
 		rf, err := pst.From.RouteFilters[i].toFilterRouteFilter()
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse route filter")
+			return nil, fmt.Errorf("Unable to parse route filter: %w", err)
 		}
 
 		routeFilters = append(routeFilters, rf)
@@ -158,7 +157,7 @@ func (pst *PolicyStatementTerm) toFilterTerm() (*filter.Term, error) {
 	if pst.Then.NextHop != nil {
 		addr, err := bnet.IPFromString(pst.Then.NextHop.Address)
 		if err != nil {
-			return nil, errors.Wrap(err, "Invalid next_hop address")
+			return nil, fmt.Errorf("Invalid next_hop address: %w", err)
 		}
 
 		a = append(a, actions.NewSetNextHopAction(addr.Dedup()))

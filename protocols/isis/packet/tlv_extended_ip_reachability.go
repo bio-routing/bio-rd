@@ -6,7 +6,6 @@ import (
 
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -66,7 +65,7 @@ func readExtendedIPReachabilityTLV(buf *bytes.Buffer, tlvType uint8, tlvLength u
 	for toRead > 0 {
 		extIPReach, err := readExtendedIPReachability(buf)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to reach extended IP reachability")
+			return nil, fmt.Errorf("Unable to reach extended IP reachability: %w", err)
 		}
 
 		toRead -= ExtendedIPReachabilityLength

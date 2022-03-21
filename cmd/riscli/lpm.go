@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
@@ -61,7 +61,7 @@ func lpm(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, 
 		Pfx:    pfx.ToProto(),
 	})
 	if err != nil {
-		return errors.Wrap(err, "Unable to get client")
+		return fmt.Errorf("Unable to get client: %w", err)
 	}
 
 	for _, r := range resp.Routes {

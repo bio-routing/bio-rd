@@ -9,7 +9,6 @@ import (
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	btime "github.com/bio-routing/bio-rd/util/time"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -184,7 +183,7 @@ func (nifa *netIfa) _start() error {
 	} else {
 		ethHandler, err := ethernet.NewHandler(nifa.name, getISISBPF(), getISISLLC())
 		if err != nil {
-			return errors.Wrapf(err, "Unable to create ethernet handler (%s)", nifa.name)
+			return fmt.Errorf("Unable to create ethernet handler (%s): %w", nifa.name, err)
 		}
 		nifa.ethHandler = ethHandler
 	}
@@ -197,7 +196,7 @@ func (nifa *netIfa) _start() error {
 	err := nifa.ethHandler.MCastJoin(allISNetworkEntitiesAddr)
 	if err != nil {
 		nifa._stop()
-		return errors.Wrap(err, "Unable to join IS p2p hello multicast group")
+		return fmt.Errorf("Unable to join IS p2p hello multicast group: %w", err)
 	}
 
 	nifa.wg.Add(1)

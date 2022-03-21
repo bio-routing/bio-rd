@@ -2,13 +2,14 @@ package ethernet
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"reflect"
 	"syscall"
 	"unsafe"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -88,7 +89,7 @@ func (e *Handler) loadBPF(b *BPF) error {
 
 	err := syscall.SetsockoptString(e.socket, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, string(buf.Bytes()))
 	if err != nil {
-		return errors.Wrap(err, "Setsockopt failed (SO_ATTACH_FILTER)")
+		return fmt.Errorf("Setsockopt failed (SO_ATTACH_FILTER): %w", err)
 	}
 
 	return nil

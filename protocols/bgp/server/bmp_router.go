@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -129,7 +128,7 @@ func (r *Router) serve(con net.Conn) error {
 
 		msg, err := recvBMPMsg(r.con)
 		if err != nil {
-			return errors.Wrap(err, "Unable to get message")
+			return fmt.Errorf("Unable to get message: %w", err)
 		}
 
 		r.processMsg(msg)
@@ -283,7 +282,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	sentOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.SentOpenMsg[packet.HeaderLen:]))
 	if err != nil {
-		return errors.Wrapf(err, "Unable to decode sent open message sent from %v to %v", r.address.String(), msg.PerPeerHeader.PeerAddress)
+		return fmt.Errorf("Unable to decode sent open message sent from %v to %v: %w", r.address.String(), msg.PerPeerHeader.PeerAddress, err)
 	}
 
 	if len(msg.ReceivedOpenMsg) < packet.MinOpenLen {
@@ -292,7 +291,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	recvOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.ReceivedOpenMsg[packet.HeaderLen:]))
 	if err != nil {
-		return errors.Wrapf(err, "Unable to decode received open message sent from %v to %v", msg.PerPeerHeader.PeerAddress, r.address.String())
+		return fmt.Errorf("Unable to decode received open message sent from %v to %v: %w", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
 	}
 
 	addrLen := net.IPv4len
@@ -362,7 +361,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	err = r.neighborManager.addNeighbor(n)
 	if err != nil {
-		return errors.Wrap(err, "Unable to add neighbor")
+		return fmt.Errorf("Unable to add neighbor: %w", err)
 	}
 
 	r.ribClientsMu.Lock()

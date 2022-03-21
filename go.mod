@@ -4,7 +4,6 @@ require (
 	github.com/bio-routing/tflow2 v0.0.0-20181230153523-2e308a4a3c3a
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/pkg/errors v0.8.0
 	github.com/prometheus/client_golang v1.0.0
 	github.com/sirupsen/logrus v1.3.0
 	github.com/stretchr/testify v1.7.0

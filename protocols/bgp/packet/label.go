@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 const bottomOfStackBit = 0x01
@@ -40,7 +40,7 @@ func decodeLabelStackEntry(buf *bytes.Buffer) (LabelStackEntry, error) {
 	label := make([]byte, BytesPerLabel)
 	_, err := buf.Read(label)
 	if err != nil {
-		return LabelStackEntry(0), errors.Wrap(err, "read failed")
+		return LabelStackEntry(0), fmt.Errorf("read failed: %w", err)
 	}
 
 	return LabelStackEntry(convert.Uint32b([]byte{0, label[0], label[1], label[2]})), nil

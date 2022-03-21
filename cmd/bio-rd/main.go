@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,7 +16,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -135,14 +135,14 @@ func loadConfig(cfg *config.Config) error {
 		if cfg.Protocols.BGP != nil {
 			err := configureProtocolsBGP(cfg.Protocols.BGP)
 			if err != nil {
-				return errors.Wrap(err, "Unable to configure BGP")
+				return fmt.Errorf("Unable to configure BGP: %w", err)
 			}
 		}
 
 		if cfg.Protocols.ISIS != nil {
 			err := configureProtocolsISIS(cfg.Protocols.ISIS)
 			if err != nil {
-				return errors.Wrap(err, "Unable to configure ISIS")
+				return fmt.Errorf("Unable to configure ISIS: %w", err)
 			}
 		}
 	}
@@ -197,7 +197,7 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByRD(0))
 			err := bgpSrv.AddPeer(*newCfg)
 			if err != nil {
-				return errors.Wrap(err, "Unable to add BGP peer")
+				return fmt.Errorf("Unable to add BGP peer: %w", err)
 			}
 		}
 	}

@@ -1,10 +1,10 @@
 package server
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -18,7 +18,7 @@ func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *pack
 
 	_, err = out.Write(updateBytes)
 	if err != nil {
-		return errors.Wrap(err, "Failed sending Update")
+		return fmt.Errorf("Failed sending Update: %w", err)
 	}
 	return nil
 }

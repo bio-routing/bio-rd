@@ -1,9 +1,10 @@
 package kernel
 
 import (
+	"fmt"
+
 	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
-	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -16,12 +17,12 @@ const (
 func (k *Kernel) init() error {
 	lk, err := newLinuxKernel()
 	if err != nil {
-		return errors.Wrap(err, "Unable to initialize linux kernel")
+		return fmt.Errorf("Unable to initialize linux kernel: %w", err)
 	}
 
 	err = lk.init()
 	if err != nil {
-		return errors.Wrap(err, "Init failed")
+		return fmt.Errorf("Init failed: %w", err)
 	}
 	k.osKernel = lk
 	return nil
@@ -35,7 +36,7 @@ type linuxKernel struct {
 func newLinuxKernel() (*linuxKernel, error) {
 	h, err := netlink.NewHandle()
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get Netlink handle")
+		return nil, fmt.Errorf("Unable to get Netlink handle: %w", err)
 	}
 
 	return &linuxKernel{
@@ -47,7 +48,7 @@ func newLinuxKernel() (*linuxKernel, error) {
 func (lk *linuxKernel) init() error {
 	err := lk.cleanup()
 	if err != nil {
-		return errors.Wrap(err, "Cleanup failed")
+		return fmt.Errorf("Cleanup failed: %w", err)
 	}
 
 	return nil
@@ -64,13 +65,13 @@ func (lk *linuxKernel) cleanup() error {
 
 	routes, err := lk.h.RouteListFiltered(0, filter, netlink.RT_FILTER_PROTOCOL)
 	if err != nil {
-		return errors.Wrap(err, "Unable to get routes")
+		return fmt.Errorf("Unable to get routes: %w", err)
 	}
 
 	for i := range routes {
 		err = lk.h.RouteDel(&routes[i])
 		if err != nil {
-			return errors.Wrap(err, "Unable to remove route")
+			return fmt.Errorf("Unable to remove route: %w", err)
 		}
 	}
 
@@ -87,7 +88,7 @@ func (lk *linuxKernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 	if _, found := lk.routes[pfx]; !found {
 		err := lk.h.RouteAdd(r)
 		if err != nil {
-			return errors.Wrap(err, "Unable to add route")
+			return fmt.Errorf("Unable to add route: %w", err)
 		}
 
 		lk.routes[pfx] = struct{}{}
@@ -96,7 +97,7 @@ func (lk *linuxKernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 
 	err := lk.h.RouteReplace(r)
 	if err != nil {
-		return errors.Wrap(err, "Unable to replace route")
+		return fmt.Errorf("Unable to replace route: %w", err)
 	}
 
 	return nil

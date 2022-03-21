@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -39,24 +38,24 @@ func (rc *RIBConfig) GetVRFs() []uint64 {
 func LoadConfig(filepath string) (*RISMirrorConfig, error) {
 	f, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read config file")
+		return nil, fmt.Errorf("Unable to read config file: %w", err)
 	}
 
 	cfg := &RISMirrorConfig{}
 	err = yaml.Unmarshal(f, cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unmarshal failed")
+		return nil, fmt.Errorf("Unmarshal failed: %w", err)
 	}
 
 	for _, rc := range cfg.RIBConfigs {
 		err := rc.loadRouter()
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to load router config")
+			return nil, fmt.Errorf("Unable to load router config: %w", err)
 		}
 
 		err = rc.loadVRFs()
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to load VRFs")
+			return nil, fmt.Errorf("Unable to load VRFs: %w", err)
 		}
 	}
 
@@ -77,7 +76,7 @@ func (r *RIBConfig) loadVRFs() error {
 	for _, vrfHuman := range r.VRFs {
 		vrfRD, err := vrf.ParseHumanReadableRouteDistinguisher(vrfHuman)
 		if err != nil {
-			return errors.Wrap(err, "Unable to parse VRF identifier")
+			return fmt.Errorf("Unable to parse VRF identifier: %w", err)
 		}
 
 		r.vrfs = append(r.vrfs, vrfRD)

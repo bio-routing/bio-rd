@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decoder"
-	"github.com/pkg/errors"
 )
 
 // RouteMonitoringMsg represents a Route Monitoring Message
@@ -26,7 +26,7 @@ func decodeRouteMonitoringMsg(buf *bytes.Buffer, ch *CommonHeader) (*RouteMonito
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode per peer header")
+		return nil, fmt.Errorf("Unable to decode per peer header: %w", err)
 	}
 
 	rm.PerPeerHeader = pph

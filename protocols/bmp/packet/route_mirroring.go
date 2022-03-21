@@ -2,8 +2,7 @@ package packet
 
 import (
 	"bytes"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // RouteMirroringMsg represents a route mirroring message
@@ -25,7 +24,7 @@ func decodeRouteMirroringMsg(buf *bytes.Buffer, ch *CommonHeader) (*RouteMirrori
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode per peer header")
+		return nil, fmt.Errorf("Unable to decode per peer header: %w", err)
 	}
 
 	rm.PerPeerHeader = pph
@@ -36,7 +35,7 @@ func decodeRouteMirroringMsg(buf *bytes.Buffer, ch *CommonHeader) (*RouteMirrori
 	for read < toRead {
 		tlv, err := decodeInformationTLV(buf)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to decode TLV")
+			return nil, fmt.Errorf("Unable to decode TLV: %w", err)
 		}
 
 		rm.TLVs = append(rm.TLVs, tlv)

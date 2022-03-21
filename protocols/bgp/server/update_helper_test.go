@@ -2,12 +2,12 @@ package server
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

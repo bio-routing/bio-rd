@@ -2,11 +2,11 @@ package ethernet
 
 import (
 	"bytes"
+	"fmt"
 	"syscall"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 type packetMreq struct {
@@ -36,7 +36,7 @@ func (e *Handler) MCastJoin(addr MACAddr) error {
 
 	err := syscall.SetsockoptString(e.socket, syscall.SOL_PACKET, syscall.PACKET_ADD_MEMBERSHIP, string(mreq.serialize()))
 	if err != nil {
-		return errors.Wrap(err, "Setsockopt failed")
+		return fmt.Errorf("Setsockopt failed: %w", err)
 	}
 
 	return nil

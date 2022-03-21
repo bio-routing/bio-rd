@@ -12,7 +12,6 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -81,7 +80,7 @@ func (b *bgpServer) Start() error {
 		for _, addr := range b.listenAddrs {
 			l, err := NewTCPListener(addr, acceptCh)
 			if err != nil {
-				return errors.Wrapf(err, "Failed to start TCPListener for %s", addr)
+				return fmt.Errorf("Failed to start TCPListener for %s: %w", addr, err)
 			}
 			b.listeners = append(b.listeners, l)
 		}
@@ -206,7 +205,7 @@ func (b *bgpServer) AddPeer(c PeerConfig) error {
 		for _, l := range b.listeners {
 			err = l.setTCPMD5(c.PeerAddress.ToNetIP(), c.AuthenticationKey)
 			if err != nil {
-				return errors.Wrap(err, "Unable to set TCP MD5 secret")
+				return fmt.Errorf("Unable to set TCP MD5 secret: %w", err)
 			}
 		}
 	}

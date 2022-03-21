@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 type Global struct {
@@ -30,7 +29,7 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 	if g.RouterID == 0 {
 		rtrid, err := generateRouterID()
 		if err != nil {
-			return errors.Wrap(err, "Unable to determine router ID")
+			return fmt.Errorf("Unable to determine router ID: %w", err)
 		}
 		g.RouterID = rtrid
 	}
@@ -65,7 +64,7 @@ func _getHighestIP(ifs []net.Interface) (net.IP, error) {
 	for _, iface := range ifs {
 		addrs, err := iface.Addrs()
 		if err != nil {
-			return nil, errors.Wrapf(err, "Unable to get interface addrs for %s", iface.Name)
+			return nil, fmt.Errorf("Unable to get interface addrs for %s: %w", iface.Name, err)
 		}
 
 		for _, addr := range addrs {
@@ -93,7 +92,7 @@ func _getHighestIP(ifs []net.Interface) (net.IP, error) {
 func getLoopbackIP() (net.IP, error) {
 	iface, err := net.InterfaceByName("lo")
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get interface lo")
+		return nil, fmt.Errorf("Unable to get interface lo: %w", err)
 	}
 
 	return _getLoopbackIP(iface)
@@ -102,7 +101,7 @@ func getLoopbackIP() (net.IP, error) {
 func _getLoopbackIP(iface *net.Interface) (net.IP, error) {
 	addrs, err := iface.Addrs()
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get interface addresses")
+		return nil, fmt.Errorf("Unable to get interface addresses: %w", err)
 	}
 
 	candidates := make([]net.IP, 0)

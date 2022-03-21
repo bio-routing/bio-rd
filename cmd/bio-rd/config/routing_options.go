@@ -1,8 +1,9 @@
 package config
 
 import (
+	"fmt"
+
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/pkg/errors"
 )
 
 type RoutingOptions struct {
@@ -15,7 +16,7 @@ type RoutingOptions struct {
 func (r *RoutingOptions) load() error {
 	addr, err := bnet.IPFromString(r.RouterID)
 	if err != nil {
-		return errors.Wrap(err, "Unable to parse router id")
+		return fmt.Errorf("Unable to parse router id: %w", err)
 	}
 	r.RouterIDUint32 = uint32(addr.Lower())
 

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/bio-routing/bio-rd/net/api"
-	"github.com/pkg/errors"
 )
 
 // Prefix represents an IPv4 prefix
@@ -50,7 +49,7 @@ func PrefixFromString(s string) (*Prefix, error) {
 
 	l, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to convert to int")
+		return nil, fmt.Errorf("Unable to convert to int: %w", err)
 	}
 
 	return &Prefix{
@@ -97,7 +96,7 @@ func StrToAddr(x string) (uint32, error) {
 	for i := 0; i < 4; i++ {
 		y, err := strconv.Atoi(parts[i])
 		if err != nil {
-			return 0, errors.Wrapf(err, "Unable to convert %q to int", parts[i])
+			return 0, fmt.Errorf("Unable to convert %q to int: %w", parts[i], err)
 		}
 
 		if y > 255 {

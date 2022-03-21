@@ -9,7 +9,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -55,7 +54,7 @@ func NewServer(b server.BMPServerInterface) *Server {
 }
 
 func wrapGetRIBErr(err error, rtr string, vrfID uint64, version api.IP_Version) error {
-	return errors.Wrapf(err, "Unable to get RIB (%s/%s/v%d)", rtr, vrf.RouteDistinguisherHumanReadable(vrfID), version)
+	return fmt.Errorf("Unable to get RIB (%s/%s/v%d): %w", rtr, vrf.RouteDistinguisherHumanReadable(vrfID), version, err)
 }
 
 func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*locRIB.LocRIB, error) {
@@ -309,7 +308,7 @@ func getVRFID(req RequestWithVRF) (uint64, error) {
 	if req.GetVrf() != "" {
 		vrfID, err := vrf.ParseHumanReadableRouteDistinguisher(req.GetVrf())
 		if err != nil {
-			return 0, errors.Wrap(err, "Unable to parse VRF")
+			return 0, fmt.Errorf("Unable to parse VRF: %w", err)
 		}
 
 		return vrfID, nil

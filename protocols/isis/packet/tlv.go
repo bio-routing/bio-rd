@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -35,7 +34,7 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 	for buf.Len() > 0 {
 		tlv, err := readTLV(buf)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read TLV")
+			return nil, fmt.Errorf("Unable to read TLV: %w", err)
 		}
 
 		TLVs = append(TLVs, tlv)

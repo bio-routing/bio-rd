@@ -7,7 +7,6 @@ import (
 	"os"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
@@ -78,7 +77,7 @@ func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint
 		Filter:  filter,
 	})
 	if err != nil {
-		return errors.Wrap(err, "Unable to get client")
+		return fmt.Errorf("Unable to get client: %w", err)
 	}
 
 	for {
@@ -87,7 +86,7 @@ func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint
 			if err == io.EOF {
 				return nil
 			}
-			return errors.Wrap(err, "Received failed")
+			return fmt.Errorf("Received failed: %w", err)
 		}
 
 		printRoute(r.Route)

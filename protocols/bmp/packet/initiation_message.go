@@ -2,8 +2,7 @@ package packet
 
 import (
 	"bytes"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // InitiationMessage represents an initiation message
@@ -29,7 +28,7 @@ func decodeInitiationMessage(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	for read < toRead {
 		tlv, err := decodeInformationTLV(buf)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to decode TLV")
+			return nil, fmt.Errorf("Unable to decode TLV: %w", err)
 		}
 
 		im.TLVs = append(im.TLVs, tlv)

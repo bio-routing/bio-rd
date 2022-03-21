@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -160,7 +159,7 @@ func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
 
 	asn, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return 0, errors.Wrap(err, "Unable to convert first part to int")
+		return 0, fmt.Errorf("Unable to convert first part to int: %w", err)
 	}
 
 	maxUint32 := int(^uint32(0))
@@ -170,7 +169,7 @@ func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
 
 	netID, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return 0, errors.Wrap(err, "Unable to convert second part to int")
+		return 0, fmt.Errorf("Unable to convert second part to int: %w", err)
 	}
 
 	if netID > maxUint32 {

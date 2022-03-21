@@ -9,7 +9,6 @@ import (
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -91,7 +90,7 @@ func (nm *neighborManager) neighborUp(src ethernet.MACAddr) bool {
 func (nm *neighborManager) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello) error {
 	err := nm.validateP2PHello(hello)
 	if err != nil {
-		return errors.Wrapf(err, "Invalid p2p hello msg from %s", src.String())
+		return fmt.Errorf("Invalid p2p hello msg from %s: %w", src.String(), err)
 	}
 
 	if nm.level == 1 {

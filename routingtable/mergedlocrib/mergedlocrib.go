@@ -2,14 +2,15 @@ package mergedlocrib
 
 import (
 	"crypto/sha1"
-	"google.golang.org/protobuf/proto"
+	"fmt"
 	"sync"
+
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bio-routing/bio-rd/route"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/mergedlocrib/metrics"
-	"github.com/pkg/errors"
 )
 
 // MergedLocRIB provides an deduplicated routing table
@@ -41,7 +42,7 @@ func (rtm *MergedLocRIB) DropAllBySrc(src interface{}) {
 func (rtm *MergedLocRIB) AddRoute(cc interface{}, r *routeapi.Route) error {
 	h, err := hashRoute(r)
 	if err != nil {
-		return errors.Wrap(err, "Hashing failed")
+		return fmt.Errorf("Hashing failed: %w", err)
 	}
 
 	rtm.routesMu.Lock()
@@ -62,7 +63,7 @@ func (rtm *MergedLocRIB) AddRoute(cc interface{}, r *routeapi.Route) error {
 func (rtm *MergedLocRIB) RemoveRoute(cc interface{}, r *routeapi.Route) error {
 	h, err := hashRoute(r)
 	if err != nil {
-		return errors.Wrap(err, "Hashing failed")
+		return fmt.Errorf("Hashing failed: %w", err)
 	}
 
 	rtm.routesMu.Lock()
@@ -91,13 +92,13 @@ func (rtm *MergedLocRIB) _delRoute(h [sha1.Size]byte, src interface{}, r *routea
 func hashRoute(route *routeapi.Route) ([sha1.Size]byte, error) {
 	m, err := proto.Marshal(route)
 	if err != nil {
-		return [sha1.Size]byte{}, errors.Wrap(err, "Proto marshal failed")
+		return [sha1.Size]byte{}, fmt.Errorf("Proto marshal failed: %w", err)
 	}
 
 	h := sha1.New()
 	_, err = h.Write(m)
 	if err != nil {
-		return [sha1.Size]byte{}, errors.Wrap(err, "Write failed")
+		return [sha1.Size]byte{}, fmt.Errorf("Write failed: %w", err)
 	}
 	res := [sha1.Size]byte{}
 	x := h.Sum(nil)
