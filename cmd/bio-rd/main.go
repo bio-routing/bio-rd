@@ -39,7 +39,7 @@ func main() {
 
 	startCfg, err := config.GetConfig(*configFilePath)
 	if err != nil {
-		log.Errorf("Unable to get config: %v", err)
+		log.Errorf("unable to get config: %v", err)
 		os.Exit(1)
 	}
 
@@ -115,7 +115,7 @@ func configReloader() {
 
 		err = loadConfig(newCfg)
 		if err != nil {
-			log.Errorf("Unable to load config: %v", err)
+			log.Errorf("unable to load config: %v", err)
 			continue
 		}
 
@@ -135,14 +135,14 @@ func loadConfig(cfg *config.Config) error {
 		if cfg.Protocols.BGP != nil {
 			err := configureProtocolsBGP(cfg.Protocols.BGP)
 			if err != nil {
-				return fmt.Errorf("Unable to configure BGP: %w", err)
+				return fmt.Errorf("unable to configure BGP: %w", err)
 			}
 		}
 
 		if cfg.Protocols.ISIS != nil {
 			err := configureProtocolsISIS(cfg.Protocols.ISIS)
 			if err != nil {
-				return fmt.Errorf("Unable to configure ISIS: %w", err)
+				return fmt.Errorf("unable to configure ISIS: %w", err)
 			}
 		}
 	}
@@ -197,7 +197,7 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByRD(0))
 			err := bgpSrv.AddPeer(*newCfg)
 			if err != nil {
-				return fmt.Errorf("Unable to add BGP peer: %w", err)
+				return fmt.Errorf("unable to add BGP peer: %w", err)
 			}
 		}
 	}

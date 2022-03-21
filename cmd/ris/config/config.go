@@ -23,7 +23,7 @@ type BMPServer struct {
 func LoadConfig(filepath string) (*RISConfig, error) {
 	f, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read config file: %w", err)
+		return nil, fmt.Errorf("unable to read config file: %w", err)
 	}
 
 	cfg := &RISConfig{}

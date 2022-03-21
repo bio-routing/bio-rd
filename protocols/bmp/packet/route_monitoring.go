@@ -26,7 +26,7 @@ func decodeRouteMonitoringMsg(buf *bytes.Buffer, ch *CommonHeader) (*RouteMonito
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode per peer header: %w", err)
+		return nil, fmt.Errorf("unable to decode per peer header: %w", err)
 	}
 
 	rm.PerPeerHeader = pph

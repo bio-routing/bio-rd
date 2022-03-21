@@ -115,7 +115,7 @@ func (s *Server) Serve() error {
 	// GRPC
 	grpcLis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.grpcSrv.port))
 	if err != nil {
-		return fmt.Errorf("Unable to listen: %v", err)
+		return fmt.Errorf("unable to listen: %v", err)
 	}
 
 	wg.Add(1)

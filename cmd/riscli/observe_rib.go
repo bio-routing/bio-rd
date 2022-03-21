@@ -67,7 +67,7 @@ func observeRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID u
 		Afisafi: afisafi,
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to get client: %w", err)
+		return fmt.Errorf("unable to get client: %w", err)
 	}
 
 	for {

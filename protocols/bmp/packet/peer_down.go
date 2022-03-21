@@ -32,7 +32,7 @@ func decodePeerDownNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerDownN
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode per peer header: %w", err)
+		return nil, fmt.Errorf("unable to decode per peer header: %w", err)
 	}
 
 	p.PerPeerHeader = pph
@@ -57,7 +57,7 @@ func decodePeerDownNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerDownN
 
 	err = decoder.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read Data: %w", err)
+		return nil, fmt.Errorf("unable to read Data: %w", err)
 	}
 
 	return p, nil

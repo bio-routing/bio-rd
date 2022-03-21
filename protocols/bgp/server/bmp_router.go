@@ -128,7 +128,7 @@ func (r *Router) serve(con net.Conn) error {
 
 		msg, err := recvBMPMsg(r.con)
 		if err != nil {
-			return fmt.Errorf("Unable to get message: %w", err)
+			return fmt.Errorf("unable to get message: %w", err)
 		}
 
 		r.processMsg(msg)
@@ -143,7 +143,7 @@ func (r *Router) cleanup() {
 func (r *Router) processMsg(msg []byte) {
 	bmpMsg, err := bmppkt.Decode(msg)
 	if err != nil {
-		r.logger.Errorf("Unable to decode BMP message: %v", err)
+		r.logger.Errorf("unable to decode BMP message: %v", err)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (r *Router) processMsg(msg []byte) {
 	case bmppkt.PeerUpNotificationType:
 		err = r.processPeerUpNotification(bmpMsg.(*bmppkt.PeerUpNotification))
 		if err != nil {
-			r.logger.Errorf("Unable to process peer up notification: %v", err)
+			r.logger.Errorf("unable to process peer up notification: %v", err)
 		}
 	case bmppkt.PeerDownNotificationType:
 		r.processPeerDownNotification(bmpMsg.(*bmppkt.PeerDownNotification))
@@ -282,7 +282,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	sentOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.SentOpenMsg[packet.HeaderLen:]))
 	if err != nil {
-		return fmt.Errorf("Unable to decode sent open message sent from %v to %v: %w", r.address.String(), msg.PerPeerHeader.PeerAddress, err)
+		return fmt.Errorf("unable to decode sent open message sent from %v to %v: %w", r.address.String(), msg.PerPeerHeader.PeerAddress, err)
 	}
 
 	if len(msg.ReceivedOpenMsg) < packet.MinOpenLen {
@@ -291,7 +291,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	recvOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.ReceivedOpenMsg[packet.HeaderLen:]))
 	if err != nil {
-		return fmt.Errorf("Unable to decode received open message sent from %v to %v: %w", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
+		return fmt.Errorf("unable to decode received open message sent from %v to %v: %w", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
 	}
 
 	addrLen := net.IPv4len
@@ -325,7 +325,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	rib4, found := fsm.peer.vrf.RIBByName("inet.0")
 	if !found {
-		return fmt.Errorf("Unable to get inet RIB")
+		return fmt.Errorf("unable to get inet RIB")
 	}
 	fsm.ipv4Unicast = newFSMAddressFamily(packet.AFIIPv4, packet.SAFIUnicast, &peerAddressFamily{
 		rib:               rib4,
@@ -335,7 +335,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	rib6, found := fsm.peer.vrf.RIBByName("inet6.0")
 	if !found {
-		return fmt.Errorf("Unable to get inet6 RIB")
+		return fmt.Errorf("unable to get inet6 RIB")
 	}
 
 	fsm.ipv6Unicast = newFSMAddressFamily(packet.AFIIPv6, packet.SAFIUnicast, &peerAddressFamily{
@@ -361,7 +361,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	err = r.neighborManager.addNeighbor(n)
 	if err != nil {
-		return fmt.Errorf("Unable to add neighbor: %w", err)
+		return fmt.Errorf("unable to add neighbor: %w", err)
 	}
 
 	r.ribClientsMu.Lock()

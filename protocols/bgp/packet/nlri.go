@@ -35,7 +35,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, safi uint8, addPa
 	for p < length {
 		nlri, consumed, err = decodeNLRI(buf, afi, safi, addPath)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode NLRI: %w", err)
+			return nil, fmt.Errorf("unable to decode NLRI: %w", err)
 		}
 		p += uint16(consumed)
 
@@ -62,7 +62,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 			&nlri.PathIdentifier,
 		})
 		if err != nil {
-			return nil, consumed, fmt.Errorf("Unable to decode path identifier: %w", err)
+			return nil, consumed, fmt.Errorf("unable to decode path identifier: %w", err)
 		}
 
 		consumed += PathIdentifierLen

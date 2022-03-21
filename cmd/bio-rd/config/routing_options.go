@@ -16,7 +16,7 @@ type RoutingOptions struct {
 func (r *RoutingOptions) load() error {
 	addr, err := bnet.IPFromString(r.RouterID)
 	if err != nil {
-		return fmt.Errorf("Unable to parse router id: %w", err)
+		return fmt.Errorf("unable to parse router id: %w", err)
 	}
 	r.RouterIDUint32 = uint32(addr.Lower())
 

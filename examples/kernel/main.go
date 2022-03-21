@@ -14,7 +14,7 @@ import (
 func main() {
 	vrf, err := vrf.New("inet.0", 0)
 	if err != nil {
-		log.Errorf("Unable to create VRF: %v", err)
+		log.Errorf("unable to create VRF: %v", err)
 		os.Exit(1)
 	}
 
@@ -28,7 +28,7 @@ func main() {
 
 	k, err := kernel.New()
 	if err != nil {
-		log.Errorf("Unable to create protocol kernel: %v", err)
+		log.Errorf("unable to create protocol kernel: %v", err)
 		os.Exit(1)
 	}
 	defer k.Dispose()

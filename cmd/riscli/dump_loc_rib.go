@@ -77,7 +77,7 @@ func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint
 		Filter:  filter,
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to get client: %w", err)
+		return fmt.Errorf("unable to get client: %w", err)
 	}
 
 	for {

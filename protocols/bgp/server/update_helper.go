@@ -12,7 +12,7 @@ import (
 func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *packet.EncodeOptions) error {
 	updateBytes, err := update.SerializeUpdate(opt)
 	if err != nil {
-		log.Errorf("Unable to serialize BGP Update: %v", err)
+		log.Errorf("unable to serialize BGP Update: %v", err)
 		return nil
 	}
 

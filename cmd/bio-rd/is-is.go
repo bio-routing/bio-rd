@@ -25,12 +25,12 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 		var err error
 		isisSrv, err = server.New(nets, ds, isis.LSPLifetime)
 		if err != nil {
-			return fmt.Errorf("Unable to create ISIS server: %w", err)
+			return fmt.Errorf("unable to create ISIS server: %w", err)
 		}
 
 		err = isisSrv.Start()
 		if err != nil {
-			return fmt.Errorf("Unable to start ISIS server: %w", err)
+			return fmt.Errorf("unable to start ISIS server: %w", err)
 		}
 	}
 
@@ -44,7 +44,7 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 			Level2:       translateInterfaceLevelConfig(ifa.Level2),
 		})
 		if err != nil {
-			return fmt.Errorf("Unable to add interface: %s: %w", ifa.Name, err)
+			return fmt.Errorf("unable to add interface: %s: %w", ifa.Name, err)
 		}
 	}
 
@@ -71,12 +71,12 @@ func parseNETs(nets []string) ([]*types.NET, error) {
 	for _, net := range nets {
 		b, err := parseHexString(net)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to convert NET hex string into ints: %w", err)
+			return nil, fmt.Errorf("unable to convert NET hex string into ints: %w", err)
 		}
 
 		n, err := types.ParseNET(b)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse NET %q: %w", net, err)
+			return nil, fmt.Errorf("unable to parse NET %q: %w", net, err)
 		}
 
 		ret = append(ret, n)
@@ -95,7 +95,7 @@ func parseHexString(s string) ([]byte, error) {
 	for i := 0; i < len(runes); i += 2 {
 		x, err := strconv.ParseInt(fmt.Sprintf("%c%c", runes[i], runes[i+1]), 16, 8)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse int: %w", err)
+			return nil, fmt.Errorf("unable to parse int: %w", err)
 		}
 
 		ret = append(ret, uint8(x))

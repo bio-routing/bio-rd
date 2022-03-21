@@ -11,7 +11,7 @@ import (
 func (ds *Server) loadAdapter() error {
 	a, err := newOSAdapterLinux(ds)
 	if err != nil {
-		return fmt.Errorf("Unable to create linux adapter: %w", err)
+		return fmt.Errorf("unable to create linux adapter: %w", err)
 	}
 
 	ds.osAdapter = a
@@ -42,13 +42,13 @@ func (o *osAdapterLinux) start() error {
 	chLU := make(chan netlink.LinkUpdate)
 	err := netlink.LinkSubscribe(chLU, o.done)
 	if err != nil {
-		return fmt.Errorf("Unable to subscribe for link updates: %w", err)
+		return fmt.Errorf("unable to subscribe for link updates: %w", err)
 	}
 
 	chAU := make(chan netlink.AddrUpdate)
 	err = netlink.AddrSubscribe(chAU, o.done)
 	if err != nil {
-		return fmt.Errorf("Unable to subscribe for address updates: %w", err)
+		return fmt.Errorf("unable to subscribe for address updates: %w", err)
 	}
 
 	err = o.init()
@@ -65,7 +65,7 @@ func (o *osAdapterLinux) start() error {
 func (o *osAdapterLinux) init() error {
 	links, err := o.handle.LinkList()
 	if err != nil {
-		return fmt.Errorf("Unable to get links: %w", err)
+		return fmt.Errorf("unable to get links: %w", err)
 	}
 
 	for _, l := range links {
@@ -73,7 +73,7 @@ func (o *osAdapterLinux) init() error {
 
 		addrs, err := o.handle.AddrList(l, 0)
 		if err != nil {
-			return fmt.Errorf("Unable to get addresses for interface %s: %w", d.name, err)
+			return fmt.Errorf("unable to get addresses for interface %s: %w", d.name, err)
 		}
 
 		for _, addr := range addrs {

@@ -65,7 +65,7 @@ func readExtendedIPReachabilityTLV(buf *bytes.Buffer, tlvType uint8, tlvLength u
 	for toRead > 0 {
 		extIPReach, err := readExtendedIPReachability(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to reach extended IP reachability: %w", err)
+			return nil, fmt.Errorf("unable to reach extended IP reachability: %w", err)
 		}
 
 		toRead -= ExtendedIPReachabilityLength
@@ -134,7 +134,7 @@ func readExtendedIPReachability(buf *bytes.Buffer) (*ExtendedIPReachability, err
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	if !e.hasSubTLVs() {
@@ -144,7 +144,7 @@ func readExtendedIPReachability(buf *bytes.Buffer) (*ExtendedIPReachability, err
 	subTLVsLen := uint8(0)
 	err = decode.Decode(buf, []interface{}{&subTLVsLen})
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	toRead := subTLVsLen

@@ -38,7 +38,7 @@ func (rc *RIBConfig) GetVRFs() []uint64 {
 func LoadConfig(filepath string) (*RISMirrorConfig, error) {
 	f, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read config file: %w", err)
+		return nil, fmt.Errorf("unable to read config file: %w", err)
 	}
 
 	cfg := &RISMirrorConfig{}
@@ -50,12 +50,12 @@ func LoadConfig(filepath string) (*RISMirrorConfig, error) {
 	for _, rc := range cfg.RIBConfigs {
 		err := rc.loadRouter()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to load router config: %w", err)
+			return nil, fmt.Errorf("unable to load router config: %w", err)
 		}
 
 		err = rc.loadVRFs()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to load VRFs: %w", err)
+			return nil, fmt.Errorf("unable to load VRFs: %w", err)
 		}
 	}
 
@@ -65,7 +65,7 @@ func LoadConfig(filepath string) (*RISMirrorConfig, error) {
 func (r *RIBConfig) loadRouter() error {
 	addr := net.ParseIP(r.Router)
 	if addr == nil {
-		return fmt.Errorf("Unable to parse routers IP: %q", r.Router)
+		return fmt.Errorf("unable to parse routers IP: %q", r.Router)
 	}
 
 	r.router = addr
@@ -76,7 +76,7 @@ func (r *RIBConfig) loadVRFs() error {
 	for _, vrfHuman := range r.VRFs {
 		vrfRD, err := vrf.ParseHumanReadableRouteDistinguisher(vrfHuman)
 		if err != nil {
-			return fmt.Errorf("Unable to parse VRF identifier: %w", err)
+			return fmt.Errorf("unable to parse VRF identifier: %w", err)
 		}
 
 		r.vrfs = append(r.vrfs, vrfRD)

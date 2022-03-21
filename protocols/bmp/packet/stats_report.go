@@ -27,7 +27,7 @@ func decodeStatsReport(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode per peer header: %w", err)
+		return nil, fmt.Errorf("unable to decode per peer header: %w", err)
 	}
 
 	sr.PerPeerHeader = pph
@@ -45,7 +45,7 @@ func decodeStatsReport(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	for i := uint32(0); i < sr.StatsCount; i++ {
 		infoTLV, err := decodeInformationTLV(buf)
 		if err != nil {
-			return sr, fmt.Errorf("Unable to decode information TLV: %w", err)
+			return sr, fmt.Errorf("unable to decode information TLV: %w", err)
 		}
 
 		sr.Stats[i] = infoTLV

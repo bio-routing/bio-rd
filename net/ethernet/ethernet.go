@@ -72,7 +72,7 @@ func (e *Handler) init(b *BPF) error {
 
 	err = e.loadBPF(b)
 	if err != nil {
-		return fmt.Errorf("Unable to load BPF: %w", err)
+		return fmt.Errorf("unable to load BPF: %w", err)
 	}
 
 	err = syscall.Bind(e.socket, &syscall.SockaddrLinklayer{

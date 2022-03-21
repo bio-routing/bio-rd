@@ -145,7 +145,7 @@ func (nifa *netIfa) DeviceUpdate(dev device.DeviceInterface) {
 
 		err := nifa._start()
 		if err != nil {
-			log.Errorf("Unable to start ISIS on interface %s: %v", nifa.name, err)
+			log.Errorf("unable to start ISIS on interface %s: %v", nifa.name, err)
 		}
 
 		return
@@ -183,7 +183,7 @@ func (nifa *netIfa) _start() error {
 	} else {
 		ethHandler, err := ethernet.NewHandler(nifa.name, getISISBPF(), getISISLLC())
 		if err != nil {
-			return fmt.Errorf("Unable to create ethernet handler (%s): %w", nifa.name, err)
+			return fmt.Errorf("unable to create ethernet handler (%s): %w", nifa.name, err)
 		}
 		nifa.ethHandler = ethHandler
 	}
@@ -196,7 +196,7 @@ func (nifa *netIfa) _start() error {
 	err := nifa.ethHandler.MCastJoin(allISNetworkEntitiesAddr)
 	if err != nil {
 		nifa._stop()
-		return fmt.Errorf("Unable to join IS p2p hello multicast group: %w", err)
+		return fmt.Errorf("unable to join IS p2p hello multicast group: %w", err)
 	}
 
 	nifa.wg.Add(1)

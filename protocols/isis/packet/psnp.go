@@ -87,12 +87,12 @@ func DecodePSNP(buf *bytes.Buffer) (*PSNP, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	tlvs, err := readTLVs(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read TLVs: %w", err)
+		return nil, fmt.Errorf("unable to read TLVs: %w", err)
 	}
 
 	psnp.TLVs = tlvs

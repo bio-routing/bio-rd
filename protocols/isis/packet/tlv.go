@@ -34,7 +34,7 @@ func readTLVs(buf *bytes.Buffer) ([]TLV, error) {
 	for buf.Len() > 0 {
 		tlv, err := readTLV(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read TLV: %w", err)
+			return nil, fmt.Errorf("unable to read TLV: %w", err)
 		}
 
 		TLVs = append(TLVs, tlv)
@@ -55,7 +55,7 @@ func readTLV(buf *bytes.Buffer) (TLV, error) {
 
 	err = decode.Decode(buf, headFields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	var tlv TLV
@@ -81,7 +81,7 @@ func readTLV(buf *bytes.Buffer) (TLV, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read TLV: %v", err)
+		return nil, fmt.Errorf("unable to read TLV: %v", err)
 	}
 
 	return tlv, nil

@@ -216,14 +216,14 @@ func (a *LocRIB) ReplacePath(pfx *net.Prefix, oldPath *route.Path, newPath *rout
 
 	r := a.rt.Get(pfx)
 	if r == nil {
-		log.Errorf("Unable to replace path of prefix %s: prefix not found", pfx.String())
+		log.Errorf("unable to replace path of prefix %s: prefix not found", pfx.String())
 		return
 	}
 
 	oldRoute := r.Copy()
 	err := r.ReplacePath(oldPath, newPath)
 	if err != nil {
-		log.Errorf("Unable to replace path: %v", err)
+		log.Errorf("unable to replace path: %v", err)
 		return
 	}
 

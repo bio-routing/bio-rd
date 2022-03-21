@@ -61,7 +61,7 @@ func readLSPEntriesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*LSPE
 	for toRead > 0 {
 		e, err := decodeLSPEntry(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode LSP Entry: %w", err)
+			return nil, fmt.Errorf("unable to decode LSP Entry: %w", err)
 		}
 
 		pdu.LSPEntries = append(pdu.LSPEntries, e)

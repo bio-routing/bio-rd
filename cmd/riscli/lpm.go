@@ -61,7 +61,7 @@ func lpm(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, 
 		Pfx:    pfx.ToProto(),
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to get client: %w", err)
+		return fmt.Errorf("unable to get client: %w", err)
 	}
 
 	for _, r := range resp.Routes {

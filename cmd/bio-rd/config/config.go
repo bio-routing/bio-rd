@@ -22,7 +22,7 @@ func (c *Config) load() error {
 	if c.PolicyOptions != nil {
 		err := c.PolicyOptions.load()
 		if err != nil {
-			return fmt.Errorf("Unable to load policy_options: %w", err)
+			return fmt.Errorf("unable to load policy_options: %w", err)
 		}
 	}
 
@@ -54,13 +54,13 @@ func (c *Config) load() error {
 func GetConfig(filePath string) (*Config, error) {
 	file, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read file: %w", err)
+		return nil, fmt.Errorf("unable to read file: %w", err)
 	}
 
 	c := &Config{}
 	err = yaml.Unmarshal(file, c)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to unmarshal: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal: %w", err)
 	}
 
 	err = c.load()

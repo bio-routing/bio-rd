@@ -80,7 +80,7 @@ func showRouteReceiveBGP(parts []string) {
 
 	peer, err := bnet.IPFromString(parts[0])
 	if err != nil {
-		log.Errorf("Unable to convert peer address: %v", err)
+		log.Errorf("unable to convert peer address: %v", err)
 		return
 	}
 

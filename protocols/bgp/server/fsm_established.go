@@ -67,11 +67,11 @@ func (s *establishedState) checkHoldtimer() (state, string) {
 func (s *establishedState) init() error {
 	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
 	if err != nil {
-		return fmt.Errorf("Unable to get local address: %w", err)
+		return fmt.Errorf("unable to get local address: %w", err)
 	}
 	localAddr, err := bnet.IPFromString(host)
 	if err != nil {
-		return fmt.Errorf("Unable to parse address: %w", err)
+		return fmt.Errorf("unable to parse address: %w", err)
 	}
 
 	n := &routingtable.Neighbor{

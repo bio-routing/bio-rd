@@ -12,7 +12,7 @@ func Decode(buf *bytes.Buffer, fields []interface{}) error {
 	for _, field := range fields {
 		err = binary.Read(buf, binary.BigEndian, field)
 		if err != nil {
-			return fmt.Errorf("Unable to read from buffer: %w", err)
+			return fmt.Errorf("unable to read from buffer: %w", err)
 		}
 	}
 	return nil

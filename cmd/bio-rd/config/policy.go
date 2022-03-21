@@ -111,7 +111,7 @@ func (ps *PolicyStatement) toFilter() (*filter.Filter, error) {
 	for _, t := range ps.Terms {
 		ft, err := t.toFilterTerm()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to process filter term: %w", err)
+			return nil, fmt.Errorf("unable to process filter term: %w", err)
 		}
 
 		terms = append(terms, ft)
@@ -128,7 +128,7 @@ func (pst *PolicyStatementTerm) toFilterTerm() (*filter.Term, error) {
 	for i := range pst.From.RouteFilters {
 		rf, err := pst.From.RouteFilters[i].toFilterRouteFilter()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse route filter: %w", err)
+			return nil, fmt.Errorf("unable to parse route filter: %w", err)
 		}
 
 		routeFilters = append(routeFilters, rf)

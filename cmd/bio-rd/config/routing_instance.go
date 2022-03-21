@@ -17,7 +17,7 @@ type RoutingInstance struct {
 func (ri *RoutingInstance) load() error {
 	err := ri.loadRD()
 	if err != nil {
-		return fmt.Errorf("Unable to load route distinguisher: %w", err)
+		return fmt.Errorf("unable to load route distinguisher: %w", err)
 	}
 
 	return nil

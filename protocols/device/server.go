@@ -38,7 +38,7 @@ func New() (*Server, error) {
 	srv := newWithAdapter(nil)
 	err := srv.loadAdapter()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create OS adapter: %w", err)
+		return nil, fmt.Errorf("unable to create OS adapter: %w", err)
 	}
 
 	return srv, nil
@@ -57,7 +57,7 @@ func newWithAdapter(a osAdapter) *Server {
 func (ds *Server) Start() error {
 	err := ds.osAdapter.start()
 	if err != nil {
-		return fmt.Errorf("Unable to start osAdapter: %w", err)
+		return fmt.Errorf("unable to start osAdapter: %w", err)
 	}
 
 	return nil

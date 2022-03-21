@@ -7,7 +7,7 @@ import (
 func (ds *Server) loadAdapter() error {
 	a, err := newOSAdapterDarwin(ds)
 	if err != nil {
-		return fmt.Errorf("Unable to create OS X adapter: %w", err)
+		return fmt.Errorf("unable to create OS X adapter: %w", err)
 	}
 
 	ds.osAdapter = a

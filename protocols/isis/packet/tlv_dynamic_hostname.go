@@ -54,7 +54,7 @@ func readDynamicHostnameTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	return pdu, nil

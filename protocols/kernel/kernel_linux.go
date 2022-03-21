@@ -17,7 +17,7 @@ const (
 func (k *Kernel) init() error {
 	lk, err := newLinuxKernel()
 	if err != nil {
-		return fmt.Errorf("Unable to initialize linux kernel: %w", err)
+		return fmt.Errorf("unable to initialize linux kernel: %w", err)
 	}
 
 	err = lk.init()
@@ -36,7 +36,7 @@ type linuxKernel struct {
 func newLinuxKernel() (*linuxKernel, error) {
 	h, err := netlink.NewHandle()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get Netlink handle: %w", err)
+		return nil, fmt.Errorf("unable to get Netlink handle: %w", err)
 	}
 
 	return &linuxKernel{
@@ -65,13 +65,13 @@ func (lk *linuxKernel) cleanup() error {
 
 	routes, err := lk.h.RouteListFiltered(0, filter, netlink.RT_FILTER_PROTOCOL)
 	if err != nil {
-		return fmt.Errorf("Unable to get routes: %w", err)
+		return fmt.Errorf("unable to get routes: %w", err)
 	}
 
 	for i := range routes {
 		err = lk.h.RouteDel(&routes[i])
 		if err != nil {
-			return fmt.Errorf("Unable to remove route: %w", err)
+			return fmt.Errorf("unable to remove route: %w", err)
 		}
 	}
 
@@ -88,7 +88,7 @@ func (lk *linuxKernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 	if _, found := lk.routes[pfx]; !found {
 		err := lk.h.RouteAdd(r)
 		if err != nil {
-			return fmt.Errorf("Unable to add route: %w", err)
+			return fmt.Errorf("unable to add route: %w", err)
 		}
 
 		lk.routes[pfx] = struct{}{}
@@ -97,7 +97,7 @@ func (lk *linuxKernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 
 	err := lk.h.RouteReplace(r)
 	if err != nil {
-		return fmt.Errorf("Unable to replace route: %w", err)
+		return fmt.Errorf("unable to replace route: %w", err)
 	}
 
 	return nil

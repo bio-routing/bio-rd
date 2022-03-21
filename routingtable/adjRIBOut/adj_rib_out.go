@@ -143,7 +143,7 @@ func (a *AdjRIBOut) addPath(pfx *bnet.Prefix, p *route.Path) error {
 	if a.addPathTX {
 		pathID, err := a.pathIDManager.addPath(p)
 		if err != nil {
-			return fmt.Errorf("Unable to get path ID: %w", err)
+			return fmt.Errorf("unable to get path ID: %w", err)
 		}
 
 		p.BGPPath.PathIdentifier = pathID

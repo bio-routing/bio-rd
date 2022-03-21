@@ -29,7 +29,7 @@ func (g *Global) SetDefaultGlobalConfigValues() error {
 	if g.RouterID == 0 {
 		rtrid, err := generateRouterID()
 		if err != nil {
-			return fmt.Errorf("Unable to determine router ID: %w", err)
+			return fmt.Errorf("unable to determine router ID: %w", err)
 		}
 		g.RouterID = rtrid
 	}
@@ -47,13 +47,13 @@ func generateRouterID() (uint32, error) {
 		return convert.Uint32b([]byte(addr)[12:16]), nil
 	}
 
-	return 0, fmt.Errorf("Unable to determine router id")
+	return 0, fmt.Errorf("unable to determine router id")
 }
 
 func getHighestIP() (net.IP, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to ")
+		return nil, fmt.Errorf("unable to ")
 	}
 
 	return _getHighestIP(ifs)
@@ -64,7 +64,7 @@ func _getHighestIP(ifs []net.Interface) (net.IP, error) {
 	for _, iface := range ifs {
 		addrs, err := iface.Addrs()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to get interface addrs for %s: %w", iface.Name, err)
+			return nil, fmt.Errorf("unable to get interface addrs for %s: %w", iface.Name, err)
 		}
 
 		for _, addr := range addrs {
@@ -92,7 +92,7 @@ func _getHighestIP(ifs []net.Interface) (net.IP, error) {
 func getLoopbackIP() (net.IP, error) {
 	iface, err := net.InterfaceByName("lo")
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get interface lo: %w", err)
+		return nil, fmt.Errorf("unable to get interface lo: %w", err)
 	}
 
 	return _getLoopbackIP(iface)
@@ -101,7 +101,7 @@ func getLoopbackIP() (net.IP, error) {
 func _getLoopbackIP(iface *net.Interface) (net.IP, error) {
 	addrs, err := iface.Addrs()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get interface addresses: %w", err)
+		return nil, fmt.Errorf("unable to get interface addresses: %w", err)
 	}
 
 	candidates := make([]net.IP, 0)

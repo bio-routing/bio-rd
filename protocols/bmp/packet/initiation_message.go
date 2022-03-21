@@ -28,7 +28,7 @@ func decodeInitiationMessage(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	for read < toRead {
 		tlv, err := decodeInformationTLV(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode TLV: %w", err)
+			return nil, fmt.Errorf("unable to decode TLV: %w", err)
 		}
 
 		im.TLVs = append(im.TLVs, tlv)

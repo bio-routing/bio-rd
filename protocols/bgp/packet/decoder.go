@@ -137,7 +137,7 @@ func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
 func DecodeOpenMsg(buf *bytes.Buffer) (*BGPOpen, error) {
 	msg, err := _decodeOpenMsg(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode OPEN message: %w", err)
+		return nil, fmt.Errorf("unable to decode OPEN message: %w", err)
 	}
 	return msg.(*BGPOpen), err
 }
@@ -165,7 +165,7 @@ func _decodeOpenMsg(buf *bytes.Buffer) (interface{}, error) {
 
 	msg.OptParams, err = decodeOptParams(buf, msg.OptParmLen)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode optional parameters: %w", err)
+		return nil, fmt.Errorf("unable to decode optional parameters: %w", err)
 	}
 
 	return msg, nil
@@ -192,7 +192,7 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 		case CapabilitiesParamType:
 			caps, err := decodeCapabilities(buf, o.Length)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to decode capabilities: %w", err)
+				return nil, fmt.Errorf("unable to decode capabilities: %w", err)
 			}
 
 			o.Value = caps
@@ -215,7 +215,7 @@ func decodeCapabilities(buf *bytes.Buffer, length uint8) (Capabilities, error) {
 	for read < length {
 		cap, err := decodeCapability(buf)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode capability: %w", err)
+			return nil, fmt.Errorf("unable to decode capability: %w", err)
 		}
 
 		ret = append(ret, cap)
@@ -241,19 +241,19 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 	case MultiProtocolCapabilityCode:
 		mpCap, err := decodeMultiProtocolCapability(buf)
 		if err != nil {
-			return cap, fmt.Errorf("Unable to decode multi protocol capability")
+			return cap, fmt.Errorf("unable to decode multi protocol capability")
 		}
 		cap.Value = mpCap
 	case AddPathCapabilityCode:
 		addPathCap, err := decodeAddPathCapability(buf, cap.Length)
 		if err != nil {
-			return cap, fmt.Errorf("Unable to decode add path capability: %w", err)
+			return cap, fmt.Errorf("unable to decode add path capability: %w", err)
 		}
 		cap.Value = addPathCap
 	case ASN4CapabilityCode:
 		asn4Cap, err := decodeASN4Capability(buf)
 		if err != nil {
-			return cap, fmt.Errorf("Unable to decode 4 octet ASN capability: %w", err)
+			return cap, fmt.Errorf("unable to decode 4 octet ASN capability: %w", err)
 		}
 		cap.Value = asn4Cap
 	default:

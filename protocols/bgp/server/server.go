@@ -205,7 +205,7 @@ func (b *bgpServer) AddPeer(c PeerConfig) error {
 		for _, l := range b.listeners {
 			err = l.setTCPMD5(c.PeerAddress.ToNetIP(), c.AuthenticationKey)
 			if err != nil {
-				return fmt.Errorf("Unable to set TCP MD5 secret: %w", err)
+				return fmt.Errorf("unable to set TCP MD5 secret: %w", err)
 			}
 		}
 	}

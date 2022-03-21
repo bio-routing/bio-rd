@@ -255,14 +255,14 @@ func (fsm *FSM) sockSettings(c net.Conn) error {
 	if setNoRoute {
 		err := setDontRoute(c)
 		if err != nil {
-			return fmt.Errorf("Unable to set DontRoute TCP option: %w", err)
+			return fmt.Errorf("unable to set DontRoute TCP option: %w", err)
 		}
 	}
 
 	if ttl != 0 {
 		err := setTTL(c, ttl)
 		if err != nil {
-			return fmt.Errorf("Unable to set TTL: %w", err)
+			return fmt.Errorf("unable to set TTL: %w", err)
 		}
 	}
 
@@ -347,7 +347,7 @@ func (fsm *FSM) sendOpen() error {
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
-		return fmt.Errorf("Unable to send OPEN message: %w", err)
+		return fmt.Errorf("unable to send OPEN message: %w", err)
 	}
 
 	return nil
@@ -376,7 +376,7 @@ func (fsm *FSM) sendNotification(errorCode uint8, errorSubCode uint8) error {
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
-		return fmt.Errorf("Unable to send NOTIFICATION message: %w", err)
+		return fmt.Errorf("unable to send NOTIFICATION message: %w", err)
 	}
 
 	return nil
@@ -387,7 +387,7 @@ func (fsm *FSM) sendKeepalive() error {
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
-		return fmt.Errorf("Unable to send KEEPALIVE message: %w", err)
+		return fmt.Errorf("unable to send KEEPALIVE message: %w", err)
 	}
 
 	return nil
