@@ -22,7 +22,7 @@ func (nm *neighborManager) addNeighbor(n *neighbor) error {
 
 	for i := range nm.neighbors {
 		if nm.neighbors[i].vrfID == n.vrfID && nm.neighbors[i].peerAddress == n.peerAddress {
-			return fmt.Errorf("Unable to add neighbor %s on VRF %d: exists", n.peerAddress, n.vrfID)
+			return fmt.Errorf("unable to add neighbor %s on VRF %d: exists", n.peerAddress, n.vrfID)
 		}
 	}
 

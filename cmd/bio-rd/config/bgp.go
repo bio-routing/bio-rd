@@ -6,7 +6,6 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/pkg/errors"
 )
 
 type BGP struct {
@@ -50,7 +49,7 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 	if bg.LocalAddress != "" {
 		a, err := bnet.IPFromString(bg.LocalAddress)
 		if err != nil {
-			return errors.Wrapf(err, "Unable to parse BGP local address: %q", bg.LocalAddress)
+			return fmt.Errorf("unable to parse BGP local address: %q: %w", bg.LocalAddress, err)
 		}
 
 		bg.LocalAddressIP = a.Dedup()
@@ -150,7 +149,7 @@ func (bn *BGPNeighbor) load(po *PolicyOptions) error {
 	if bn.LocalAddress != "" {
 		a, err := bnet.IPFromString(bn.LocalAddress)
 		if err != nil {
-			return errors.Wrap(err, "Unable to parse BGP local address")
+			return fmt.Errorf("unable to parse BGP local address: %w", err)
 		}
 
 		bn.LocalAddressIP = a.Dedup()
@@ -158,7 +157,7 @@ func (bn *BGPNeighbor) load(po *PolicyOptions) error {
 
 	b, err := bnet.IPFromString(bn.PeerAddress)
 	if err != nil {
-		return errors.Wrap(err, "Unable to parse BGP peer address")
+		return fmt.Errorf("unable to parse BGP peer address: %w", err)
 	}
 
 	bn.PeerAddressIP = b.Dedup()

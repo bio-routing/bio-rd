@@ -11,7 +11,6 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -68,11 +67,11 @@ func (s *establishedState) checkHoldtimer() (state, string) {
 func (s *establishedState) init() error {
 	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
 	if err != nil {
-		return errors.Wrap(err, "Unable to get local address")
+		return fmt.Errorf("unable to get local address: %w", err)
 	}
 	localAddr, err := bnet.IPFromString(host)
 	if err != nil {
-		return errors.Wrap(err, "Unable to parse address")
+		return fmt.Errorf("unable to parse address: %w", err)
 	}
 
 	n := &routingtable.Neighbor{

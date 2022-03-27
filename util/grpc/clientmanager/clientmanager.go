@@ -1,10 +1,10 @@
 package clientmanager
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/util/grpc/clientmanager/metrics"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -50,7 +50,7 @@ func (cm *ClientManager) AddIfNotExists(target string, opts ...grpc.DialOption) 
 
 	cc, err := grpc.Dial(target, opts...)
 	if err != nil {
-		return errors.Wrap(err, "grpc.Dial failed")
+		return fmt.Errorf("grpc.Dial failed: %w", err)
 	}
 
 	cm.connections[target] = &conn{

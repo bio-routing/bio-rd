@@ -1,6 +1,6 @@
 package config
 
-import "github.com/pkg/errors"
+import "fmt"
 
 type Protocols struct {
 	BGP  *BGP  `yaml:"bgp"`
@@ -10,7 +10,7 @@ type Protocols struct {
 func (p *Protocols) load(localAS uint32, policyOptions *PolicyOptions) error {
 	err := p.BGP.load(localAS, policyOptions)
 	if err != nil {
-		return errors.Wrap(err, "BGP error")
+		return fmt.Errorf("BGP error: %w", err)
 	}
 
 	if p.ISIS != nil {

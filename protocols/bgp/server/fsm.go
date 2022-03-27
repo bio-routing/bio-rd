@@ -11,7 +11,6 @@ import (
 	"github.com/bio-routing/bio-rd/net/tcp"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -256,14 +255,14 @@ func (fsm *FSM) sockSettings(c net.Conn) error {
 	if setNoRoute {
 		err := setDontRoute(c)
 		if err != nil {
-			return errors.Wrap(err, "Unable to set DontRoute TCP option")
+			return fmt.Errorf("unable to set DontRoute TCP option: %w", err)
 		}
 	}
 
 	if ttl != 0 {
 		err := setTTL(c, ttl)
 		if err != nil {
-			return errors.Wrap(err, "Unable to set TTL")
+			return fmt.Errorf("unable to set TTL: %w", err)
 		}
 	}
 
@@ -348,7 +347,7 @@ func (fsm *FSM) sendOpen() error {
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
-		return errors.Wrap(err, "Unable to send OPEN message")
+		return fmt.Errorf("unable to send OPEN message: %w", err)
 	}
 
 	return nil
@@ -377,7 +376,7 @@ func (fsm *FSM) sendNotification(errorCode uint8, errorSubCode uint8) error {
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
-		return errors.Wrap(err, "Unable to send NOTIFICATION message")
+		return fmt.Errorf("unable to send NOTIFICATION message: %w", err)
 	}
 
 	return nil
@@ -388,7 +387,7 @@ func (fsm *FSM) sendKeepalive() error {
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {
-		return errors.Wrap(err, "Unable to send KEEPALIVE message")
+		return fmt.Errorf("unable to send KEEPALIVE message: %w", err)
 	}
 
 	return nil
@@ -398,14 +397,14 @@ func recvMsg(c net.Conn) (msg []byte, err error) {
 	buffer := make([]byte, packet.MaxLen)
 	_, err = io.ReadFull(c, buffer[0:packet.MinLen])
 	if err != nil {
-		return nil, errors.Wrap(err, "Read failed")
+		return nil, fmt.Errorf("Read failed: %w", err)
 	}
 
 	l := int(buffer[16])*256 + int(buffer[17])
 	toRead := l
 	_, err = io.ReadFull(c, buffer[packet.MinLen:toRead])
 	if err != nil {
-		return nil, errors.Wrap(err, "Read failed")
+		return nil, fmt.Errorf("Read failed: %w", err)
 	}
 
 	return buffer, nil

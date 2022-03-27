@@ -2,14 +2,12 @@ package device
 
 import (
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 func (ds *Server) loadAdapter() error {
 	a, err := newOSAdapterDarwin(ds)
 	if err != nil {
-		return errors.Wrap(err, "Unable to create OS X adapter")
+		return fmt.Errorf("unable to create OS X adapter: %w", err)
 	}
 
 	ds.osAdapter = a

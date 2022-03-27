@@ -122,7 +122,7 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 
 			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP, u.rrClient)
 			if err != nil {
-				log.Errorf("Unable to get path attributes: %v", err)
+				log.Errorf("unable to get path attributes: %v", err)
 				continue
 			}
 
@@ -288,7 +288,7 @@ func (u *UpdateSender) copyAttributesWithoutNextHop(pa *packet.PathAttribute) (a
 func (u *UpdateSender) RemovePath(pfx *bnet.Prefix, p *route.Path) bool {
 	err := u.withdrawPrefix(u.fsm.con, pfx, p)
 	if err != nil {
-		log.Errorf("Unable to withdraw prefix: %v", err)
+		log.Errorf("unable to withdraw prefix: %v", err)
 		return false
 	}
 

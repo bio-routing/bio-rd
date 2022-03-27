@@ -1,9 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,13 +23,13 @@ type BMPServer struct {
 func LoadConfig(filepath string) (*RISConfig, error) {
 	f, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read config file")
+		return nil, fmt.Errorf("unable to read config file: %w", err)
 	}
 
 	cfg := &RISConfig{}
 	err = yaml.Unmarshal(f, cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unmarshal failed")
+		return nil, fmt.Errorf("Unmarshal failed: %w", err)
 	}
 
 	return cfg, nil

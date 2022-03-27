@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,13 +22,13 @@ func (c *Config) load() error {
 	if c.PolicyOptions != nil {
 		err := c.PolicyOptions.load()
 		if err != nil {
-			return errors.Wrap(err, "Unable to load policy_options")
+			return fmt.Errorf("unable to load policy_options: %w", err)
 		}
 	}
 
 	err := c.RoutingOptions.load()
 	if err != nil {
-		return errors.Wrap(err, "error in routing_options")
+		return fmt.Errorf("error in routing_options: %w", err)
 	}
 
 	for _, ri := range c.RoutingInstances {
@@ -44,7 +43,7 @@ func (c *Config) load() error {
 
 		err := c.Protocols.load(localAS, c.PolicyOptions)
 		if err != nil {
-			return errors.Wrap(err, "Failed to load protocols")
+			return fmt.Errorf("Failed to load protocols: %w", err)
 		}
 	}
 
@@ -55,13 +54,13 @@ func (c *Config) load() error {
 func GetConfig(filePath string) (*Config, error) {
 	file, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read file")
+		return nil, fmt.Errorf("unable to read file: %w", err)
 	}
 
 	c := &Config{}
 	err = yaml.Unmarshal(file, c)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to unmarshal")
+		return nil, fmt.Errorf("unable to unmarshal: %w", err)
 	}
 
 	err = c.load()

@@ -29,14 +29,14 @@ func readAreaAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*A
 	for read < tlvLength {
 		areaLen, err := buf.ReadByte()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read: %v", err)
+			return nil, fmt.Errorf("unable to read: %v", err)
 		}
 		read++
 
 		newArea := make(types.AreaID, areaLen)
 		_, err = buf.Read(newArea)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read: %v", err)
+			return nil, fmt.Errorf("unable to read: %v", err)
 		}
 		read += areaLen
 

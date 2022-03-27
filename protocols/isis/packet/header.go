@@ -46,7 +46,7 @@ func DecodeHeader(buf *bytes.Buffer) (*ISISHeader, error) {
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode fields: %v", err)
+		return nil, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	return h, nil

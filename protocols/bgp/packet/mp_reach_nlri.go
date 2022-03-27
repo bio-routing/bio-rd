@@ -7,7 +7,6 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 // MultiProtocolReachNLRI represents network layer reachability information for an IP address family (rfc4760)
@@ -71,7 +70,7 @@ func deserializeMultiProtocolReachNLRI(b []byte, opt *DecodeOptions) (MultiProto
 	}
 	nh, err := bnet.IPFromBytes(variable[:firstNextHopLength])
 	if err != nil {
-		return MultiProtocolReachNLRI{}, errors.Wrap(err, "Failed to decode next hop IP")
+		return MultiProtocolReachNLRI{}, fmt.Errorf("Failed to decode next hop IP: %w", err)
 	}
 	n.NextHop = nh.Dedup()
 	budget -= int(nextHopLength)

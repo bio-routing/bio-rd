@@ -1,8 +1,9 @@
 package device
 
 import (
+	"fmt"
+
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
@@ -10,7 +11,7 @@ import (
 func (ds *Server) loadAdapter() error {
 	a, err := newOSAdapterLinux(ds)
 	if err != nil {
-		return errors.Wrap(err, "Unable to create linux adapter")
+		return fmt.Errorf("unable to create linux adapter: %w", err)
 	}
 
 	ds.osAdapter = a
@@ -30,7 +31,7 @@ func newOSAdapterLinux(srv *Server) (*osAdapterLinux, error) {
 
 	h, err := netlink.NewHandle()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create netlink handle")
+		return nil, fmt.Errorf("Failed to create netlink handle: %w", err)
 	}
 
 	o.handle = h
@@ -41,18 +42,18 @@ func (o *osAdapterLinux) start() error {
 	chLU := make(chan netlink.LinkUpdate)
 	err := netlink.LinkSubscribe(chLU, o.done)
 	if err != nil {
-		return errors.Wrap(err, "Unable to subscribe for link updates")
+		return fmt.Errorf("unable to subscribe for link updates: %w", err)
 	}
 
 	chAU := make(chan netlink.AddrUpdate)
 	err = netlink.AddrSubscribe(chAU, o.done)
 	if err != nil {
-		return errors.Wrap(err, "Unable to subscribe for address updates")
+		return fmt.Errorf("unable to subscribe for address updates: %w", err)
 	}
 
 	err = o.init()
 	if err != nil {
-		return errors.Wrap(err, "Init failed")
+		return fmt.Errorf("Init failed: %w", err)
 	}
 
 	go o.monitorLinks(chLU)
@@ -64,7 +65,7 @@ func (o *osAdapterLinux) start() error {
 func (o *osAdapterLinux) init() error {
 	links, err := o.handle.LinkList()
 	if err != nil {
-		return errors.Wrap(err, "Unable to get links")
+		return fmt.Errorf("unable to get links: %w", err)
 	}
 
 	for _, l := range links {
@@ -72,7 +73,7 @@ func (o *osAdapterLinux) init() error {
 
 		addrs, err := o.handle.AddrList(l, 0)
 		if err != nil {
-			return errors.Wrapf(err, "Unable to get addresses for interface %s", d.name)
+			return fmt.Errorf("unable to get addresses for interface %s: %w", d.name, err)
 		}
 
 		for _, addr := range addrs {

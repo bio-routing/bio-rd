@@ -7,7 +7,6 @@ import (
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,7 +27,7 @@ func (nifa *netIfa) receiver() {
 func (nifa *netIfa) receive() error {
 	pkt, src, err := nifa.ethHandler.RecvPacket()
 	if err != nil {
-		return errors.Wrap(err, "Read failed")
+		return fmt.Errorf("Read failed: %w", err)
 	}
 
 	return nifa.processPkt(src, pkt)
@@ -38,7 +37,7 @@ func (nifa *netIfa) processPkt(src ethernet.MACAddr, rawPkt []byte) error {
 	buf := bytes.NewBuffer(rawPkt)
 	pkt, err := packet.Decode(buf)
 	if err != nil {
-		return errors.Wrap(err, "Decode failed")
+		return fmt.Errorf("Decode failed: %w", err)
 	}
 
 	err = nifa.validatePkt(src, pkt)
@@ -84,7 +83,7 @@ func (nifa *netIfa) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello
 		if nifa.neighborManagerL1 != nil {
 			err := nifa.neighborManagerL1.processP2PHello(src, hello)
 			if err != nil {
-				return errors.Wrap(err, "neighbor manager L1 failed processing the p2p hello")
+				return fmt.Errorf("neighbor manager L1 failed processing the p2p hello: %w", err)
 			}
 		}
 	}
@@ -93,7 +92,7 @@ func (nifa *netIfa) processP2PHello(src ethernet.MACAddr, hello *packet.P2PHello
 		if nifa.neighborManagerL2 != nil {
 			err := nifa.neighborManagerL2.processP2PHello(src, hello)
 			if err != nil {
-				return errors.Wrap(err, "neighbor manager L2 failed processing the p2p hello")
+				return fmt.Errorf("neighbor manager L2 failed processing the p2p hello: %w", err)
 			}
 		}
 	}

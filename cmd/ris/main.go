@@ -53,7 +53,7 @@ func main() {
 	for _, r := range cfg.BMPServers {
 		ip := net.ParseIP(r.Address)
 		if ip == nil {
-			log.Errorf("Unable to convert %q to net.IP", r.Address)
+			log.Errorf("unable to convert %q to net.IP", r.Address)
 			os.Exit(1)
 		}
 		b.AddRouter(ip, r.Port, r.Passive)

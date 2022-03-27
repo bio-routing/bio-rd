@@ -31,7 +31,7 @@ func (s *BGPAPIServer) ListSessions(ctx context.Context, in *api.ListSessionsReq
 func (s *BGPAPIServer) DumpRIBIn(in *api.DumpRIBRequest, stream api.BgpService_DumpRIBInServer) error {
 	r := s.srv.GetRIBIn(bnet.IPFromProtoIP(in.Peer), uint16(in.Afi), uint8(in.Safi))
 	if r == nil {
-		return fmt.Errorf("Unable to get AdjRIBIn")
+		return fmt.Errorf("unable to get AdjRIBIn")
 	}
 
 	for _, r := range r.Dump() {
@@ -49,7 +49,7 @@ func (s *BGPAPIServer) DumpRIBIn(in *api.DumpRIBRequest, stream api.BgpService_D
 func (s *BGPAPIServer) DumpRIBOut(in *api.DumpRIBRequest, stream api.BgpService_DumpRIBOutServer) error {
 	r := s.srv.GetRIBOut(bnet.IPFromProtoIP(in.Peer), uint16(in.Afi), uint8(in.Safi))
 	if r == nil {
-		return fmt.Errorf("Unable to get AdjRIBOut")
+		return fmt.Errorf("unable to get AdjRIBOut")
 	}
 
 	for _, r := range r.Dump() {

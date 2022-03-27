@@ -11,7 +11,6 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -144,7 +143,7 @@ func (a *AdjRIBOut) addPath(pfx *bnet.Prefix, p *route.Path) error {
 	if a.addPathTX {
 		pathID, err := a.pathIDManager.addPath(p)
 		if err != nil {
-			return errors.Wrap(err, "Unable to get path ID")
+			return fmt.Errorf("unable to get path ID: %w", err)
 		}
 
 		p.BGPPath.PathIdentifier = pathID

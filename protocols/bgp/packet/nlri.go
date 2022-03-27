@@ -8,7 +8,6 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -36,7 +35,7 @@ func decodeNLRIs(buf *bytes.Buffer, length uint16, afi uint16, safi uint8, addPa
 	for p < length {
 		nlri, consumed, err = decodeNLRI(buf, afi, safi, addPath)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to decode NLRI")
+			return nil, fmt.Errorf("unable to decode NLRI: %w", err)
 		}
 		p += uint16(consumed)
 
@@ -63,7 +62,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 			&nlri.PathIdentifier,
 		})
 		if err != nil {
-			return nil, consumed, errors.Wrap(err, "Unable to decode path identifier")
+			return nil, consumed, fmt.Errorf("unable to decode path identifier: %w", err)
 		}
 
 		consumed += PathIdentifierLen
@@ -80,7 +79,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 		for {
 			lse, err := decodeLabelStackEntry(buf)
 			if err != nil {
-				return nil, consumed, errors.Wrap(err, "decode label stack entry failed")
+				return nil, consumed, fmt.Errorf("decode label stack entry failed: %w", err)
 			}
 
 			consumed += BytesPerLabel

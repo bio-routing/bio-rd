@@ -10,7 +10,6 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
-	"github.com/pkg/errors"
 )
 
 func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathAttribute, error) {
@@ -32,7 +31,7 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathA
 	for p < tpal {
 		pa, consumed, err = decodePathAttr(buf, opt)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to decode path attr")
+			return nil, fmt.Errorf("unable to decode path attr: %w", err)
 		}
 		p += consumed
 
@@ -78,7 +77,7 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 
 	err = decodePathAttrFlags(buf, pa)
 	if err != nil {
-		return nil, consumed, errors.Wrap(err, "Unable to get path attribute flags")
+		return nil, consumed, fmt.Errorf("unable to get path attribute flags: %w", err)
 	}
 	consumed++
 
@@ -97,7 +96,7 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 	switch pa.TypeCode {
 	case OriginAttr:
 		if err := pa.decodeOrigin(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode Origin")
+			return nil, consumed, fmt.Errorf("Failed to decode Origin: %w", err)
 		}
 	case ASPathAttr:
 		asnLength := uint8(2)
@@ -106,62 +105,62 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 		}
 
 		if err := pa.decodeASPath(buf, asnLength); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode AS Path")
+			return nil, consumed, fmt.Errorf("Failed to decode AS Path: %w", err)
 		}
 	/* Don't decodeAS4Paths yet: The rest of the software does not support it right yet!
 	case AS4PathAttr:
 		if err := pa.decodeASPath(buf, 4); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode AS4 Path")
+			return nil, consumed, fmt.Errorf("Failed to decode AS4 Path: %w", err)
 		}*/
 	case NextHopAttr:
 		if err := pa.decodeNextHop(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode Next-Hop")
+			return nil, consumed, fmt.Errorf("Failed to decode Next-Hop: %w", err)
 		}
 	case MEDAttr:
 		if err := pa.decodeMED(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode MED")
+			return nil, consumed, fmt.Errorf("Failed to decode MED: %w", err)
 		}
 	case LocalPrefAttr:
 		if err := pa.decodeLocalPref(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode local pref")
+			return nil, consumed, fmt.Errorf("Failed to decode local pref: %w", err)
 		}
 	case AggregatorAttr:
 		if err := pa.decodeAggregator(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode Aggregator")
+			return nil, consumed, fmt.Errorf("Failed to decode Aggregator: %w", err)
 		}
 	case AtomicAggrAttr:
 		// Nothing to do for 0 octet long attribute
 	case CommunitiesAttr:
 		if err := pa.decodeCommunities(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode Community")
+			return nil, consumed, fmt.Errorf("Failed to decode Community: %w", err)
 		}
 	case OriginatorIDAttr:
 		if err := pa.decodeOriginatorID(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode OriginatorID")
+			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %w", err)
 		}
 	case ClusterListAttr:
 		if err := pa.decodeClusterList(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode OriginatorID")
+			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %w", err)
 		}
 	case MultiProtocolReachNLRICode:
 		if err := pa.decodeMultiProtocolReachNLRI(buf, opt); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to multi protocol reachable NLRI")
+			return nil, consumed, fmt.Errorf("Failed to multi protocol reachable NLRI: %w", err)
 		}
 	case MultiProtocolUnreachNLRICode:
 		if err := pa.decodeMultiProtocolUnreachNLRI(buf, opt); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to multi protocol unreachable NLRI")
+			return nil, consumed, fmt.Errorf("Failed to multi protocol unreachable NLRI: %w", err)
 		}
 	case AS4AggregatorAttr:
 		if err := pa.decodeAS4Aggregator(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to skip not supported AS4Aggregator")
+			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Aggregator: %w", err)
 		}
 	case LargeCommunitiesAttr:
 		if err := pa.decodeLargeCommunities(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode large communities")
+			return nil, consumed, fmt.Errorf("Failed to decode large communities: %w", err)
 		}
 	default:
 		if err := pa.decodeUnknown(buf); err != nil {
-			return nil, consumed, errors.Wrap(err, "Failed to decode unknown attribute")
+			return nil, consumed, fmt.Errorf("Failed to decode unknown attribute: %w", err)
 		}
 	}
 
@@ -172,15 +171,15 @@ func (pa *PathAttribute) decodeMultiProtocolReachNLRI(buf *bytes.Buffer, opt *De
 	b := make([]byte, pa.Length)
 	n, err := buf.Read(b)
 	if err != nil {
-		return errors.Wrapf(err, "Unable to read %d bytes from buffer", pa.Length)
+		return fmt.Errorf("unable to read %d bytes from buffer: %w", pa.Length, err)
 	}
 	if n != int(pa.Length) {
-		return fmt.Errorf("Unable to read %d bytes from buffer, only got %d bytes", pa.Length, n)
+		return fmt.Errorf("unable to read %d bytes from buffer, only got %d bytes", pa.Length, n)
 	}
 
 	nlri, err := deserializeMultiProtocolReachNLRI(b, opt)
 	if err != nil {
-		return errors.Wrap(err, "Unable to decode MP_REACH_NLRI")
+		return fmt.Errorf("unable to decode MP_REACH_NLRI: %w", err)
 	}
 
 	pa.Value = nlri
@@ -191,15 +190,15 @@ func (pa *PathAttribute) decodeMultiProtocolUnreachNLRI(buf *bytes.Buffer, opt *
 	b := make([]byte, pa.Length)
 	n, err := buf.Read(b)
 	if err != nil {
-		return errors.Wrapf(err, "Unable to read %d bytes from buffer", pa.Length)
+		return fmt.Errorf("unable to read %d bytes from buffer: %w", pa.Length, err)
 	}
 	if n != int(pa.Length) {
-		return fmt.Errorf("Unable to read %d bytes from buffer, only got %d bytes", pa.Length, n)
+		return fmt.Errorf("unable to read %d bytes from buffer, only got %d bytes", pa.Length, n)
 	}
 
 	nlri, err := deserializeMultiProtocolUnreachNLRI(b, opt)
 	if err != nil {
-		return errors.Wrap(err, "Unable to decode MP_UNREACH_NLRI")
+		return fmt.Errorf("unable to decode MP_UNREACH_NLRI: %w", err)
 	}
 
 	pa.Value = nlri
@@ -211,7 +210,7 @@ func (pa *PathAttribute) decodeUnknown(buf *bytes.Buffer) error {
 
 	err := decode.Decode(buf, []interface{}{&u})
 	if err != nil {
-		return errors.Wrap(err, "Unable to decode")
+		return fmt.Errorf("unable to decode: %w", err)
 	}
 
 	pa.Value = u
@@ -224,7 +223,7 @@ func (pa *PathAttribute) decodeOrigin(buf *bytes.Buffer) error {
 	p := uint16(0)
 	err := decode.DecodeUint8(buf, &origin)
 	if err != nil {
-		return errors.Wrap(err, "Unable to decode")
+		return fmt.Errorf("unable to decode: %w", err)
 	}
 
 	pa.Value = origin
@@ -311,7 +310,7 @@ func (pa *PathAttribute) decodeNextHop(buf *bytes.Buffer) error {
 	nextHop := uint32(0)
 	err := decode.Decode(buf, []interface{}{&nextHop})
 	if err != nil {
-		return errors.Wrap(err, "Unable to decode next hop")
+		return fmt.Errorf("unable to decode next hop: %w", err)
 	}
 
 	pa.Value = bnet.IPv4(nextHop).Dedup()
@@ -355,7 +354,7 @@ func (pa *PathAttribute) decodeAggregator(buf *bytes.Buffer) error {
 
 func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 	if pa.Length%CommunityLen != 0 {
-		return fmt.Errorf("Unable to read community path attribute. Length %d is not divisible by 4", pa.Length)
+		return fmt.Errorf("unable to read community path attribute. Length %d is not divisible by 4", pa.Length)
 	}
 
 	count := pa.Length / CommunityLen
@@ -375,7 +374,7 @@ func (pa *PathAttribute) decodeCommunities(buf *bytes.Buffer) error {
 
 func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 	if pa.Length%LargeCommunityLen != 0 {
-		return fmt.Errorf("Unable to read large community path attribute. Length %d is not divisible by 12", pa.Length)
+		return fmt.Errorf("unable to read large community path attribute. Length %d is not divisible by 12", pa.Length)
 	}
 
 	count := pa.Length / LargeCommunityLen
@@ -416,7 +415,7 @@ func (pa *PathAttribute) decodeAS4Aggregator(buf *bytes.Buffer) error {
 func (pa *PathAttribute) decodeUint32(buf *bytes.Buffer, attrName string) error {
 	v, err := read4BytesAsUint32(buf)
 	if err != nil {
-		return errors.Wrapf(err, "Unable to decode %s", attrName)
+		return fmt.Errorf("unable to decode %s: %w", attrName, err)
 	}
 
 	pa.Value = v
@@ -424,7 +423,7 @@ func (pa *PathAttribute) decodeUint32(buf *bytes.Buffer, attrName string) error 
 	p := uint16(4)
 	err = dumpNBytes(buf, pa.Length-p)
 	if err != nil {
-		return errors.Wrap(err, "dumpNBytes failed")
+		return fmt.Errorf("dumpNBytes failed: %w", err)
 	}
 
 	return nil
@@ -436,7 +435,7 @@ func (pa *PathAttribute) decodeOriginatorID(buf *bytes.Buffer) error {
 
 func (pa *PathAttribute) decodeClusterList(buf *bytes.Buffer) error {
 	if pa.Length%ClusterIDLen != 0 {
-		return fmt.Errorf("Unable to read ClusterList path attribute. Length %d is not divisible by %d", pa.Length, ClusterIDLen)
+		return fmt.Errorf("unable to read ClusterList path attribute. Length %d is not divisible by %d", pa.Length, ClusterIDLen)
 	}
 
 	count := pa.Length / ClusterIDLen
@@ -861,7 +860,7 @@ func read4BytesAsUint32(buf *bytes.Buffer) (uint32, error) {
 		return 0, err
 	}
 	if n != 4 {
-		return 0, fmt.Errorf("Unable to read as uint32. Expected 4 bytes but got only %d", n)
+		return 0, fmt.Errorf("unable to read as uint32. Expected 4 bytes but got only %d", n)
 	}
 
 	return fourBytesToUint32(b), nil

@@ -40,7 +40,7 @@ func readProtocolsSupportedTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8
 	for i := uint8(0); i < tlvLength; i++ {
 		err := decode.Decode(buf, fields)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to decode fields: %v", err)
+			return nil, fmt.Errorf("unable to decode fields: %v", err)
 		}
 		pdu.NetworkLayerProtocolIDs[i] = protoID
 	}

@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decoder"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -32,7 +32,7 @@ func decodePeerDownNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerDownN
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode per peer header")
+		return nil, fmt.Errorf("unable to decode per peer header: %w", err)
 	}
 
 	p.PerPeerHeader = pph
@@ -57,7 +57,7 @@ func decodePeerDownNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerDownN
 
 	err = decoder.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read Data")
+		return nil, fmt.Errorf("unable to read Data: %w", err)
 	}
 
 	return p, nil

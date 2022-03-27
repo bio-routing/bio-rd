@@ -2,8 +2,7 @@ package packet
 
 import (
 	"bytes"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 const (
@@ -62,7 +61,7 @@ func readLSPEntriesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*LSPE
 	for toRead > 0 {
 		e, err := decodeLSPEntry(buf)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to decode LSP Entry")
+			return nil, fmt.Errorf("unable to decode LSP Entry: %w", err)
 		}
 
 		pdu.LSPEntries = append(pdu.LSPEntries, e)

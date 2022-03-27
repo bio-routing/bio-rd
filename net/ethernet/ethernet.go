@@ -7,7 +7,6 @@ import (
 	"syscall"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -47,7 +46,7 @@ type HandlerInterface interface {
 func NewHandler(devName string, bpf *BPF, llc LLC) (*Handler, error) {
 	ifa, err := net.InterfaceByName(devName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "net.InterfaceByName failed")
+		return nil, fmt.Errorf("net.InterfaceByName failed: %w", err)
 	}
 
 	h := &Handler{
@@ -58,7 +57,7 @@ func NewHandler(devName string, bpf *BPF, llc LLC) (*Handler, error) {
 
 	err = h.init(bpf)
 	if err != nil {
-		return nil, errors.Wrap(err, "init failed")
+		return nil, fmt.Errorf("init failed: %w", err)
 	}
 
 	return h, nil
@@ -73,7 +72,7 @@ func (e *Handler) init(b *BPF) error {
 
 	err = e.loadBPF(b)
 	if err != nil {
-		return errors.Wrap(err, "Unable to load BPF")
+		return fmt.Errorf("unable to load BPF: %w", err)
 	}
 
 	err = syscall.Bind(e.socket, &syscall.SockaddrLinklayer{
@@ -81,7 +80,7 @@ func (e *Handler) init(b *BPF) error {
 		Ifindex:  int(e.ifIndex),
 	})
 	if err != nil {
-		return errors.Wrap(err, "Bind failed")
+		return fmt.Errorf("Bind failed: %w", err)
 	}
 
 	return nil

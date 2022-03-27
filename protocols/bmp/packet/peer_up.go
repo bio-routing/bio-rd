@@ -2,9 +2,9 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decoder"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -36,7 +36,7 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 
 	pph, err := decodePerPeerHeader(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to decode per peer header")
+		return nil, fmt.Errorf("unable to decode per peer header: %w", err)
 	}
 
 	p.PerPeerHeader = pph
@@ -54,13 +54,13 @@ func decodePeerUpNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerUpNotif
 
 	sentOpenMsg, err := getOpenMsg(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get OPEN message")
+		return nil, fmt.Errorf("unable to get OPEN message: %w", err)
 	}
 	p.SentOpenMsg = sentOpenMsg
 
 	recvOpenMsg, err := getOpenMsg(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get OPEN message")
+		return nil, fmt.Errorf("unable to get OPEN message: %w", err)
 	}
 	p.ReceivedOpenMsg = recvOpenMsg
 
@@ -87,7 +87,7 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 	}
 	err := decoder.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read")
+		return nil, fmt.Errorf("unable to read: %w", err)
 	}
 
 	if msg[OpenMsgMinLen-1] == 0 {
@@ -101,7 +101,7 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 
 	err = decoder.Decode(buf, fields)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read")
+		return nil, fmt.Errorf("unable to read: %w", err)
 	}
 
 	msg = append(msg, optParams...)

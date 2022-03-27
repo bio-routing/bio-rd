@@ -8,7 +8,6 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,12 +25,12 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 		var err error
 		isisSrv, err = server.New(nets, ds, isis.LSPLifetime)
 		if err != nil {
-			return errors.Wrap(err, "Unable to create ISIS server")
+			return fmt.Errorf("unable to create ISIS server: %w", err)
 		}
 
 		err = isisSrv.Start()
 		if err != nil {
-			return errors.Wrap(err, "Unable to start ISIS server")
+			return fmt.Errorf("unable to start ISIS server: %w", err)
 		}
 	}
 
@@ -45,7 +44,7 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 			Level2:       translateInterfaceLevelConfig(ifa.Level2),
 		})
 		if err != nil {
-			return errors.Wrapf(err, "Unable to add interface: %s", ifa.Name)
+			return fmt.Errorf("unable to add interface: %s: %w", ifa.Name, err)
 		}
 	}
 
@@ -72,12 +71,12 @@ func parseNETs(nets []string) ([]*types.NET, error) {
 	for _, net := range nets {
 		b, err := parseHexString(net)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to convert NET hex string into ints")
+			return nil, fmt.Errorf("unable to convert NET hex string into ints: %w", err)
 		}
 
 		n, err := types.ParseNET(b)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Unable to parse NET %q", net)
+			return nil, fmt.Errorf("unable to parse NET %q: %w", net, err)
 		}
 
 		ret = append(ret, n)
@@ -96,7 +95,7 @@ func parseHexString(s string) ([]byte, error) {
 	for i := 0; i < len(runes); i += 2 {
 		x, err := strconv.ParseInt(fmt.Sprintf("%c%c", runes[i], runes[i+1]), 16, 8)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse int")
+			return nil, fmt.Errorf("unable to parse int: %w", err)
 		}
 
 		ret = append(ret, uint8(x))

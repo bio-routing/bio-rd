@@ -1,9 +1,10 @@
 package prom
 
 import (
+	"fmt"
+
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
 	bgp_prom "github.com/bio-routing/bio-rd/metrics/bgp/adapter/prom"
@@ -68,7 +69,7 @@ func (c *bmpCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *bmpCollector) Collect(ch chan<- prometheus.Metric) {
 	m, err := c.server.Metrics()
 	if err != nil {
-		log.Error(errors.Wrap(err, "Could not retrieve metrics from BMP server"))
+		log.Error(fmt.Errorf("Could not retrieve metrics from BMP server: %w", err))
 		return
 	}
 
