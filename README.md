@@ -43,5 +43,5 @@ go mod tidy
 
 ## Benchmarks
 
-The benchmarks can be found in the [bio-rd-benchmarks](/bio-routing/bio-rd-benchmarks)
+The benchmarks can be found in the [bio-routing/bio-rd-benchmarks](https://github.com/bio-routing/bio-rd-benchmarks)
 repository.
