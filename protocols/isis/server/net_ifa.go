@@ -206,6 +206,13 @@ func (nifa *netIfa) _start() error {
 	return nil
 }
 
+func (nifa *netIfa) stop() {
+	nifa.mu.Lock()
+	defer nifa.mu.Unlock()
+
+	nifa._stop()
+}
+
 func (nifa *netIfa) _stop() {
 	if nifa.neighborManagerL1 != nil {
 		nifa.neighborManagerL1.netDown()

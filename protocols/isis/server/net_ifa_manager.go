@@ -23,8 +23,27 @@ func newNetIfaManager(srv *Server) *netIfaManager {
 
 // AddInterface adds an interface to the ISIS server
 func (s *Server) AddInterface(cfg *InterfaceConfig) error {
-	log.Debugf("Adding interface %s", cfg.Name)
+	log.Debugf("IS-IS: Adding interface %s", cfg.Name)
 	return s.netIfaManager.addInterface(cfg)
+}
+
+func (s *Server) RemoveInterface(name string) error {
+	log.Debugf("IS-IS: Removing interface %s", name)
+	return s.netIfaManager.removeInterface(name)
+}
+
+func (nima *netIfaManager) removeInterface(name string) error {
+	nima.netIfasMu.Lock()
+	defer nima.netIfasMu.Unlock()
+
+	if _, exists := nima.netIfas[name]; !exists {
+		return fmt.Errorf("IS-IS is not enabled on interface %q", name)
+	}
+
+	nima.netIfas[name].stop()
+	delete(nima.netIfas, name)
+
+	return nil
 }
 
 func (nima *netIfaManager) addInterface(cfg *InterfaceConfig) error {

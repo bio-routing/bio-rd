@@ -34,7 +34,13 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 		}
 	}
 
+	configuredInterfaces := isisSrv.GetInterfaceNames()
 	for _, ifa := range isis.Interfaces {
+		if strSliceContains(configuredInterfaces, ifa.Name) {
+			log.Debugf("ISIS: Interface %q is already configured", ifa.Name)
+			continue
+		}
+
 		log.Infof("ISIS: Adding interface %s to ISIS server", ifa.Name)
 		err := isisSrv.AddInterface(&server.InterfaceConfig{
 			Name:         ifa.Name,
@@ -45,6 +51,15 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 		})
 		if err != nil {
 			return fmt.Errorf("unable to add interface: %s: %w", ifa.Name, err)
+		}
+	}
+
+	for _, ifaName := range configuredInterfaces {
+		if !isis.InterfaceConfigured(ifaName) {
+			err := isisSrv.RemoveInterface(ifaName)
+			if err != nil {
+				return fmt.Errorf("failed to remove ISIS interface %q", ifaName)
+			}
 		}
 	}
 
@@ -102,4 +117,14 @@ func parseHexString(s string) ([]byte, error) {
 	}
 
 	return ret, nil
+}
+
+func strSliceContains(haystack []string, needle string) bool {
+	for _, x := range haystack {
+		if x == needle {
+			return true
+		}
+	}
+
+	return false
 }
