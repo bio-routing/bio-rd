@@ -78,3 +78,13 @@ func (i *ISISInterfaceLevel) loadDefaults() {
 		i.HoldTime = defaultHoldTime
 	}
 }
+
+func (i *ISIS) InterfaceConfigured(name string) bool {
+	for _, x := range i.Interfaces {
+		if x.Name == name {
+			return true
+		}
+	}
+
+	return false
+}

@@ -16,6 +16,8 @@ const (
 // ISISServer is generic ISIS server interface
 type ISISServer interface {
 	AddInterface(*InterfaceConfig) error
+	RemoveInterface(name string) error
+	GetInterfaceNames() []string
 	Start() error
 }
 
@@ -80,4 +82,14 @@ func netsCompatible(nets []*types.NET) bool {
 	}
 
 	return true
+}
+
+// GetInterfaceNames gets names of all configured interfaces
+func (s *Server) GetInterfaceNames() []string {
+	ret := make([]string, 0)
+	for _, x := range s.netIfaManager.getAllInterfaces() {
+		ret = append(ret, x.name)
+	}
+
+	return ret
 }
