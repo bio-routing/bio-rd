@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	btime "github.com/bio-routing/bio-rd/util/time"
@@ -21,6 +23,7 @@ type ISISServer interface {
 	RemoveInterface(name string) error
 	GetInterfaceNames() []string
 	Start() error
+	GetAdjacencies() []*Adjacency
 }
 
 //Server represents an ISIS server
@@ -56,6 +59,31 @@ func (s *Server) Start() error {
 	s.lsdbL2.start(decrementTicker, minLSPTransTicker, psnpTransTicker, csnpTransTicker)
 
 	return nil
+}
+
+type Adjacency struct {
+	Name            string
+	SystemID        types.SystemID
+	Address         ethernet.MACAddr
+	InterfaceName   string
+	Level           uint8
+	Priority        uint8
+	IPAddresses     []bnet.IP
+	LastStateChange time.Time
+	Timeout         time.Time
+	Status          uint8
+}
+
+func (s *Server) GetAdjacencies() []*Adjacency {
+	ret := make([]*Adjacency, 0)
+
+	for _, ifa := range s.netIfaManager.getAllInterfaces() {
+		for _, n := range ifa.neighborManagerL2.getNeighbors() {
+			ret = append(ret, n.getAdjacency())
+		}
+	}
+
+	return ret
 }
 
 // New creates a new ISIS server

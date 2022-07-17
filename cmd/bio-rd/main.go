@@ -12,6 +12,7 @@ import (
 	bgpapi "github.com/bio-routing/bio-rd/protocols/bgp/api"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/protocols/device"
+	isisapi "github.com/bio-routing/bio-rd/protocols/isis/api"
 	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
@@ -76,6 +77,7 @@ func main() {
 	installSignalHandler()
 
 	s := bgpserver.NewBGPAPIServer(bgpSrv)
+	isisAPISrv := isisserver.NewISISAPIServer(isisSrv)
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
 	streamInterceptors := []grpc.StreamServerInterceptor{}
 	srv, err := servicewrapper.New(
@@ -94,6 +96,7 @@ func main() {
 	}
 
 	bgpapi.RegisterBgpServiceServer(srv.GRPC(), s)
+	isisapi.RegisterIsisServiceServer(srv.GRPC(), isisAPISrv)
 	if err := srv.Serve(); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
