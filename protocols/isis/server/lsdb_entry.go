@@ -125,3 +125,13 @@ func (l *lsdbEntry) olderInDatabase(x *packet.LSPEntry) bool {
 
 	return l.lspdu.SequenceNumber < x.SequenceNumber
 }
+
+func (l *lsdbEntry) processSameLSPDU(ifa *netIfa) {
+	l.clearSRMFlag(ifa)
+	l.setSSN(ifa)
+}
+
+func (l *lsdbEntry) newerLocalLSPDU(ifa *netIfa) {
+	l.setSRM(ifa)
+	l.clearSSNFlag(ifa)
+}
