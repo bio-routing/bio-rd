@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	allISNetworkEntitiesAddr = ethernet.MACAddr{0x00, 0x2B, 0x00, 0x00, 0x05}
+	allISNetworkEntitiesAddr = ethernet.MACAddr{0x09, 0x00, 0x2B, 0x00, 0x00, 0x05}
 )
 
 // InterfaceConfig represents a network interfaces ISIS config

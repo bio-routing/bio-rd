@@ -127,7 +127,7 @@ func (l *lsdb) sendLSPDUs() {
 	}
 }
 
-func (l *lsdb) processCSNP(csnp *packet.CSNP, from *netIfa) {
+func (l *lsdb) processCSNP(from *netIfa, csnp *packet.CSNP) {
 	l.lspsMu.Lock()
 	defer l.lspsMu.Unlock()
 
@@ -197,7 +197,7 @@ func (l *lsdb) _isNewer(pkt *packet.LSPDU) bool {
 	return pkt.SequenceNumber > l.lsps[pkt.LSPID].lspdu.SequenceNumber
 }
 
-func (l *lsdb) processPSNP(psnp *packet.PSNP, from *netIfa) {
+func (l *lsdb) processPSNP(from *netIfa, psnp *packet.PSNP) {
 	l.lspsMu.Lock()
 	defer l.lspsMu.Unlock()
 
@@ -311,4 +311,40 @@ func (l *lsdb) sendCSNPs(ifa *netIfa) {
 	for _, c := range l.getCSNPs(ifa) {
 		ifa.sendCSNP(&c, l.level())
 	}
+}
+
+func (l *lsdb) processLSP(ifa *netIfa, lspdu *packet.LSPDU) {
+	log.Debug("Processing received LSP")
+	l.lspsMu.Lock()
+	defer l.lspsMu.Unlock()
+
+	existingLSDBEntry, exists := l.lsps[lspdu.LSPID]
+	if !exists || lspdu.SequenceNumber > existingLSDBEntry.lspdu.SequenceNumber {
+		log.Debugf("ISIS: Received newer LSPDU %v sequence number %d", lspdu.LSPID, lspdu.SequenceNumber)
+		l.processNewerLSPDU(ifa, lspdu)
+		return
+	}
+
+	if lspdu.SequenceNumber == existingLSDBEntry.lspdu.SequenceNumber {
+		log.Debugf("ISIS: Received same sequence LSPDU %v sequence number %d", lspdu.LSPID, lspdu.SequenceNumber)
+		existingLSDBEntry.processSameLSPDU(ifa)
+		return
+	}
+
+	log.Debugf("ISIS: Received older LSPDU %v sequence number %d / %d", lspdu.LSPID, existingLSDBEntry.lspdu.SequenceNumber, lspdu.SequenceNumber)
+	existingLSDBEntry.newerLocalLSPDU(ifa)
+}
+
+func (l *lsdb) processNewerLSPDU(ifa *netIfa, lspdu *packet.LSPDU) {
+	lsdbEntry := newLSDBEntry(lspdu)
+
+	for _, i := range l.srv.netIfaManager.getAllInterfacesExcept(ifa) {
+		lsdbEntry.setSRM(i)
+	}
+
+	lsdbEntry.clearSRMFlag(ifa)
+	lsdbEntry.setSSN(ifa)
+
+	l.lsps[lspdu.LSPID] = lsdbEntry
+	return
 }

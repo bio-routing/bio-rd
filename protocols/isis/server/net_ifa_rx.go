@@ -49,6 +49,15 @@ func (nifa *netIfa) processPkt(src ethernet.MACAddr, rawPkt []byte) error {
 	switch pkt.Header.PDUType {
 	case packet.P2P_HELLO:
 		return nifa.processP2PHello(src, pkt.Body.(*packet.P2PHello))
+	case packet.L2_LS_PDU_TYPE:
+		nifa.srv.lsdbL2.processLSP(nifa, pkt.Body.(*packet.LSPDU))
+		return nil
+	case packet.L2_CSNP_TYPE:
+		nifa.srv.lsdbL2.processCSNP(nifa, pkt.Body.(*packet.CSNP))
+		return nil
+	case packet.L2_PSNP_TYPE:
+		nifa.srv.lsdbL2.processPSNP(nifa, pkt.Body.(*packet.PSNP))
+		return nil
 	}
 
 	return fmt.Errorf("Unknown PDU type %d", pkt.Header.PDUType)

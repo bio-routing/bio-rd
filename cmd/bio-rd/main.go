@@ -37,6 +37,8 @@ var (
 func main() {
 	flag.Parse()
 
+	log.SetLevel(log.DebugLevel)
+
 	startCfg, err := config.GetConfig(*configFilePath)
 	if err != nil {
 		log.Errorf("unable to get config: %v", err)

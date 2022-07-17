@@ -3,14 +3,16 @@ package server
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
 const (
-	minimumLSPTransmissionIntervalS = 5
-	csnpTransmissionIntervalS       = 40
+	minimumLSPTransmissionInterval = time.Second * 5
+	csnpTransmissionInterval       = time.Second * 10
 )
 
 // ISISServer is generic ISIS server interface
@@ -47,6 +49,12 @@ func (s *Server) Start() error {
 		s.running = true
 	}
 
+	decrementTicker := btime.NewBIOTicker(time.Second)
+	minLSPTransTicker := btime.NewBIOTicker(minimumLSPTransmissionInterval)
+	psnpTransTicker := btime.NewBIOTicker(time.Second * 5)
+	csnpTransTicker := btime.NewBIOTicker(csnpTransmissionInterval)
+	s.lsdbL2.start(decrementTicker, minLSPTransTicker, psnpTransTicker, csnpTransTicker)
+
 	return nil
 }
 
@@ -68,6 +76,7 @@ func New(nets []*types.NET, ds device.Updater, lspLifetime uint16) (*Server, err
 	}
 
 	s.netIfaManager = newNetIfaManager(s)
+	s.lsdbL2 = newLSDB(s)
 
 	return s, nil
 }
