@@ -31,6 +31,16 @@ type ExtendedISReachabilityTLV struct {
 	Neighbors []*ExtendedISReachabilityNeighbor
 }
 
+func (e *ExtendedISReachabilityTLV) Copy() TLV {
+	ret := *e
+	ret.Neighbors = make([]*ExtendedISReachabilityNeighbor, 0, len(e.Neighbors))
+	for _, n := range e.Neighbors {
+		ret.Neighbors = append(ret.Neighbors, n.Copy())
+	}
+
+	return &ret
+}
+
 // Type gets the type of the TLV
 func (e *ExtendedISReachabilityTLV) Type() uint8 {
 	return e.TLVType
@@ -64,15 +74,24 @@ func (e *ExtendedISReachabilityTLV) Serialize(buf *bytes.Buffer) {
 // ExtendedISReachabilityNeighbor is an extended IS Reachability Neighbor
 type ExtendedISReachabilityNeighbor struct {
 	NeighborID   types.SourceID
-	Metric       [3]byte
+	Metric       uint32
 	SubTLVLength uint8
 	SubTLVs      []TLV
+}
+
+func (e *ExtendedISReachabilityNeighbor) Copy() *ExtendedISReachabilityNeighbor {
+	ret := *e
+	ret.SubTLVs = make([]TLV, 0, len(e.SubTLVs))
+	for _, stlv := range e.SubTLVs {
+		ret.SubTLVs = append(ret.SubTLVs, stlv.Copy())
+	}
+	return &ret
 }
 
 // Serialize serializes an ExtendedISReachabilityNeighbor
 func (e *ExtendedISReachabilityNeighbor) Serialize(buf *bytes.Buffer) {
 	buf.Write(e.NeighborID.Serialize())
-	buf.Write(e.Metric[:])
+	buf.Write(convert.Uint32Byte(e.Metric)[1:])
 	buf.WriteByte(e.SubTLVLength)
 	for i := range e.SubTLVs {
 		e.SubTLVs[i].Serialize(buf)
@@ -80,7 +99,7 @@ func (e *ExtendedISReachabilityNeighbor) Serialize(buf *bytes.Buffer) {
 }
 
 // NewExtendedISReachabilityNeighbor creates a new ExtendedISReachabilityNeighbor
-func NewExtendedISReachabilityNeighbor(neighborID types.SourceID, metric [3]byte) *ExtendedISReachabilityNeighbor {
+func NewExtendedISReachabilityNeighbor(neighborID types.SourceID, metric uint32) *ExtendedISReachabilityNeighbor {
 	return &ExtendedISReachabilityNeighbor{
 		NeighborID: neighborID,
 		Metric:     metric,
@@ -111,6 +130,11 @@ type LinkLocalRemoteIdentifiersSubTLV struct {
 	TLVLength uint8
 	Local     uint32
 	Remote    uint32
+}
+
+func (l *LinkLocalRemoteIdentifiersSubTLV) Copy() TLV {
+	ret := *l
+	return &ret
 }
 
 // Type gets the type of the TLV
@@ -151,6 +175,11 @@ type IPv4AddressSubTLV struct {
 	TLVType   uint8
 	TLVLength uint8
 	Address   uint32
+}
+
+func (s *IPv4AddressSubTLV) Copy() TLV {
+	ret := *s
+	return &ret
 }
 
 // Type gets the type of the TLV

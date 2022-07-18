@@ -23,6 +23,17 @@ type ExtendedIPReachabilityTLV struct {
 	ExtendedIPReachabilities []*ExtendedIPReachability
 }
 
+func (e *ExtendedIPReachabilityTLV) Copy() TLV {
+	ret := *e
+	ret.ExtendedIPReachabilities = make([]*ExtendedIPReachability, 0, len(e.ExtendedIPReachabilities))
+
+	for _, eIPReach := range e.ExtendedIPReachabilities {
+		ret.ExtendedIPReachabilities = append(ret.ExtendedIPReachabilities, eIPReach.Copy())
+	}
+
+	return &ret
+}
+
 // Type gets the type of the TLV
 func (e *ExtendedIPReachabilityTLV) Type() uint8 {
 	return e.TLVType
@@ -94,6 +105,17 @@ func NewExtendedIPReachability(metric uint32, pfxLen uint8, addr uint32) *Extend
 		UDSubBitPfxLen: pfxLen,
 		Address:        addr,
 	}
+}
+
+func (e *ExtendedIPReachability) Copy() *ExtendedIPReachability {
+	x := *e
+	x.SubTLVs = make([]TLV, 0, len(e.SubTLVs))
+
+	for _, stlv := range e.SubTLVs {
+		x.SubTLVs = append(x.SubTLVs, stlv.Copy())
+	}
+
+	return &x
 }
 
 // AddExtendedIPReachability adds an extended IP reachability

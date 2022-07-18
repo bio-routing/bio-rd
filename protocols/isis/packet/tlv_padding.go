@@ -23,6 +23,13 @@ func NewPaddingTLV(length uint8) *PaddingTLV {
 	}
 }
 
+func (p *PaddingTLV) Copy() TLV {
+	ret := *p
+	ret.PaddingData = make([]byte, 0, len(p.PaddingData))
+	copy(ret.PaddingData, p.PaddingData)
+	return &ret
+}
+
 // Type gets the type of the TLV
 func (p *PaddingTLV) Type() uint8 {
 	return p.TLVType

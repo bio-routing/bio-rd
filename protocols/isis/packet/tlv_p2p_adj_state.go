@@ -72,6 +72,11 @@ func NewP2PAdjacencyStateTLV(adjacencyState uint8, extendedLocalCircuitID uint32
 	}
 }
 
+func (p P2PAdjacencyStateTLV) Copy() TLV {
+	x := p
+	return x
+}
+
 // Type gets the type of the TLV
 func (p P2PAdjacencyStateTLV) Type() uint8 {
 	return p.TLVType

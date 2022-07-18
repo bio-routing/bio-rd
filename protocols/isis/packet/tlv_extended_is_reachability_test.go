@@ -25,7 +25,7 @@ func TestExtendedISReachabilityTLVSerialize(t *testing.T) {
 							SystemID:  types.SystemID{10, 20, 30, 40, 50, 60},
 							CircuitID: 100,
 						},
-						Metric:       [3]byte{0, 0, 123},
+						Metric:       123,
 						SubTLVLength: 8,
 						SubTLVs: []TLV{
 							NewLinkLocalRemoteIdentifiersSubTLV(1000, 2000),
@@ -67,7 +67,7 @@ func TestExtendedISReachabilityNeighborAddSubTLV(t *testing.T) {
 			neighbor: NewExtendedISReachabilityNeighbor(types.NewSourceID(
 				types.SystemID{1, 2, 3, 4, 5, 6},
 				0,
-			), [3]byte{1, 2, 3}),
+			), 16777215),
 			addTLV: &IPv4AddressSubTLV{
 				TLVType:   6,
 				TLVLength: 4,
@@ -78,7 +78,7 @@ func TestExtendedISReachabilityNeighborAddSubTLV(t *testing.T) {
 					types.SystemID{1, 2, 3, 4, 5, 6},
 					0,
 				),
-				Metric:       [3]byte{1, 2, 3},
+				Metric:       16777215,
 				SubTLVLength: 6,
 				SubTLVs: []TLV{
 					&IPv4AddressSubTLV{

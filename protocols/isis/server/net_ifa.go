@@ -122,6 +122,13 @@ func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
 	return ret
 }
 
+func (nifa *netIfa) getName() string {
+	nifa.mu.RLock()
+	defer nifa.mu.RUnlock()
+
+	return nifa.name
+}
+
 func (nifa *netIfa) isInitialized() bool {
 	nifa.mu.Lock()
 	defer nifa.mu.Unlock()

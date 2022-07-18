@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decode"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 const (
@@ -16,11 +17,11 @@ const (
 type TrafficEngineeringRouterIDTLV struct {
 	TLVType   uint8
 	TLVLength uint8
-	Address   [4]byte
+	Address   uint32
 }
 
 // NewTrafficEngineeringRouterIDTLV creates a new TrafficEngineeringRouterIDTLV
-func NewTrafficEngineeringRouterIDTLV(addr [4]byte) *TrafficEngineeringRouterIDTLV {
+func NewTrafficEngineeringRouterIDTLV(addr uint32) *TrafficEngineeringRouterIDTLV {
 	return &TrafficEngineeringRouterIDTLV{
 		TLVType:   TrafficEngineeringRouterIDTLVType,
 		TLVLength: 4,
@@ -32,7 +33,7 @@ func NewTrafficEngineeringRouterIDTLV(addr [4]byte) *TrafficEngineeringRouterIDT
 func (t *TrafficEngineeringRouterIDTLV) Serialize(buf *bytes.Buffer) {
 	buf.WriteByte(t.TLVType)
 	buf.WriteByte(t.TLVLength)
-	buf.Write(t.Address[:])
+	buf.Write(convert.Uint32Byte(t.Address))
 }
 
 func readTrafficEngineeringRouterIDTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*TrafficEngineeringRouterIDTLV, error) {
@@ -42,7 +43,7 @@ func readTrafficEngineeringRouterIDTLV(buf *bytes.Buffer, tlvType uint8, tlvLeng
 	}
 
 	fields := []interface{}{
-		pdu.Address[:],
+		&pdu.Address,
 	}
 
 	err := decode.Decode(buf, fields)
@@ -51,6 +52,11 @@ func readTrafficEngineeringRouterIDTLV(buf *bytes.Buffer, tlvType uint8, tlvLeng
 	}
 
 	return pdu, nil
+}
+
+func (t TrafficEngineeringRouterIDTLV) Copy() TLV {
+	x := t
+	return &x
 }
 
 // Type gets the type of the TLV

@@ -31,6 +31,13 @@ func readUnknownTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*Unknown
 	return pdu, nil
 }
 
+func (u UnknownTLV) Copy() TLV {
+	ret := &UnknownTLV{}
+	ret.TLVValue = make([]byte, 0, len(u.TLVValue))
+	copy(ret.TLVValue, u.TLVValue)
+	return ret
+}
+
 // Type gets the type of the TLV
 func (u UnknownTLV) Type() uint8 {
 	return u.TLVType

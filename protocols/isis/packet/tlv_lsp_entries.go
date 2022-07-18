@@ -17,6 +17,21 @@ type LSPEntriesTLV struct {
 	LSPEntries []*LSPEntry
 }
 
+func (l *LSPEntriesTLV) Copy() TLV {
+	res := &LSPEntriesTLV{
+		TLVType:    l.TLVType,
+		TLVLength:  l.TLVLength,
+		LSPEntries: make([]*LSPEntry, 0, len(l.LSPEntries)),
+	}
+
+	for _, e := range l.LSPEntries {
+		c := *e
+		res.LSPEntries = append(res.LSPEntries, &c)
+	}
+
+	return res
+}
+
 // Type returns the type of the TLV
 func (l *LSPEntriesTLV) Type() uint8 {
 	return l.TLVType

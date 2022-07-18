@@ -47,6 +47,13 @@ func readIPInterfaceAddressesTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uin
 	return pdu, nil
 }
 
+func (i *IPInterfaceAddressesTLV) Copy() TLV {
+	ret := *i
+	ret.IPv4Addresses = make([]uint32, len(i.IPv4Addresses))
+	copy(ret.IPv4Addresses, i.IPv4Addresses)
+	return &ret
+}
+
 // Type returns the type of the TLV
 func (i IPInterfaceAddressesTLV) Type() uint8 {
 	return i.TLVType
