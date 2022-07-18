@@ -42,6 +42,28 @@ type neighbor struct {
 	done                   chan struct{}
 }
 
+func (n *neighbor) getAdjacency() *Adjacency {
+
+	n.stateMu.RLock()
+	defer n.stateMu.RUnlock()
+
+	n.timeoutMu.Lock()
+	defer n.timeoutMu.Unlock()
+
+	return &Adjacency{
+		Name:            n.name,
+		SystemID:        n.sysID,
+		Address:         n.addr,
+		InterfaceName:   n.nm.netIfa.name,
+		Level:           n.nm.level,
+		Priority:        n.priority,
+		IPAddresses:     n.ipAddresses,
+		LastStateChange: n.lastStateChange,
+		Timeout:         n.timeout,
+		Status:          n.state,
+	}
+}
+
 func (nm *neighborManager) neighborFromP2PHello(hello *packet.P2PHello, addr ethernet.MACAddr) *neighbor {
 	n := &neighbor{
 		addr:            addr,
