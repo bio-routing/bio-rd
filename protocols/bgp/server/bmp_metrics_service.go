@@ -3,7 +3,6 @@ package server
 import (
 	"sync/atomic"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bgp_metrics "github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	vrf_metrics "github.com/bio-routing/bio-rd/routingtable/vrf/metrics"
@@ -13,14 +12,14 @@ type bmpMetricsService struct {
 	server *BMPServer
 }
 
-func (b *bmpMetricsService) metrics() *metrics.BMPMetrics {
-	return &metrics.BMPMetrics{
+func (b *bmpMetricsService) metrics() *bgp_metrics.BMPMetrics {
+	return &bgp_metrics.BMPMetrics{
 		Routers: b.routerMetrics(),
 	}
 }
 
-func (b *bmpMetricsService) routerMetrics() []*metrics.BMPRouterMetrics {
-	routers := make([]*metrics.BMPRouterMetrics, 0)
+func (b *bmpMetricsService) routerMetrics() []*bgp_metrics.BMPRouterMetrics {
+	routers := make([]*bgp_metrics.BMPRouterMetrics, 0)
 
 	for _, rtr := range b.server.getRouters() {
 		routers = append(routers, b.metricsForRouter(rtr))
@@ -29,10 +28,10 @@ func (b *bmpMetricsService) routerMetrics() []*metrics.BMPRouterMetrics {
 	return routers
 }
 
-func (b *bmpMetricsService) metricsForRouter(rtr *Router) *metrics.BMPRouterMetrics {
+func (b *bmpMetricsService) metricsForRouter(rtr *Router) *bgp_metrics.BMPRouterMetrics {
 	established := atomic.LoadUint32(&rtr.established)
 
-	rm := &metrics.BMPRouterMetrics{
+	rm := &bgp_metrics.BMPRouterMetrics{
 		Address:                      rtr.address,
 		SysName:                      rtr.name,
 		Established:                  established == 1,

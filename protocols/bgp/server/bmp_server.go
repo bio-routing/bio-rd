@@ -208,7 +208,7 @@ func (b *BMPServer) addRouter(r *Router) {
 	b.routersMu.Lock()
 	defer b.routersMu.Unlock()
 
-	b.routers[fmt.Sprintf("%s", r.address.String())] = r
+	b.routers[r.address.String()] = r
 }
 
 func (b *BMPServer) deleteRouter(addr net.IP) {
@@ -297,7 +297,7 @@ func (b *BMPServer) GetRouter(name string) RouterInterface {
 // Metrics gets BMP server metrics
 func (b *BMPServer) Metrics() (*metrics.BMPMetrics, error) {
 	if b.metrics == nil {
-		return nil, fmt.Errorf("Server not started yet")
+		return nil, fmt.Errorf("server not started yet")
 	}
 
 	return b.metrics.metrics(), nil
