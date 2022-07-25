@@ -171,7 +171,6 @@ func (fsm *FSM) start() {
 
 	go fsm.run()
 	go fsm.tcpConnector(ctx)
-	return
 }
 
 func (fsm *FSM) activate() {

@@ -68,7 +68,7 @@ func (nm *neighborManager) _neighborDown(vrfID uint64, addr [16]byte) error {
 		return nil
 	}
 
-	return fmt.Errorf("Neighbor %d/%v not found", vrfID, addr)
+	return fmt.Errorf("neighbor %d/%v not found", vrfID, addr)
 }
 
 func (nm *neighborManager) disposeAll() {

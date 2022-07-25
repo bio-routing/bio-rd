@@ -72,7 +72,7 @@ func TestSerializeAndSendUpdate(t *testing.T) {
 		{
 			name: "failed connection",
 			buf:  &failingReadWriter{},
-			err:  errors.New("Failed sending Update: general error"),
+			err:  errors.New("failed sending Update: general error"),
 			testUpdate: &packet.BGPUpdate{
 				WithdrawnRoutesLen: 5,
 				WithdrawnRoutes: &packet.NLRI{

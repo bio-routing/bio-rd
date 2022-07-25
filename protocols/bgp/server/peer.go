@@ -276,7 +276,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		}
 
 		if p.ipv4.rib == nil {
-			return nil, fmt.Errorf("No RIB for IPv4 unicast configured")
+			return nil, fmt.Errorf("no RIB for IPv4 unicast configured")
 		}
 	}
 
@@ -307,7 +307,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		caps = append(caps, multiProtocolCapability(packet.AFIIPv6))
 
 		if p.ipv6.rib == nil {
-			return nil, fmt.Errorf("No RIB for IPv6 unicast configured")
+			return nil, fmt.Errorf("no RIB for IPv6 unicast configured")
 		}
 	}
 

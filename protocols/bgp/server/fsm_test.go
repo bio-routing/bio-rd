@@ -119,7 +119,6 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 		}
 
 		fsmA.msgRecvCh <- update
-		ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
 	}
 	time.Sleep(time.Second * 1)
 	ribRouteCount = fsmA.ipv4Unicast.rib.RouteCount()
@@ -233,7 +232,6 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 			64, 0x20, 0x01, 0x06, 0x78, 0x01, 0xe0, 0x0, i,
 		}
 		fsmA.msgRecvCh <- update
-		ribRouteCount = fsmA.ipv6Unicast.rib.RouteCount()
 	}
 	time.Sleep(time.Second * 1)
 

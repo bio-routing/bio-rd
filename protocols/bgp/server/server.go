@@ -80,7 +80,7 @@ func (b *bgpServer) Start() error {
 		for _, addr := range b.listenAddrs {
 			l, err := NewTCPListener(addr, acceptCh)
 			if err != nil {
-				return fmt.Errorf("Failed to start TCPListener for %s: %w", addr, err)
+				return fmt.Errorf("failed to start TCPListener for %s: %w", addr, err)
 			}
 			b.listeners = append(b.listeners, l)
 		}
@@ -96,7 +96,7 @@ func (b *bgpServer) Start() error {
 func (b *bgpServer) ReplaceImportFilterChain(peerIP *bnet.IP, c filter.Chain) error {
 	p := b.peers.get(peerIP)
 	if p == nil {
-		return fmt.Errorf("Peer %q not found", peerIP.String())
+		return fmt.Errorf("peer %q not found", peerIP.String())
 	}
 
 	p.replaceImportFilterChain(c)
@@ -107,7 +107,7 @@ func (b *bgpServer) ReplaceImportFilterChain(peerIP *bnet.IP, c filter.Chain) er
 func (b *bgpServer) ReplaceExportFilterChain(peerIP *bnet.IP, c filter.Chain) error {
 	p := b.peers.get(peerIP)
 	if p == nil {
-		return fmt.Errorf("Peer %q not found", peerIP.String())
+		return fmt.Errorf("peer %q not found", peerIP.String())
 	}
 
 	p.replaceExportFilterChain(c)
@@ -242,14 +242,14 @@ func (b *bgpServer) DisposePeer(addr *bnet.IP) {
 		return
 	}
 
-	log.Infof("Disposing BGP session with %s", addr.String())
+	log.Infof("disposing BGP session with %s", addr.String())
 	p.stop()
 	b.peers.remove(addr)
 }
 
 func (b *bgpServer) Metrics() (*metrics.BGPMetrics, error) {
 	if b.metrics == nil {
-		return nil, fmt.Errorf("Server not started yet")
+		return nil, fmt.Errorf("server not started yet")
 	}
 
 	return b.metrics.metrics(), nil
