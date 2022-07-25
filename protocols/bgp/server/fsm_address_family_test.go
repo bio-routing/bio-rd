@@ -21,8 +21,9 @@ func TestFSMAFIInitDispose(t *testing.T) {
 		exportFilterChain: filter.NewAcceptAllFilterChain(),
 		fsm: &FSM{
 			peer: &peer{
-				routerID: 100,
-				localASN: 15169,
+				routerID:        100,
+				localASN:        15169,
+				adjRIBInFactory: adjRIBInFactory{},
 			},
 		},
 		addPathTX: routingtable.ClientOptions{
