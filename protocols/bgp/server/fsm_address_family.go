@@ -77,10 +77,20 @@ func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
 	return f.adjRIBIn.Dump()
 }
 
+type adjRIBInFactoryI interface {
+	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32, addPathRX bool) routingtable.AdjRIBIn
+}
+
+type adjRIBInFactory struct{}
+
+func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32, addPathRX bool) routingtable.AdjRIBIn {
+	return adjRIBIn.New(exportFilterChain, contributingASNs, routerID, clusterID, addPathRX)
+}
+
 func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs := f.rib.GetContributingASNs()
 
-	f.adjRIBIn = adjRIBIn.New(f.importFilterChain, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 	contributingASNs.Add(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Register(f.rib)

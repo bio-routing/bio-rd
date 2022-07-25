@@ -11,7 +11,7 @@ import (
 func TestBMPServer(t *testing.T) {
 	srv := NewServer(time.Second)
 
-	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119, false)
+	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119, false, &adjRIBInFactory{})
 	_, pipe := net.Pipe()
 	rtr.con = pipe
 	srv.addRouter(rtr)

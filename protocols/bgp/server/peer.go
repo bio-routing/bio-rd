@@ -42,6 +42,8 @@ type peer struct {
 	vrf  *vrf.VRF
 	ipv4 *peerAddressFamily
 	ipv6 *peerAddressFamily
+
+	adjRIBInFactory adjRIBInFactoryI
 }
 
 // PeerConfig defines the configuration for a BGP session
@@ -264,6 +266,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		routeReflectorClient: c.RouteReflectorClient,
 		clusterID:            c.RouteReflectorClusterID,
 		vrf:                  c.VRF,
+		adjRIBInFactory:      adjRIBInFactory{},
 	}
 
 	if c.IPv4 != nil {

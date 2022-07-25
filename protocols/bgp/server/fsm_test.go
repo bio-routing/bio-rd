@@ -22,6 +22,7 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 			importFilterChain: filter.NewAcceptAllFilterChain(),
 			exportFilterChain: filter.NewAcceptAllFilterChain(),
 		},
+		adjRIBInFactory: adjRIBInFactory{},
 	})
 
 	fsmA.holdTime = time.Second * 180
@@ -140,6 +141,7 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 			importFilterChain: filter.NewAcceptAllFilterChain(),
 			exportFilterChain: filter.NewAcceptAllFilterChain(),
 		},
+		adjRIBInFactory: adjRIBInFactory{},
 	})
 
 	fsmA.ipv6Unicast.multiProtocol = true
