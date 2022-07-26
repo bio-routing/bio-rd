@@ -51,7 +51,7 @@ func (s establishedState) run() (state, string) {
 		case <-time.After(time.Second):
 			return s.checkHoldtimer()
 		case recvMsg := <-s.fsm.msgRecvCh:
-			return s.msgReceived(recvMsg, opt)
+			return s.msgReceived(recvMsg, opt, false)
 		}
 	}
 }
@@ -159,7 +159,7 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (state, string) {
+func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions, postPolicy bool) (state, string) {
 	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
 		switch bgperr := err.(type) {
@@ -179,7 +179,7 @@ func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions) (
 		fmt.Println(data)
 		return s.notification()
 	case packet.UpdateMsg:
-		return s.update(msg.Body.(*packet.BGPUpdate))
+		return s.update(msg.Body.(*packet.BGPUpdate), postPolicy)
 	case packet.KeepaliveMsg:
 		return s.keepaliveReceived()
 	default:
@@ -195,7 +195,7 @@ func (s *establishedState) notification() (state, string) {
 	return newIdleState(s.fsm), "Received NOTIFICATION"
 }
 
-func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
+func (s *establishedState) update(u *packet.BGPUpdate, postPolicy bool) (state, string) {
 	atomic.AddUint64(&s.fsm.counters.updatesReceived, 1)
 
 	if s.fsm.holdTime != 0 {
@@ -203,11 +203,11 @@ func (s *establishedState) update(u *packet.BGPUpdate) (state, string) {
 	}
 
 	if s.fsm.ipv4Unicast != nil {
-		s.fsm.ipv4Unicast.processUpdate(u)
+		s.fsm.ipv4Unicast.processUpdate(u, postPolicy)
 	}
 
 	if s.fsm.ipv6Unicast != nil {
-		s.fsm.ipv6Unicast.processUpdate(u)
+		s.fsm.ipv6Unicast.processUpdate(u, postPolicy)
 	}
 
 	afi, safi := s.updateAddressFamily(u)

@@ -10,6 +10,7 @@ import (
 // Path represents a network path
 type Path struct {
 	Type       uint8
+	PostPolicy bool // PostPolicy fields is a hack used in BMP to differentiate between pre/post policy routes (L flag of the per peer header)
 	StaticPath *StaticPath
 	BGPPath    *BGPPath
 	FIBPath    *FIBPath

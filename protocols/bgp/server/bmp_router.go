@@ -181,7 +181,8 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	s := n.fsm.state.(*establishedState)
 	opt := s.fsm.decodeOptions()
 	opt.Use32BitASN = !msg.PerPeerHeader.GetAFlag()
-	s.msgReceived(msg.BGPUpdate, opt)
+
+	s.msgReceived(msg.BGPUpdate, opt, msg.PerPeerHeader.GetLFlag())
 }
 
 func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {

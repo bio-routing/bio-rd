@@ -143,27 +143,30 @@ func (f *fsmAddressFamily) dispose() {
 	f.initialized = false
 }
 
-func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, postPolicy bool) {
 	if f.safi != packet.SAFIUnicast {
 		return
 	}
 
 	f.multiProtocolUpdates(u)
 	if f.afi == packet.AFIIPv4 {
-		f.withdraws(u)
-		f.updates(u)
+		f.withdraws(u, postPolicy)
+		f.updates(u, postPolicy)
 	}
 }
 
-func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate, postPolicy bool) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
-		f.adjRIBIn.RemovePath(r.Prefix, nil)
+		f.adjRIBIn.RemovePath(r.Prefix, &route.Path{
+			PostPolicy: postPolicy,
+		})
 	}
 }
 
-func (f *fsmAddressFamily) updates(u *packet.BGPUpdate) {
+func (f *fsmAddressFamily) updates(u *packet.BGPUpdate, postPolicy bool) {
 	for r := u.NLRI; r != nil; r = r.Next {
 		path := f.newRoutePath()
+		path.PostPolicy = postPolicy
 		f.processAttributes(u.PathAttributes, path)
 
 		f.adjRIBIn.AddPath(r.Prefix, path)
