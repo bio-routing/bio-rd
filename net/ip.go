@@ -290,7 +290,7 @@ func (ip *IP) SizeBytes() uint8 {
 }
 
 // ToUint32 return the rightmost 32 bits of an 'IP'
-func (ip *IP) ToUint32() uint32 {
+func (ip IP) ToUint32() uint32 {
 	return uint32(^uint64(0) >> 32 & ip.lower)
 }
 
