@@ -134,6 +134,19 @@ func netsCompatible(nets []*types.NET) bool {
 	return true
 }
 
+func (s *Server) systemID() types.SystemID {
+	return s.nets[0].SystemID
+}
+
+func (s *Server) areaIDs() []types.AreaID {
+	areaIDs := make([]types.AreaID, 0, len(s.nets))
+	for _, net := range s.nets {
+		areaIDs = append(areaIDs, net.AreaID)
+	}
+
+	return areaIDs
+}
+
 // GetInterfaceNames gets names of all configured interfaces
 func (s *Server) GetInterfaceNames() []string {
 	ret := make([]string, 0)
