@@ -38,6 +38,11 @@ func readISNeighborsTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*ISN
 	return pdu, nil
 }
 
+func (i ISNeighborsTLV) Copy() TLV {
+	ret := i
+	return &ret
+}
+
 // Type returns the type of the TLV
 func (i ISNeighborsTLV) Type() uint8 {
 	return i.TLVType

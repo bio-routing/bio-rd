@@ -17,6 +17,7 @@ type TLV interface {
 	Length() uint8
 	Serialize(*bytes.Buffer)
 	Value() interface{}
+	Copy() TLV
 }
 
 func serializeTLVs(tlvs []TLV) []byte {

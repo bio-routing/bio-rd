@@ -62,6 +62,19 @@ func NewAreaAddressesTLV(areas []types.AreaID) *AreaAddressesTLV {
 	return a
 }
 
+func (a *AreaAddressesTLV) Copy() TLV {
+	res := &AreaAddressesTLV{
+		TLVType:   a.TLVType,
+		TLVLength: a.TLVLength,
+		AreaIDs:   make([]types.AreaID, 0, len(a.AreaIDs)),
+	}
+
+	for _, aid := range a.AreaIDs {
+		res.AreaIDs = append(res.AreaIDs, aid)
+	}
+	return res
+}
+
 // Type gets the type of the TLV
 func (a *AreaAddressesTLV) Type() uint8 {
 	return a.TLVType

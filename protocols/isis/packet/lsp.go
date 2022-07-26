@@ -68,6 +68,16 @@ type LSPDU struct {
 	TLVs              []TLV
 }
 
+func (l *LSPDU) Copy() *LSPDU {
+	ret := *l
+	ret.TLVs = make([]TLV, 0, len(l.TLVs))
+	for _, tlv := range l.TLVs {
+		ret.TLVs = append(ret.TLVs, tlv.Copy())
+	}
+
+	return &ret
+}
+
 // UpdateLength updates the length of the LSPDU
 func (l *LSPDU) UpdateLength() {
 	l.Length = LSPDUMinLen
@@ -153,7 +163,6 @@ func DecodeLSPDU(buf *bytes.Buffer) (*LSPDU, error) {
 		&pdu.Checksum,
 		&pdu.TypeBlock,
 	}
-
 	err := decode.Decode(buf, fields)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode fields: %v", err)

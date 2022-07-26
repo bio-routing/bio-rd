@@ -24,6 +24,7 @@ type ISISServer interface {
 	GetInterfaceNames() []string
 	Start() error
 	GetAdjacencies() []*Adjacency
+	GetLSDB() []*LSDBEntry
 }
 
 //Server represents an ISIS server
@@ -81,6 +82,18 @@ func (s *Server) GetAdjacencies() []*Adjacency {
 		for _, n := range ifa.neighborManagerL2.getNeighbors() {
 			ret = append(ret, n.getAdjacency())
 		}
+	}
+
+	return ret
+}
+
+func (s *Server) GetLSDB() []*LSDBEntry {
+	s.lsdbL2.lspsMu.RLock()
+	defer s.lsdbL2.lspsMu.RUnlock()
+
+	ret := make([]*LSDBEntry, 0)
+	for _, lspEntry := range s.lsdbL2.lsps {
+		ret = append(ret, lspEntry.Export())
 	}
 
 	return ret

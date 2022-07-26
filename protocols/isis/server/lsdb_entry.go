@@ -13,6 +13,12 @@ type lsdbEntry struct {
 	mutex    sync.RWMutex
 }
 
+type LSDBEntry struct {
+	lspdu    *packet.LSPDU
+	srmFlags []string
+	ssnFlags []string
+}
+
 func newLSDBEntry(lspdu *packet.LSPDU) *lsdbEntry {
 	return &lsdbEntry{
 		lspdu:    lspdu,
@@ -32,6 +38,24 @@ func newEmptyLSDBEntry(lspEntry *packet.LSPEntry) *lsdbEntry {
 		srmFlags: make(map[*netIfa]struct{}),
 		ssnFlags: make(map[*netIfa]struct{}),
 	}
+}
+
+func (l *lsdbEntry) Export() *LSDBEntry {
+	c := &LSDBEntry{
+		lspdu:    l.lspdu.Copy(),
+		srmFlags: make([]string, 0),
+		ssnFlags: make([]string, 0),
+	}
+
+	for ifa := range l.srmFlags {
+		c.srmFlags = append(c.srmFlags, ifa.getName())
+	}
+
+	for ifa := range l.ssnFlags {
+		c.ssnFlags = append(c.ssnFlags, ifa.getName())
+	}
+
+	return c
 }
 
 func (l *lsdbEntry) dropInterface(ifa *netIfa) {

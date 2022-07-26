@@ -18,6 +18,11 @@ type ChecksumTLV struct {
 	Checksum  uint16
 }
 
+func (c ChecksumTLV) Copy() TLV {
+	ret := c
+	return &ret
+}
+
 // Type gets the type of the TLV
 func (c ChecksumTLV) Type() uint8 {
 	return c.TLVType

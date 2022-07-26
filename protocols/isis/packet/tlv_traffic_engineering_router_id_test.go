@@ -10,16 +10,16 @@ import (
 func TestNewTrafficEngineeringRouterIDTLV(t *testing.T) {
 	tests := []struct {
 		name     string
-		addr     [4]byte
+		addr     uint32
 		expected *TrafficEngineeringRouterIDTLV
 	}{
 		{
 			name: "Test #1",
-			addr: [4]byte{10, 20, 30, 40},
+			addr: 169090600,
 			expected: &TrafficEngineeringRouterIDTLV{
 				TLVType:   134,
 				TLVLength: 4,
-				Address:   [4]byte{10, 20, 30, 40},
+				Address:   169090600,
 			},
 		},
 	}
@@ -41,7 +41,7 @@ func TestTrafficEngineeringRouterIDTLVSerialize(t *testing.T) {
 			tlv: &TrafficEngineeringRouterIDTLV{
 				TLVType:   134,
 				TLVLength: 4,
-				Address:   [4]byte{10, 0, 0, 123},
+				Address:   167772283,
 			},
 			expected: []byte{134, 4, 10, 0, 0, 123},
 		},
@@ -73,7 +73,7 @@ func TestReadTrafficEngineeringRouterIDTLV(t *testing.T) {
 			expected: &TrafficEngineeringRouterIDTLV{
 				TLVType:   134,
 				TLVLength: 4,
-				Address:   [4]byte{1, 2, 3, 4},
+				Address:   16909060,
 			},
 		},
 	}

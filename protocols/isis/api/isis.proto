@@ -29,6 +29,68 @@ message Adjacency {
     State status = 10;
 }
 
+message GetLSDBRequest {
+    uint32 level = 1;
+}
+
+message GetLSDBResponse {
+    repeated LSDBEntry lsdb_entries = 1;
+}
+
+message LSDBEntry {
+    LSPDU lsp = 1;
+    repeated string interfaces_with_ssn_flag = 2;
+    repeated string interfaces_with_srm_flag = 3;
+}
+
+message LSPDU {
+    LSPID lsp_id = 1;
+    uint32 length = 2;
+    uint32 remaining_lifetime = 3;
+    uint32 sequence_number = 4;
+    uint32 checksum = 5;
+    uint32 type_block = 6;
+
+    // TLV representations:
+    repeated bytes area_ids = 7;
+    uint32 lsp_buffer_size = 8;
+    enum Protocol {
+        IPv4 = 0;
+        IPv6 = 1;
+    }
+    repeated Protocol protocols_supported = 9;
+    repeated uint32 ip_interfaces_addresses = 10;
+    repeated ExtendedISReachability extended_is_reachabilities = 11;
+    repeated ExtendedIPReachability extended_ip_reachabilities = 12;
+    uint32 ipv4_te_router_id = 13;
+    string hostname = 14;
+}
+
+message LSPID {
+    bytes system_id = 1;
+    uint32 pseudonode_id = 2;
+    uint32 lsp_number = 3;
+}
+
+message ExtendedIPReachability {
+    uint32 metric = 1;
+    uint32 prefix_length = 2;
+    uint32 ip_address = 3;
+    // To be extended with sub-TLVs
+}
+
+message IPv4NLRI {
+    uint32 ip_address = 1;
+    uint32 subnetmask = 2;
+}
+
+message ExtendedISReachability {
+    uint32 default_metric = 1;
+    bytes neighbor_id = 2;
+    // To be extended with sub-TLVs
+}
+
 service IsisService {
     rpc ListAdjacencies(ListAdjacenciesRequest) returns (ListAdjacenciesResponse) {}
+    rpc GetLSDB(GetLSDBRequest) returns (GetLSDBResponse) {}
 }

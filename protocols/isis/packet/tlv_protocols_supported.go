@@ -56,6 +56,17 @@ func NewProtocolsSupportedTLV(protocols []uint8) ProtocolsSupportedTLV {
 	}
 }
 
+func (p ProtocolsSupportedTLV) Copy() TLV {
+	res := ProtocolsSupportedTLV{
+		TLVType:                 p.TLVType,
+		TLVLength:               p.TLVLength,
+		NetworkLayerProtocolIDs: make([]uint8, 0, len(p.NetworkLayerProtocolIDs)),
+	}
+
+	copy(res.NetworkLayerProtocolIDs, p.NetworkLayerProtocolIDs)
+	return res
+}
+
 // Type gets the type of the TLV
 func (p ProtocolsSupportedTLV) Type() uint8 {
 	return p.TLVType

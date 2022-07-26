@@ -17,6 +17,13 @@ type DynamicHostNameTLV struct {
 	Hostname  []byte
 }
 
+func (d *DynamicHostNameTLV) Copy() TLV {
+	ret := *d
+	ret.Hostname = make([]byte, len(d.Hostname))
+	copy(ret.Hostname, d.Hostname)
+	return &ret
+}
+
 // Type gets the type of the TLV
 func (d *DynamicHostNameTLV) Type() uint8 {
 	return d.TLVType
