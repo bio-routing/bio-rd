@@ -9,7 +9,9 @@ import (
 )
 
 func TestBMPServer(t *testing.T) {
-	srv := NewServer(time.Second)
+	srv := NewServer(BMPServerConfig{
+		KeepalivePeriod: time.Second,
+	})
 
 	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119, false, &adjRIBInFactory{})
 	_, pipe := net.Pipe()

@@ -34,6 +34,12 @@ type BMPServer struct {
 	metrics         *bmpMetricsService
 	listener        net.Listener
 	adjRIBInFactory adjRIBInFactoryI
+	acceptAny       bool
+}
+
+type BMPServerConfig struct {
+	KeepalivePeriod time.Duration
+	AcceptAny       bool
 }
 
 type afiClient struct {
@@ -42,20 +48,21 @@ type afiClient struct {
 }
 
 // NewServer creates a new BMP server
-func NewServer(keepalivePeriod time.Duration) *BMPServer {
+func NewServer(cfg BMPServerConfig) *BMPServer {
 	b := &BMPServer{
 		routers:         make(map[string]*Router),
 		ribClients:      make(map[string]map[afiClient]struct{}),
-		keepalivePeriod: keepalivePeriod,
+		keepalivePeriod: cfg.KeepalivePeriod,
 		adjRIBInFactory: adjRIBInFactory{},
+		acceptAny:       cfg.AcceptAny,
 	}
 
 	b.metrics = &bmpMetricsService{b}
 	return b
 }
 
-func NewServerWithAdjRIBInFactory(keepalivePeriod time.Duration, adjRIBInFactory adjRIBInFactoryI) *BMPServer {
-	b := NewServer(keepalivePeriod)
+func NewServerWithAdjRIBInFactory(cfg BMPServerConfig, adjRIBInFactory adjRIBInFactoryI) *BMPServer {
+	b := NewServer(cfg)
 	b.adjRIBInFactory = adjRIBInFactory
 
 	return b
@@ -91,9 +98,16 @@ func (b *BMPServer) Listen(addr string) error {
 			}).Infof("Unable to accept on %s", tcp.String())
 			return err
 		}
+
+		if b.acceptAny {
+			tcpRemoteAddr := c.RemoteAddr().(*net.TCPAddr)
+			b.AddRouter(tcpRemoteAddr.IP, tcp.AddrPort().Port(), true)
+		}
+
 		if r, ok := b.validateConnection(c); ok {
 			go b.handleConnection(c, r, true)
 		}
+
 	}
 }
 
