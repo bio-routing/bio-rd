@@ -38,7 +38,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	b := server.NewServer(time.Duration(*tcpKeepaliveInterval) * time.Second)
+	b := server.NewServer(server.BMPServerConfig{
+		KeepalivePeriod: time.Duration(*tcpKeepaliveInterval) * time.Second,
+	})
 	if *bmpListenAddr != "" {
 		go func() {
 			if err := b.Listen(*bmpListenAddr); err != nil {
