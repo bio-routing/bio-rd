@@ -33,6 +33,7 @@ type BMPServer struct {
 	keepalivePeriod time.Duration
 	metrics         *bmpMetricsService
 	listener        net.Listener
+	adjRIBInFactory adjRIBInFactoryI
 }
 
 type afiClient struct {
@@ -46,9 +47,17 @@ func NewServer(keepalivePeriod time.Duration) *BMPServer {
 		routers:         make(map[string]*Router),
 		ribClients:      make(map[string]map[afiClient]struct{}),
 		keepalivePeriod: keepalivePeriod,
+		adjRIBInFactory: adjRIBInFactory{},
 	}
 
 	b.metrics = &bmpMetricsService{b}
+	return b
+}
+
+func NewServerWithAdjRIBInFactory(keepalivePeriod time.Duration, adjRIBInFactory adjRIBInFactoryI) *BMPServer {
+	b := NewServer(keepalivePeriod)
+	b.adjRIBInFactory = adjRIBInFactory
+
 	return b
 }
 
@@ -157,7 +166,7 @@ func conString(host string, port uint16) string {
 
 // AddRouter adds a router to which we connect with BMP
 func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool) {
-	r := newRouter(addr, port, passive)
+	r := newRouter(addr, port, passive, b.adjRIBInFactory)
 	b.addRouter(r)
 
 	if r.passive {
@@ -208,7 +217,7 @@ func (b *BMPServer) addRouter(r *Router) {
 	b.routersMu.Lock()
 	defer b.routersMu.Unlock()
 
-	b.routers[fmt.Sprintf("%s", r.address.String())] = r
+	b.routers[r.address.String()] = r
 }
 
 func (b *BMPServer) deleteRouter(addr net.IP) {
@@ -297,7 +306,7 @@ func (b *BMPServer) GetRouter(name string) RouterInterface {
 // Metrics gets BMP server metrics
 func (b *BMPServer) Metrics() (*metrics.BMPMetrics, error) {
 	if b.metrics == nil {
-		return nil, fmt.Errorf("Server not started yet")
+		return nil, fmt.Errorf("server not started yet")
 	}
 
 	return b.metrics.metrics(), nil

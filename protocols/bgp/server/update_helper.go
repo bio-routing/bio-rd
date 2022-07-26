@@ -18,7 +18,7 @@ func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *pack
 
 	_, err = out.Write(updateBytes)
 	if err != nil {
-		return fmt.Errorf("Failed sending Update: %w", err)
+		return fmt.Errorf("failed sending Update: %w", err)
 	}
 	return nil
 }

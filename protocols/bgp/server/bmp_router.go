@@ -46,8 +46,9 @@ type Router struct {
 	runMu            sync.Mutex
 	stop             chan struct{}
 
-	ribClients   map[afiClient]struct{}
-	ribClientsMu sync.Mutex
+	ribClients      map[afiClient]struct{}
+	ribClientsMu    sync.Mutex
+	adjRIBInFactory adjRIBInFactoryI
 
 	counters routerCounters
 }
@@ -72,7 +73,7 @@ type neighbor struct {
 	opt         *packet.DecodeOptions
 }
 
-func newRouter(addr net.IP, port uint16, passive bool) *Router {
+func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI) *Router {
 	return &Router{
 		address:          addr,
 		port:             port,
@@ -86,6 +87,7 @@ func newRouter(addr net.IP, port uint16, passive bool) *Router {
 		logger:           log.New(),
 		stop:             make(chan struct{}),
 		ribClients:       make(map[afiClient]struct{}),
+		adjRIBInFactory:  arif,
 	}
 }
 
@@ -277,7 +279,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	}).Infof("peer up notification received")
 
 	if len(msg.SentOpenMsg) < packet.MinOpenLen {
-		return fmt.Errorf("Received peer up notification for %v: Invalid sent open message: %v", msg.PerPeerHeader.PeerAddress, msg.SentOpenMsg)
+		return fmt.Errorf("received peer up notification for %v: Invalid sent open message: %v", msg.PerPeerHeader.PeerAddress, msg.SentOpenMsg)
 	}
 
 	sentOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.SentOpenMsg[packet.HeaderLen:]))
@@ -286,7 +288,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	}
 
 	if len(msg.ReceivedOpenMsg) < packet.MinOpenLen {
-		return fmt.Errorf("Received peer up notification for %v: Invalid received open message: %v", msg.PerPeerHeader.PeerAddress, msg.ReceivedOpenMsg)
+		return fmt.Errorf("received peer up notification for %v: Invalid received open message: %v", msg.PerPeerHeader.PeerAddress, msg.ReceivedOpenMsg)
 	}
 
 	recvOpen, err := packet.DecodeOpenMsg(bytes.NewBuffer(msg.ReceivedOpenMsg[packet.HeaderLen:]))
@@ -306,14 +308,15 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	fsm := &FSM{
 		isBMP: true,
 		peer: &peer{
-			routerID:  sentOpen.BGPIdentifier,
-			addr:      peerAddress.Dedup(),
-			localAddr: localAddress.Dedup(),
-			peerASN:   msg.PerPeerHeader.PeerAS,
-			localASN:  uint32(sentOpen.ASN),
-			ipv4:      &peerAddressFamily{},
-			ipv6:      &peerAddressFamily{},
-			vrf:       r.vrfRegistry.CreateVRFIfNotExists(fmt.Sprintf("%d", msg.PerPeerHeader.PeerDistinguisher), msg.PerPeerHeader.PeerDistinguisher),
+			routerID:        sentOpen.BGPIdentifier,
+			addr:            peerAddress.Dedup(),
+			localAddr:       localAddress.Dedup(),
+			peerASN:         msg.PerPeerHeader.PeerAS,
+			localASN:        uint32(sentOpen.ASN),
+			ipv4:            &peerAddressFamily{},
+			ipv6:            &peerAddressFamily{},
+			vrf:             r.vrfRegistry.CreateVRFIfNotExists(fmt.Sprintf("%d", msg.PerPeerHeader.PeerDistinguisher), msg.PerPeerHeader.PeerDistinguisher),
+			adjRIBInFactory: r.adjRIBInFactory,
 		},
 	}
 

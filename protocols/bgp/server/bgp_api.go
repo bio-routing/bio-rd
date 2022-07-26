@@ -24,7 +24,7 @@ func NewBGPAPIServer(s BGPServer) *BGPAPIServer {
 }
 
 func (s *BGPAPIServer) ListSessions(ctx context.Context, in *api.ListSessionsRequest) (*api.ListSessionsResponse, error) {
-	return nil, fmt.Errorf("Not implemented yet")
+	return nil, fmt.Errorf("not implemented yet")
 }
 
 // DumpRIBIn dumps the RIB in of a peer for a given AFI/SAFI

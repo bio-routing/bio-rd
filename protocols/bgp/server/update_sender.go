@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
@@ -383,12 +382,12 @@ func (a *UpdateSender) ReplaceFilterChain(c filter.Chain) {
 }
 
 // ReplacePath is here to fulfill an interface
-func (a *UpdateSender) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
+func (a *UpdateSender) ReplacePath(*bnet.Prefix, *route.Path, *route.Path) {
 
 }
 
 // RefreshRoute is here to fultill an interface
-func (a *UpdateSender) RefreshRoute(*net.Prefix, []*route.Path) {
+func (a *UpdateSender) RefreshRoute(*bnet.Prefix, []*route.Path) {
 
 }
 
