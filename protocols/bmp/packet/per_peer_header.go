@@ -67,6 +67,11 @@ func (p *PerPeerHeader) GetIPVersion() uint8 {
 	return 4
 }
 
+// GetLFlag checks if the L flag is set
+func (p *PerPeerHeader) GetLFlag() bool {
+	return p.PeerFlags&0b01000000 == 0b01000000
+}
+
 // GetAFlag checks if the A flag is set
 func (p *PerPeerHeader) GetAFlag() bool {
 	return p.PeerFlags&0b00100000 == 0b00100000
