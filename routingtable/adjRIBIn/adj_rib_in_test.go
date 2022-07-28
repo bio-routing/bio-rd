@@ -176,7 +176,12 @@ func TestAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), routerID, clusterID, test.addPath)
+		peerParams := PeerParameters{
+			RouterID:  routerID,
+			ClusterID: clusterID,
+			AddPathRX: test.addPath,
+		}
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), peerParams)
 		mc := routingtable.NewRTMockClient()
 		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
@@ -401,7 +406,12 @@ func TestRemovePath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 1, 2, test.addPath)
+		peerParams := PeerParameters{
+			RouterID:  1,
+			ClusterID: 2,
+			AddPathRX: test.addPath,
+		}
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), peerParams)
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix().Ptr(), route.Paths()[0])
 		}
@@ -429,7 +439,11 @@ func TestRemovePath(t *testing.T) {
 }
 
 func TestUnregister(t *testing.T) {
-	adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 0, 0, false)
+	peerParams := PeerParameters{
+		RouterID:  0,
+		ClusterID: 0,
+		AddPathRX: false}
+	adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), peerParams)
 	mc := routingtable.NewRTMockClient()
 	adjRIBIn.Register(mc)
 

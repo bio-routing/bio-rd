@@ -78,19 +78,19 @@ func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
 }
 
 type adjRIBInFactoryI interface {
-	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32, addPathRX bool) routingtable.AdjRIBIn
+	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerParams adjRIBIn.PeerParameters) routingtable.AdjRIBIn
 }
 
 type adjRIBInFactory struct{}
 
-func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, routerID uint32, clusterID uint32, addPathRX bool) routingtable.AdjRIBIn {
-	return adjRIBIn.New(exportFilterChain, contributingASNs, routerID, clusterID, addPathRX)
+func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerParams adjRIBIn.PeerParameters) routingtable.AdjRIBIn {
+	return adjRIBIn.New(exportFilterChain, contributingASNs, peerParams)
 }
 
 func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	contributingASNs := f.rib.GetContributingASNs()
 
-	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, f.peerParameters())
 	contributingASNs.Add(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Register(f.rib)
@@ -106,8 +106,25 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	f.initialized = true
 }
 
+func (f *fsmAddressFamily) peerParameters() adjRIBIn.PeerParameters {
+	rip, _ := bnet.IPFromBytes(f.fsm.bmpRouterAddress)
+
+	return adjRIBIn.PeerParameters{
+		RouterID:  f.fsm.peer.routerID,
+		ClusterID: f.fsm.peer.clusterID,
+		AddPathRX: f.addPathRX,
+
+		// Only relevant for BMP use
+		RouterIP: rip,
+		LocalIP:  f.fsm.peer.localAddr,
+		PeerIP:   f.fsm.peer.addr,
+		LocalASN: f.fsm.peer.localASN,
+		PeerASN:  f.fsm.peer.peerASN,
+	}
+}
+
 func (f *fsmAddressFamily) bmpInit() {
-	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.peerParameters())
 
 	if f.rib != nil {
 		f.adjRIBIn.Register(f.rib)

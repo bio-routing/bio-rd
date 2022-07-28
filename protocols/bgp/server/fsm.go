@@ -40,7 +40,9 @@ type state interface {
 type FSM struct {
 	counters fsmCounters
 
-	isBMP       bool
+	isBMP            bool
+	bmpRouterAddress net.IP
+
 	peer        *peer
 	eventCh     chan int
 	con         net.Conn

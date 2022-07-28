@@ -24,6 +24,12 @@ import (
 )
 
 func TestDumpRIBInOut(t *testing.T) {
+	peerParams := adjRIBIn.PeerParameters{
+		RouterID:  0,
+		ClusterID: 0,
+		AddPathRX: true,
+	}
+
 	tests := []struct {
 		name      string
 		apisrv    *BGPAPIServer
@@ -60,7 +66,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, 0, 0, true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, peerParams),
 											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain(), true),
 										},
 									},
@@ -90,7 +96,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, 0, 0, true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, peerParams),
 											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},
@@ -150,7 +156,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), 0, 0, true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), peerParams),
 											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},

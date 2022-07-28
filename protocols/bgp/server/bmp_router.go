@@ -307,7 +307,8 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	localAddress, _ := bnet.IPFromBytes(msg.LocalAddress[16-addrLen:])
 
 	fsm := &FSM{
-		isBMP: true,
+		isBMP:            true,
+		bmpRouterAddress: r.address,
 		peer: &peer{
 			routerID:        sentOpen.BGPIdentifier,
 			addr:            peerAddress.Dedup(),
