@@ -83,3 +83,5 @@ func (m *RTMockClient) ReplaceFilterChain(filter.Chain) {}
 func (m *RTMockClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}
 
 func (m *RTMockClient) Dispose() {}
+
+func (m *RTMockClient) Flush() {}

@@ -31,6 +31,7 @@ type AdjRIB interface {
 // AdjRIBIn is the interface any AdjRIBIn must implement
 type AdjRIBIn interface {
 	AdjRIB
+	Flush()
 }
 
 // AdjRIBOut is the interface any AdjRIBOut must implement

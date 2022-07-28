@@ -119,7 +119,7 @@ func (f *fsmAddressFamily) bmpInit() {
 func (f *fsmAddressFamily) bmpDispose() {
 	f.rib.GetContributingASNs().Remove(f.fsm.peer.localASN)
 
-	f.adjRIBIn.(*adjRIBIn.AdjRIBIn).Flush()
+	f.adjRIBIn.Flush()
 
 	f.adjRIBIn.Unregister(f.rib)
 
