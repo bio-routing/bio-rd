@@ -107,7 +107,7 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 }
 
 func (f *fsmAddressFamily) bmpInit() {
-	f.adjRIBIn = adjRIBIn.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.fsm.peer.routerID, f.fsm.peer.clusterID, f.addPathRX)
 
 	if f.rib != nil {
 		f.adjRIBIn.Register(f.rib)
