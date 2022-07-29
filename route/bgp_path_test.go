@@ -492,7 +492,23 @@ func TestLength(t *testing.T) {
 			expected: 71,
 		},
 		{
-			name: "Cluster list, unknown attr and originator",
+			name: "Cluster list and originator",
+			path: &BGPPath{
+				ASPath: &types.ASPath{
+					{
+						Type: types.ASSequence,
+						ASNs: []uint32{13335, 41981},
+					},
+				},
+				ClusterList: &types.ClusterList{10, 20, 30},
+				BGPPathA: &BGPPathA{
+					OriginatorID: 10,
+				},
+			},
+			expected: 44 + 3 + 3*4 + 4,
+		},
+		{
+			name: "Cluster list + originator and unknown attr",
 			path: &BGPPath{
 				ASPath: &types.ASPath{
 					{
@@ -513,7 +529,7 @@ func TestLength(t *testing.T) {
 					NextHop:      net.IPv4(0).Ptr(),
 				},
 			},
-			expected: 54,
+			expected: 44 + 19 + 6,
 		},
 	}
 

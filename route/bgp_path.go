@@ -182,6 +182,11 @@ func (b *BGPPath) Length() uint16 {
 		clusterListLen += 3 + uint16(len(*b.ClusterList)*4)
 	}
 
+	originatorID := uint16(0)
+	if b.BGPPathA.OriginatorID != 0 {
+		originatorID = 4
+	}
+
 	unknownAttributesLen := uint16(0)
 	if b.UnknownAttributes != nil {
 		for _, unknownAttr := range b.UnknownAttributes {
@@ -189,12 +194,7 @@ func (b *BGPPath) Length() uint16 {
 		}
 	}
 
-	originatorID := uint16(0)
-	if b.BGPPathA.OriginatorID != 0 {
-		originatorID = 4
-	}
-
-	return communitiesLen + largeCommunitiesLen + 4*7 + 4 + originatorID + asPathLen + unknownAttributesLen
+	return 4*7 + 4 + asPathLen + communitiesLen + largeCommunitiesLen + clusterListLen + originatorID + unknownAttributesLen
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
@@ -231,6 +231,10 @@ func (b *BGPPath) Compare(c *BGPPath) bool {
 		return false
 	}
 
+	if !b.compareUnknownAttributes(c) {
+		return false
+	}
+
 	return true
 }
 
@@ -255,10 +259,6 @@ func (b *BGPPath) compareCommunities(c *BGPPath) bool {
 		if (*b.Communities)[i] != (*c.Communities)[i] {
 			return false
 		}
-	}
-
-	if !b.compareUnknownAttributes(c) {
-		return false
 	}
 
 	return true
