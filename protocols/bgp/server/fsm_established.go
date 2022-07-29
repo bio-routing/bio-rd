@@ -159,7 +159,7 @@ func (s *establishedState) keepaliveTimerExpired() (state, string) {
 	return newEstablishedState(s.fsm), s.fsm.reason
 }
 
-func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions, postPolicy bool) (state, string) {
+func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions, bmpPostPolicy bool) (state, string) {
 	msg, err := packet.Decode(bytes.NewBuffer(data), opt)
 	if err != nil {
 		switch bgperr := err.(type) {
@@ -179,7 +179,7 @@ func (s *establishedState) msgReceived(data []byte, opt *packet.DecodeOptions, p
 		fmt.Println(data)
 		return s.notification()
 	case packet.UpdateMsg:
-		return s.update(msg.Body.(*packet.BGPUpdate), postPolicy)
+		return s.update(msg.Body.(*packet.BGPUpdate), bmpPostPolicy)
 	case packet.KeepaliveMsg:
 		return s.keepaliveReceived()
 	default:
@@ -195,7 +195,7 @@ func (s *establishedState) notification() (state, string) {
 	return newIdleState(s.fsm), "Received NOTIFICATION"
 }
 
-func (s *establishedState) update(u *packet.BGPUpdate, postPolicy bool) (state, string) {
+func (s *establishedState) update(u *packet.BGPUpdate, bmpPostPolicy bool) (state, string) {
 	atomic.AddUint64(&s.fsm.counters.updatesReceived, 1)
 
 	if s.fsm.holdTime != 0 {
@@ -203,11 +203,11 @@ func (s *establishedState) update(u *packet.BGPUpdate, postPolicy bool) (state, 
 	}
 
 	if s.fsm.ipv4Unicast != nil {
-		s.fsm.ipv4Unicast.processUpdate(u, postPolicy)
+		s.fsm.ipv4Unicast.processUpdate(u, bmpPostPolicy)
 	}
 
 	if s.fsm.ipv6Unicast != nil {
-		s.fsm.ipv6Unicast.processUpdate(u, postPolicy)
+		s.fsm.ipv6Unicast.processUpdate(u, bmpPostPolicy)
 	}
 
 	afi, safi := s.updateAddressFamily(u)
