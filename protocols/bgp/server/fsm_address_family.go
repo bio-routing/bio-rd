@@ -165,7 +165,7 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool
 		return
 	}
 
-	f.multiProtocolUpdates(u)
+	f.multiProtocolUpdates(u, bmpPostPolicy)
 	if f.afi == packet.AFIIPv4 {
 		f.withdraws(u, bmpPostPolicy)
 		f.updates(u, bmpPostPolicy)
@@ -175,15 +175,16 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool
 func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate, bmpPostPolicy bool) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
 		f.adjRIBIn.RemovePath(r.Prefix, &route.Path{
-			BMPPostPolicy: bmpPostPolicy,
+			BGPPath: &route.BGPPath{
+				BMPPostPolicy: bmpPostPolicy,
+			},
 		})
 	}
 }
 
 func (f *fsmAddressFamily) updates(u *packet.BGPUpdate, bmpPostPolicy bool) {
 	for r := u.NLRI; r != nil; r = r.Next {
-		path := f.newRoutePath()
-		path.BMPPostPolicy = bmpPostPolicy
+		path := f.newRoutePath(bmpPostPolicy)
 		f.processAttributes(u.PathAttributes, path)
 		path.BGPPath.PathIdentifier = u.NLRI.PathIdentifier
 
@@ -191,8 +192,8 @@ func (f *fsmAddressFamily) updates(u *packet.BGPUpdate, bmpPostPolicy bool) {
 	}
 }
 
-func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate) {
-	path := f.newRoutePath()
+func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate, bmpPostPolicy bool) {
+	path := f.newRoutePath(bmpPostPolicy)
 	f.processAttributes(u.PathAttributes, path)
 
 	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
@@ -205,10 +206,11 @@ func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate) {
 	}
 }
 
-func (f *fsmAddressFamily) newRoutePath() *route.Path {
+func (f *fsmAddressFamily) newRoutePath(bmpPostPolicy bool) *route.Path {
 	return &route.Path{
 		Type: route.BGPPathType,
 		BGPPath: &route.BGPPath{
+			BMPPostPolicy: bmpPostPolicy,
 			BGPPathA: &route.BGPPathA{
 				Source: f.fsm.peer.addr,
 				EBGP:   f.fsm.peer.localASN != f.fsm.peer.peerASN,
