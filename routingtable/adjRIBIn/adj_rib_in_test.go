@@ -109,7 +109,18 @@ func TestAddPath(t *testing.T) {
 					},
 				}),
 			},
-			expected: []*route.Route{},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:    111,
+							OriginatorID: routerID,
+						},
+					},
+					HiddenReason: route.HiddenReasonOurOriginatorID,
+				}),
+			},
 		},
 		{
 			name: "Add route with our ClusterID within ClusterList",
@@ -127,7 +138,22 @@ func TestAddPath(t *testing.T) {
 					},
 				}),
 			},
-			expected: []*route.Route{},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:    222,
+							OriginatorID: 23,
+						},
+						ClusterList: &types.ClusterList{
+							clusterID,
+						},
+					},
+
+					HiddenReason: route.HiddenReasonClusterLoop,
+				}),
+			},
 		},
 		{
 			name:    "Add route (with BGP add path)",
@@ -257,7 +283,7 @@ func TestAddPath(t *testing.T) {
 
 			assert.Equal(t, test.removePath.Equal(removePathParams.Path), true, test.name)
 		}
-		assert.Equal(t, test.expected, adjRIBIn.rt.Dump())
+		assert.Equal(t, test.expected, adjRIBIn.rt.Dump(), test.name)
 	}
 }
 

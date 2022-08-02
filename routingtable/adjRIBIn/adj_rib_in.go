@@ -161,23 +161,9 @@ func (a *AdjRIBIn) AddPath(pfx *net.Prefix, p *route.Path) error {
 
 // addPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
 func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
-	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
-	if p.BGPPath.BGPPathA.OriginatorID == a.routerID {
-		return nil
-	}
-
-	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
-	if p.BGPPath.ClusterList != nil && len(*p.BGPPath.ClusterList) > 0 {
-		for _, cid := range *p.BGPPath.ClusterList {
-			if cid == a.clusterID {
-				return nil
-			}
-		}
-	}
-
 	var oldPaths []*route.Path
 	if a.addPathRX {
-		oldPaths := make([]*route.Path, 0)
+		oldPaths = make([]*route.Path, 0)
 		r := a.rt.Get(pfx)
 		if r != nil {
 			for _, path := range r.Paths() {
@@ -194,13 +180,15 @@ func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 	}
 	a.removePathsFromClients(pfx, oldPaths)
 
-	p, reject := a.exportFilterChain.Process(pfx, p)
-	if reject {
+	// Bail out if this path is considered ineligible
+	p.HiddenReason = a.validatePath(p)
+	if p.HiddenReason != route.HiddenReasonNone {
 		return nil
 	}
 
-	// Bail out - for all clients for now - if any of our ASNs is within the path
-	if a.ourASNsInPath(p) {
+	p, reject := a.exportFilterChain.Process(pfx, p)
+	if reject {
+		p.HiddenReason = route.HiddenReasonFilteredByPolicy
 		return nil
 	}
 
@@ -208,22 +196,6 @@ func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 		client.AddPath(pfx, p)
 	}
 	return nil
-}
-
-func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
-	if p.BGPPath.ASPath == nil {
-		return false
-	}
-
-	for _, pathSegment := range *p.BGPPath.ASPath {
-		for _, asn := range pathSegment.ASNs {
-			if a.contributingASNs.IsContributingASN(asn) {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 // RemovePath removes the path for prefix `pfx`
@@ -260,6 +232,11 @@ func (a *AdjRIBIn) removePath(pfx *net.Prefix, p *route.Path) bool {
 
 func (a *AdjRIBIn) removePathsFromClients(pfx *net.Prefix, paths []*route.Path) {
 	for _, path := range paths {
+		// If this path wasn't eligible in the first place, we didn't announce it
+		if path.HiddenReason != route.HiddenReasonNone {
+			continue
+		}
+
 		path, reject := a.exportFilterChain.Process(pfx, path)
 		if reject {
 			continue
@@ -315,4 +292,44 @@ func (a *AdjRIBIn) Get(pfx *net.Prefix) *route.Route {
 // GetLonger gets all more specifics
 func (a *AdjRIBIn) GetLonger(pfx *net.Prefix) (res []*route.Route) {
 	return a.rt.GetLonger(pfx)
+}
+
+// Validate path information
+func (a *AdjRIBIn) validatePath(p *route.Path) uint8 {
+	// Bail out - for all clients for now - if any of our ASNs is within the path
+	if a.ourASNsInPath(p) {
+		return route.HiddenReasonASLoop
+	}
+
+	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
+	if p.BGPPath.BGPPathA.OriginatorID == a.routerID {
+		return route.HiddenReasonOurOriginatorID
+	}
+
+	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
+	if p.BGPPath.ClusterList != nil && len(*p.BGPPath.ClusterList) > 0 {
+		for _, cid := range *p.BGPPath.ClusterList {
+			if cid == a.clusterID {
+				return route.HiddenReasonClusterLoop
+			}
+		}
+	}
+
+	return route.HiddenReasonNone
+}
+
+func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
+	if p.BGPPath.ASPath == nil {
+		return false
+	}
+
+	for _, pathSegment := range *p.BGPPath.ASPath {
+		for _, asn := range pathSegment.ASNs {
+			if a.contributingASNs.IsContributingASN(asn) {
+				return true
+			}
+		}
+	}
+
+	return false
 }

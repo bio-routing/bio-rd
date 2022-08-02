@@ -15,9 +15,19 @@ message Path {
         Static = 0;
         BGP = 1;
     }
+    enum HiddenReason {
+        HiddenReasonNone = 0;
+        HiddenReasonNextHopUnreachable = 1;
+        HiddenReasonFilteredByPolicy = 2;
+        HiddenReasonASLoop = 3;
+        HiddenReasonOurOriginatorID = 4;
+        HiddenReasonClusterLoop = 5;
+        HiddenReasonOTCMismatch = 6;
+    }
     Type type = 1;
     StaticPath static_path = 2;
     BGPPath bgp_path = 3;
+    HiddenReason hidden_reason = 4;
 }
 
 message StaticPath {

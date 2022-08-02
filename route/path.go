@@ -2,15 +2,27 @@ package route
 
 import (
 	"fmt"
+	"strings"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route/api"
 )
 
+const (
+	HiddenReasonNone = iota
+	HiddenReasonNextHopUnreachable
+	HiddenReasonFilteredByPolicy
+	HiddenReasonASLoop
+	HiddenReasonOurOriginatorID
+	HiddenReasonClusterLoop
+	HiddenReasonOTCMismatch
+)
+
 // Path represents a network path
 type Path struct {
 	Type          uint8
-	BMPPostPolicy bool // BMPPostPolicy fields is a hack used in BMP to differentiate between pre/post policy routes (L flag of the per peer header)
+	BMPPostPolicy bool  // BMPPostPolicy fields is a hack used in BMP to differentiate between pre/post policy routes (L flag of the per peer header)
+	HiddenReason  uint8 // If set, Path is hidden and ineligible to be installed in LocRIB and used for path selection
 	StaticPath    *StaticPath
 	BGPPath       *BGPPath
 	FIBPath       *FIBPath
@@ -76,6 +88,22 @@ func (p *Path) ToProto() *api.Path {
 		a.Type = api.Path_BGP
 	}
 
+	switch p.HiddenReason {
+	case HiddenReasonNone:
+		a.HiddenReason = api.Path_HiddenReasonNone
+	case HiddenReasonNextHopUnreachable:
+		a.HiddenReason = api.Path_HiddenReasonNextHopUnreachable
+	case HiddenReasonFilteredByPolicy:
+		a.HiddenReason = api.Path_HiddenReasonFilteredByPolicy
+	case HiddenReasonASLoop:
+		a.HiddenReason = api.Path_HiddenReasonASLoop
+	case HiddenReasonOurOriginatorID:
+		a.HiddenReason = api.Path_HiddenReasonOurOriginatorID
+	case HiddenReasonClusterLoop:
+		a.HiddenReason = api.Path_HiddenReasonClusterLoop
+	case HiddenReasonOTCMismatch:
+		a.HiddenReason = api.Path_HiddenReasonOTCMismatch
+	}
 	return a
 }
 
@@ -158,6 +186,8 @@ func (p *Path) String() string {
 
 // Print all known information about a route in human readable form
 func (p *Path) Print() string {
+	buf := &strings.Builder{}
+
 	protocol := ""
 	switch p.Type {
 	case StaticPathType:
@@ -168,17 +198,23 @@ func (p *Path) Print() string {
 		protocol = "Netlink"
 	}
 
-	ret := fmt.Sprintf("\tProtocol: %s\n", protocol)
-	switch p.Type {
-	case StaticPathType:
-		ret += "Not implemented yet"
-	case BGPPathType:
-		ret += p.BGPPath.Print()
-	case FIBPathType:
-		ret += p.FIBPath.Print()
+	fmt.Fprintf(buf, "\tProtocol: %s\n", protocol)
+
+	hr := p.HiddenReasonString()
+	if hr != "" {
+		fmt.Fprintf(buf, "\tHidden Reason: %s\n", hr)
 	}
 
-	return ret
+	switch p.Type {
+	case StaticPathType:
+		buf.WriteString("Not implemented yet")
+	case BGPPathType:
+		buf.WriteString(p.BGPPath.Print())
+	case FIBPathType:
+		buf.WriteString(p.FIBPath.Print())
+	}
+
+	return buf.String()
 }
 
 // Copy a route
@@ -206,4 +242,31 @@ func (p *Path) NextHop() *bnet.IP {
 	}
 
 	panic("Unknown path type")
+}
+
+// IsHidden returns if the path is hidden
+func (p *Path) IsHidden() bool {
+	return p.HiddenReason != HiddenReasonNone
+}
+
+// HiddenReasonString returns a human readable reason why this path is hidden (if any)
+func (p *Path) HiddenReasonString() string {
+	switch p.HiddenReason {
+	case HiddenReasonNone:
+		return ""
+	case HiddenReasonNextHopUnreachable:
+		return "Next-Hop unreachable"
+	case HiddenReasonFilteredByPolicy:
+		return "Filtered by Policy"
+	case HiddenReasonASLoop:
+		return "AS Path loop"
+	case HiddenReasonOurOriginatorID:
+		return "Found our Router ID as Originator ID"
+	case HiddenReasonClusterLoop:
+		return "Found our cluster ID in cluster list"
+	case HiddenReasonOTCMismatch:
+		return "OTC mismatch"
+	default:
+		return "unknown"
+	}
 }
