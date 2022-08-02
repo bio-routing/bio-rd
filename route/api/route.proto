@@ -49,6 +49,7 @@ message BGPPath {
     uint32 originator_id = 12;
     repeated uint32 cluster_list = 13;
     repeated UnknownPathAttribute unknown_attributes = 14;
+    bool bmp_post_policy = 15;
 }
 
 message ASPathSegment {

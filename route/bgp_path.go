@@ -22,6 +22,7 @@ type BGPPath struct {
 	UnknownAttributes []types.UnknownPathAttribute
 	PathIdentifier    uint32
 	ASPathLen         uint16
+	BMPPostPolicy     bool // BMPPostPolicy fields is a hack used in BMP to differentiate between pre/post policy routes (L flag of the per peer header)
 }
 
 // BGPPathA represents cachable BGP path attributes
@@ -73,6 +74,7 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		Source:            b.BGPPathA.Source.ToProto(),
 		UnknownAttributes: make([]*api.UnknownPathAttribute, len(b.UnknownAttributes)),
 		OriginatorId:      b.BGPPathA.OriginatorID,
+		BmpPostPolicy:     b.BMPPostPolicy,
 	}
 
 	if b.ASPath != nil {
@@ -122,6 +124,7 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath, dedup bool) *BGPPath {
 		},
 		PathIdentifier: pb.PathIdentifier,
 		ASPath:         types.ASPathFromProtoASPath(pb.AsPath),
+		BMPPostPolicy:  pb.BmpPostPolicy,
 	}
 
 	if dedup {
