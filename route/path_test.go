@@ -701,3 +701,144 @@ func TestFIBPathSelect(t *testing.T) {
 	}
 
 }
+
+func TestPathIsHidden(t *testing.T) {
+	tests := []struct {
+		name   string
+		source *Path
+		hidden bool
+	}{
+		{
+			name: "BGPPath without hidden reason",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+			},
+			hidden: false,
+		},
+		{
+			name: "BGPPath with hidden reason",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: HiddenReasonOTCMismatch,
+			},
+			hidden: true,
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equalf(t, test.hidden, test.source.IsHidden(), test.name)
+	}
+}
+
+func TestPathHiddenReasonString(t *testing.T) {
+	tests := []struct {
+		name   string
+		source *Path
+		reason string
+	}{
+		{
+			name: "BGPPath without hidden reason",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+			},
+			reason: "",
+		},
+		{
+			name: "Next-Hop unreachable",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: HiddenReasonNextHopUnreachable,
+			},
+			reason: "Next-Hop unreachable",
+		},
+		{
+			name: "Filtered by Policy",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: HiddenReasonFilteredByPolicy,
+			},
+			reason: "Filtered by Policy",
+		},
+		{
+			name: "HiddenReasonASLoop",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: HiddenReasonASLoop,
+			},
+			reason: "AS Path loop",
+		},
+		{
+			name: "Contains our Originator ID",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: HiddenReasonOurOriginatorID,
+			},
+			reason: "Found our Router ID as Originator ID",
+		},
+		{
+			name: "Cluster list loop",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: HiddenReasonClusterLoop,
+			},
+			reason: "Found our cluster ID in cluster list",
+		},
+		{
+			name: "OTC mismatch",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: HiddenReasonOTCMismatch,
+			},
+			reason: "OTC mismatch",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equalf(t, test.reason, test.source.HiddenReasonString(), test.name)
+	}
+}
