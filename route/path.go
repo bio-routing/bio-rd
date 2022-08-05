@@ -3,6 +3,7 @@ package route
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route/api"
@@ -21,7 +22,8 @@ const (
 // Path represents a network path
 type Path struct {
 	Type         uint8
-	HiddenReason uint8 // If set, Path is hidden and ineligible to be installed in LocRIB and used for path selection
+	HiddenReason uint8  // If set, Path is hidden and ineligible to be installed in LocRIB and used for path selection
+	LTime        uint32 // The time we learned this path, as unix epoch (seconds)
 	StaticPath   *StaticPath
 	BGPPath      *BGPPath
 	FIBPath      *FIBPath
@@ -76,8 +78,9 @@ func (p *Path) ECMP(q *Path) bool {
 // ToProto converts path to proto path
 func (p *Path) ToProto() *api.Path {
 	a := &api.Path{
-		StaticPath: p.StaticPath.ToProto(),
-		BgpPath:    p.BGPPath.ToProto(),
+		StaticPath:  p.StaticPath.ToProto(),
+		BgpPath:     p.BGPPath.ToProto(),
+		TimeLearned: p.LTime,
 	}
 
 	switch p.Type {
@@ -103,6 +106,7 @@ func (p *Path) ToProto() *api.Path {
 	case HiddenReasonOTCMismatch:
 		a.HiddenReason = api.Path_HiddenReasonOTCMismatch
 	}
+
 	return a
 }
 
@@ -202,6 +206,11 @@ func (p *Path) Print() string {
 	hr := p.HiddenReasonString()
 	if hr != "" {
 		fmt.Fprintf(buf, "\tHidden Reason: %s\n", hr)
+	}
+
+	if p.LTime != 0 {
+		fmt.Fprintf(buf, "\tAge: %s\n", time.Since(time.Unix(int64(p.LTime), 0)).Truncate(time.Second).String())
+
 	}
 
 	switch p.Type {

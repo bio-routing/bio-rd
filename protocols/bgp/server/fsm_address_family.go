@@ -160,15 +160,15 @@ func (f *fsmAddressFamily) dispose() {
 	f.initialized = false
 }
 
-func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool) {
+func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool, timestamp uint32) {
 	if f.safi != packet.SAFIUnicast {
 		return
 	}
 
-	f.multiProtocolUpdates(u, bmpPostPolicy)
+	f.multiProtocolUpdates(u, bmpPostPolicy, timestamp)
 	if f.afi == packet.AFIIPv4 {
 		f.withdraws(u, bmpPostPolicy)
-		f.updates(u, bmpPostPolicy)
+		f.updates(u, bmpPostPolicy, timestamp)
 	}
 }
 
@@ -182,9 +182,9 @@ func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate, bmpPostPolicy bool) {
 	}
 }
 
-func (f *fsmAddressFamily) updates(u *packet.BGPUpdate, bmpPostPolicy bool) {
+func (f *fsmAddressFamily) updates(u *packet.BGPUpdate, bmpPostPolicy bool, timestamp uint32) {
 	for r := u.NLRI; r != nil; r = r.Next {
-		path := f.newRoutePath(bmpPostPolicy)
+		path := f.newRoutePath(bmpPostPolicy, timestamp)
 		f.processAttributes(u.PathAttributes, path)
 		path.BGPPath.PathIdentifier = u.NLRI.PathIdentifier
 
@@ -192,8 +192,8 @@ func (f *fsmAddressFamily) updates(u *packet.BGPUpdate, bmpPostPolicy bool) {
 	}
 }
 
-func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate, bmpPostPolicy bool) {
-	path := f.newRoutePath(bmpPostPolicy)
+func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate, bmpPostPolicy bool, timestamp uint32) {
+	path := f.newRoutePath(bmpPostPolicy, timestamp)
 	f.processAttributes(u.PathAttributes, path)
 
 	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
@@ -206,9 +206,10 @@ func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate, bmpPostPoli
 	}
 }
 
-func (f *fsmAddressFamily) newRoutePath(bmpPostPolicy bool) *route.Path {
+func (f *fsmAddressFamily) newRoutePath(bmpPostPolicy bool, timestamp uint32) *route.Path {
 	return &route.Path{
-		Type: route.BGPPathType,
+		LTime: timestamp,
+		Type:  route.BGPPathType,
 		BGPPath: &route.BGPPath{
 			BMPPostPolicy: bmpPostPolicy,
 			BGPPathA: &route.BGPPathA{
