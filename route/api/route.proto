@@ -28,6 +28,7 @@ message Path {
     StaticPath static_path = 2;
     BGPPath bgp_path = 3;
     HiddenReason hidden_reason = 4;
+    uint32 time_learned = 5;
 }
 
 message StaticPath {
