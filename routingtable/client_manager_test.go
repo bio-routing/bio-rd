@@ -37,33 +37,21 @@ func (m MockClient) UpdateNewClient(RouteTableClient) error {
 	return nil
 }
 
-func (m MockClient) Register(RouteTableClient) {
-	return
-}
+func (m MockClient) Register(RouteTableClient) {}
 
-func (m MockClient) Unregister(RouteTableClient) {
-	return
-}
+func (m MockClient) Unregister(RouteTableClient) {}
 
 func (m MockClient) RouteCount() int64 {
 	return 0
 }
 
-func (m MockClient) ReplaceFilterChain(c filter.Chain) {
+func (m MockClient) ReplaceFilterChain(c filter.Chain) {}
 
-}
+func (m MockClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {}
 
-func (m MockClient) ReplacePath(*net.Prefix, *route.Path, *route.Path) {
+func (m MockClient) RefreshRoute(*net.Prefix, []*route.Path) {}
 
-}
-
-func (m MockClient) RefreshRoute(*net.Prefix, []*route.Path) {
-
-}
-
-func (m MockClient) Dispose() {
-
-}
+func (m MockClient) Dispose() {}
 
 func TestClients(t *testing.T) {
 	tests := []struct {

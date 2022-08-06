@@ -46,20 +46,14 @@ func (m *RTMockClient) AddPathInitialDump(pfx *net.Prefix, p *route.Path) error 
 }
 
 func (m *RTMockClient) UpdateNewClient(client RouteTableClient) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }
 
-func (m *RTMockClient) Register(RouteTableClient) {
-	return
-}
+func (m *RTMockClient) Register(RouteTableClient) {}
 
-func (m *RTMockClient) RegisterWithOptions(RouteTableClient, ClientOptions) {
-	return
-}
+func (m *RTMockClient) RegisterWithOptions(RouteTableClient, ClientOptions) {}
 
-func (m *RTMockClient) Unregister(RouteTableClient) {
-	return
-}
+func (m *RTMockClient) Unregister(RouteTableClient) {}
 
 // RemovePath removes the path for prefix `pfx`
 func (m *RTMockClient) RemovePath(pfx *net.Prefix, p *route.Path) bool {
