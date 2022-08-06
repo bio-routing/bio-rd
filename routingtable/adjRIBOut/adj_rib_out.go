@@ -20,7 +20,6 @@ type AdjRIBOut struct {
 	rib                      *locRIB.LocRIB
 	rt                       *routingtable.RoutingTable
 	peerInfo                 *routingtable.PeerInfo
-	addPathTX                bool
 	pathIDManager            *pathIDManager
 	exportFilterChain        filter.Chain
 	exportFilterChainPending filter.Chain
@@ -28,14 +27,13 @@ type AdjRIBOut struct {
 }
 
 // New creates a new Adjacency RIB Out with BGP add path
-func New(rib *locRIB.LocRIB, peerInfo *routingtable.PeerInfo, exportFilterChain filter.Chain, addPathTX bool) *AdjRIBOut {
+func New(rib *locRIB.LocRIB, peerInfo *routingtable.PeerInfo, exportFilterChain filter.Chain) *AdjRIBOut {
 	a := &AdjRIBOut{
 		rib:               rib,
 		rt:                routingtable.NewRoutingTable(),
 		peerInfo:          peerInfo,
 		pathIDManager:     newPathIDManager(),
 		exportFilterChain: exportFilterChain,
-		addPathTX:         addPathTX,
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 	return a
@@ -66,7 +64,7 @@ func (a *AdjRIBOut) RouteCount() int64 {
 
 func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, a.peerInfo) {
-		if a.addPathTX {
+		if a.peerInfo.AddPathTX {
 			a.removePathsForPrefix(pfx)
 		}
 		return nil, false
@@ -140,7 +138,7 @@ func (a *AdjRIBOut) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 }
 
 func (a *AdjRIBOut) addPath(pfx *bnet.Prefix, p *route.Path) error {
-	if a.addPathTX {
+	if a.peerInfo.AddPathTX {
 		pathID, err := a.pathIDManager.addPath(p)
 		if err != nil {
 			return fmt.Errorf("unable to get path ID: %w", err)
@@ -187,7 +185,7 @@ func (a *AdjRIBOut) removePath(pfx *bnet.Prefix, p *route.Path) bool {
 	}
 
 	sentPath := p
-	if a.addPathTX {
+	if a.peerInfo.AddPathTX {
 		for _, sp := range r.Paths() {
 			if sp.Select(p) == 0 {
 				a.rt.RemovePath(pfx, sp)

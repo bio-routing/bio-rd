@@ -22,9 +22,10 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 		IBGP:              false,
 		LocalASN:          41981,
 		RouteServerClient: false,
+		AddPathTX:         false,
 	}
 
-	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain(), false)
+	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain())
 
 	tests := []struct {
 		name          string
@@ -372,9 +373,10 @@ func TestBestPathOnlyIBGP(t *testing.T) {
 		IBGP:              true,
 		LocalASN:          41981,
 		RouteServerClient: false,
+		AddPathTX:         false,
 	}
 
-	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain(), false)
+	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain())
 
 	testSteps := []struct {
 		name          string
@@ -605,9 +607,10 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		RouteServerClient:    false,
 		RouteReflectorClient: true,
 		ClusterID:            net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32(),
+		AddPathTX:            false,
 	}
 
-	adjRIBOut := New(nil, peerInfoBestOnlyRR, filter.NewAcceptAllFilterChain(), false)
+	adjRIBOut := New(nil, peerInfoBestOnlyRR, filter.NewAcceptAllFilterChain())
 
 	tests := []struct {
 		name          string
@@ -959,9 +962,10 @@ func TestAddPathIBGP(t *testing.T) {
 		IBGP:              true,
 		LocalASN:          41981,
 		RouteServerClient: false,
+		AddPathTX:         true,
 	}
 
-	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain(), true)
+	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain())
 
 	tests := []struct {
 		name          string

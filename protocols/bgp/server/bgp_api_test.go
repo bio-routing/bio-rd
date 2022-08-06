@@ -67,7 +67,7 @@ func TestDumpRIBInOut(t *testing.T) {
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, &peerInfo),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain(), true),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType, AddPathTX: true}, filter.NewAcceptAllFilterChain()),
 										},
 									},
 								},
@@ -97,7 +97,7 @@ func TestDumpRIBInOut(t *testing.T) {
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, &peerInfo),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(0).Ptr(), AddPathTX: false}, filter.NewAcceptAllFilterChain()),
 										},
 									},
 								},
@@ -146,7 +146,7 @@ func TestDumpRIBInOut(t *testing.T) {
 			wantFail: false,
 		},
 		{
-			name: "Test #3: One complex routes given",
+			name: "Test #3: One complex route given",
 			apisrv: &BGPAPIServer{
 				srv: &bgpServer{
 					peers: &peerManager{
@@ -157,7 +157,7 @@ func TestDumpRIBInOut(t *testing.T) {
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), &peerInfo),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(123).Ptr(), AddPathTX: false}, filter.NewAcceptAllFilterChain()),
 										},
 									},
 								},
