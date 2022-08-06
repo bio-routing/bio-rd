@@ -22,28 +22,15 @@ type AdjRIBIn struct {
 	addPathRX         bool
 }
 
-type PeerParameters struct {
-	RouterID  uint32
-	ClusterID uint32
-	AddPathRX bool
-
-	// Only relevant for BMP use
-	RouterIP net.IP
-	LocalIP  *net.IP
-	PeerIP   *net.IP
-	LocalASN uint32
-	PeerASN  uint32
-}
-
 // New creates a new Adjacency RIB In
-func New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerParams PeerParameters) *AdjRIBIn {
+func New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerInfo *routingtable.PeerInfo) *AdjRIBIn {
 	a := &AdjRIBIn{
 		rt:                routingtable.NewRoutingTable(),
 		exportFilterChain: exportFilterChain,
 		contributingASNs:  contributingASNs,
-		routerID:          peerParams.RouterID,
-		clusterID:         peerParams.ClusterID,
-		addPathRX:         peerParams.AddPathRX,
+		routerID:          peerInfo.RouterID,
+		clusterID:         peerInfo.ClusterID,
+		addPathRX:         peerInfo.AddPathRX,
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 	return a

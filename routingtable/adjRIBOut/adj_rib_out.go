@@ -19,7 +19,7 @@ type AdjRIBOut struct {
 	clientManager            *routingtable.ClientManager
 	rib                      *locRIB.LocRIB
 	rt                       *routingtable.RoutingTable
-	neighbor                 *routingtable.Neighbor
+	peerInfo                 *routingtable.PeerInfo
 	addPathTX                bool
 	pathIDManager            *pathIDManager
 	exportFilterChain        filter.Chain
@@ -28,11 +28,11 @@ type AdjRIBOut struct {
 }
 
 // New creates a new Adjacency RIB Out with BGP add path
-func New(rib *locRIB.LocRIB, neighbor *routingtable.Neighbor, exportFilterChain filter.Chain, addPathTX bool) *AdjRIBOut {
+func New(rib *locRIB.LocRIB, peerInfo *routingtable.PeerInfo, exportFilterChain filter.Chain, addPathTX bool) *AdjRIBOut {
 	a := &AdjRIBOut{
 		rib:               rib,
 		rt:                routingtable.NewRoutingTable(),
-		neighbor:          neighbor,
+		peerInfo:          peerInfo,
 		pathIDManager:     newPathIDManager(),
 		exportFilterChain: exportFilterChain,
 		addPathTX:         addPathTX,
@@ -65,7 +65,7 @@ func (a *AdjRIBOut) RouteCount() int64 {
 }
 
 func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
-	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
+	if !routingtable.ShouldPropagateUpdate(pfx, p, a.peerInfo) {
 		if a.addPathTX {
 			a.removePathsForPrefix(pfx)
 		}
@@ -73,19 +73,19 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 	}
 
 	// Don't export routes learned via iBGP to an iBGP neighbor which is NOT a route reflection client
-	if !p.BGPPath.BGPPathA.EBGP && a.neighbor.IBGP && !a.neighbor.RouteReflectorClient {
+	if !p.BGPPath.BGPPathA.EBGP && a.peerInfo.IBGP && !a.peerInfo.RouteReflectorClient {
 		return nil, false
 	}
 
 	// If the neighbor is an eBGP peer and not a Route Server client modify ASPath and Next Hop
 	p = p.Copy()
-	if !a.neighbor.IBGP && !a.neighbor.RouteServerClient {
-		p.BGPPath.Prepend(a.neighbor.LocalASN, 1)
-		p.BGPPath.BGPPathA.NextHop = a.neighbor.LocalAddress
+	if !a.peerInfo.IBGP && !a.peerInfo.RouteServerClient {
+		p.BGPPath.Prepend(a.peerInfo.LocalASN, 1)
+		p.BGPPath.BGPPathA.NextHop = a.peerInfo.LocalIP
 	}
 
 	// If the iBGP neighbor is a route reflection client...
-	if a.neighbor.IBGP && a.neighbor.RouteReflectorClient {
+	if a.peerInfo.IBGP && a.peerInfo.RouteReflectorClient {
 		/*
 		 * RFC4456 Section 8:
 		 * This attribute will carry the BGP Identifier of the originator of the route in the local AS.
@@ -108,7 +108,7 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 		if p.BGPPath.ClusterList != nil {
 			copy(cList[1:], *p.BGPPath.ClusterList)
 		}
-		cList[0] = a.neighbor.ClusterID
+		cList[0] = a.peerInfo.ClusterID
 		p.BGPPath.ClusterList = &cList
 	}
 
@@ -172,7 +172,7 @@ func (a *AdjRIBOut) RemovePath(pfx *bnet.Prefix, p *route.Path) bool {
 }
 
 func (a *AdjRIBOut) removePath(pfx *bnet.Prefix, p *route.Path) bool {
-	if !routingtable.ShouldPropagateUpdate(pfx, p, a.neighbor) {
+	if !routingtable.ShouldPropagateUpdate(pfx, p, a.peerInfo) {
 		return false
 	}
 
@@ -235,13 +235,13 @@ func (a *AdjRIBOut) removePathsForPrefix(pfx *bnet.Prefix) bool {
 }
 
 func (a *AdjRIBOut) isOwnPath(p *route.Path) bool {
-	if p.Type != a.neighbor.Type {
+	if p.Type != a.peerInfo.Type {
 		return false
 	}
 
 	switch p.Type {
 	case route.BGPPathType:
-		return p.BGPPath.BGPPathA.Source == a.neighbor.Address
+		return p.BGPPath.BGPPathA.Source == a.peerInfo.PeerIP
 	}
 
 	return false

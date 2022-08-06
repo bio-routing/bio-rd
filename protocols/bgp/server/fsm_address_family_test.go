@@ -31,13 +31,9 @@ func TestFSMAFIInitDispose(t *testing.T) {
 		},
 	}
 
-	n := &routingtable.Neighbor{
-		LocalASN: 15169,
-	}
-
 	assert.Equal(t, uint64(0), f.rib.ClientCount())
 
-	f.init(n)
+	f.init()
 	assert.NotEqual(t, nil, f.adjRIBIn)
 	assert.Equal(t, true, f.rib.GetContributingASNs().IsContributingASN(15169))
 	assert.NotEqual(t, true, f.rib.GetContributingASNs().IsContributingASN(15170))

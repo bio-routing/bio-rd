@@ -15,16 +15,16 @@ import (
 )
 
 func TestBestPathOnlyEBGP(t *testing.T) {
-	neighborBestOnlyEBGP := &routingtable.Neighbor{
+	peerInfoBestOnlyEBGP := &routingtable.PeerInfo{
 		Type:              route.BGPPathType,
-		LocalAddress:      net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
-		Address:           net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
+		LocalIP:           net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
+		PeerIP:            net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
 		IBGP:              false,
 		LocalASN:          41981,
 		RouteServerClient: false,
 	}
 
-	adjRIBOut := New(nil, neighborBestOnlyEBGP, filter.NewAcceptAllFilterChain(), false)
+	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain(), false)
 
 	tests := []struct {
 		name          string
@@ -51,7 +51,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       0,
 							EBGP:      false,
@@ -62,7 +62,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -81,7 +81,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       1,
 							EBGP:      false,
@@ -92,7 +92,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -109,7 +109,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       0,
 							EBGP:      false,
@@ -120,7 +120,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -139,7 +139,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       0,
 							EBGP:      false,
@@ -150,7 +150,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -219,7 +219,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       0,
 							EBGP:      false,
@@ -230,7 +230,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -249,7 +249,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       0,
 							EBGP:      false,
@@ -260,7 +260,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -279,7 +279,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       0,
 							EBGP:      false,
@@ -290,7 +290,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -320,7 +320,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
 						BGPPathA: &route.BGPPathA{
-							NextHop:   neighborBestOnlyEBGP.LocalAddress,
+							NextHop:   peerInfoBestOnlyEBGP.LocalIP,
 							Origin:    0,
 							MED:       0,
 							EBGP:      false,
@@ -331,7 +331,7 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 							types.ASPathSegment{
 								Type: types.ASSequence,
 								ASNs: []uint32{
-									neighborBestOnlyEBGP.LocalASN,
+									peerInfoBestOnlyEBGP.LocalASN,
 								},
 							},
 						},
@@ -365,16 +365,16 @@ func TestBestPathOnlyEBGP(t *testing.T) {
 }
 
 func TestBestPathOnlyIBGP(t *testing.T) {
-	neighborBestOnlyEBGP := &routingtable.Neighbor{
+	peerInfoBestOnlyEBGP := &routingtable.PeerInfo{
 		Type:              route.BGPPathType,
-		LocalAddress:      net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
-		Address:           net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
+		LocalIP:           net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
+		PeerIP:            net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
 		IBGP:              true,
 		LocalASN:          41981,
 		RouteServerClient: false,
 	}
 
-	adjRIBOut := New(nil, neighborBestOnlyEBGP, filter.NewAcceptAllFilterChain(), false)
+	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain(), false)
 
 	testSteps := []struct {
 		name          string
@@ -596,10 +596,10 @@ func TestBestPathOnlyIBGP(t *testing.T) {
  */
 
 func TestBestPathOnlyRRClient(t *testing.T) {
-	neighborBestOnlyRR := &routingtable.Neighbor{
+	peerInfoBestOnlyRR := &routingtable.PeerInfo{
 		Type:                 route.BGPPathType,
-		LocalAddress:         net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
-		Address:              net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
+		LocalIP:              net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
+		PeerIP:               net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
 		IBGP:                 true,
 		LocalASN:             41981,
 		RouteServerClient:    false,
@@ -607,7 +607,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		ClusterID:            net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32(),
 	}
 
-	adjRIBOut := New(nil, neighborBestOnlyRR, filter.NewAcceptAllFilterChain(), false)
+	adjRIBOut := New(nil, peerInfoBestOnlyRR, filter.NewAcceptAllFilterChain(), false)
 
 	tests := []struct {
 		name          string
@@ -640,7 +640,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						},
 						ASPath: &types.ASPath{},
 						ClusterList: &types.ClusterList{
-							neighborBestOnlyRR.ClusterID,
+							peerInfoBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -694,7 +694,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							neighborBestOnlyRR.ClusterID,
+							peerInfoBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -755,7 +755,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							neighborBestOnlyRR.ClusterID,
+							peerInfoBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -788,7 +788,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							neighborBestOnlyRR.ClusterID,
+							peerInfoBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -849,7 +849,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						},
 						PathIdentifier: 0,
 						ClusterList: &types.ClusterList{
-							neighborBestOnlyRR.ClusterID,
+							peerInfoBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -876,7 +876,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						},
 						PathIdentifier: 0,
 						ClusterList: &types.ClusterList{
-							neighborBestOnlyRR.ClusterID,
+							peerInfoBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -918,7 +918,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							neighborBestOnlyRR.ClusterID,
+							peerInfoBestOnlyRR.ClusterID,
 							23,
 						},
 					},
@@ -952,16 +952,16 @@ func TestBestPathOnlyRRClient(t *testing.T) {
  */
 
 func TestAddPathIBGP(t *testing.T) {
-	neighborBestOnlyEBGP := &routingtable.Neighbor{
+	peerInfoBestOnlyEBGP := &routingtable.PeerInfo{
 		Type:              route.BGPPathType,
-		LocalAddress:      net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
-		Address:           net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
+		LocalIP:           net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
+		PeerIP:            net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
 		IBGP:              true,
 		LocalASN:          41981,
 		RouteServerClient: false,
 	}
 
-	adjRIBOut := New(nil, neighborBestOnlyEBGP, filter.NewAcceptAllFilterChain(), true)
+	adjRIBOut := New(nil, peerInfoBestOnlyEBGP, filter.NewAcceptAllFilterChain(), true)
 
 	tests := []struct {
 		name          string

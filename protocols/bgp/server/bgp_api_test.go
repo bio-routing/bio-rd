@@ -24,7 +24,7 @@ import (
 )
 
 func TestDumpRIBInOut(t *testing.T) {
-	peerParams := adjRIBIn.PeerParameters{
+	peerInfo := routingtable.PeerInfo{
 		RouterID:  0,
 		ClusterID: 0,
 		AddPathRX: true,
@@ -66,8 +66,8 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, peerParams),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain(), true),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, &peerInfo),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain(), true),
 										},
 									},
 								},
@@ -96,8 +96,8 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, peerParams),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, &peerInfo),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},
 								},
@@ -156,8 +156,8 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), peerParams),
-											adjRIBOut: adjRIBOut.New(nil, &routingtable.Neighbor{Type: route.BGPPathType, RouteServerClient: true, Address: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), &peerInfo),
+											adjRIBOut: adjRIBOut.New(nil, &routingtable.PeerInfo{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain(), false),
 										},
 									},
 								},
