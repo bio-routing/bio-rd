@@ -33,7 +33,7 @@ func (fm *pathIDManager) addPath(p *route.Path) (uint32, error) {
 	}
 
 	if fm.used == maxUint32 {
-		return 0, fmt.Errorf("Out of path IDs")
+		return 0, fmt.Errorf("out of path IDs")
 	}
 
 	fm.last++

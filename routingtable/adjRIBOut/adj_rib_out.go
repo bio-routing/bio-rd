@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
@@ -274,7 +273,7 @@ func (a *AdjRIBOut) Print() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	ret := fmt.Sprintf("DUMPING ADJ-RIB-OUT:\n")
+	ret := "DUMPING ADJ-RIB-OUT:\n"
 	routes := a.rt.Dump()
 	for _, r := range routes {
 		ret += fmt.Sprintf("%s\n", r.Prefix().String())
@@ -309,12 +308,12 @@ func (a *AdjRIBOut) ReplaceFilterChain(c filter.Chain) {
 }
 
 // ReplacePath is here to fulfill an interface
-func (a *AdjRIBOut) ReplacePath(pfx *net.Prefix, old *route.Path, new *route.Path) {
+func (a *AdjRIBOut) ReplacePath(pfx *bnet.Prefix, old *route.Path, new *route.Path) {
 
 }
 
 // RefreshRoute refreshes a route
-func (a *AdjRIBOut) RefreshRoute(pfx *net.Prefix, ribPaths []*route.Path) {
+func (a *AdjRIBOut) RefreshRoute(pfx *bnet.Prefix, ribPaths []*route.Path) {
 	for _, p := range ribPaths {
 		p, propagate := a.checkPropagateUpdate(pfx, p)
 		if !propagate {
@@ -350,17 +349,17 @@ func (a *AdjRIBOut) RefreshRoute(pfx *net.Prefix, ribPaths []*route.Path) {
 }
 
 // LPM performs a longest prefix match on the routing table
-func (a *AdjRIBOut) LPM(pfx *net.Prefix) (res []*route.Route) {
+func (a *AdjRIBOut) LPM(pfx *bnet.Prefix) (res []*route.Route) {
 	return a.rt.LPM(pfx)
 }
 
 // Get gets a route
-func (a *AdjRIBOut) Get(pfx *net.Prefix) *route.Route {
+func (a *AdjRIBOut) Get(pfx *bnet.Prefix) *route.Route {
 	return a.rt.Get(pfx)
 }
 
 // GetLonger gets all more specifics
-func (a *AdjRIBOut) GetLonger(pfx *net.Prefix) (res []*route.Route) {
+func (a *AdjRIBOut) GetLonger(pfx *bnet.Prefix) (res []*route.Route) {
 	return a.rt.GetLonger(pfx)
 }
 
