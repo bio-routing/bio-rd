@@ -695,3 +695,37 @@ func TestBaseAddr(t *testing.T) {
 		assert.Equal(t, test.expected, test.input.BaseAddr(), test.name)
 	}
 }
+
+func TestPrefixFromString(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantFail bool
+	}{
+		{
+			name:     "valid prefix",
+			input:    "2a05:1234:abcd:face:b00c::aa/128",
+			wantFail: false,
+		},
+		{
+			name:     "No / in prefix",
+			input:    "2a05:1234:abcd:face:b00c::aa",
+			wantFail: true,
+		},
+		{
+			name:     "invalid IP",
+			input:    "2a05:1234:abcd:face:b00c::aax/123",
+			wantFail: true,
+		},
+		{
+			name:     "invalid prefix length",
+			input:    "2a05:1234:abcd:face:b00c::aax/123foo",
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		_, err := PrefixFromString(test.input)
+		assert.Equal(t, test.wantFail, err != nil, test.name)
+	}
+}

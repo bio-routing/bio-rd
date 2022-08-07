@@ -64,6 +64,11 @@ func TestParseCommunityString(t *testing.T) {
 			wantFail: true,
 		},
 		{
+			name:     "bad element in brackets",
+			value:    "(131072,256a)",
+			wantFail: true,
+		},
+		{
 			name:     "empty string",
 			value:    "",
 			wantFail: true,
@@ -88,6 +93,36 @@ func TestParseCommunityString(t *testing.T) {
 			}
 
 			assert.Equal(te, test.expected, c)
+		})
+	}
+}
+
+func TestCommunityToString(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    *Communities
+		expected string
+	}{
+		{
+			name:     "nil",
+			expected: "",
+			value:    nil,
+		},
+		{
+			name:     "one elememt",
+			expected: "250",
+			value:    &Communities{250},
+		},
+		{
+			name:     "two elements",
+			expected: "131080 2342",
+			value:    &Communities{131080, 2342},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(te *testing.T) {
+			assert.Equal(te, test.expected, test.value.String())
 		})
 	}
 }

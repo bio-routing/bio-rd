@@ -15,12 +15,12 @@ func (lc *LargeCommunities) String() string {
 		return ""
 	}
 
-	ret := ""
-	for _, x := range *lc {
-		ret += x.String() + " "
+	lcStrings := make([]string, len(*lc))
+	for i, x := range *lc {
+		lcStrings[i] = x.String()
 	}
 
-	return ret
+	return strings.Join(lcStrings, " ")
 }
 
 // LargeCommunity represents a large community (RFC8195)
@@ -50,6 +50,10 @@ func LargeCommunityFromProtoCommunity(alc *api.LargeCommunity) LargeCommunity {
 
 // String transitions a large community to it's human readable representation
 func (c *LargeCommunity) String() string {
+	if c == nil {
+		return ""
+	}
+
 	return fmt.Sprintf("(%d,%d,%d)", c.GlobalAdministrator, c.DataPart1, c.DataPart2)
 }
 
