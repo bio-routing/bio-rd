@@ -30,6 +30,22 @@ func TestLargeCommunityFromProtoCommunity(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestLargeCommunityToProto(t *testing.T) {
+	input := LargeCommunity{
+		GlobalAdministrator: 1,
+		DataPart1:           100,
+		DataPart2:           200,
+	}
+
+	expected := &api.LargeCommunity{
+		GlobalAdministrator: 1,
+		DataPart1:           100,
+		DataPart2:           200,
+	}
+
+	assert.Equal(t, expected, input.ToProto())
+}
+
 func TestParseLargeCommunityString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -104,6 +120,61 @@ func TestParseLargeCommunityString(t *testing.T) {
 			}
 
 			assert.Equal(t, test.expected, com)
+		})
+	}
+}
+
+func TestLargeCommunityToString(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       *LargeCommunity
+		expected string
+	}{
+		{
+			name:     "nil",
+			in:       nil,
+			expected: "",
+		},
+		{
+			name:     "all fields set",
+			in:       &LargeCommunity{1, 100, 200},
+			expected: "(1,100,200)",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			assert.Equal(t, test.expected, test.in.String())
+		})
+	}
+}
+
+func TestLargeCommunitiesToString(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       *LargeCommunities
+		expected string
+	}{
+		{
+			name:     "nil",
+			in:       nil,
+			expected: "",
+		},
+		{
+			name:     "one LC",
+			in:       &LargeCommunities{LargeCommunity{1, 100, 200}},
+			expected: "(1,100,200)",
+		},
+		{
+			name:     "two LC",
+			in:       &LargeCommunities{LargeCommunity{1, 100, 200}, LargeCommunity{2, 23, 42}},
+			expected: "(1,100,200) (2,23,42)",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			assert.Equal(t, test.expected, test.in.String())
 		})
 	}
 }

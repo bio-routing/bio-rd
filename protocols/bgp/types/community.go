@@ -52,10 +52,10 @@ func (c *Communities) String() string {
 		return ""
 	}
 
-	ret := ""
-	for _, x := range *c {
-		ret += strconv.Itoa(int(x)) + " "
+	cStrings := make([]string, len(*c))
+	for i, x := range *c {
+		cStrings[i] = strconv.Itoa(int(x))
 	}
 
-	return ret
+	return strings.Join(cStrings, " ")
 }

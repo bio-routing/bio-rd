@@ -114,6 +114,31 @@ func TestParseHumanReadableRouteDistinguisher(t *testing.T) {
 			input:    "51324",
 			wantFail: true,
 		},
+		{
+			name:     "First part invalid",
+			input:    "foo:2342",
+			wantFail: true,
+		},
+		{
+			name:     "First part invalid",
+			input:    "foo:2342",
+			wantFail: true,
+		},
+		{
+			name:     "First part too large",
+			input:    "4294967297:1",
+			wantFail: true,
+		},
+		{
+			name:     "Second part invalid",
+			input:    "42:foo",
+			wantFail: true,
+		},
+		{
+			name:     "Second part too large",
+			input:    "42:4294967297",
+			wantFail: true,
+		},
 	}
 
 	for _, test := range tests {
