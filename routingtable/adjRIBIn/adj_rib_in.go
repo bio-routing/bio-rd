@@ -17,33 +17,16 @@ type AdjRIBIn struct {
 	mu                sync.RWMutex
 	exportFilterChain filter.Chain
 	contributingASNs  *routingtable.ContributingASNs
-	routerID          uint32
-	clusterID         uint32
-	addPathRX         bool
-}
-
-type PeerParameters struct {
-	RouterID  uint32
-	ClusterID uint32
-	AddPathRX bool
-
-	// Only relevant for BMP use
-	RouterIP net.IP
-	LocalIP  *net.IP
-	PeerIP   *net.IP
-	LocalASN uint32
-	PeerASN  uint32
+	sessionAttrs      routingtable.SessionAttrs
 }
 
 // New creates a new Adjacency RIB In
-func New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerParams PeerParameters) *AdjRIBIn {
+func New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, sessionAttrs routingtable.SessionAttrs) *AdjRIBIn {
 	a := &AdjRIBIn{
 		rt:                routingtable.NewRoutingTable(),
 		exportFilterChain: exportFilterChain,
 		contributingASNs:  contributingASNs,
-		routerID:          peerParams.RouterID,
-		clusterID:         peerParams.ClusterID,
-		addPathRX:         peerParams.AddPathRX,
+		sessionAttrs:      sessionAttrs,
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 	return a
@@ -162,7 +145,7 @@ func (a *AdjRIBIn) AddPath(pfx *net.Prefix, p *route.Path) error {
 // addPath replaces the path for prefix `pfx`. If the prefix doesn't exist it is added.
 func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 	var oldPaths []*route.Path
-	if a.addPathRX {
+	if a.sessionAttrs.AddPathRX {
 		oldPaths = make([]*route.Path, 0)
 		r := a.rt.Get(pfx)
 		if r != nil {
@@ -216,7 +199,7 @@ func (a *AdjRIBIn) removePath(pfx *net.Prefix, p *route.Path) bool {
 	removed := make([]*route.Path, 0)
 	oldPaths := r.Paths()
 	for _, path := range oldPaths {
-		if a.addPathRX {
+		if a.sessionAttrs.AddPathRX {
 			if p != nil && path.BGPPath.PathIdentifier != p.BGPPath.PathIdentifier {
 				continue
 			}
@@ -302,14 +285,14 @@ func (a *AdjRIBIn) validatePath(p *route.Path) uint8 {
 	}
 
 	// RFC4456 Sect. 8: Ignore route with our RouterID as OriginatorID
-	if p.BGPPath.BGPPathA.OriginatorID == a.routerID {
+	if p.BGPPath.BGPPathA.OriginatorID == a.sessionAttrs.RouterID {
 		return route.HiddenReasonOurOriginatorID
 	}
 
 	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
 	if p.BGPPath.ClusterList != nil && len(*p.BGPPath.ClusterList) > 0 {
 		for _, cid := range *p.BGPPath.ClusterList {
-			if cid == a.clusterID {
+			if cid == a.sessionAttrs.ClusterID {
 				return route.HiddenReasonClusterLoop
 			}
 		}

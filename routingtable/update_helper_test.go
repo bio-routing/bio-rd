@@ -12,10 +12,10 @@ import (
 
 func TestShouldPropagateUpdate(t *testing.T) {
 	tests := []struct {
-		name        string
-		communities string
-		neighbor    Neighbor
-		expected    bool
+		name         string
+		communities  string
+		sessionAttrs SessionAttrs
+		expected     bool
 	}{
 		{
 			name:     "arbitrary path",
@@ -24,9 +24,9 @@ func TestShouldPropagateUpdate(t *testing.T) {
 		{
 			name:        "path was received from this peer before",
 			communities: "(1,2)",
-			neighbor: Neighbor{
-				Type:    route.BGPPathType,
-				Address: bnet.IPv4FromOctets(192, 168, 1, 1).Ptr(),
+			sessionAttrs: SessionAttrs{
+				Type:   route.BGPPathType,
+				PeerIP: bnet.IPv4FromOctets(192, 168, 1, 1).Ptr(),
 			},
 			expected: false,
 		},
@@ -38,7 +38,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 		{
 			name:        "path with no-export community (iBGP)",
 			communities: "(1,2) (65535,65281)",
-			neighbor: Neighbor{
+			sessionAttrs: SessionAttrs{
 				IBGP: true,
 			},
 			expected: true,
@@ -51,7 +51,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 		{
 			name:        "path with no-advertise community (iBGP)",
 			communities: "(1,2) (65535,65282)",
-			neighbor: Neighbor{
+			sessionAttrs: SessionAttrs{
 				IBGP: true,
 			},
 			expected: false,
@@ -84,7 +84,7 @@ func TestShouldPropagateUpdate(t *testing.T) {
 				},
 			}
 
-			res := ShouldPropagateUpdate(pfx, pa, &test.neighbor)
+			res := ShouldPropagateUpdate(pfx, pa, &test.sessionAttrs)
 			assert.Equal(t, test.expected, res)
 		})
 	}

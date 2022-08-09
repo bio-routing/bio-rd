@@ -78,24 +78,25 @@ func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
 }
 
 type adjRIBInFactoryI interface {
-	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerParams adjRIBIn.PeerParameters) routingtable.AdjRIBIn
+	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn
 }
 
 type adjRIBInFactory struct{}
 
-func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerParams adjRIBIn.PeerParameters) routingtable.AdjRIBIn {
-	return adjRIBIn.New(exportFilterChain, contributingASNs, peerParams)
+func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn {
+	return adjRIBIn.New(exportFilterChain, contributingASNs, peerAttrs)
 }
 
-func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
+func (f *fsmAddressFamily) init() {
 	contributingASNs := f.rib.GetContributingASNs()
+	peerAttrs := f.getSessionAttrs()
 
-	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, f.peerParameters())
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, peerAttrs)
 	contributingASNs.Add(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(f.rib, n, f.exportFilterChain, !f.addPathTX.BestOnly)
+	f.adjRIBOut = adjRIBOut.New(f.rib, peerAttrs, f.exportFilterChain, !f.addPathTX.BestOnly)
 
 	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)
@@ -106,25 +107,29 @@ func (f *fsmAddressFamily) init(n *routingtable.Neighbor) {
 	f.initialized = true
 }
 
-func (f *fsmAddressFamily) peerParameters() adjRIBIn.PeerParameters {
+func (f *fsmAddressFamily) getSessionAttrs() routingtable.SessionAttrs {
 	rip, _ := bnet.IPFromBytes(f.fsm.bmpRouterAddress)
 
-	return adjRIBIn.PeerParameters{
-		RouterID:  f.fsm.peer.routerID,
-		ClusterID: f.fsm.peer.clusterID,
-		AddPathRX: f.addPathRX,
+	return routingtable.SessionAttrs{
+		RouterID:             f.fsm.peer.routerID,
+		PeerIP:               f.fsm.peer.addr,
+		LocalIP:              f.fsm.peer.localAddr,
+		Type:                 route.BGPPathType,
+		IBGP:                 f.fsm.peer.localASN == f.fsm.peer.peerASN,
+		LocalASN:             f.fsm.peer.localASN,
+		PeerASN:              f.fsm.peer.peerASN,
+		RouteServerClient:    f.fsm.peer.routeServerClient,
+		RouteReflectorClient: f.fsm.peer.routeReflectorClient,
+		ClusterID:            f.fsm.peer.clusterID,
+		AddPathRX:            f.addPathRX,
 
 		// Only relevant for BMP use
 		RouterIP: rip,
-		LocalIP:  f.fsm.peer.localAddr,
-		PeerIP:   f.fsm.peer.addr,
-		LocalASN: f.fsm.peer.localASN,
-		PeerASN:  f.fsm.peer.peerASN,
 	}
 }
 
 func (f *fsmAddressFamily) bmpInit() {
-	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.peerParameters())
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.getSessionAttrs())
 
 	if f.rib != nil {
 		f.adjRIBIn.Register(f.rib)
