@@ -28,6 +28,7 @@ func TestDumpRIBInOut(t *testing.T) {
 		RouterID:  0,
 		ClusterID: 0,
 		AddPathRX: true,
+		AddPathTX: true,
 	}
 
 	tests := []struct {
@@ -67,7 +68,7 @@ func TestDumpRIBInOut(t *testing.T) {
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, sessionAttrs),
-											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain(), true),
+											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain()),
 										},
 									},
 								},
@@ -97,7 +98,7 @@ func TestDumpRIBInOut(t *testing.T) {
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, sessionAttrs),
-											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain()),
 										},
 									},
 								},
@@ -146,7 +147,7 @@ func TestDumpRIBInOut(t *testing.T) {
 			wantFail: false,
 		},
 		{
-			name: "Test #3: One complex routes given",
+			name: "Test #3: One complex route given",
 			apisrv: &BGPAPIServer{
 				srv: &bgpServer{
 					peers: &peerManager{
@@ -157,7 +158,7 @@ func TestDumpRIBInOut(t *testing.T) {
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
 											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), sessionAttrs),
-											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain(), false),
+											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain()),
 										},
 									},
 								},

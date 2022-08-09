@@ -96,7 +96,7 @@ func (f *fsmAddressFamily) init() {
 
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(f.rib, peerAttrs, f.exportFilterChain, !f.addPathTX.BestOnly)
+	f.adjRIBOut = adjRIBOut.New(f.rib, peerAttrs, f.exportFilterChain)
 
 	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)
@@ -122,6 +122,7 @@ func (f *fsmAddressFamily) getSessionAttrs() routingtable.SessionAttrs {
 		RouteReflectorClient: f.fsm.peer.routeReflectorClient,
 		ClusterID:            f.fsm.peer.clusterID,
 		AddPathRX:            f.addPathRX,
+		AddPathTX:            !f.addPathTX.BestOnly,
 
 		// Only relevant for BMP use
 		RouterIP: rip,

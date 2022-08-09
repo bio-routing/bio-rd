@@ -37,6 +37,9 @@ type SessionAttrs struct {
 	// AddPathRX indicates if AddPath receive is active
 	AddPathRX bool
 
+	// AddPathTX indicates if AddPath send is active
+	AddPathTX bool
+
 	// RouterIP indicates the IP address of the remote BMP peer (only for BMP)
 	RouterIP bnet.IP
 }
