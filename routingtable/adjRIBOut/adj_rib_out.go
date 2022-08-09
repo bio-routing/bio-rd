@@ -62,7 +62,7 @@ func (a *AdjRIBOut) RouteCount() int64 {
 	return a.rt.GetRouteCount()
 }
 
-func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
+func (a *AdjRIBOut) checkPropagateUpdate(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
 	if !routingtable.ShouldPropagateUpdate(pfx, p, &a.sessionAttrs) {
 		if a.sessionAttrs.AddPathTX {
 			a.removePathsForPrefix(pfx)
@@ -70,16 +70,19 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 		return nil, false
 	}
 
+	p = p.Copy()
+
+	if a.sessionAttrs.IBGP {
+		return a.checkPropagateUpdateIBGP(pfx, p)
+	}
+
+	return a.checkPropagateUpdateEBGP(pfx, p)
+}
+
+func (a *AdjRIBOut) checkPropagateUpdateIBGP(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
 	// Don't export routes learned via iBGP to an iBGP neighbor which is NOT a route reflection client
 	if !p.BGPPath.BGPPathA.EBGP && a.sessionAttrs.IBGP && !a.sessionAttrs.RouteReflectorClient {
 		return nil, false
-	}
-
-	// If the neighbor is an eBGP peer and not a Route Server client modify ASPath and Next Hop
-	p = p.Copy()
-	if !a.sessionAttrs.IBGP && !a.sessionAttrs.RouteServerClient {
-		p.BGPPath.Prepend(a.sessionAttrs.LocalASN, 1)
-		p.BGPPath.BGPPathA.NextHop = a.sessionAttrs.LocalIP
 	}
 
 	// If the iBGP neighbor is a route reflection client...
@@ -97,7 +100,6 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 		 * When an RR reflects a route, it MUST prepend the local CLUSTER_ID to the CLUSTER_LIST.
 		 * If the CLUSTER_LIST is empty, it MUST create a new one.
 		 */
-
 		x := 1
 		if p.BGPPath.ClusterList != nil {
 			x += len(*p.BGPPath.ClusterList)
@@ -113,13 +115,23 @@ func (a *AdjRIBOut) bgpChecks(pfx *bnet.Prefix, p *route.Path) (retPath *route.P
 	return p, true
 }
 
+func (a *AdjRIBOut) checkPropagateUpdateEBGP(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
+	// If the neighbor is an eBGP peer and not a Route Server client modify ASPath and Next Hop
+	if !a.sessionAttrs.RouteServerClient {
+		p.BGPPath.Prepend(a.sessionAttrs.LocalASN, 1)
+		p.BGPPath.BGPPathA.NextHop = a.sessionAttrs.LocalIP
+	}
+
+	return p, true
+}
+
 func (a *AdjRIBOut) AddPathInitialDump(pfx *bnet.Prefix, p *route.Path) error {
 	return a.AddPath(pfx, p)
 }
 
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOut) AddPath(pfx *bnet.Prefix, p *route.Path) error {
-	p, propagate := a.bgpChecks(pfx, p)
+	p, propagate := a.checkPropagateUpdate(pfx, p)
 	if !propagate {
 		return nil
 	}
@@ -304,7 +316,7 @@ func (a *AdjRIBOut) ReplacePath(pfx *net.Prefix, old *route.Path, new *route.Pat
 // RefreshRoute refreshes a route
 func (a *AdjRIBOut) RefreshRoute(pfx *net.Prefix, ribPaths []*route.Path) {
 	for _, p := range ribPaths {
-		p, propagate := a.bgpChecks(pfx, p)
+		p, propagate := a.checkPropagateUpdate(pfx, p)
 		if !propagate {
 			continue
 		}
