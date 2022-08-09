@@ -3,14 +3,10 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"net"
 	"sync/atomic"
 	"time"
 
-	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	"github.com/bio-routing/bio-rd/route"
-	"github.com/bio-routing/bio-rd/routingtable"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -65,32 +61,12 @@ func (s *establishedState) checkHoldtimer() (state, string) {
 }
 
 func (s *establishedState) init() error {
-	host, _, err := net.SplitHostPort(s.fsm.con.LocalAddr().String())
-	if err != nil {
-		return fmt.Errorf("unable to get local address: %w", err)
-	}
-	localAddr, err := bnet.IPFromString(host)
-	if err != nil {
-		return fmt.Errorf("unable to parse address: %w", err)
-	}
-
-	n := &routingtable.Neighbor{
-		Type:                 route.BGPPathType,
-		Address:              s.fsm.peer.addr,
-		IBGP:                 s.fsm.peer.localASN == s.fsm.peer.peerASN,
-		LocalASN:             s.fsm.peer.localASN,
-		RouteServerClient:    s.fsm.peer.routeServerClient,
-		LocalAddress:         localAddr.Dedup(),
-		RouteReflectorClient: s.fsm.peer.routeReflectorClient,
-		ClusterID:            s.fsm.peer.clusterID,
-	}
-
 	if s.fsm.ipv4Unicast != nil {
-		s.fsm.ipv4Unicast.init(n)
+		s.fsm.ipv4Unicast.init()
 	}
 
 	if s.fsm.ipv6Unicast != nil {
-		s.fsm.ipv6Unicast.init(n)
+		s.fsm.ipv6Unicast.init()
 	}
 
 	s.fsm.ribsInitialized = true
