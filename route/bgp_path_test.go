@@ -104,6 +104,66 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestBGPPathToProto(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    *BGPPath
+		expected *api.BGPPath
+	}{
+		{
+			name:     "nil",
+			value:    nil,
+			expected: nil,
+		},
+		{
+			name: "basic attrs only, like from withdraw()",
+			value: &BGPPath{
+				BMPPostPolicy:  false,
+				PathIdentifier: 1,
+			},
+			expected: &api.BGPPath{
+				PathIdentifier:    1,
+				BmpPostPolicy:     false,
+				UnknownAttributes: make([]*api.UnknownPathAttribute, 0),
+			},
+		},
+		{
+			name: "Path with empty BGPPathA",
+			value: &BGPPath{
+				BMPPostPolicy:  false,
+				PathIdentifier: 1,
+				BGPPathA:       &BGPPathA{},
+			},
+			expected: &api.BGPPath{
+				PathIdentifier:    1,
+				BmpPostPolicy:     false,
+				UnknownAttributes: make([]*api.UnknownPathAttribute, 0),
+			},
+		},
+		{
+			name: "Path with BGPPathA + NextHop + Source",
+			value: &BGPPath{
+				BMPPostPolicy:  false,
+				PathIdentifier: 1,
+				BGPPathA: &BGPPathA{
+					NextHop: net.IPv4FromOctets(10, 0, 0, 2).Ptr(),
+					Source:  net.IPv4FromOctets(10, 0, 0, 2).Ptr(),
+				},
+			},
+			expected: &api.BGPPath{
+				PathIdentifier:    1,
+				BmpPostPolicy:     false,
+				UnknownAttributes: make([]*api.UnknownPathAttribute, 0),
+				NextHop:           bnet.IPv4FromOctets(10, 0, 0, 2).ToProto(),
+				Source:            bnet.IPv4FromOctets(10, 0, 0, 2).ToProto(),
+			},
+		},
+	}
+	for _, test := range tests {
+		assert.Equal(t, test.expected, test.value.ToProto(), test.name)
+	}
+}
+
 func TestBGPSelect(t *testing.T) {
 	tests := []struct {
 		name     string

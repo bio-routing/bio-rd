@@ -65,16 +65,25 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 
 	a := &api.BGPPath{
 		PathIdentifier:    b.PathIdentifier,
-		NextHop:           b.BGPPathA.NextHop.ToProto(),
-		LocalPref:         b.BGPPathA.LocalPref,
-		Origin:            uint32(b.BGPPathA.Origin),
-		Med:               b.BGPPathA.MED,
-		Ebgp:              b.BGPPathA.EBGP,
-		BgpIdentifier:     b.BGPPathA.BGPIdentifier,
-		Source:            b.BGPPathA.Source.ToProto(),
 		UnknownAttributes: make([]*api.UnknownPathAttribute, len(b.UnknownAttributes)),
-		OriginatorId:      b.BGPPathA.OriginatorID,
 		BmpPostPolicy:     b.BMPPostPolicy,
+	}
+
+	if b.BGPPathA != nil {
+		a.LocalPref = b.BGPPathA.LocalPref
+		a.Origin = uint32(b.BGPPathA.Origin)
+		a.Med = b.BGPPathA.MED
+		a.Ebgp = b.BGPPathA.EBGP
+		a.BgpIdentifier = b.BGPPathA.BGPIdentifier
+		a.OriginatorId = b.BGPPathA.OriginatorID
+
+		if b.BGPPathA.NextHop != nil {
+			a.NextHop = b.BGPPathA.NextHop.ToProto()
+		}
+
+		if b.BGPPathA.Source != nil {
+			a.Source = b.BGPPathA.Source.ToProto()
+		}
 	}
 
 	if b.ASPath != nil {
