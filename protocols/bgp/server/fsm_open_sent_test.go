@@ -296,3 +296,964 @@ func TestProcessAddPathCapabilityTX(t *testing.T) {
 		})
 	}
 }
+
+func TestProcessPeerRoleCapability(t *testing.T) {
+	tests := []struct {
+		name               string
+		msg                packet.BGPOpen
+		peerRoleEnabled    bool
+		peerRoleStrictMode bool
+		peerRoleLocalRole  uint8
+		wantIdle           bool
+		errmsg             string
+	}{
+		// mode: off
+		{
+			name:            "peer role mode off, no peer role received",
+			peerRoleEnabled: false,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    0,
+				OptParams:     []packet.OptParam{},
+			},
+			wantIdle: false,
+		},
+		{
+			name:            "peer role mode off, peer role received",
+			peerRoleEnabled: false,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 6,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRolePeer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: false,
+		},
+
+		// mode allow
+		{
+			name:               "peer role mode allow, no peer role received",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: false,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    0,
+				OptParams:     []packet.OptParam{},
+			},
+			wantIdle: false,
+		},
+		{
+			name:               "peer role mode allow, peer role received",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: false,
+			peerRoleLocalRole:  packet.PeerRoleRolePeer,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 6,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRolePeer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: false,
+		},
+
+		// mode strict
+		{
+			name:               "peer role mode strict, peer role received",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleProvider,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 6,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleCustomer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: false,
+		},
+		{
+			name:               "peer role mode strict, no peer role received",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    0,
+				OptParams:     []packet.OptParam{},
+			},
+			wantIdle: true,
+			errmsg:   "role misatch error: Strict mode configured but peer didn't advertise a BGP role",
+		},
+
+		// Multiple peer roles
+		{
+			name:               "peer role mode strict, multiple identical peer role received",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleCustomer,
+			errmsg:             "role misatch error: Multiple different BGP roles received from peer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleProvider,
+								},
+							},
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleProvider,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: false,
+		},
+		{
+			name:               "peer role mode strict, multiple different peer role received",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRolePeer,
+			errmsg:             "role misatch error: Multiple different BGP roles received from peer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRolePeer,
+								},
+							},
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRSClient,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+
+		// (Remaining) Role pair tests for allowed pairs
+		// Peer <-> Peer, Provider <-> Customer, and Customer <-> Provider implicitly tested above
+		{
+			name:               "valid peer role pair RS <-> RS-Client",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRS,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 6,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRSClient,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: false,
+		},
+		{
+			name:               "valid peer role pair RS-Client <-> RS",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRSClient,
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 6,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRS,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: false,
+		},
+
+		// (Remaining) Role pair tests for disallowed pairs
+		{
+			name:               "invalid peer role pair Provider <-> Provider",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleProvider,
+			errmsg:             "role misatch error: Local role Provider incompatible to remote role Provider",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleProvider,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Provider <-> RS",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleProvider,
+			errmsg:             "role misatch error: Local role Provider incompatible to remote role RS",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRS,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Provider <-> RS-Client",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleProvider,
+			errmsg:             "role misatch error: Local role Provider incompatible to remote role RS-Client",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRSClient,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Provider <-> Peer",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleProvider,
+			errmsg:             "role misatch error: Local role Provider incompatible to remote role Peer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRolePeer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+
+		// Invalid peer role pairs RS <-> *
+		{
+			name:               "invalid peer role pair RS <-> Provider",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRS,
+			errmsg:             "role misatch error: Local role RS incompatible to remote role Provider",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleProvider,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS <-> RS",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRS,
+			errmsg:             "role misatch error: Local role RS incompatible to remote role RS",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRS,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS <-> Customer",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRS,
+			errmsg:             "role misatch error: Local role RS incompatible to remote role Customer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleCustomer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS <-> Peer",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRS,
+			errmsg:             "role misatch error: Local role RS incompatible to remote role Peer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRolePeer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+
+		// Invalid role pairs for RS-Client <-> *
+		{
+			name:               "invalid peer role pair RS-Client <-> Provider",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRSClient,
+			errmsg:             "role misatch error: Local role RS-Client incompatible to remote role Provider",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleProvider,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS-Client <-> RS-Client",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRSClient,
+			errmsg:             "role misatch error: Local role RS-Client incompatible to remote role RS-Client",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRSClient,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS-Clinet <-> Customer",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRSClient,
+			errmsg:             "role misatch error: Local role RS-Client incompatible to remote role Customer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleCustomer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS-Client <-> Peer",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRSClient,
+			errmsg:             "role misatch error: Local role RS-Client incompatible to remote role Peer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRolePeer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+
+		// Invalid role pairs for Peer <-> *
+		{
+			name:               "invalid peer role pair Peer <-> Provider",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRolePeer,
+			errmsg:             "role misatch error: Local role Peer incompatible to remote role Provider",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleProvider,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Peer <-> RS",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRolePeer,
+			errmsg:             "role misatch error: Local role Peer incompatible to remote role RS",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRS,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Peer <-> RS-Client",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRolePeer,
+			errmsg:             "role misatch error: Local role Peer incompatible to remote role RS-Client",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleRSClient,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Peer <-> Customer",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRolePeer,
+			errmsg:             "role misatch error: Local role Peer incompatible to remote role Customer",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: packet.PeerRoleRoleCustomer,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+
+		// Invalid role pairs for * <-> unassigned
+		{
+			name:               "invalid peer role pair Provider <-> unassigned",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleProvider,
+			errmsg:             "role misatch error: Local role Provider incompatible to remote role Unknown",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: 23,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS <-> unassigned",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRS,
+			errmsg:             "role misatch error: Local role RS incompatible to remote role Unknown",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: 23,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair RS-Clinet <-> unassigned",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleRSClient,
+			errmsg:             "role misatch error: Local role RS-Client incompatible to remote role Unknown",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: 23,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Customer <-> unassigned",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRoleCustomer,
+			errmsg:             "role misatch error: Local role Customer incompatible to remote role Unknown",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: 23,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+		{
+			name:               "invalid peer role pair Peer <-> unassigned",
+			peerRoleEnabled:    true,
+			peerRoleStrictMode: true,
+			peerRoleLocalRole:  packet.PeerRoleRolePeer,
+			errmsg:             "role misatch error: Local role Peer incompatible to remote role Unknown",
+			msg: packet.BGPOpen{
+				HoldTime:      90,
+				BGPIdentifier: 1,
+				Version:       4,
+				ASN:           23456,
+				OptParmLen:    1,
+				OptParams: []packet.OptParam{
+					{
+						Type:   packet.CapabilitiesParamType,
+						Length: 10,
+						Value: packet.Capabilities{
+							packet.Capability{
+								Code:   packet.PeerRoleCapabilityCode,
+								Length: 4,
+								Value: packet.PeerRoleCapability{
+									PeerRole: 23,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantIdle: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fsm := newFSM(&peer{
+				peerASN: 23456,
+			})
+
+			conA, conB := net.Pipe()
+			fsm.con = conB
+
+			go func() {
+				for {
+					buf := make([]byte, 1)
+					_, err := conA.Read(buf)
+					if err != nil {
+						return
+					}
+				}
+			}()
+
+			s := &openSentState{
+				fsm: fsm,
+			}
+
+			s.fsm.peer.peerRoleEnabled = test.peerRoleEnabled
+			s.fsm.peer.peerRoleStrictMode = test.peerRoleStrictMode
+			s.fsm.peer.peerRoleLocal = test.peerRoleLocalRole
+
+			state, errmsg := s.handleOpenMessage(&test.msg)
+
+			if test.wantIdle {
+				assert.IsType(t, &idleState{}, state, "state")
+				assert.Equal(t, test.errmsg, errmsg, "errmsg")
+				return
+			}
+
+			assert.IsType(t, &openConfirmState{}, state, errmsg)
+		})
+	}
+}

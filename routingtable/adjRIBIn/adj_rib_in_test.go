@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -566,4 +567,286 @@ func TestUnregister(t *testing.T) {
 	assert.Equal(t, &routingtable.RemovePathParams{Pfx: pfxs[0], Path: paths[0]}, r[0], "Withdraw 1")
 	assert.Equal(t, &routingtable.RemovePathParams{Pfx: pfxs[0], Path: paths[1]}, r[1], "Withdraw 2")
 	assert.Equal(t, &routingtable.RemovePathParams{Pfx: pfxs[1], Path: paths[2]}, r[2], "Withdraw 3")
+}
+
+func TestPeerRoleOTC(t *testing.T) {
+	routerID := net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()
+
+	tests := []struct {
+		name         string
+		routes       []*route.Route
+		expected     []*route.Route
+		sessionAttrs routingtable.SessionAttrs
+	}{
+		{
+			name: "Peer Role not enabled. path with invalid OTC value",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23,
+						},
+					},
+					HiddenReason: route.HiddenReasonNone,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID: routerID,
+				PeerASN:  42,
+			},
+		},
+		{
+			name: "Peer Role enabled locally but not remote. path with invalid OTC value",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23,
+						},
+					},
+					HiddenReason: route.HiddenReasonNone,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID:        routerID,
+				PeerASN:         42,
+				PeerRoleEnabled: true,
+				PeerRoleLocal:   packet.PeerRoleRoleProvider,
+			},
+		},
+		{
+			name: "Peer Role enabled locally and remote. path with valid OTC value from Customer",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23,
+						},
+					},
+					HiddenReason: route.HiddenReasonOTCMismatch,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID:          routerID,
+				PeerASN:           23,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleProvider,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleCustomer,
+			},
+		},
+		{
+			name: "Peer Role enabled locally and remote. path with valid OTC value from RSClient",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23,
+						},
+					},
+					HiddenReason: route.HiddenReasonOTCMismatch,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID:          routerID,
+				PeerASN:           23,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleProvider,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleRSClient,
+			},
+		},
+		{
+			name: "Peer Role enabled locally and remote. path with invalid OTC AS from valid peer role",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 23,
+						},
+					},
+					HiddenReason: route.HiddenReasonOTCMismatch,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID:          routerID,
+				PeerASN:           42,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRolePeer,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRolePeer,
+			},
+		},
+		{
+			name: "Peer Role enabled locally and remote. path without OTC from Provider",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 42,
+						},
+					},
+					HiddenReason: route.HiddenReasonNone,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID:          routerID,
+				PeerASN:           42,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleCustomer,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleProvider,
+			},
+		},
+		{
+			name: "Peer Role enabled locally and remote. path without OTC from Peer",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 42,
+						},
+					},
+					HiddenReason: route.HiddenReasonNone,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID:          routerID,
+				PeerASN:           42,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRolePeer,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRolePeer,
+			},
+		},
+		{
+			name: "Peer Role enabled locally and remote. path without OTC from RS",
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref:      100,
+							OnlyToCustomer: 42,
+						},
+					},
+					HiddenReason: route.HiddenReasonNone,
+				}),
+			},
+			sessionAttrs: routingtable.SessionAttrs{
+				RouterID:          routerID,
+				PeerASN:           42,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleRSClient,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleRS,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), test.sessionAttrs)
+		mc := routingtable.NewRTMockClient()
+		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
+
+		for _, route := range test.routes {
+			adjRIBIn.AddPath(route.Prefix().Ptr(), route.Paths()[0])
+		}
+
+		assert.Equal(t, test.expected, adjRIBIn.rt.Dump(), test.name)
+	}
 }

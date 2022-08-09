@@ -81,3 +81,11 @@ func (a MultiProtocolCapability) serialize(buf *bytes.Buffer) {
 	buf.WriteByte(0) // RESERVED
 	buf.WriteByte(a.SAFI)
 }
+
+type PeerRoleCapability struct {
+	PeerRole uint8
+}
+
+func (a PeerRoleCapability) serialize(buf *bytes.Buffer) {
+	buf.Write(convert.Uint8Byte(a.PeerRole))
+}

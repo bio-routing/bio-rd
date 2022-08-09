@@ -42,4 +42,23 @@ type SessionAttrs struct {
 
 	// RouterIP indicates the IP address of the remote BMP peer (only for BMP)
 	RouterIP bnet.IP
+
+	/*
+	 * RFC9234
+	 */
+
+	// PeerRoleEnabled indicates if Peer Role validation is activated locally
+	PeerRoleEnabled bool
+
+	// PeerRoleStrictMode indicates if strict Peer Role validation is activated
+	PeerRoleStrictMode bool
+
+	// PeerRoleLocal denotes our role
+	PeerRoleLocal uint8
+
+	// PeerRoleAdvByPeer indicates if the peer did advertise the PeerRole capability
+	PeerRoleAdvByPeer bool
+
+	// PeerRoleRemote denotes the peers role
+	PeerRoleRemote uint8
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 
@@ -1573,5 +1574,257 @@ func TestAddPathIBGP(t *testing.T) {
 			t.Errorf("Expected route count %d differs from actual route count %d!\n", test.expectedCount, actualCount)
 			return
 		}
+	}
+}
+
+// RFC9234 - BGP Role / OTC
+func TestOTC(t *testing.T) {
+	localIP := net.IPv4FromOctets(127, 0, 0, 1).Ptr()
+	peerIP := net.IPv4FromOctets(127, 0, 0, 2).Ptr()
+
+	tests := []struct {
+		name         string
+		routesAdd    []*route.Route
+		expected     []*route.Route
+		sessionAttrs routingtable.SessionAttrs
+	}{
+		// Test Sect. 5 Egress path 1.
+		{
+			name: "Route without OTC to be advertised to Customer",
+			sessionAttrs: routingtable.SessionAttrs{
+				Type:              route.BGPPathType,
+				LocalIP:           localIP,
+				PeerIP:            peerIP,
+				IBGP:              false,
+				LocalASN:          41981,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleProvider,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleCustomer,
+				PeerASN:           41981,
+			},
+			routesAdd: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source: net.IPv4(0).Ptr(),
+						},
+						ASPath: &types.ASPath{},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source:         net.IPv4(0).Ptr(),
+							NextHop:        localIP,
+							OnlyToCustomer: 41981,
+						},
+						ASPath: &types.ASPath{
+							types.ASPathSegment{
+								Type: types.ASSequence,
+								ASNs: []uint32{
+									41981,
+								},
+							},
+						},
+						ASPathLen: 1,
+					},
+				}),
+			},
+		},
+		{
+			name: "Route without OTC to be advertised to Peer",
+			sessionAttrs: routingtable.SessionAttrs{
+				Type:              route.BGPPathType,
+				LocalIP:           localIP,
+				PeerIP:            peerIP,
+				IBGP:              false,
+				LocalASN:          41981,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRolePeer,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRolePeer,
+				PeerASN:           41981,
+			},
+			routesAdd: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source: net.IPv4(0).Ptr(),
+						},
+						ASPath: &types.ASPath{},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source:         net.IPv4(0).Ptr(),
+							NextHop:        localIP,
+							OnlyToCustomer: 41981,
+						},
+						ASPath: &types.ASPath{
+							types.ASPathSegment{
+								Type: types.ASSequence,
+								ASNs: []uint32{
+									41981,
+								},
+							},
+						},
+						ASPathLen: 1,
+					},
+				}),
+			},
+		},
+		{
+			name: "Route without OTC to be advertised to RS-Client",
+			sessionAttrs: routingtable.SessionAttrs{
+				Type:              route.BGPPathType,
+				LocalIP:           localIP,
+				PeerIP:            peerIP,
+				IBGP:              false,
+				LocalASN:          41981,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleRS,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleRSClient,
+				PeerASN:           41981,
+			},
+			routesAdd: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source: net.IPv4(0).Ptr(),
+						},
+						ASPath: &types.ASPath{},
+					},
+				}),
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source:         net.IPv4(0).Ptr(),
+							NextHop:        localIP,
+							OnlyToCustomer: 41981,
+						},
+						ASPath: &types.ASPath{
+							types.ASPathSegment{
+								Type: types.ASSequence,
+								ASNs: []uint32{
+									41981,
+								},
+							},
+						},
+						ASPathLen: 1,
+					},
+				}),
+			},
+		},
+
+		// Test Sect. 5 Egress path 2.
+		{
+			name: "Route with OTC to be advertised to Provider",
+			sessionAttrs: routingtable.SessionAttrs{
+				Type:              route.BGPPathType,
+				LocalIP:           localIP,
+				PeerIP:            peerIP,
+				IBGP:              false,
+				LocalASN:          41981,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleCustomer,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleProvider,
+				PeerASN:           41981,
+			},
+			routesAdd: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source:         net.IPv4(0).Ptr(),
+							OnlyToCustomer: 2342,
+						},
+						ASPath: &types.ASPath{},
+					},
+				}),
+			},
+			expected: []*route.Route{},
+		},
+		{
+			name: "Route with OTC to be advertised to Peer",
+			sessionAttrs: routingtable.SessionAttrs{
+				Type:              route.BGPPathType,
+				LocalIP:           localIP,
+				PeerIP:            peerIP,
+				IBGP:              false,
+				LocalASN:          41981,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRolePeer,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRolePeer,
+				PeerASN:           41981,
+			},
+			routesAdd: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source:         net.IPv4(0).Ptr(),
+							OnlyToCustomer: 2342,
+						},
+						ASPath: &types.ASPath{},
+					},
+				}),
+			},
+			expected: []*route.Route{},
+		},
+		{
+			name: "Route with OTC to be advertised to RS",
+			sessionAttrs: routingtable.SessionAttrs{
+				Type:              route.BGPPathType,
+				LocalIP:           localIP,
+				PeerIP:            peerIP,
+				IBGP:              false,
+				LocalASN:          41981,
+				PeerRoleEnabled:   true,
+				PeerRoleLocal:     packet.PeerRoleRoleRSClient,
+				PeerRoleAdvByPeer: true,
+				PeerRoleRemote:    packet.PeerRoleRoleRS,
+				PeerASN:           41981,
+			},
+			routesAdd: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							Source:         net.IPv4(0).Ptr(),
+							OnlyToCustomer: 2342,
+						},
+						ASPath: &types.ASPath{},
+					},
+				}),
+			},
+			expected: []*route.Route{},
+		},
+	}
+
+	for _, test := range tests {
+		adjRIBOut := New(nil, test.sessionAttrs, filter.NewAcceptAllFilterChain())
+
+		for _, route := range test.routesAdd {
+			adjRIBOut.AddPath(route.Prefix().Ptr(), route.Paths()[0])
+		}
+
+		assert.Equal(t, test.expected, adjRIBOut.rt.Dump())
 	}
 }

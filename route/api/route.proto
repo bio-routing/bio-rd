@@ -51,6 +51,7 @@ message BGPPath {
     repeated uint32 cluster_list = 13;
     repeated UnknownPathAttribute unknown_attributes = 14;
     bool bmp_post_policy = 15;
+    uint32 only_to_customer = 16;
 }
 
 message ASPathSegment {

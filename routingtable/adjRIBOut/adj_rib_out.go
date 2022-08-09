@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -119,6 +120,24 @@ func (a *AdjRIBOut) checkPropagateUpdateEBGP(pfx *bnet.Prefix, p *route.Path) (r
 	if !a.sessionAttrs.RouteServerClient {
 		p.BGPPath.Prepend(a.sessionAttrs.LocalASN, 1)
 		p.BGPPath.BGPPathA.NextHop = a.sessionAttrs.LocalIP
+	}
+
+	// RFC9234 Sect 5. Egress par. - Check OTC attribute
+	if a.sessionAttrs.PeerRoleEnabled && a.sessionAttrs.PeerRoleAdvByPeer {
+		pr := a.sessionAttrs.PeerRoleRemote
+
+		// 2. If a route already contains the OTC Attribute, it MUST NOT be propagated to Providers, Peers, or RSes
+		if p.BGPPath.BGPPathA.OnlyToCustomer != 0 &&
+			(pr == packet.PeerRoleRoleProvider || pr == packet.PeerRoleRolePeer || pr == packet.PeerRoleRoleRS) {
+			return nil, false
+		}
+
+		// 1. If peer is Customer, Peer, or RSClient and OTC is not present we MUST add it with our ASN
+		if p.BGPPath.BGPPathA.OnlyToCustomer == 0 &&
+			(pr == packet.PeerRoleRoleCustomer || pr == packet.PeerRoleRolePeer || pr == packet.PeerRoleRoleRSClient) {
+			p.BGPPath.BGPPathA.OnlyToCustomer = a.sessionAttrs.PeerASN
+		}
+
 	}
 
 	return p, true

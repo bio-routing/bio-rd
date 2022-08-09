@@ -256,6 +256,12 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 			return cap, fmt.Errorf("unable to decode 4 octet ASN capability: %w", err)
 		}
 		cap.Value = asn4Cap
+	case PeerRoleCapabilityCode:
+		peerRoleCap, err := decodePeerRoleCapability(buf)
+		if err != nil {
+			return cap, fmt.Errorf("unable to decode peer role capability: %w", err)
+		}
+		cap.Value = peerRoleCap
 	default:
 		for i := uint8(0); i < cap.Length; i++ {
 			_, err := buf.ReadByte()
@@ -320,6 +326,20 @@ func decodeASN4Capability(buf *bytes.Buffer) (ASN4Capability, error) {
 	}
 
 	return asn4Cap, nil
+}
+
+func decodePeerRoleCapability(buf *bytes.Buffer) (PeerRoleCapability, error) {
+	peerRoleCap := PeerRoleCapability{}
+	fields := []interface{}{
+		&peerRoleCap.PeerRole,
+	}
+
+	err := decode.Decode(buf, fields)
+	if err != nil {
+		return peerRoleCap, err
+	}
+
+	return peerRoleCap, nil
 }
 
 func validateOpen(msg *BGPOpen) error {

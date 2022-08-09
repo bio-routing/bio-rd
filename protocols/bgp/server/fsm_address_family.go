@@ -124,6 +124,12 @@ func (f *fsmAddressFamily) getSessionAttrs() routingtable.SessionAttrs {
 		AddPathRX:            f.addPathRX,
 		AddPathTX:            !f.addPathTX.BestOnly,
 
+		PeerRoleEnabled:    f.fsm.peer.peerRoleEnabled,
+		PeerRoleStrictMode: f.fsm.peer.peerRoleStrictMode,
+		PeerRoleLocal:      f.fsm.peer.peerRoleLocal,
+		PeerRoleAdvByPeer:  f.fsm.peer.peerRoleAdvByPeer,
+		PeerRoleRemote:     f.fsm.peer.peerRoleRemote,
+
 		// Only relevant for BMP use
 		RouterIP: rip,
 	}
