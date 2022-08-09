@@ -176,7 +176,8 @@ func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate, bmpPostPolicy bool) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
 		f.adjRIBIn.RemovePath(r.Prefix, &route.Path{
 			BGPPath: &route.BGPPath{
-				BMPPostPolicy: bmpPostPolicy,
+				BMPPostPolicy:  bmpPostPolicy,
+				PathIdentifier: r.PathIdentifier,
 			},
 		})
 	}
