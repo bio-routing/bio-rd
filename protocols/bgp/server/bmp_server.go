@@ -115,6 +115,12 @@ func (b *BMPServer) Listen(addr string) error {
 				log.Errorf("failed to add router: %v", err)
 				continue
 			}
+
+			r = b.getRouter(tcpRemoteAddr.IP.String())
+			// Potentially we could have already removed this router if it were connecting twice and did not offer an init message
+			if r == nil {
+				continue
+			}
 		}
 
 		if b.validateConnection(r, c) {
@@ -259,15 +265,6 @@ func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic b
 
 	return nil
 }
-
-/*
-func (b *BMPServer) _addRouter(r *Router) {
-	b.routersMu.Lock()
-	defer b.routersMu.Unlock()
-
-	b.routers[r.address.String()] = r
-}
-*/
 
 func (b *BMPServer) deleteRouter(addr net.IP) {
 	b.routersMu.Lock()
