@@ -17,7 +17,7 @@ func main() {
 	b := server.NewServer(server.BMPServerConfig{
 		KeepalivePeriod: time.Second,
 	})
-	b.AddRouter(net.IP{10, 0, 255, 1}, 30119, false)
+	b.AddRouter(net.IP{10, 0, 255, 1}, 30119, false, false)
 
 	go func() {
 		for {
