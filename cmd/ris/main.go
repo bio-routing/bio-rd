@@ -58,7 +58,7 @@ func main() {
 			log.Errorf("unable to convert %q to net.IP", r.Address)
 			os.Exit(1)
 		}
-		b.AddRouter(ip, r.Port, r.Passive)
+		b.AddRouter(ip, r.Port, r.Passive, false)
 	}
 
 	s := risserver.NewServer(b)

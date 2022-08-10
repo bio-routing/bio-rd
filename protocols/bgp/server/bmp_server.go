@@ -99,31 +99,38 @@ func (b *BMPServer) Listen(addr string) error {
 			return err
 		}
 
-		if b.acceptAny {
+		// Do we know this router from configuration or have seen it before?
+		r := b.getRouter(c.RemoteAddr().(*net.TCPAddr).IP.String())
+		dynamic := false
+		if r == nil {
+			// If we don't know this router and don't accept connection from anyone, we drop it
+			if !b.acceptAny {
+				continue
+			}
+
+			dynamic = true
 			tcpRemoteAddr := c.RemoteAddr().(*net.TCPAddr)
-			b.AddRouter(tcpRemoteAddr.IP, tcp.AddrPort().Port(), true)
+			err := b.AddRouter(tcpRemoteAddr.IP, tcp.AddrPort().Port(), true, dynamic)
+			if err != nil {
+				log.Errorf("failed to add router: %v", err)
+				continue
+			}
 		}
 
-		if r, ok := b.validateConnection(c); ok {
-			go b.handleConnection(c, r, true)
+		if b.validateConnection(r, c) {
+			go b.handleConnection(c, r, true, dynamic)
 		}
-
 	}
 }
 
-func (b *BMPServer) validateConnection(c net.Conn) (*Router, bool) {
-	r := b.getRouter(c.RemoteAddr().(*net.TCPAddr).IP.String())
-	if r == nil {
-		return nil, false
-	}
-
+func (b *BMPServer) validateConnection(r *Router, c net.Conn) bool {
 	if !r.passive {
 		log.WithFields(log.Fields{
 			"component":      "bmp_server",
 			"remote_address": c.RemoteAddr(),
 		}).Error("dropping unconfigured connection")
 		c.Close()
-		return nil, false
+		return false
 	}
 
 	if atomic.LoadUint32(&r.established) == 1 {
@@ -133,13 +140,13 @@ func (b *BMPServer) validateConnection(c net.Conn) (*Router, bool) {
 			"router":         r.Name(),
 		}).Error("router already connected, dropping connection")
 		c.Close()
-		return nil, false
+		return false
 	}
 
-	return r, true
+	return true
 }
 
-func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool) error {
+func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool, dynamic bool) error {
 	if b.keepalivePeriod != 0 {
 		if err := c.(*net.TCPConn).SetKeepAlive(true); err != nil {
 			log.WithError(err).Error("Unable to enable keepalive")
@@ -162,12 +169,25 @@ func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool) error 
 	atomic.StoreUint32(&r.established, 0)
 
 	if err != nil {
-		r.logger.WithFields(log.Fields{
-			"component": "bmp_server",
-			"address":   c.RemoteAddr().String(),
-			"router":    r.Name(),
-			"passive":   passive,
-		}).WithError(err).Error("r.serve() failed")
+		if dynamic && r.counters.initiationMessages == 0 {
+			defer b.RemoveRouter(r.address)
+
+			r.logger.WithFields(log.Fields{
+				"component": "bmp_server",
+				"address":   c.RemoteAddr().String(),
+				"router":    r.Name(),
+				"passive":   passive,
+			}).WithError(err).Info("r.serve() failed for dynamic peer")
+			return err
+
+		} else {
+			r.logger.WithFields(log.Fields{
+				"component": "bmp_server",
+				"address":   c.RemoteAddr().String(),
+				"router":    r.Name(),
+				"passive":   passive,
+			}).WithError(err).Error("r.serve() failed")
+		}
 		return err
 	}
 
@@ -179,13 +199,24 @@ func conString(host string, port uint16) string {
 }
 
 // AddRouter adds a router to which we connect with BMP
-func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool) {
+func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
+	b.routersMu.Lock()
+	defer b.routersMu.Unlock()
+
+	return b._addRouter(addr, port, passive, dynamic)
+}
+
+func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
 	r := newRouter(addr, port, passive, b.adjRIBInFactory)
-	b.addRouter(r)
+	if _, exists := b.routers[r.address.String()]; exists {
+		return fmt.Errorf("router %s already configured,", r.address.String())
+	}
+
+	b.routers[r.address.String()] = r
 
 	if r.passive {
 		// router initializes the connection
-		return
+		return nil
 	}
 
 	go func(r *Router) {
@@ -222,17 +253,21 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool) {
 			r.reconnectTime = r.reconnectTimeMin
 			r.reconnectTimer = time.NewTimer(time.Second * time.Duration(r.reconnectTime))
 
-			b.handleConnection(c, r, false)
+			b.handleConnection(c, r, false, dynamic)
 		}
 	}(r)
+
+	return nil
 }
 
-func (b *BMPServer) addRouter(r *Router) {
+/*
+func (b *BMPServer) _addRouter(r *Router) {
 	b.routersMu.Lock()
 	defer b.routersMu.Unlock()
 
 	b.routers[r.address.String()] = r
 }
+*/
 
 func (b *BMPServer) deleteRouter(addr net.IP) {
 	b.routersMu.Lock()
