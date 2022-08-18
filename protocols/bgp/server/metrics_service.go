@@ -68,9 +68,10 @@ func metricsForPeer(peer *peer) *metrics.BGPPeerMetrics {
 
 func metricsForFamily(family *fsmAddressFamily) *metrics.BGPAddressFamilyMetrics {
 	m := &metrics.BGPAddressFamilyMetrics{
-		AFI:            family.afi,
-		SAFI:           family.safi,
-		RoutesReceived: uint64(family.adjRIBIn.RouteCount()),
+		AFI:                    family.afi,
+		SAFI:                   family.safi,
+		RoutesReceived:         uint64(family.adjRIBIn.RouteCount()),
+		EndOfRIBMarkerReceived: family.endOfRIBMarkerReceived,
 	}
 
 	if family.adjRIBOut != nil {
