@@ -13,4 +13,7 @@ type BGPAddressFamilyMetrics struct {
 
 	// RoutesAccepted is the number of routes we sent
 	RoutesSent uint64
+
+	// EndOfRIBMarkerReceived indicates if a BGP End of RIB marker was received for this AFI/SAFI from the peer
+	EndOfRIBMarkerReceived bool
 }

@@ -34,7 +34,8 @@ type fsmAddressFamily struct {
 
 	multiProtocol bool
 
-	initialized bool
+	initialized            bool
+	endOfRIBMarkerReceived bool
 }
 
 func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm *FSM) *fsmAddressFamily {
@@ -179,6 +180,10 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool
 
 	f.multiProtocolUpdates(u, bmpPostPolicy, timestamp)
 	if f.afi == packet.AFIIPv4 {
+		if u.IsEndOfRIBMarker() {
+			f.endOfRIBMarkerReceived = true
+		}
+
 		f.withdraws(u, bmpPostPolicy)
 		f.updates(u, bmpPostPolicy, timestamp)
 	}
@@ -209,14 +214,37 @@ func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate, bmpPostPoli
 	path := f.newRoutePath(bmpPostPolicy, timestamp)
 	f.processAttributes(u.PathAttributes, path)
 
-	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
-		switch pa.TypeCode {
-		case packet.MultiProtocolReachNLRICode:
-			f.multiProtocolUpdate(path, pa.Value.(packet.MultiProtocolReachNLRI))
-		case packet.MultiProtocolUnreachNLRICode:
-			f.multiProtocolWithdraw(path, pa.Value.(packet.MultiProtocolUnreachNLRI))
+	mpReachNLRI, mpUnreachNLRI := getMPReachAndUnreachNLRIs(u)
+
+	if mpReachNLRI != nil {
+		f.multiProtocolUpdate(path, *mpReachNLRI)
+	}
+
+	if mpUnreachNLRI != nil {
+		f.multiProtocolWithdraw(path, *mpUnreachNLRI)
+	}
+
+	if mpReachNLRI != nil && mpUnreachNLRI != nil {
+		if mpReachNLRI.NLRI == nil && mpUnreachNLRI.NLRI == nil {
+			f.endOfRIBMarkerReceived = true
 		}
 	}
+}
+
+func getMPReachAndUnreachNLRIs(u *packet.BGPUpdate) (reach *packet.MultiProtocolReachNLRI, unreach *packet.MultiProtocolUnreachNLRI) {
+	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
+		if pa.TypeCode == packet.MultiProtocolReachNLRICode {
+			r := pa.Value.(packet.MultiProtocolReachNLRI)
+			reach = &r
+		}
+
+		if pa.TypeCode == packet.MultiProtocolUnreachNLRICode {
+			ur := pa.Value.(packet.MultiProtocolUnreachNLRI)
+			unreach = &ur
+		}
+	}
+
+	return reach, unreach
 }
 
 func (f *fsmAddressFamily) newRoutePath(bmpPostPolicy bool, timestamp uint32) *route.Path {

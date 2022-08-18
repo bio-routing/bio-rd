@@ -30,10 +30,12 @@ var (
 	routesSentDesc            *prometheus.Desc
 	routesRejectedDesc        *prometheus.Desc
 	routesAcceptedDesc        *prometheus.Desc
+	endOfRIBMarkerDesc        *prometheus.Desc
 	routesReceivedDescRouter  *prometheus.Desc
 	routesSentDescRouter      *prometheus.Desc
 	routesRejectedDescRouter  *prometheus.Desc
 	routesAcceptedDescRouter  *prometheus.Desc
+	endOfRIBMarkerDescRouter  *prometheus.Desc
 )
 
 func init() {
@@ -56,12 +58,14 @@ func init() {
 	routesSentDesc = prometheus.NewDesc(prefix+"route_sent_count", "Number of routes sent", labels, nil)
 	routesRejectedDesc = prometheus.NewDesc(prefix+"route_rejected_count", "Number of routes rejected", labels, nil)
 	routesAcceptedDesc = prometheus.NewDesc(prefix+"route_accepted_count", "Number of routes accepted", labels, nil)
+	endOfRIBMarkerDesc = prometheus.NewDesc(prefix+"end_of_rib_marker_received", "End of RIB marker received", labels, nil)
 
 	labelsRouter = append(labelsRouter, "afi", "safi")
 	routesReceivedDescRouter = prometheus.NewDesc(prefix+"route_received_count", "Number of routes received", labelsRouter, nil)
 	routesSentDescRouter = prometheus.NewDesc(prefix+"route_sent_count", "Number of routes sent", labelsRouter, nil)
 	routesRejectedDescRouter = prometheus.NewDesc(prefix+"route_rejected_count", "Number of routes rejected", labelsRouter, nil)
 	routesAcceptedDescRouter = prometheus.NewDesc(prefix+"route_accepted_count", "Number of routes accepted", labelsRouter, nil)
+	endOfRIBMarkerDescRouter = prometheus.NewDesc(prefix+"end_of_rib_marker_received", "End of RIB marker received", labelsRouter, nil)
 }
 
 // NewCollector creates a new collector instance for the given BGP server
@@ -85,6 +89,7 @@ func (c *bgpCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- routesSentDesc
 	ch <- routesRejectedDesc
 	ch <- routesAcceptedDesc
+	ch <- endOfRIBMarkerDesc
 }
 
 func DescribeRouter(ch chan<- *prometheus.Desc) {
@@ -97,6 +102,7 @@ func DescribeRouter(ch chan<- *prometheus.Desc) {
 	ch <- routesSentDescRouter
 	ch <- routesRejectedDescRouter
 	ch <- routesAcceptedDescRouter
+	ch <- endOfRIBMarkerDescRouter
 }
 
 // Collect conforms to the prometheus collector interface
@@ -171,6 +177,12 @@ func collectForFamily(ch chan<- prometheus.Metric, family *metrics.BGPAddressFam
 
 	ch <- prometheus.MustNewConstMetric(routesReceivedDesc, prometheus.CounterValue, float64(family.RoutesReceived), l...)
 	ch <- prometheus.MustNewConstMetric(routesSentDesc, prometheus.CounterValue, float64(family.RoutesSent), l...)
+
+	eor := 0
+	if family.EndOfRIBMarkerReceived {
+		eor = 1
+	}
+	ch <- prometheus.MustNewConstMetric(endOfRIBMarkerDesc, prometheus.GaugeValue, float64(eor))
 }
 
 func collectForFamilyRouter(ch chan<- prometheus.Metric, family *metrics.BGPAddressFamilyMetrics, l []string) {
@@ -178,4 +190,10 @@ func collectForFamilyRouter(ch chan<- prometheus.Metric, family *metrics.BGPAddr
 
 	ch <- prometheus.MustNewConstMetric(routesReceivedDescRouter, prometheus.CounterValue, float64(family.RoutesReceived), l...)
 	ch <- prometheus.MustNewConstMetric(routesSentDescRouter, prometheus.CounterValue, float64(family.RoutesSent), l...)
+
+	eor := 0
+	if family.EndOfRIBMarkerReceived {
+		eor = 1
+	}
+	ch <- prometheus.MustNewConstMetric(routesSentDescRouter, prometheus.GaugeValue, float64(eor), l...)
 }

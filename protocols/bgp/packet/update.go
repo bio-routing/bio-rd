@@ -73,3 +73,7 @@ func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
+
+func (b *BGPUpdate) IsEndOfRIBMarker() bool {
+	return b.WithdrawnRoutesLen == 0 && b.NLRI == nil
+}
