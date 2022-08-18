@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 )
@@ -284,8 +283,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 100,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -294,8 +293,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 200,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -304,8 +303,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 300,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -315,8 +314,8 @@ func TestRouteRemovePath(t *testing.T) {
 				BGPPath: &BGPPath{
 					BGPPathA: &BGPPathA{
 						LocalPref: 200,
-						Source:    net.IPv4(0).Ptr(),
-						NextHop:   net.IPv4(0).Ptr(),
+						Source:    bnet.IPv4(0).Ptr(),
+						NextHop:   bnet.IPv4(0).Ptr(),
 					},
 				},
 			},
@@ -326,8 +325,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 100,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -336,8 +335,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 300,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -351,8 +350,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 10,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -361,8 +360,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 20,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -372,8 +371,8 @@ func TestRouteRemovePath(t *testing.T) {
 				BGPPath: &BGPPath{
 					BGPPathA: &BGPPathA{
 						LocalPref: 50,
-						Source:    net.IPv4(0).Ptr(),
-						NextHop:   net.IPv4(0).Ptr(),
+						Source:    bnet.IPv4(0).Ptr(),
+						NextHop:   bnet.IPv4(0).Ptr(),
 					},
 				},
 			},
@@ -383,8 +382,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 10,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -393,8 +392,8 @@ func TestRouteRemovePath(t *testing.T) {
 					BGPPath: &BGPPath{
 						BGPPathA: &BGPPathA{
 							LocalPref: 20,
-							Source:    net.IPv4(0).Ptr(),
-							NextHop:   net.IPv4(0).Ptr(),
+							Source:    bnet.IPv4(0).Ptr(),
+							NextHop:   bnet.IPv4(0).Ptr(),
 						},
 					},
 				},
@@ -552,7 +551,7 @@ func TestRouteEqual(t *testing.T) {
 	}{
 		{
 			a: &Route{
-				pfx:       net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx:       bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -570,7 +569,7 @@ func TestRouteEqual(t *testing.T) {
 				},
 			},
 			b: &Route{
-				pfx:       net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx:       bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -591,7 +590,7 @@ func TestRouteEqual(t *testing.T) {
 		},
 		{
 			a: &Route{
-				pfx:       net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx:       bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -609,7 +608,7 @@ func TestRouteEqual(t *testing.T) {
 				},
 			},
 			b: &Route{
-				pfx:       net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx:       bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -630,7 +629,7 @@ func TestRouteEqual(t *testing.T) {
 		},
 		{
 			a: &Route{
-				pfx:       net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx:       bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -648,7 +647,7 @@ func TestRouteEqual(t *testing.T) {
 				},
 			},
 			b: &Route{
-				pfx:       net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx:       bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				ecmpPaths: 2,
 				paths: []*Path{
 					{
@@ -679,7 +678,7 @@ func TestRouteIsBGPOriginatedBy(t *testing.T) {
 		{
 			name: "Single AS Path, correct originating AS",
 			r: &Route{
-				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx: bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				paths: []*Path{
 					{
 						Type: StaticPathType,
@@ -700,7 +699,7 @@ func TestRouteIsBGPOriginatedBy(t *testing.T) {
 		{
 			name: "Single AS Path, wrong originating AS",
 			r: &Route{
-				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx: bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				paths: []*Path{
 					{
 						Type: StaticPathType,
@@ -721,7 +720,7 @@ func TestRouteIsBGPOriginatedBy(t *testing.T) {
 		{
 			name: "Empty AS Path",
 			r: &Route{
-				pfx: net.NewPfx(net.IPv4(0), 0).Ptr(),
+				pfx: bnet.NewPfx(bnet.IPv4(0), 0).Ptr(),
 				paths: []*Path{
 					{
 						Type: StaticPathType,

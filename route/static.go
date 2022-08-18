@@ -16,7 +16,6 @@ func (r *Route) staticPathSelection() {
 	}
 
 	r.ecmpPaths = uint(len(r.paths))
-	return
 }
 
 // Select returns negative if s < t, 0 if paths are equal, positive if s > t
