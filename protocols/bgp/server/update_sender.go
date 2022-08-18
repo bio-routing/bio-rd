@@ -84,7 +84,7 @@ func (u *UpdateSender) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 		return nil
 	}
 
-	u.toSend[p.BGPPath.ComputeHashWithPathID()] = &pathPfxs{
+	u.toSend[hash] = &pathPfxs{
 		path: p,
 		pfxs: []*bnet.Prefix{
 			pfx,
