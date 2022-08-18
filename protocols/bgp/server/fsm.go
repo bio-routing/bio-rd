@@ -373,7 +373,10 @@ func (fsm *FSM) local16BitASN() uint16 {
 }
 
 func (fsm *FSM) sendNotification(errorCode uint8, errorSubCode uint8) error {
-	msg := packet.SerializeNotificationMsg(&packet.BGPNotification{})
+	msg := packet.SerializeNotificationMsg(&packet.BGPNotification{
+		ErrorCode:    errorCode,
+		ErrorSubcode: errorSubCode,
+	})
 
 	_, err := fsm.con.Write(msg)
 	if err != nil {

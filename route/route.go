@@ -62,9 +62,8 @@ func NewRouteAddPath(pfx *net.Prefix, p []*Path) *Route {
 		return r
 	}
 
-	for _, path := range p {
-		r.paths = append(r.paths, path)
-	}
+	r.paths = append(r.paths, p...)
+
 	return r
 }
 
@@ -344,7 +343,7 @@ func getBestProtocol(paths []*Path) uint8 {
 // Print returns a printable representation of route `r`
 func (r *Route) Print() string {
 	ret := fmt.Sprintf("%s:\n", r.pfx.String())
-	ret += fmt.Sprintf("All Paths:\n")
+	ret += "All Paths:\n"
 	for _, p := range r.paths {
 		ret += p.Print()
 	}

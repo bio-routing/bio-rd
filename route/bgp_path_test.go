@@ -3,7 +3,6 @@ package route
 import (
 	"testing"
 
-	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/bio-rd/route/api"
@@ -148,8 +147,8 @@ func TestBGPPathToProto(t *testing.T) {
 				BMPPostPolicy:  false,
 				PathIdentifier: 1,
 				BGPPathA: &BGPPathA{
-					NextHop: net.IPv4FromOctets(10, 0, 0, 2).Ptr(),
-					Source:  net.IPv4FromOctets(10, 0, 0, 2).Ptr(),
+					NextHop: bnet.IPv4FromOctets(10, 0, 0, 2).Ptr(),
+					Source:  bnet.IPv4FromOctets(10, 0, 0, 2).Ptr(),
 				},
 			},
 			expected: &api.BGPPath{
