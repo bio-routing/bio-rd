@@ -586,8 +586,8 @@ func TestLength(t *testing.T) {
 				},
 				BGPPathA: &BGPPathA{
 					OriginatorID:   10,
-					Source:         net.IPv4(0).Ptr(),
-					NextHop:        net.IPv4(0).Ptr(),
+					Source:         bnet.IPv4(0).Ptr(),
+					NextHop:        bnet.IPv4(0).Ptr(),
 					OnlyToCustomer: 199714,
 				},
 			},
@@ -611,8 +611,8 @@ func TestBGPPathString(t *testing.T) {
 				BGPPathA: &BGPPathA{
 					EBGP:           true,
 					OriginatorID:   23,
-					NextHop:        net.IPv6(0, 0).Ptr(),
-					Source:         net.IPv6(0, 0).Ptr(),
+					NextHop:        bnet.IPv6(0, 0).Ptr(),
+					Source:         bnet.IPv6(0, 0).Ptr(),
 					OnlyToCustomer: 2342,
 				},
 				ASPath:           &types.ASPath{},
