@@ -37,6 +37,11 @@ type peer struct {
 	routeReflectorClient        bool
 	ipv4MultiProtocolAdvertised bool
 	clusterID                   uint32
+	peerRoleEnabled             bool
+	peerRoleStrictMode          bool
+	peerRoleLocal               uint8
+	peerRoleAdvByPeer           bool
+	peerRoleRemote              uint8
 
 	vrf  *vrf.VRF
 	ipv4 *peerAddressFamily
@@ -63,6 +68,8 @@ type PeerConfig struct {
 	RouteReflectorClient       bool
 	RouteReflectorClusterID    uint32
 	AdvertiseIPv4MultiProtocol bool
+	PeerRole                   uint8
+	PeerRoleStrictMode         bool
 	IPv4                       *AddressFamilyConfig
 	IPv6                       *AddressFamilyConfig
 	VRF                        *vrf.VRF
@@ -105,6 +112,16 @@ func (pc *PeerConfig) NeedsRestart(x *PeerConfig) bool {
 
 	if pc.RouteServerClient != x.RouteServerClient {
 		return true
+	}
+
+	if peerRoleEnabled(pc.PeerRole) {
+		if pc.PeerRole != x.PeerRole {
+			return true
+		}
+
+		if pc.PeerRoleStrictMode != x.PeerRoleStrictMode {
+			return true
+		}
 	}
 
 	if pc.VRF != x.VRF {
@@ -264,6 +281,9 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		routeServerClient:    c.RouteServerClient,
 		routeReflectorClient: c.RouteReflectorClient,
 		clusterID:            c.RouteReflectorClusterID,
+		peerRoleEnabled:      peerRoleEnabled(c.PeerRole),
+		peerRoleStrictMode:   c.PeerRoleStrictMode,
+		peerRoleLocal:        translatePeerRole(c.PeerRole),
 		vrf:                  c.VRF,
 		adjRIBInFactory:      adjRIBInFactory{},
 	}
@@ -311,6 +331,11 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		if p.ipv6.rib == nil {
 			return nil, fmt.Errorf("no RIB for IPv6 unicast configured")
 		}
+	}
+
+	// Activate Peer Role capability for eBGP neighbors if configured
+	if p.localASN != p.peerASN && peerRoleEnabled(c.PeerRole) {
+		caps = append(caps, peerRoleCapability(c))
 	}
 
 	p.optOpenParams = append(p.optOpenParams, packet.OptParam{
@@ -385,6 +410,15 @@ func addPathCapabilityForFamily(f *AddressFamilyConfig, afi uint16, safi uint8) 
 				SAFI:        safi,
 				SendReceive: addPath,
 			},
+		},
+	}
+}
+
+func peerRoleCapability(c PeerConfig) packet.Capability {
+	return packet.Capability{
+		Code: packet.PeerRoleCapabilityCode,
+		Value: packet.PeerRoleCapability{
+			PeerRole: c.PeerRole,
 		},
 	}
 }

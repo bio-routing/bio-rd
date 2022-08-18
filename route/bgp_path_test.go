@@ -49,20 +49,22 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 				Value:      []byte{200, 222},
 			},
 		},
-		OriginatorId: 8888,
-		ClusterList:  []uint32{999, 199},
+		OriginatorId:   8888,
+		ClusterList:    []uint32{999, 199},
+		OnlyToCustomer: 201701,
 	}
 
 	expected := &BGPPath{
 		PathIdentifier: 100,
 		BGPPathA: &BGPPathA{
-			BGPIdentifier: 123,
-			Source:        bnet.IPv4FromOctets(10, 0, 0, 2).Ptr(),
-			NextHop:       bnet.IPv4FromOctets(10, 0, 0, 1).Ptr(),
-			LocalPref:     1000,
-			Origin:        1,
-			EBGP:          true,
-			OriginatorID:  8888,
+			BGPIdentifier:  123,
+			Source:         bnet.IPv4FromOctets(10, 0, 0, 2).Ptr(),
+			NextHop:        bnet.IPv4FromOctets(10, 0, 0, 1).Ptr(),
+			LocalPref:      1000,
+			Origin:         1,
+			EBGP:           true,
+			OriginatorID:   8888,
+			OnlyToCustomer: 201701,
 		},
 		ASPath: &types.ASPath{
 			{
@@ -567,7 +569,7 @@ func TestLength(t *testing.T) {
 			expected: 44 + 3 + 3*4 + 4,
 		},
 		{
-			name: "Cluster list + originator and unknown attr",
+			name: "Cluster list + originator, OTC and unknown attr",
 			path: &BGPPath{
 				ASPath: &types.ASPath{
 					{
@@ -583,12 +585,13 @@ func TestLength(t *testing.T) {
 					},
 				},
 				BGPPathA: &BGPPathA{
-					OriginatorID: 10,
-					Source:       bnet.IPv4(0).Ptr(),
-					NextHop:      bnet.IPv4(0).Ptr(),
+					OriginatorID:   10,
+					Source:         net.IPv4(0).Ptr(),
+					NextHop:        net.IPv4(0).Ptr(),
+					OnlyToCustomer: 199714,
 				},
 			},
-			expected: 44 + 19 + 6,
+			expected: 44 + 19 + 6 + 4,
 		},
 	}
 
@@ -606,17 +609,18 @@ func TestBGPPathString(t *testing.T) {
 		{
 			input: BGPPath{
 				BGPPathA: &BGPPathA{
-					EBGP:         true,
-					OriginatorID: 23,
-					NextHop:      bnet.IPv6(0, 0).Ptr(),
-					Source:       bnet.IPv6(0, 0).Ptr(),
+					EBGP:           true,
+					OriginatorID:   23,
+					NextHop:        net.IPv6(0, 0).Ptr(),
+					Source:         net.IPv6(0, 0).Ptr(),
+					OnlyToCustomer: 2342,
 				},
 				ASPath:           &types.ASPath{},
 				ClusterList:      &types.ClusterList{10, 20},
 				Communities:      &types.Communities{},
 				LargeCommunities: &types.LargeCommunities{},
 			},
-			expectedString: "Local Pref: 0, Origin: IGP, AS Path: , BGP type: external, NEXT HOP: 0:0:0:0:0:0:0:0, MED: 0, Path ID: 0, Source: 0:0:0:0:0:0:0:0, Communities: [], LargeCommunities: [], OriginatorID: 0.0.0.23, ClusterList 0.0.0.10 0.0.0.20",
+			expectedString: "Local Pref: 0, Origin: IGP, AS Path: , BGP type: external, NEXT HOP: 0:0:0:0:0:0:0:0, MED: 0, Path ID: 0, Source: 0:0:0:0:0:0:0:0, OnlyToCustomer: 2342, Communities: [], LargeCommunities: [], OriginatorID: 0.0.0.23, ClusterList 0.0.0.10 0.0.0.20",
 			expectedPrint: `		Local Pref: 0
 		Origin: IGP
 		AS Path: 
@@ -625,6 +629,7 @@ func TestBGPPathString(t *testing.T) {
 		MED: 0
 		Path ID: 0
 		Source: 0:0:0:0:0:0:0:0
+		OnlyToCustomer: 2342
 		Communities: []
 		LargeCommunities: []
 		OriginatorID: 0.0.0.23

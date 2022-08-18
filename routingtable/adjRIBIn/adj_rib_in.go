@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
@@ -298,6 +299,11 @@ func (a *AdjRIBIn) validatePath(p *route.Path) uint8 {
 		}
 	}
 
+	// RFC9234 Sect. 5: Validate OTC attribute
+	if !a.validatePathOnlyToCustomer(p) {
+		return route.HiddenReasonOTCMismatch
+	}
+
 	return route.HiddenReasonNone
 }
 
@@ -315,4 +321,36 @@ func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
 	}
 
 	return false
+}
+
+// RFC9234 Sect 5. - BGP Peer Roles & BGO OTC path attribute
+func (a *AdjRIBIn) validatePathOnlyToCustomer(path *route.Path) bool {
+	// If either we or the peer don't have a peer role configured, we can't check OTC and consider the path valid.
+	if !a.sessionAttrs.PeerRoleEnabled || !a.sessionAttrs.PeerRoleAdvByPeer {
+		return true
+	}
+
+	pr := a.sessionAttrs.PeerRoleRemote
+
+	// RFC9234 Sect. 5 - Validate OTC attribute if present
+	if path.BGPPath.BGPPathA.OnlyToCustomer != 0 {
+		// 1. Route with OTC attr from Customer or RS-Client are ineligible
+		if pr == packet.PeerRoleRoleCustomer || pr == packet.PeerRoleRoleRSClient {
+			return false
+		}
+
+		// 2. Route with OTC attr from peer but peer AS != OTC AS
+		if pr == packet.PeerRoleRolePeer && path.BGPPath.BGPPathA.OnlyToCustomer != a.sessionAttrs.PeerASN {
+			return false
+		}
+	}
+
+	// 3. Route rcvd from Provider, Peer or RS without OTC set
+	if path.BGPPath.BGPPathA.OnlyToCustomer == 0 &&
+		(pr == packet.PeerRoleRoleProvider || pr == packet.PeerRoleRolePeer || pr == packet.PeerRoleRoleRS) {
+		path.BGPPath.BGPPathA.OnlyToCustomer = a.sessionAttrs.PeerASN
+		return true
+	}
+
+	return true
 }

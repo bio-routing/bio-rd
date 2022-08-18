@@ -28,3 +28,39 @@ func TestBGPErrorError(t *testing.T) {
 	expected := "Unknown Error TestBGPErrorError"
 	assert.Equal(t, expected, actual)
 }
+
+func TestPeerRoleName(t *testing.T) {
+	tests := []struct {
+		peerRole     uint8
+		peerRoleName string
+	}{
+		{
+			peerRole:     PeerRoleRoleProvider,
+			peerRoleName: "Provider",
+		},
+		{
+			peerRole:     PeerRoleRoleRS,
+			peerRoleName: "RS",
+		},
+		{
+			peerRole:     PeerRoleRoleRSClient,
+			peerRoleName: "RS-Client",
+		},
+		{
+			peerRole:     PeerRoleRoleCustomer,
+			peerRoleName: "Customer",
+		},
+		{
+			peerRole:     PeerRoleRolePeer,
+			peerRoleName: "Peer",
+		},
+		{
+			peerRole:     123,
+			peerRoleName: "Unknown",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.peerRoleName, PeerRoleName(test.peerRole))
+	}
+}

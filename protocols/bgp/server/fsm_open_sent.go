@@ -10,8 +10,9 @@ import (
 )
 
 type openSentState struct {
-	fsm         *FSM
-	peerASNRcvd uint32
+	fsm                   *FSM
+	peerASNRcvd           uint32
+	multiplePeerRolesRcvd bool
 }
 
 func newOpenSentState(fsm *FSM) *openSentState {
@@ -151,6 +152,15 @@ func (s *openSentState) handleOpenMessage(openMsg *packet.BGPOpen) (state, strin
 		return newIdleState(s.fsm), fmt.Sprintf("Bad Peer AS %d, expected: %d", s.peerASNRcvd, s.fsm.peer.peerASN)
 	}
 
+	// Validate Peer Role relationship for eBGP peers
+	if !s.fsm.isBMP && s.fsm.peer.localASN != s.fsm.peer.peerASN {
+		err := s.validatePeerRole()
+		if err != nil {
+			s.fsm.sendNotification(packet.OpenMessageError, packet.RoleMismatchError)
+			return newIdleState(s.fsm), err.Error()
+		}
+	}
+
 	return newOpenConfirmState(s.fsm), "Received OPEN message"
 }
 
@@ -184,6 +194,8 @@ func (s *openSentState) processCapability(cap packet.Capability) {
 		s.processASN4Capability(cap.Value.(packet.ASN4Capability))
 	case packet.MultiProtocolCapabilityCode:
 		s.processMultiProtocolCapability(cap.Value.(packet.MultiProtocolCapability))
+	case packet.PeerRoleCapabilityCode:
+		s.processPeerRoleCapability(cap.Value.(packet.PeerRoleCapability))
 	}
 }
 
@@ -242,6 +254,73 @@ func (s *openSentState) processASN4Capability(cap packet.ASN4Capability) {
 	if s.peerASNRcvd == packet.ASTransASN {
 		s.peerASNRcvd = cap.ASN4
 	}
+}
+
+func (s *openSentState) processPeerRoleCapability(cap packet.PeerRoleCapability) {
+	if !s.fsm.peer.peerRoleEnabled {
+		return
+	}
+
+	if s.fsm.peer.peerRoleAdvByPeer && s.fsm.peer.peerRoleRemote != cap.PeerRole {
+		s.multiplePeerRolesRcvd = true
+	}
+
+	s.fsm.peer.peerRoleAdvByPeer = true
+	s.fsm.peer.peerRoleRemote = cap.PeerRole
+}
+
+// Validate BGP Peer Role rules as defined in RFC9234
+func (s *openSentState) validatePeerRole() error {
+	// Peer Role checking is deactivated, do nothing
+	if !s.fsm.peer.peerRoleEnabled {
+		return nil
+	}
+
+	// We're running in strict mode and require the peer to advertise a peer role to us, but it didn't
+	if s.fsm.peer.peerRoleStrictMode && !s.fsm.peer.peerRoleAdvByPeer {
+		return fmt.Errorf("role misatch error: Strict mode configured but peer didn't advertise a BGP role")
+	}
+
+	// We're running in allow mode and no peer role was advertised
+	if !s.fsm.peer.peerRoleAdvByPeer {
+		return nil
+	}
+
+	if s.multiplePeerRolesRcvd {
+		return fmt.Errorf("role misatch error: Multiple different BGP roles received from peer")
+	}
+
+	// Allowed pairs of role capabilities according to section 4.2 of RFC9234
+	if isPeerRelationshipProviderClient(s.fsm.peer.peerRoleLocal, s.fsm.peer.peerRoleRemote) ||
+		isPeerRelationshipRSClientRS(s.fsm.peer.peerRoleLocal, s.fsm.peer.peerRoleRemote) ||
+		isPeerRelationshipPeerPeer(s.fsm.peer.peerRoleLocal, s.fsm.peer.peerRoleRemote) {
+		return nil
+	}
+
+	return fmt.Errorf("role misatch error: Local role %v incompatible to remote role %v",
+		packet.PeerRoleName(s.fsm.peer.peerRoleLocal), packet.PeerRoleName(s.fsm.peer.peerRoleRemote))
+}
+
+func isPeerRelationshipProviderClient(localRole uint8, remoteRole uint8) bool {
+	if (localRole == packet.PeerRoleRoleProvider && remoteRole == packet.PeerRoleRoleCustomer) ||
+		(localRole == packet.PeerRoleRoleCustomer && remoteRole == packet.PeerRoleRoleProvider) {
+		return true
+	}
+
+	return false
+}
+
+func isPeerRelationshipRSClientRS(localRole uint8, remoteRole uint8) bool {
+	if (localRole == packet.PeerRoleRoleRSClient && remoteRole == packet.PeerRoleRoleRS) ||
+		(localRole == packet.PeerRoleRoleRS && remoteRole == packet.PeerRoleRoleRSClient) {
+		return true
+	}
+
+	return false
+}
+
+func isPeerRelationshipPeerPeer(localRole uint8, remoteRole uint8) bool {
+	return localRole == packet.PeerRoleRolePeer && remoteRole == packet.PeerRoleRolePeer
 }
 
 func (s *openSentState) notification(msg *packet.BGPMessage) (state, string) {

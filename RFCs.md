@@ -13,3 +13,4 @@ Please keep this list ordered.
  * 7947 BGP Route Server
  * 8092 BGP Large Communities Attribute
  * 8212 Default External BGP (EBGP) Route Propagation Behavior without Policies
+ * 9234 Route Leak Prevention and Detection Using Roles in UPDATE and OPEN Messages

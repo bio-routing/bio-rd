@@ -1649,6 +1649,23 @@ func TestDecodeCapability(t *testing.T) {
 			wantFail: false,
 		},
 		{
+			name:  "PeerRole Capability",
+			input: []byte{9, 4, 3},
+			expected: Capability{
+				Code:   PeerRoleCapabilityCode,
+				Length: 4,
+				Value: PeerRoleCapability{
+					PeerRole: PeerRoleRoleCustomer,
+				},
+			},
+			wantFail: false,
+		},
+		{
+			name:     "PeerRole Capability without value",
+			input:    []byte{9, 4},
+			wantFail: true,
+		},
+		{
 			name:     "Fail",
 			input:    []byte{69, 4, 0, 1},
 			wantFail: true,
@@ -1704,6 +1721,57 @@ func TestDecodeAddPathCapability(t *testing.T) {
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.input)
 		cap, err := decodeAddPathCapability(buf, uint8(len(test.input)))
+		if err != nil {
+			if test.wantFail {
+				continue
+			}
+
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		if test.wantFail {
+			t.Errorf("Unexpected success for test %q", test.name)
+			continue
+		}
+
+		assert.Equal(t, test.expected, cap)
+	}
+}
+
+func TestDecodePeerRoleCapability(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		expected PeerRoleCapability
+		wantFail bool
+	}{
+		{
+			name:     "Provider",
+			input:    []byte{0},
+			wantFail: false,
+			expected: PeerRoleCapability{
+				PeerRole: PeerRoleRoleProvider,
+			},
+		},
+		{
+			name:     "Peer",
+			input:    []byte{4},
+			wantFail: false,
+			expected: PeerRoleCapability{
+				PeerRole: PeerRoleRolePeer,
+			},
+		},
+		{
+			name:     "Incomplete",
+			input:    []byte{},
+			wantFail: true,
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(test.input)
+		cap, err := decodePeerRoleCapability(buf)
 		if err != nil {
 			if test.wantFail {
 				continue

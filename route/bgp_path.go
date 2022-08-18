@@ -37,6 +37,7 @@ type BGPPathA struct {
 	EBGP            bool
 	AtomicAggregate bool
 	Origin          uint8
+	OnlyToCustomer  uint32
 }
 
 // NewBGPPathA creates a new BGPPathA
@@ -76,6 +77,7 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		a.Ebgp = b.BGPPathA.EBGP
 		a.BgpIdentifier = b.BGPPathA.BGPIdentifier
 		a.OriginatorId = b.BGPPathA.OriginatorID
+		a.OnlyToCustomer = b.BGPPathA.OnlyToCustomer
 
 		if b.BGPPathA.NextHop != nil {
 			a.NextHop = b.BGPPathA.NextHop.ToProto()
@@ -122,14 +124,15 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 func BGPPathFromProtoBGPPath(pb *api.BGPPath, dedup bool) *BGPPath {
 	p := &BGPPath{
 		BGPPathA: &BGPPathA{
-			NextHop:       bnet.IPFromProtoIP(pb.NextHop),
-			LocalPref:     pb.LocalPref,
-			OriginatorID:  pb.OriginatorId,
-			Origin:        uint8(pb.Origin),
-			MED:           pb.Med,
-			EBGP:          pb.Ebgp,
-			BGPIdentifier: pb.BgpIdentifier,
-			Source:        bnet.IPFromProtoIP(pb.Source),
+			NextHop:        bnet.IPFromProtoIP(pb.NextHop),
+			LocalPref:      pb.LocalPref,
+			OriginatorID:   pb.OriginatorId,
+			Origin:         uint8(pb.Origin),
+			MED:            pb.Med,
+			EBGP:           pb.Ebgp,
+			BGPIdentifier:  pb.BgpIdentifier,
+			Source:         bnet.IPFromProtoIP(pb.Source),
+			OnlyToCustomer: pb.OnlyToCustomer,
 		},
 		PathIdentifier: pb.PathIdentifier,
 		ASPath:         types.ASPathFromProtoASPath(pb.AsPath),
@@ -199,6 +202,11 @@ func (b *BGPPath) Length() uint16 {
 		originatorID = 4
 	}
 
+	onlyToCustomer := uint16(0)
+	if b.BGPPathA.OnlyToCustomer != 0 {
+		onlyToCustomer = 4
+	}
+
 	unknownAttributesLen := uint16(0)
 	if b.UnknownAttributes != nil {
 		for _, unknownAttr := range b.UnknownAttributes {
@@ -206,7 +214,7 @@ func (b *BGPPath) Length() uint16 {
 		}
 	}
 
-	return 4*7 + 4 + asPathLen + communitiesLen + largeCommunitiesLen + clusterListLen + originatorID + unknownAttributesLen
+	return 4*7 + 4 + asPathLen + communitiesLen + largeCommunitiesLen + clusterListLen + originatorID + onlyToCustomer + unknownAttributesLen
 }
 
 // ECMP determines if routes b and c are euqal in terms of ECMP
@@ -562,6 +570,9 @@ func (b *BGPPath) String() string {
 	fmt.Fprintf(buf, "MED: %d, ", b.BGPPathA.MED)
 	fmt.Fprintf(buf, "Path ID: %d, ", b.PathIdentifier)
 	fmt.Fprintf(buf, "Source: %s, ", b.BGPPathA.Source)
+	if b.BGPPathA.OnlyToCustomer != 0 {
+		fmt.Fprintf(buf, "OnlyToCustomer: %d, ", b.BGPPathA.OnlyToCustomer)
+	}
 	if b.Communities != nil {
 		fmt.Fprintf(buf, "Communities: %v, ", *b.Communities)
 	}
@@ -607,6 +618,9 @@ func (b *BGPPath) Print() string {
 	fmt.Fprintf(buf, "\t\tMED: %d\n", b.BGPPathA.MED)
 	fmt.Fprintf(buf, "\t\tPath ID: %d\n", b.PathIdentifier)
 	fmt.Fprintf(buf, "\t\tSource: %s\n", b.BGPPathA.Source)
+	if b.BGPPathA.OnlyToCustomer != 0 {
+		fmt.Fprintf(buf, "\t\tOnlyToCustomer: %d\n", b.BGPPathA.OnlyToCustomer)
+	}
 	if b.Communities != nil {
 		fmt.Fprintf(buf, "\t\tCommunities: %v\n", *b.Communities)
 	}

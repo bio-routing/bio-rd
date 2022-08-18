@@ -46,6 +46,7 @@ const (
 	UnsupportedOptionalParameter = 4
 	DeprecatedOpenMsgError5      = 5
 	UnacceptableHoldTime         = 6
+	RoleMismatchError            = 11
 
 	// Update Msg Errors
 	MalformedAttributeList    = 1
@@ -64,7 +65,7 @@ const (
 	AdministrativeShutdown = 2
 	AdministrativeReset    = 4
 
-	// Attribute Type Codes
+	// Path Attribute Type Codes
 	OriginAttr           = 1
 	ASPathAttr           = 2
 	NextHopAttr          = 3
@@ -78,6 +79,7 @@ const (
 	AS4PathAttr          = 17
 	AS4AggregatorAttr    = 18
 	LargeCommunitiesAttr = 32
+	OnlyToCustomerAttr   = 35
 
 	// ORIGIN values
 	IGP        = 0
@@ -102,18 +104,28 @@ const (
 	SAFIUnicast        = 1
 	SAFILabeledUnicast = 4
 
-	// Capabilities
-	CapabilitiesParamType        = 2
-	MultiProtocolCapabilityCode  = 1
+	// NLRI Codes
 	MultiProtocolReachNLRICode   = 14
 	MultiProtocolUnreachNLRICode = 15
-	AddPathCapabilityCode        = 69
-	ASN4CapabilityCode           = 65
 
-	// AddPath capabilities
+	// Capabilities
+	CapabilitiesParamType       = 2
+	MultiProtocolCapabilityCode = 1
+	PeerRoleCapabilityCode      = 9
+	ASN4CapabilityCode          = 65
+	AddPathCapabilityCode       = 69
+
+	// AddPath capability
 	AddPathReceive     = 1
 	AddPathSend        = 2
 	AddPathSendReceive = 3
+
+	// BGP Role capability
+	PeerRoleRoleProvider = 0
+	PeerRoleRoleRS       = 1
+	PeerRoleRoleRSClient = 2
+	PeerRoleRoleCustomer = 3
+	PeerRoleRolePeer     = 4
 
 	ASTransASN = 23456
 )
@@ -179,5 +191,22 @@ func AFIName(afi uint16) string {
 		return "IPv6"
 	default:
 		return "Unknown AFI"
+	}
+}
+
+func PeerRoleName(pr uint8) string {
+	switch pr {
+	case PeerRoleRoleProvider:
+		return "Provider"
+	case PeerRoleRoleRS:
+		return "RS"
+	case PeerRoleRoleRSClient:
+		return "RS-Client"
+	case PeerRoleRoleCustomer:
+		return "Customer"
+	case PeerRoleRolePeer:
+		return "Peer"
+	default:
+		return "Unknown"
 	}
 }

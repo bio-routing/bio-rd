@@ -155,6 +155,25 @@ func TestSerializeOptParams(t *testing.T) {
 			},
 			expected: []byte{2, 12, 1, 4, 0, 2, 0, 1, 65, 4, 0x00, 0x03, 0x17, 0xf3},
 		},
+		{
+			name: "PeerRole",
+			optParams: []OptParam{
+				{
+					Type:   2,
+					Length: 3,
+					Value: Capabilities{
+						Capability{
+							Code:   PeerRoleCapabilityCode,
+							Length: 1,
+							Value: PeerRoleCapability{
+								PeerRole: 4,
+							},
+						},
+					},
+				},
+			},
+			expected: []byte{2, 3, 9, 1, 4},
+		},
 	}
 
 	for _, test := range tests {
