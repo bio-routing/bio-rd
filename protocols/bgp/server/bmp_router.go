@@ -308,6 +308,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 
 	fsm := &FSM{
 		isBMP:            true,
+		ribsInitialized:  true,
 		bmpRouterAddress: r.address,
 		peer: &peer{
 			routerID:        sentOpen.BGPIdentifier,

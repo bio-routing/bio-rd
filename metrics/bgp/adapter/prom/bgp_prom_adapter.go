@@ -195,5 +195,5 @@ func collectForFamilyRouter(ch chan<- prometheus.Metric, family *metrics.BGPAddr
 	if family.EndOfRIBMarkerReceived {
 		eor = 1
 	}
-	ch <- prometheus.MustNewConstMetric(routesSentDescRouter, prometheus.GaugeValue, float64(eor), l...)
+	ch <- prometheus.MustNewConstMetric(endOfRIBMarkerDescRouter, prometheus.GaugeValue, float64(eor), l...)
 }
