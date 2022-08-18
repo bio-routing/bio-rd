@@ -66,20 +66,22 @@ const (
 	AdministrativeReset    = 4
 
 	// Path Attribute Type Codes
-	OriginAttr           = 1
-	ASPathAttr           = 2
-	NextHopAttr          = 3
-	MEDAttr              = 4
-	LocalPrefAttr        = 5
-	AtomicAggrAttr       = 6
-	AggregatorAttr       = 7
-	CommunitiesAttr      = 8
-	OriginatorIDAttr     = 9
-	ClusterListAttr      = 10
-	AS4PathAttr          = 17
-	AS4AggregatorAttr    = 18
-	LargeCommunitiesAttr = 32
-	OnlyToCustomerAttr   = 35
+	OriginAttr                   = 1
+	ASPathAttr                   = 2
+	NextHopAttr                  = 3
+	MEDAttr                      = 4
+	LocalPrefAttr                = 5
+	AtomicAggrAttr               = 6
+	AggregatorAttr               = 7
+	CommunitiesAttr              = 8
+	OriginatorIDAttr             = 9
+	ClusterListAttr              = 10
+	MultiProtocolReachNLRIAttr   = 14
+	MultiProtocolUnreachNLRIAttr = 15
+	AS4PathAttr                  = 17
+	AS4AggregatorAttr            = 18
+	LargeCommunitiesAttr         = 32
+	OnlyToCustomerAttr           = 35
 
 	// ORIGIN values
 	IGP        = 0
@@ -103,10 +105,6 @@ const (
 	// Sub-Address Familiy Identifiers
 	SAFIUnicast        = 1
 	SAFILabeledUnicast = 4
-
-	// NLRI Codes
-	MultiProtocolReachNLRICode   = 14
-	MultiProtocolUnreachNLRICode = 15
 
 	// Capabilities
 	CapabilitiesParamType       = 2

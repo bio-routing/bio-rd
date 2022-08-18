@@ -233,12 +233,12 @@ func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate, bmpPostPoli
 
 func getMPReachAndUnreachNLRIs(u *packet.BGPUpdate) (reach *packet.MultiProtocolReachNLRI, unreach *packet.MultiProtocolUnreachNLRI) {
 	for pa := u.PathAttributes; pa != nil; pa = pa.Next {
-		if pa.TypeCode == packet.MultiProtocolReachNLRICode {
+		if pa.TypeCode == packet.MultiProtocolReachNLRIAttr {
 			r := pa.Value.(packet.MultiProtocolReachNLRI)
 			reach = &r
 		}
 
-		if pa.TypeCode == packet.MultiProtocolUnreachNLRICode {
+		if pa.TypeCode == packet.MultiProtocolUnreachNLRIAttr {
 			ur := pa.Value.(packet.MultiProtocolUnreachNLRI)
 			unreach = &ur
 		}
@@ -315,8 +315,8 @@ func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *
 			path.BGPPath.BGPPathA.OriginatorID = pa.Value.(uint32)
 		case packet.ClusterListAttr:
 			path.BGPPath.ClusterList = pa.Value.(*types.ClusterList)
-		case packet.MultiProtocolReachNLRICode:
-		case packet.MultiProtocolUnreachNLRICode:
+		case packet.MultiProtocolReachNLRIAttr:
+		case packet.MultiProtocolUnreachNLRIAttr:
 		default:
 			unknownAttr := f.processUnknownAttribute(pa)
 			if unknownAttr != nil {

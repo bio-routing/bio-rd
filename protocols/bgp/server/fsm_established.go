@@ -215,12 +215,12 @@ func (s *establishedState) updateAddressFamily(u *packet.BGPUpdate) (afi uint16,
 	}
 
 	for cur := u.PathAttributes; cur != nil; cur = cur.Next {
-		if cur.TypeCode == packet.MultiProtocolReachNLRICode {
+		if cur.TypeCode == packet.MultiProtocolReachNLRIAttr {
 			a := cur.Value.(packet.MultiProtocolReachNLRI)
 			return a.AFI, a.SAFI
 		}
 
-		if cur.TypeCode == packet.MultiProtocolUnreachNLRICode {
+		if cur.TypeCode == packet.MultiProtocolUnreachNLRIAttr {
 			a := cur.Value.(packet.MultiProtocolUnreachNLRI)
 			return a.AFI, a.SAFI
 		}
