@@ -11,7 +11,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 // AdjRIBOut represents an Adjacency RIB Out with BGP add path
@@ -185,7 +185,9 @@ func (a *AdjRIBOut) addPath(pfx *bnet.Prefix, p *route.Path) error {
 	for _, client := range a.clientManager.Clients() {
 		err := client.AddPath(pfx, p)
 		if err != nil {
-			log.WithField("Sender", "AdjRIBOutAddPath").WithError(err).Error("Could not send update to client")
+			log.WithFields(log.Fields{
+				"sender": "AdjRIBOutAddPath",
+			}).WithError(err).Error("Could not send update to client")
 		}
 	}
 	return nil
@@ -222,7 +224,8 @@ func (a *AdjRIBOut) removePath(pfx *bnet.Prefix, p *route.Path) bool {
 
 				_, err := a.pathIDManager.releasePath(p)
 				if err != nil {
-					log.Warningf("Unable to release path for prefix %s: %v", pfx.String(), err)
+					log.WithError(err).
+						Errorf("Unable to release path for prefix %s: %v", pfx.String(), err)
 					return true
 				}
 

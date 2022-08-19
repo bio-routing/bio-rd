@@ -7,9 +7,8 @@ import (
 
 	risapi "github.com/bio-routing/bio-rd/cmd/ris/api"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
+	"github.com/bio-routing/bio-rd/util/log"
 	"google.golang.org/grpc"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Client is a client interface

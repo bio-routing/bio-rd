@@ -8,13 +8,13 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/kernel"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	vrf, err := vrf.New("inet.0", 0)
 	if err != nil {
-		log.Errorf("unable to create VRF: %v", err)
+		logrus.Errorf("unable to create VRF: %v", err)
 		os.Exit(1)
 	}
 
@@ -28,7 +28,7 @@ func main() {
 
 	k, err := kernel.New()
 	if err != nil {
-		log.Errorf("unable to create protocol kernel: %v", err)
+		logrus.Errorf("unable to create protocol kernel: %v", err)
 		os.Exit(1)
 	}
 	defer k.Dispose()

@@ -3,8 +3,9 @@ package main
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Error(err)
+		log.Error(err.Error())
 		os.Exit(1)
 	}
 }

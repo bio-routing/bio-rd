@@ -5,8 +5,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/tflow2/convert"
-	log "github.com/sirupsen/logrus"
 )
 
 func (nifa *netIfa) p2pHelloSender() {

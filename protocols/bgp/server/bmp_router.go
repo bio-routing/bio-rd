@@ -8,14 +8,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/tflow2/convert"
 )
 
@@ -42,7 +41,6 @@ type Router struct {
 	reconnectTimer   *time.Timer
 	vrfRegistry      *vrf.VRFRegistry
 	neighborManager  *neighborManager
-	logger           *log.Logger
 	runMu            sync.Mutex
 	stop             chan struct{}
 
@@ -84,7 +82,6 @@ func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI) *R
 		dialTimeout:      time.Second * 5,
 		vrfRegistry:      vrf.NewVRFRegistry(),
 		neighborManager:  newNeighborManager(),
-		logger:           log.New(),
 		stop:             make(chan struct{}),
 		ribClients:       make(map[afiClient]struct{}),
 		adjRIBInFactory:  arif,
@@ -145,7 +142,7 @@ func (r *Router) cleanup() {
 func (r *Router) processMsg(msg []byte) {
 	bmpMsg, err := bmppkt.Decode(msg)
 	if err != nil {
-		r.logger.Errorf("unable to decode BMP message: %v", err)
+		log.Errorf("unable to decode BMP message: %v", err)
 		return
 	}
 
@@ -153,7 +150,7 @@ func (r *Router) processMsg(msg []byte) {
 	case bmppkt.PeerUpNotificationType:
 		err = r.processPeerUpNotification(bmpMsg.(*bmppkt.PeerUpNotification))
 		if err != nil {
-			r.logger.Errorf("unable to process peer up notification: %v", err)
+			log.Errorf("unable to process peer up notification: %v", err)
 		}
 	case bmppkt.PeerDownNotificationType:
 		r.processPeerDownNotification(bmpMsg.(*bmppkt.PeerDownNotification))
@@ -174,7 +171,7 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 
 	n := r.neighborManager.getNeighbor(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if n == nil {
-		r.logger.Errorf("Received route monitoring message for non-existent neighbor %d/%v on %s", msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress, r.address.String())
+		log.Errorf("Received route monitoring message for non-existent neighbor %d/%v on %s", msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress, r.address.String())
 		return
 	}
 
@@ -211,7 +208,7 @@ func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
 		}
 	}
 
-	r.logger.Info(logMsg)
+	log.Info(logMsg)
 }
 
 func (r *Router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
@@ -249,14 +246,14 @@ func (r *Router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 		}
 	}
 
-	r.logger.Warning(logMsg)
+	log.Info(logMsg)
 
 	r.con.Close()
 	r.neighborManager.disposeAll()
 }
 
 func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
-	r.logger.WithFields(log.Fields{
+	log.WithFields(log.Fields{
 		"address":            r.address.String(),
 		"router":             r.name,
 		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
@@ -266,13 +263,13 @@ func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 
 	err := r.neighborManager.neighborDown(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if err != nil {
-		r.logger.Errorf("Failed to process peer down notification: %v", err)
+		log.Errorf("Failed to process peer down notification: %v", err)
 	}
 }
 
 func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error {
 	atomic.AddUint64(&r.counters.peerUpNotificationMessages, 1)
-	r.logger.WithFields(log.Fields{
+	log.WithFields(log.Fields{
 		"address":            r.address.String(),
 		"router":             r.name,
 		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),

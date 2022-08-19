@@ -7,7 +7,7 @@ import (
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 func (nifa *netIfa) receiver() {

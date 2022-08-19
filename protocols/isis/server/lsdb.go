@@ -5,9 +5,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
+	"github.com/bio-routing/bio-rd/util/log"
 	btime "github.com/bio-routing/bio-rd/util/time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type lsdb struct {

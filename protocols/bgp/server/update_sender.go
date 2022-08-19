@@ -13,7 +13,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 // UpdateSender converts table changes into BGP update messages
@@ -351,13 +351,13 @@ func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx *bnet.Pref
 
 // UpdateNewClient does nothing
 func (u *UpdateSender) UpdateNewClient(client routingtable.RouteTableClient) error {
-	log.Warningf("BGP Update Sender: UpdateNewClient not implemented")
+	log.Error("BGP Update Sender: UpdateNewClient not implemented")
 	return nil
 }
 
 // RouteCount returns the number of stored routes
 func (u *UpdateSender) RouteCount() int64 {
-	log.Warningf("BGP Update Sender: RouteCount not implemented")
+	log.Error("BGP Update Sender: RouteCount not implemented")
 	return 0
 }
 

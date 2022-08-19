@@ -11,7 +11,7 @@ import (
 	"github.com/bio-routing/bio-rd/net/tcp"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 const (

@@ -23,12 +23,6 @@ cd examples/bgp/ && go build
 cd examples/bmp/ && go build
 ```
 
-#### Device
-
-```bash
-cd examples/device && go build
-```
-
 ### Run Tests
 
 ```bash

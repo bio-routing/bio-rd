@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 type establishedState struct {
@@ -196,12 +196,12 @@ func (s *establishedState) update(u *packet.BGPUpdate, bmpPostPolicy bool, times
 	switch afi {
 	case packet.AFIIPv4:
 		if s.fsm.ipv4Unicast == nil {
-			log.Warnf("Received update for family IPv4 unicast, but this family is not configured.")
+			log.Info("Received update for family IPv4 unicast, but this family is not configured.")
 		}
 
 	case packet.AFIIPv6:
 		if s.fsm.ipv6Unicast == nil {
-			log.Warnf("Received update for family IPv6 unicast, but this family is not configured.")
+			log.Info("Received update for family IPv6 unicast, but this family is not configured.")
 		}
 
 	}

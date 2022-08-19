@@ -20,12 +20,13 @@ coverage.txt
 
 # 'go build' binary
 /cmd/bio-rd/bio-rd
-examples/bgp
-examples/bmp
-examples/fib/fib
-examples/device/device
-cmd/ris/ris
-benchmarks/bgp/learning/learning
+/cmd/bio-rdc/bio-rdc
+/cmd/ris-mirror/ris-mirror
+/cmd/ris/ris
+/cmd/riscli/riscli
+/examples/bgp/bgp
+/examples/bmp/bmp
+/examples/kernel
 
 # bazel directories
 /bazel-*

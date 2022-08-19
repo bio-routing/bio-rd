@@ -16,7 +16,7 @@ type ISIS struct {
 	LSPLifetime uint16           `yaml:"lsp_lifetime"`
 }
 
-//ISISLevel level config
+// ISISLevel level config
 type ISISLevel struct {
 	Disable               bool   `yaml:"disable"`
 	AuthenticationKey     string `yaml:"authentication_key"`

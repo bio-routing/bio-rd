@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"log"
 	"net"
 	"testing"
 	"time"
@@ -269,7 +268,7 @@ func TestDumpRIBInOut(t *testing.T) {
 		api.RegisterBgpServiceServer(s, test.apisrv)
 		go func() {
 			if err := s.Serve(lis); err != nil {
-				log.Fatalf("Server exited with error: %v", err)
+				t.Logf("Server exited with error: %v", err)
 			}
 		}()
 
@@ -324,7 +323,7 @@ func TestDumpRIBInOut(t *testing.T) {
 		api.RegisterBgpServiceServer(s, test.apisrv)
 		go func() {
 			if err := s.Serve(lis); err != nil {
-				log.Fatalf("Server exited with error: %v", err)
+				t.Logf("Server exited with error: %v", err)
 			}
 		}()
 

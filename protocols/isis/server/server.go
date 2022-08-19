@@ -27,7 +27,7 @@ type ISISServer interface {
 	GetLSDB() []*LSDBEntry
 }
 
-//Server represents an ISIS server
+// Server represents an ISIS server
 type Server struct {
 	running            bool
 	runningMu          sync.Mutex

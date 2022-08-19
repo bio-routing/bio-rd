@@ -14,35 +14,34 @@ import (
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // CodeToLogrusLevel is the default 0-stor implementation
 // of gRPC return codes to log(rus) levels for server side.
-func codeToLogrusLevel(code codes.Code) log.Level {
+func codeToLogrusLevel(code codes.Code) logrus.Level {
 	if level, ok := _GRPCCodeToLogrusLevelMapping[code]; ok {
 		return level
 	}
-	return log.ErrorLevel
+	return logrus.ErrorLevel
 }
 
-var _GRPCCodeToLogrusLevelMapping = map[codes.Code]log.Level{
-	codes.OK:                 log.DebugLevel,
-	codes.Canceled:           log.DebugLevel,
-	codes.InvalidArgument:    log.DebugLevel,
-	codes.NotFound:           log.DebugLevel,
-	codes.AlreadyExists:      log.DebugLevel,
-	codes.Unauthenticated:    log.InfoLevel,
-	codes.PermissionDenied:   log.InfoLevel,
-	codes.DeadlineExceeded:   log.WarnLevel,
-	codes.ResourceExhausted:  log.WarnLevel,
-	codes.FailedPrecondition: log.WarnLevel,
-	codes.Aborted:            log.WarnLevel,
+var _GRPCCodeToLogrusLevelMapping = map[codes.Code]logrus.Level{
+	codes.OK:                 logrus.DebugLevel,
+	codes.Canceled:           logrus.DebugLevel,
+	codes.InvalidArgument:    logrus.DebugLevel,
+	codes.NotFound:           logrus.DebugLevel,
+	codes.AlreadyExists:      logrus.DebugLevel,
+	codes.Unauthenticated:    logrus.InfoLevel,
+	codes.PermissionDenied:   logrus.InfoLevel,
+	codes.DeadlineExceeded:   logrus.WarnLevel,
+	codes.ResourceExhausted:  logrus.WarnLevel,
+	codes.FailedPrecondition: logrus.WarnLevel,
+	codes.Aborted:            logrus.WarnLevel,
 }
 
 // Server represents an exarpc server wrapper
@@ -64,7 +63,7 @@ func New(grpcPort uint16, h *http.Server, unaryInterceptors []grpc.UnaryServerIn
 		httpSrv: h,
 	}
 
-	logrusEntry := log.NewEntry(log.StandardLogger())
+	logrusEntry := logrus.NewEntry(logrus.StandardLogger())
 	levelOpt := grpc_logrus.WithLevels(codeToLogrusLevel)
 
 	unaryInterceptors = append(unaryInterceptors,
@@ -121,7 +120,7 @@ func (s *Server) Serve() error {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		err := s.grpcSrv.srv.Serve(grpcLis)
-		log.Fatalf("GRPC serving failed: %v", err)
+		logrus.Fatalf("GRPC serving failed: %v", err)
 		os.Exit(1)
 		wg.Done()
 	}(&wg)
@@ -131,7 +130,7 @@ func (s *Server) Serve() error {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		err := s.httpSrv.ListenAndServe()
-		log.Fatalf("HTTP serving failed: %v", err)
+		logrus.Fatalf("HTTP serving failed: %v", err)
 		os.Exit(1)
 		wg.Done()
 	}(&wg)

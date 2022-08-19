@@ -11,9 +11,8 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	bmppkt "github.com/bio-routing/bio-rd/protocols/bmp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/tflow2/convert"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -178,7 +177,7 @@ func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool, dynami
 		if dynamic && r.counters.initiationMessages == 0 {
 			defer b.RemoveRouter(r.address)
 
-			r.logger.WithFields(log.Fields{
+			log.WithFields(log.Fields{
 				"component": "bmp_server",
 				"address":   c.RemoteAddr().String(),
 				"router":    r.Name(),
@@ -187,7 +186,7 @@ func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool, dynami
 			return err
 
 		} else {
-			r.logger.WithFields(log.Fields{
+			log.WithFields(log.Fields{
 				"component": "bmp_server",
 				"address":   c.RemoteAddr().String(),
 				"router":    r.Name(),

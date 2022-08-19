@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,10 +22,10 @@ func strAddr(s string) uint32 {
 func main() {
 	logrus.Printf("This is a BGP speaker\n")
 
-	b := server.NewBGPServer(0, []string{":"})
+	b := server.NewBGPServer(0, []string{"127.0.0.1:0"})
 	v, err := vrf.New("master", 0)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
 	go startMetricsEndpoint(b)

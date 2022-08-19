@@ -16,8 +16,9 @@ import (
 	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
@@ -38,7 +39,9 @@ var (
 func main() {
 	flag.Parse()
 
-	log.SetLevel(log.DebugLevel)
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	log.SetLogger(log.NewLogrusWrapper(logger))
 
 	startCfg, err := config.GetConfig(*configFilePath)
 	if err != nil {
@@ -48,12 +51,14 @@ func main() {
 
 	ds, err = device.New()
 	if err != nil {
-		log.Fatalf("Unable to create device server: %v", err)
+		log.Errorf("Unable to create device server: %v", err)
+		os.Exit(1)
 	}
 
 	err = ds.Start()
 	if err != nil {
-		log.Fatalf("Unable to start device server: %v", err)
+		log.Errorf("Unable to start device server: %v", err)
+		os.Exit(1)
 	}
 
 	bgpSrv = bgpserver.NewBGPServer(
@@ -66,7 +71,7 @@ func main() {
 
 	err = bgpSrv.Start()
 	if err != nil {
-		log.Fatalf("Unable to start BGP server: %v", err)
+		log.Errorf("Unable to start BGP server: %v", err)
 		os.Exit(1)
 	}
 
@@ -98,7 +103,8 @@ func main() {
 	bgpapi.RegisterBgpServiceServer(srv.GRPC(), s)
 	isisapi.RegisterIsisServiceServer(srv.GRPC(), isisAPISrv)
 	if err := srv.Serve(); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+		log.Errorf("failed to start server: %v", err)
+		os.Exit(1)
 	}
 
 	select {}

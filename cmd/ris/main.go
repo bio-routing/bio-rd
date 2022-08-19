@@ -11,13 +11,14 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/ris/config"
 	"github.com/bio-routing/bio-rd/cmd/ris/risserver"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/keepalive"
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	prom_bmp "github.com/bio-routing/bio-rd/metrics/bmp/adapter/prom"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -33,11 +34,16 @@ var (
 func main() {
 	flag.Parse()
 
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	log.SetLogger(log.NewLogrusWrapper(logger))
+
 	cfg := &config.RISConfig{}
 	if *configFilePath != "" {
 		c, err := config.LoadConfig(*configFilePath)
 		if err != nil {
-			log.Fatalf("Failed to load config: %v", err)
+			log.WithError(err).Error("Failed to load config: %v")
+			os.Exit(1)
 		}
 
 		cfg = c
@@ -62,7 +68,8 @@ func main() {
 	for _, r := range cfg.BMPServers {
 		ip := net.ParseIP(r.Address)
 		if ip == nil {
-			log.Fatalf("unable to convert %q to net.IP", r.Address)
+			log.Errorf("unable to convert %q to net.IP", r.Address)
+			os.Exit(1)
 		}
 		b.AddRouter(ip, r.Port, r.Passive, false)
 	}
@@ -87,6 +94,7 @@ func main() {
 
 	pb.RegisterRoutingInformationServiceServer(srv.GRPC(), s)
 	if err := srv.Serve(); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+		log.Errorf("failed to start server: %v", err)
+		os.Exit(1)
 	}
 }

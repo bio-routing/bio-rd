@@ -12,9 +12,10 @@ import (
 	prom_grpc_cm "github.com/bio-routing/bio-rd/metrics/grpc/clientmanager/adapter/prom"
 	prom_ris_mirror "github.com/bio-routing/bio-rd/metrics/ris-mirror/adapter/prom"
 	"github.com/bio-routing/bio-rd/util/grpc/clientmanager"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
@@ -30,9 +31,14 @@ var (
 func main() {
 	flag.Parse()
 
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	log.SetLogger(log.NewLogrusWrapper(logger))
+
 	cfg, err := config.LoadConfig(*configFilePath)
 	if err != nil {
-		log.WithError(err).Fatal("Failed to load config")
+		log.WithError(err).Error("Failed to load config")
+		os.Exit(1)
 	}
 
 	grpcClientManager := clientmanager.New()
@@ -44,7 +50,8 @@ func main() {
 		}))
 
 		if err != nil {
-			log.WithError(err).Fatal("GRPC clientmanager add failed")
+			log.WithError(err).Error("GRPC clientmanager add failed")
+			os.Exit(1)
 		}
 	}
 
@@ -83,6 +90,7 @@ func main() {
 
 	pb.RegisterRoutingInformationServiceServer(srv.GRPC(), s)
 	if err := srv.Serve(); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+		log.Errorf("failed to start server: %v", err)
+		os.Exit(1)
 	}
 }
