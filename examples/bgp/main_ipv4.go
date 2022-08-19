@@ -14,7 +14,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	api "github.com/bio-routing/bio-rd/protocols/bgp/api"
 )
@@ -24,7 +24,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 
 	lis, err := net.Listen("tcp", ":1337")
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logrus.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 	api.RegisterBgpServiceServer(grpcServer, apiSrv)
@@ -32,7 +32,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 
 	err = b.Start()
 	if err != nil {
-		log.Fatalf("Unable to start BGP server: %v", err)
+		logrus.Fatalf("Unable to start BGP server: %v", err)
 	}
 
 	b.AddPeer(server.PeerConfig{

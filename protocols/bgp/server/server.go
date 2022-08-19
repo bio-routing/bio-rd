@@ -11,8 +11,8 @@ import (
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
+	"github.com/bio-routing/bio-rd/util/log"
 	bnetutils "github.com/bio-routing/bio-rd/util/net"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -162,7 +162,7 @@ func (b *bgpServer) incomingConnectionWorker() {
 			c.Close()
 			log.WithFields(log.Fields{
 				"source": c.RemoteAddr(),
-			}).Warning("TCP connection from unknown source")
+			}).Info("TCP connection from unknown source")
 			continue
 		}
 
@@ -170,7 +170,9 @@ func (b *bgpServer) incomingConnectionWorker() {
 			"source": c.RemoteAddr(),
 		}).Info("Incoming TCP connection")
 
-		log.WithField("Peer", peerAddr).Debug("Sending incoming TCP connection to fsm for peer")
+		log.WithFields(log.Fields{
+			"peer": peerAddr,
+		}).Debug("Sending incoming TCP connection to fsm for peer")
 		fsm := NewActiveFSM(peer)
 		fsm.state = newActiveState(fsm)
 		fsm.startConnectRetryTimer()

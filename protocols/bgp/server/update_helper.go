@@ -5,8 +5,7 @@ import (
 	"io"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 func serializeAndSendUpdate(out io.Writer, update serializeAbleUpdate, opt *packet.EncodeOptions) error {

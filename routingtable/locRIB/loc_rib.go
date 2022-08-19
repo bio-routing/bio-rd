@@ -8,8 +8,8 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/bio-rd/util/math"
-	log "github.com/sirupsen/logrus"
 )
 
 // LocRIB represents a routing information base

@@ -4,7 +4,7 @@ import (
 	"net"
 
 	"github.com/bio-routing/bio-rd/net/tcp"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 const (
@@ -40,10 +40,9 @@ func NewTCPListener(addr string, ch chan net.Conn) (*TCPListener, error) {
 			conn, err := tl.l.AcceptTCP()
 			if err != nil {
 				close(tl.closeCh)
-				log.WithFields(log.Fields{
+				log.WithError(err).WithFields(log.Fields{
 					"Topic": "Peer",
-					"Error": err,
-				}).Warn("Failed to AcceptTCP")
+				}).Error("Failed to AcceptTCP")
 				return err
 			}
 			ch <- conn

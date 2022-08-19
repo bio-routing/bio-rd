@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/vishvananda/netlink"
 )
 
@@ -124,7 +124,7 @@ func (o *osAdapterLinux) processAddrUpdate(au *netlink.AddrUpdate) {
 	defer o.srv.devicesMu.RUnlock()
 
 	if _, ok := o.srv.devices[uint64(au.LinkIndex)]; !ok {
-		log.Warningf("Received address update for non existent device index %d", au.LinkIndex)
+		log.Infof("Received address update for non existent device index %d", au.LinkIndex)
 		return
 	}
 

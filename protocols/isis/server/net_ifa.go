@@ -8,8 +8,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
+	"github.com/bio-routing/bio-rd/util/log"
 	btime "github.com/bio-routing/bio-rd/util/time"
-	log "github.com/sirupsen/logrus"
 )
 
 var (

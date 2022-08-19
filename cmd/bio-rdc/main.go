@@ -11,7 +11,8 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	bgpapi "github.com/bio-routing/bio-rd/protocols/bgp/api"
 	"github.com/bio-routing/bio-rd/route"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -23,6 +24,10 @@ var (
 
 func main() {
 	flag.Parse()
+
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	log.SetLogger(log.NewLogrusWrapper(logger))
 
 	conn, err := grpc.Dial(*bioAddr, grpc.WithInsecure())
 	if err != nil {

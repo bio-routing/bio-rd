@@ -7,7 +7,7 @@ import (
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	bnet "github.com/bio-routing/bio-rd/net"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
 )
@@ -32,7 +32,8 @@ func NewLPMCommand() cli.Command {
 
 		ipAddr, err := bnet.IPFromString(c.String("ip"))
 		if err != nil {
-			log.Fatalf("Unable to parse address: %v", err)
+			log.Errorf("Unable to parse address: %v", err)
+			os.Exit(1)
 		}
 
 		pfxLen := uint8(32)
@@ -44,7 +45,8 @@ func NewLPMCommand() cli.Command {
 		client := pb.NewRoutingInformationServiceClient(conn)
 		err = lpm(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), pfx)
 		if err != nil {
-			log.Fatalf("LPM failed: %v", err)
+			log.Errorf("LPM failed: %v", err)
+			os.Exit(1)
 		}
 
 		return nil

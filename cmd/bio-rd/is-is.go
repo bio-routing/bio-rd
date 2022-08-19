@@ -8,7 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
 	"github.com/bio-routing/bio-rd/protocols/isis/server"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	log "github.com/sirupsen/logrus"
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 func configureProtocolsISIS(isis *config.ISIS) error {

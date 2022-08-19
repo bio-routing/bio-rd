@@ -1,8 +1,9 @@
 package route
 
 import (
-	"log"
 	"sync"
+
+	"github.com/bio-routing/bio-rd/util/log"
 )
 
 // BGPPathManager is a component used to deduplicate BGP Path objects
@@ -56,7 +57,7 @@ func (m *BGPPathManager) RemovePath(p BGPPath) {
 	defer m.mu.Unlock()
 
 	if m.lookup(p) == nil {
-		log.Fatalf("Tried to remove non-existent BGPPath: %v", p)
+		log.Errorf("Tried to remove non-existent BGPPath: %v", p)
 		return
 	}
 

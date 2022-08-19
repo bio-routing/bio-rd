@@ -13,6 +13,8 @@ package server
 		},
 	}
 
+        logger := logrus.New()
+        SetLogger(log.NewLogrusWrapper(logger))
 	for _, test := range tests {
 		addr := net.IP{10, 20, 30, 40}
 		port := uint16(123)
@@ -22,7 +24,7 @@ package server
 
 		r := newRouter(addr, port, rib4, rib6)
 		buf := bytes.NewBuffer(nil)
-		r.logger.Out = buf
+		logger.Out = buf
 		go r.serve(conA)
 
 		conB.Write(test.msg)
@@ -375,7 +377,6 @@ func TestProcessRouteMonitoringMsg(t *testing.T) {
 			name: "Unknown peer address",
 			r: &router{
 				address: net.IP{10, 20, 30, 40},
-				logger:  log.New(),
 			},
 			msg: &bmppkt.RouteMonitoringMsg{
 				PerPeerHeader: &bmppkt.PerPeerHeader{
@@ -388,12 +389,12 @@ func TestProcessRouteMonitoringMsg(t *testing.T) {
 		},
 	}
 
+        logger := logrus.New()
+        SetLogger(log.NewLogrusWrapper(logger))
 	for _, test := range tests {
 		logBuf := bytes.NewBuffer(nil)
-		test.r.logger.Out = logBuf
-		test.r.logger.Formatter = biotesting.NewLogFormatter()
-
-		test.expected.logger = test.r.logger
+		logger.Out = logBuf
+		logger.Formatter = biotesting.NewLogFormatter()
 
 		test.r.processRouteMonitoringMsg(test.msg)
 
@@ -417,7 +418,6 @@ func TestProcessInitiationMsg(t *testing.T) {
 			name: "Test #1",
 			r: &router{
 				address: net.IP{10, 20, 30, 40},
-				logger:  log.New(),
 			},
 			msg: &bmppkt.InitiationMessage{
 				TLVs: []*bmppkt.InformationTLV{
@@ -439,10 +439,12 @@ func TestProcessInitiationMsg(t *testing.T) {
 		},
 	}
 
+        logger := logrus.New()
+        SetLogger(log.NewLogrusWrapper(logger))
 	for _, test := range tests {
 		logBuf := bytes.NewBuffer(nil)
-		test.r.logger.Out = logBuf
-		test.r.logger.Formatter = biotesting.NewLogFormatter()
+		logger.Out = logBuf
+		logger.Formatter = biotesting.NewLogFormatter()
 
 		test.r.processInitiationMsg(test.msg)
 
@@ -463,7 +465,6 @@ func TestProcessTerminationMsg(t *testing.T) {
 			r: &router{
 				con:     &biotesting.MockConn{},
 				address: net.IP{10, 20, 30, 40},
-				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
 					{1, 2, 3}: {},
 				},
@@ -490,7 +491,6 @@ func TestProcessTerminationMsg(t *testing.T) {
 			r: &router{
 				con:     &biotesting.MockConn{},
 				address: net.IP{10, 20, 30, 40},
-				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
 					{1, 2, 3}: {},
 				},
@@ -530,12 +530,12 @@ func TestProcessTerminationMsg(t *testing.T) {
 		},
 	}
 
+        logger := logrus.New()
+        SetLogger(log.NewLogrusWrapper(logger))
 	for _, test := range tests {
 		logBuf := bytes.NewBuffer(nil)
-		test.r.logger.Out = logBuf
-		test.r.logger.Formatter = biotesting.NewLogFormatter()
-
-		test.expected.logger = test.r.logger
+		logger.Out = logBuf
+		logger.Formatter = biotesting.NewLogFormatter()
 
 		test.r.processTerminationMsg(test.msg)
 
@@ -556,7 +556,6 @@ func TestProcessPeerDownNotification(t *testing.T) {
 			name: "Peer down notification for existing peer",
 			r: &router{
 				address: net.IP{10, 20, 30, 40},
-				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
 					{1, 2, 3}: {},
 				},
@@ -576,7 +575,6 @@ func TestProcessPeerDownNotification(t *testing.T) {
 			name: "Peer down notification for non-existing peer",
 			r: &router{
 				address: net.IP{10, 20, 30, 40},
-				logger:  log.New(),
 				neighbors: map[[16]byte]*neighbor{
 					{1, 2, 3}: {},
 				},
@@ -596,12 +594,12 @@ func TestProcessPeerDownNotification(t *testing.T) {
 		},
 	}
 
+        logger := logrus.New()
+        SetLogger(log.NewLogrusWrapper(logger))
 	for _, test := range tests {
 		logBuf := bytes.NewBuffer(nil)
-		test.r.logger.Out = logBuf
-		test.r.logger.Formatter = biotesting.NewLogFormatter()
-
-		test.expected.logger = test.r.logger
+		logger.Out = logBuf
+		logger.Formatter = biotesting.NewLogFormatter()
 
 		test.r.processPeerDownNotification(test.msg)
 

@@ -1,14 +1,13 @@
 package prom
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
+	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -109,7 +108,7 @@ func DescribeRouter(ch chan<- *prometheus.Desc) {
 func (c *bgpCollector) Collect(ch chan<- prometheus.Metric) {
 	m, err := c.server.Metrics()
 	if err != nil {
-		log.Error(fmt.Errorf("Could not retrieve metrics from BGP server: %w", err))
+		log.WithError(err).Error("Could not retrieve metrics from BGP server")
 		return
 	}
 
