@@ -128,6 +128,14 @@ func (b *BMPServer) Listen(addr string) error {
 	}
 }
 
+// LocalAddr returns the local address the server is listening to.
+func (b *BMPServer) LocalAddr() net.Addr {
+	if b.listener != nil {
+		return b.listener.Addr()
+	}
+	return nil
+}
+
 func (b *BMPServer) validateConnection(r *Router, c net.Conn) bool {
 	if !r.passive {
 		log.WithFields(log.Fields{
