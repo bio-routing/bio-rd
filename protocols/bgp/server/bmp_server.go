@@ -87,14 +87,19 @@ func (b *BMPServer) Listen(addr string) error {
 		return err
 	}
 	b.listener = l
+	return nil
+}
 
+// Serve accepts all incoming connections for the BMP server until Close() is called.
+func (b *BMPServer) Serve() error {
+	l := b.listener
 	for {
 		c, err := l.Accept()
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"component": "bmp_server",
-				"address":   addr,
-			}).Infof("Unable to accept on %s", tcp.String())
+				"address":   b.LocalAddr(),
+			}).Infof("Unable to accept on %s", b.LocalAddr())
 			return err
 		}
 
@@ -109,7 +114,8 @@ func (b *BMPServer) Listen(addr string) error {
 
 			dynamic = true
 			tcpRemoteAddr := c.RemoteAddr().(*net.TCPAddr)
-			err := b.AddRouter(tcpRemoteAddr.IP, tcp.AddrPort().Port(), true, dynamic)
+			localPort := uint16(b.LocalAddr().(*net.TCPAddr).Port)
+			err := b.AddRouter(tcpRemoteAddr.IP, localPort, true, dynamic)
 			if err != nil {
 				log.Errorf("failed to add router: %v", err)
 				continue

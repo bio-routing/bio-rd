@@ -59,6 +59,9 @@ func main() {
 			if err := b.Listen(*bmpListenAddr); err != nil {
 				log.WithError(err).Error("error while starting listener")
 			}
+			if err := b.Serve(); err != nil {
+				log.WithError(err).Error("error while serving connections")
+			}
 		}()
 	}
 	defer b.Close()
