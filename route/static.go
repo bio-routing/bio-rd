@@ -61,6 +61,6 @@ func (s *StaticPath) ToProto() *api.StaticPath {
 // StaticPathFromProtoStaticPath converts a proto StaticPath to StaticPath
 func StaticPathFromProtoStaticPath(pb *api.StaticPath, dedup bool) *StaticPath {
 	return &StaticPath{
-		NextHop: bnet.IPFromProtoIP(pb.NextHop),
+		NextHop: bnet.IPFromProtoIP(pb.NextHop).Ptr(),
 	}
 }

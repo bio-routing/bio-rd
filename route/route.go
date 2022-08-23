@@ -88,7 +88,7 @@ func (r *Route) Prefix() *net.Prefix {
 
 // Addr gets a routes address
 func (r *Route) Addr() *net.IP {
-	return r.pfx.Addr()
+	return r.pfx.Addr().Ptr()
 }
 
 // Pfxlen gets a routes prefix length

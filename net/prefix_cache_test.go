@@ -8,7 +8,7 @@ import (
 
 func TestPrefixCache(t *testing.T) {
 	a := &Prefix{
-		addr: &IP{
+		addr: IP{
 			higher:   100,
 			lower:    200,
 			isLegacy: false,
@@ -16,16 +16,13 @@ func TestPrefixCache(t *testing.T) {
 		pfxlen: 64,
 	}
 	b := &Prefix{
-		addr: &IP{
+		addr: IP{
 			higher:   100,
 			lower:    200,
 			isLegacy: false,
 		},
 		pfxlen: 64,
 	}
-
-	a.addr = a.addr.Dedup()
-	b.addr = b.addr.Dedup()
 
 	x := a.Dedup()
 	y := b.Dedup()

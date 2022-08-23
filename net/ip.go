@@ -27,8 +27,8 @@ func (ip IP) Ptr() *IP {
 }
 
 // IPFromProtoIP creates an IP address from a proto IP
-func IPFromProtoIP(addr *api.IP) *IP {
-	return &IP{
+func IPFromProtoIP(addr *api.IP) IP {
+	return IP{
 		higher:   addr.Higher,
 		lower:    addr.Lower,
 		isLegacy: addr.Version == api.IP_IPv4,
@@ -59,12 +59,8 @@ func (ip *IP) Higher() uint64 {
 	return ip.higher
 }
 
-func (ip *IP) copy() *IP {
-	return &IP{
-		higher:   ip.higher,
-		lower:    ip.lower,
-		isLegacy: ip.isLegacy,
-	}
+func (ip *IP) copy() IP {
+	return *ip
 }
 
 // IPv4 returns a new `IP` representing an IPv4 address
@@ -151,8 +147,8 @@ func IPFromString(str string) (IP, error) {
 }
 
 // Equal returns true if ip is equal to other
-func (ip *IP) Equal(other *IP) bool {
-	return *ip == *other
+func (ip *IP) Equal(other IP) bool {
+	return *ip == other
 }
 
 // Compare compares two IP addresses (returns 0 if equal, -1 if `ip` is smaller than `other`, 1 if `ip` is greater than `other`)
@@ -204,7 +200,7 @@ func (ip *IP) stringIPv4() string {
 }
 
 // Bytes returns the byte representation of an IP address
-func (ip *IP) Bytes() []byte {
+func (ip IP) Bytes() []byte {
 	if !ip.isLegacy {
 		return ip.bytesIPv6()
 	}
@@ -223,7 +219,7 @@ func (ip *IP) bytesIPv4() []byte {
 }
 
 // IsIPv4 returns if the `IP` is of address family IPv4
-func (ip *IP) IsIPv4() bool {
+func (ip IP) IsIPv4() bool {
 	return ip.isLegacy
 }
 
@@ -268,7 +264,7 @@ func (ip *IP) ToNetIP() net.IP {
 }
 
 // BitAtPosition returns the bit at position pos
-func (ip *IP) BitAtPosition(pos uint8) bool {
+func (ip IP) BitAtPosition(pos uint8) bool {
 	if ip.isLegacy {
 		return ip.bitAtPositionIPv4(pos)
 	}
@@ -276,7 +272,7 @@ func (ip *IP) BitAtPosition(pos uint8) bool {
 	return ip.bitAtPositionIPv6(pos)
 }
 
-func (ip *IP) bitAtPositionIPv4(pos uint8) bool {
+func (ip IP) bitAtPositionIPv4(pos uint8) bool {
 	if pos > 32 {
 		return false
 	}
@@ -284,7 +280,7 @@ func (ip *IP) bitAtPositionIPv4(pos uint8) bool {
 	return (ip.ToUint32() & (1 << (32 - pos))) != 0
 }
 
-func (ip *IP) bitAtPositionIPv6(pos uint8) bool {
+func (ip IP) bitAtPositionIPv6(pos uint8) bool {
 	if pos > 128 {
 		return false
 	}
@@ -297,7 +293,7 @@ func (ip *IP) bitAtPositionIPv6(pos uint8) bool {
 }
 
 // Next gets the next ip address
-func (ip *IP) Next() *IP {
+func (ip *IP) Next() IP {
 	newIP := ip.copy()
 	if ip.isLegacy {
 		newIP.lower++
@@ -313,24 +309,22 @@ func (ip *IP) Next() *IP {
 }
 
 // MaskLastNBits masks the last n bits of an IP address
-func (ip *IP) MaskLastNBits(n uint8) *IP {
-	ip = ip.copy()
-
+func (ip *IP) MaskLastNBits(n uint8) IP {
 	if ip.isLegacy {
-		ip.maskLastNBitsIPv4(n)
-		return ip
+		return ip.maskLastNBitsIPv4(n)
 	}
 
-	ip.maskLastNBitsIPv6(n)
+	return ip.maskLastNBitsIPv6(n)
+}
+
+func (ip IP) maskLastNBitsIPv4(n uint8) IP {
+	mask := uint64((math.MaxUint64 << (n)))
+	ip.lower = ip.lower & mask
+
 	return ip
 }
 
-func (ip *IP) maskLastNBitsIPv4(n uint8) {
-	mask := uint64((math.MaxUint64 << (n)))
-	ip.lower = ip.lower & mask
-}
-
-func (ip *IP) maskLastNBitsIPv6(n uint8) {
+func (ip IP) maskLastNBitsIPv6(n uint8) IP {
 	maskBitsLow := uint8(bmath.Min(int(n), 64))
 	maskBitsHigh := uint8(bmath.Max(int(n)-64, 0))
 
@@ -339,4 +333,6 @@ func (ip *IP) maskLastNBitsIPv6(n uint8) {
 
 	ip.lower = ip.lower & maskLow
 	ip.higher = ip.higher & maskHigh
+
+	return ip
 }
