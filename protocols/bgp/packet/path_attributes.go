@@ -42,7 +42,7 @@ func decodePathAttrs(buf *bytes.Buffer, tpal uint16, opt *DecodeOptions) (*PathA
 			haveOrigin = true
 		case NextHopAttr:
 			haveNextHop = true
-		case MultiProtocolReachNLRICode:
+		case MultiProtocolReachNLRIAttr:
 			haveNextHop = true
 		}
 
@@ -142,11 +142,11 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 		if err := pa.decodeClusterList(buf); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %w", err)
 		}
-	case MultiProtocolReachNLRICode:
+	case MultiProtocolReachNLRIAttr:
 		if err := pa.decodeMultiProtocolReachNLRI(buf, opt); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to multi protocol reachable NLRI: %w", err)
 		}
-	case MultiProtocolUnreachNLRICode:
+	case MultiProtocolUnreachNLRIAttr:
 		if err := pa.decodeMultiProtocolUnreachNLRI(buf, opt); err != nil {
 			return nil, consumed, fmt.Errorf("Failed to multi protocol unreachable NLRI: %w", err)
 		}
@@ -528,9 +528,9 @@ func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16
 		pathAttrLen = uint16(pa.serializeCommunities(buf))
 	case LargeCommunitiesAttr:
 		pathAttrLen = uint16(pa.serializeLargeCommunities(buf))
-	case MultiProtocolReachNLRICode:
+	case MultiProtocolReachNLRIAttr:
 		pathAttrLen = pa.serializeMultiProtocolReachNLRI(buf, opt)
-	case MultiProtocolUnreachNLRICode:
+	case MultiProtocolUnreachNLRIAttr:
 		pathAttrLen = pa.serializeMultiProtocolUnreachNLRI(buf, opt)
 	case OriginatorIDAttr:
 		pathAttrLen = uint16(pa.serializeOriginatorID(buf))

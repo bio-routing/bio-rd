@@ -226,7 +226,7 @@ func (u *UpdateSender) bgpUpdateMultiProtocol(pfxs []*bnet.Prefix, pa *packet.Pa
 	pa, nextHop := u.copyAttributesWithoutNextHop(pa)
 
 	attrs := &packet.PathAttribute{
-		TypeCode: packet.MultiProtocolReachNLRICode,
+		TypeCode: packet.MultiProtocolReachNLRIAttr,
 		Value: packet.MultiProtocolReachNLRI{
 			AFI:     u.addressFamily.afi,
 			SAFI:    u.addressFamily.safi,
@@ -334,7 +334,7 @@ func (u *UpdateSender) withdrawPrefixMultiProtocol(out io.Writer, pfx *bnet.Pref
 
 	update := &packet.BGPUpdate{
 		PathAttributes: &packet.PathAttribute{
-			TypeCode: packet.MultiProtocolUnreachNLRICode,
+			TypeCode: packet.MultiProtocolUnreachNLRIAttr,
 			Value: packet.MultiProtocolUnreachNLRI{
 				AFI:  u.addressFamily.afi,
 				SAFI: u.addressFamily.safi,
