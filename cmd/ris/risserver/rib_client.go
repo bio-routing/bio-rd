@@ -48,6 +48,12 @@ func (r *ribClient) addPath(pfx *net.Prefix, path *route.Path, isInitalDump bool
 	return nil
 }
 
+func (r *ribClient) EndOfRIB() {
+	r.fifo.queue(&pb.RIBUpdate{
+		EndOfRib: true,
+	})
+}
+
 func (r *ribClient) RemovePath(pfx *net.Prefix, path *route.Path) bool {
 	r.fifo.queue(&pb.RIBUpdate{
 		Advertisement: false,

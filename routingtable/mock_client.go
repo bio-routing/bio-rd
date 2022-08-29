@@ -37,6 +37,8 @@ func (m *RTMockClient) Dump() []*route.Route {
 	return nil
 }
 
+func (m *RTMockClient) EndOfRIB() {}
+
 func (m *RTMockClient) AddPath(pfx *net.Prefix, p *route.Path) error {
 	return nil
 }
