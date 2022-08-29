@@ -10,6 +10,7 @@ import (
 type RouteTableClient interface {
 	AddPath(pfx *net.Prefix, path *route.Path) error
 	AddPathInitialDump(pfx *net.Prefix, path *route.Path) error
+	EndOfRIB()
 	RemovePath(*net.Prefix, *route.Path) bool
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	RefreshRoute(*net.Prefix, []*route.Path)
@@ -37,6 +38,7 @@ type AdjRIBIn interface {
 // AdjRIBOut is the interface any AdjRIBOut must implement
 type AdjRIBOut interface {
 	AdjRIB
+	EndOfRIB()
 	AddPathInitialDump(pfx *net.Prefix, path *route.Path) error
 	ReplacePath(*net.Prefix, *route.Path, *route.Path)
 	RefreshRoute(*net.Prefix, []*route.Path)

@@ -129,6 +129,9 @@ func (a *AdjRIBIn) UpdateNewClient(client routingtable.RouteTableClient) error {
 			}
 		}
 	}
+
+	client.EndOfRIB()
+
 	return nil
 }
 

@@ -35,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	logger := logrus.New()
-	logger.SetLevel(logrus.DebugLevel)
+	logger.SetLevel(logrus.InfoLevel)
 	log.SetLogger(log.NewLogrusWrapper(logger))
 
 	cfg := &config.RISConfig{}

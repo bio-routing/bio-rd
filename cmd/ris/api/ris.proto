@@ -68,6 +68,7 @@ message RIBFilter {
 message RIBUpdate {
     bool advertisement = 1;
     bool is_initial_dump = 3;
+    bool end_of_rib = 4;
     bio.route.Route route = 2;
 }
 

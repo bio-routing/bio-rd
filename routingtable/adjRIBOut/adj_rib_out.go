@@ -52,6 +52,12 @@ func (a *AdjRIBOut) Dump() []*route.Route {
 	return a.rt.Dump()
 }
 
+func (a *AdjRIBOut) EndOfRIB() {
+	for _, client := range a.clientManager.Clients() {
+		client.EndOfRIB()
+	}
+}
+
 // UpdateNewClient sends current state to a new client
 func (a *AdjRIBOut) UpdateNewClient(client routingtable.RouteTableClient) error {
 	return nil

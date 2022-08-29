@@ -21,6 +21,8 @@ func (m MockClient) Dump() []*route.Route {
 	return nil
 }
 
+func (m MockClient) EndOfRIB() {}
+
 func (m MockClient) AddPath(*net.Prefix, *route.Path) error {
 	return nil
 }

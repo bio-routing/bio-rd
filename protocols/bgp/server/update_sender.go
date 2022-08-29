@@ -76,11 +76,11 @@ func (u *UpdateSender) AddPathInitialDump(pfx *bnet.Prefix, p *route.Path) error
 // AddPath adds path p for pfx to toSend queue
 func (u *UpdateSender) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 	u.toSendMu.Lock()
+	defer u.toSendMu.Unlock()
 
 	hash := p.BGPPath.ComputeHashWithPathID()
 	if _, exists := u.toSend[hash]; exists {
 		u.toSend[hash].pfxs = append(u.toSend[hash].pfxs, pfx)
-		u.toSendMu.Unlock()
 		return nil
 	}
 
@@ -91,7 +91,6 @@ func (u *UpdateSender) AddPath(pfx *bnet.Prefix, p *route.Path) error {
 		},
 	}
 
-	u.toSendMu.Unlock()
 	return nil
 }
 
@@ -100,12 +99,27 @@ func (u *UpdateSender) Dump() []*route.Route {
 	return nil
 }
 
+func (u *UpdateSender) EndOfRIB() {
+	u.toSendMu.Lock()
+	defer u.toSendMu.Unlock()
+
+	u._flush()
+	u.sendEndOfRIB()
+}
+
+func (u *UpdateSender) sendEndOfRIB() {
+	update := &packet.BGPUpdate{
+		SAFI: u.addressFamily.safi,
+	}
+	err := serializeAndSendUpdate(u.fsm.con, update, u.options)
+	if err != nil {
+		log.Errorf("Failed to serialize and send end of RIB marker: %v", err)
+	}
+}
+
 // sender serializes BGP update messages
 func (u *UpdateSender) sender(aggrTime time.Duration) {
 	ticker := time.NewTicker(aggrTime)
-	var err error
-	var pathAttrs *packet.PathAttribute
-	var budget int
 
 	for {
 		select {
@@ -117,42 +131,57 @@ func (u *UpdateSender) sender(aggrTime time.Duration) {
 
 		u.toSendMu.Lock()
 		for key, pathNLRIs := range u.toSend {
-			budget = u.getBudget(pathNLRIs)
-
-			pathAttrs, err = packet.PathAttributes(pathNLRIs.path, u.iBGP, u.rrClient)
-			if err != nil {
-				log.Errorf("unable to get path attributes: %v", err)
-				continue
-			}
-
-			updatesPrefixes := make([][]*bnet.Prefix, 0, 1)
-			prefixes := make([]*bnet.Prefix, 0, 1)
-			for _, pfx := range pathNLRIs.pfxs {
-				budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
-
-				if u.options.UseAddPath {
-					budget -= packet.PathIdentifierLen
-				}
-
-				if budget < 0 {
-					updatesPrefixes = append(updatesPrefixes, prefixes)
-					prefixes = make([]*bnet.Prefix, 0, 1)
-					budget = u.getBudget(pathNLRIs)
-				}
-
-				prefixes = append(prefixes, pfx)
-			}
-			if len(prefixes) > 0 {
-				updatesPrefixes = append(updatesPrefixes, prefixes)
-			}
+			pathAttrs, updatesPrefixes, pathID := u._getUpdateInformation(pathNLRIs)
 
 			delete(u.toSend, key)
 			u.toSendMu.Unlock()
 
-			u.sendUpdates(pathAttrs, updatesPrefixes, pathNLRIs.path.BGPPath.PathIdentifier)
+			u.sendUpdates(pathAttrs, updatesPrefixes, pathID)
 			u.toSendMu.Lock()
 		}
 		u.toSendMu.Unlock()
+	}
+}
+
+func (u *UpdateSender) _getUpdateInformation(pathNLRIs *pathPfxs) (*packet.PathAttribute, [][]*bnet.Prefix, uint32) {
+	budget := u.getBudget(pathNLRIs)
+
+	pathAttrs, err := packet.PathAttributes(pathNLRIs.path, u.iBGP, u.rrClient)
+	if err != nil {
+		log.Errorf("unable to get path attributes: %v", err)
+		return nil, nil, 0 // FIXME
+	}
+
+	updatesPrefixes := make([][]*bnet.Prefix, 0, 1)
+	prefixes := make([]*bnet.Prefix, 0, 1)
+	for _, pfx := range pathNLRIs.pfxs {
+		budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
+
+		if u.options.UseAddPath {
+			budget -= packet.PathIdentifierLen
+		}
+
+		if budget < 0 {
+			updatesPrefixes = append(updatesPrefixes, prefixes)
+			prefixes = make([]*bnet.Prefix, 0, 1)
+			budget = u.getBudget(pathNLRIs)
+		}
+
+		prefixes = append(prefixes, pfx)
+	}
+	if len(prefixes) > 0 {
+		updatesPrefixes = append(updatesPrefixes, prefixes)
+	}
+
+	return pathAttrs, updatesPrefixes, pathNLRIs.path.BGPPath.PathIdentifier
+}
+
+func (u *UpdateSender) _flush() {
+	for key, pathNLRIs := range u.toSend {
+		pathAttrs, updatesPrefixes, pathID := u._getUpdateInformation(pathNLRIs)
+		delete(u.toSend, key)
+
+		u.sendUpdates(pathAttrs, updatesPrefixes, pathID)
 	}
 }
 
@@ -176,6 +205,7 @@ func (u *UpdateSender) updateOverhead() int {
 
 func (u *UpdateSender) sendUpdates(pathAttrs *packet.PathAttribute, updatePrefixes [][]*bnet.Prefix, pathID uint32) {
 	var err error
+
 	for _, prefixes := range updatePrefixes {
 		update := u.updateMessageForPrefixes(prefixes, pathAttrs, pathID)
 		if update == nil {

@@ -21,12 +21,93 @@ import (
 func TestSender(t *testing.T) {
 	tests := []struct {
 		name            string
+		endOfRIB        bool
 		paths           []pathPfxs
 		generateNLRIs   uint64
 		expectedUpdates [][]byte
 		addPath         routingtable.ClientOptions
 		afi             uint16
 	}{
+		{
+			name:     "Two paths with 3 NLRIs each + end of RIB marker",
+			endOfRIB: true,
+			afi:      packet.AFIIPv4,
+			addPath:  routingtable.ClientOptions{BestOnly: true},
+			paths: []pathPfxs{
+				{
+					path: &route.Path{
+						Type: 2,
+						BGPPath: &route.BGPPath{
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 100,
+								NextHop:   bnet.IPv4(0).Ptr(),
+								Source:    bnet.IPv4(0).Ptr(),
+							},
+							ASPath: &types.ASPath{},
+						},
+					},
+					pfxs: []*bnet.Prefix{
+						bnet.NewPfx(bnet.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(11, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(12, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(13, 0, 0, 0), 32).Ptr(),
+					},
+				},
+				{
+					path: &route.Path{
+						Type: 2,
+						BGPPath: &route.BGPPath{
+							BGPPathA: &route.BGPPathA{
+								LocalPref: 200,
+								NextHop:   bnet.IPv4(0).Ptr(),
+								Source:    bnet.IPv4(0).Ptr(),
+							},
+							ASPath: &types.ASPath{},
+						},
+					},
+					pfxs: []*bnet.Prefix{
+						bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(21, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(22, 0, 0, 0), 8).Ptr(),
+						bnet.NewPfx(bnet.IPv4FromOctets(23, 0, 0, 0), 8).Ptr(),
+					},
+				},
+			},
+			expectedUpdates: [][]byte{
+				{
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 52,
+					2,
+					0, 0, 0, 21, 64, 2, 0, 64, 1, 1, 0, 64, 3, 4, 0, 0, 0, 0, 64, 5, 4, 0, 0, 0, 200,
+					8, 23, 8, 22, 8, 21, 8, 20,
+
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 55,
+					2,
+					0, 0, 0, 21, 64, 2, 0, 64, 1, 1, 0, 64, 3, 4, 0, 0, 0, 0, 64, 5, 4, 0, 0, 0, 100,
+					32, 13, 0, 0, 0, 8, 12, 8, 11, 8, 10,
+
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 23, 2, 0, 0, 0, 0,
+				},
+				{
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 55,
+					2,
+					0, 0, 0, 21, 64, 2, 0, 64, 1, 1, 0, 64, 3, 4, 0, 0, 0, 0, 64, 5, 4, 0, 0, 0, 100,
+					32, 13, 0, 0, 0, 8, 12, 8, 11, 8, 10,
+
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 52,
+					2,
+					0, 0, 0, 21, 64, 2, 0, 64, 1, 1, 0, 64, 3, 4, 0, 0, 0, 0, 64, 5, 4, 0, 0, 0, 200,
+					8, 23, 8, 22, 8, 21, 8, 20,
+
+					255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+					0, 23, 2, 0, 0, 0, 0,
+				},
+			},
+		},
 		{
 			name:    "Two paths with 3 NLRIs each",
 			afi:     packet.AFIIPv4,
@@ -948,6 +1029,10 @@ func TestSender(t *testing.T) {
 					updateSender.AddPath(pfx, pathPfx.path)
 				}
 			}
+		}
+
+		if test.endOfRIB {
+			updateSender.EndOfRIB()
 		}
 
 		updateSender.Start(time.Millisecond)
