@@ -66,7 +66,7 @@ func TestPrefixToProto(t *testing.T) {
 		{
 			name: "IPv4",
 			pfx: Prefix{
-				addr: &IP{
+				addr: IP{
 					lower:    200,
 					isLegacy: true,
 				},
@@ -83,7 +83,7 @@ func TestPrefixToProto(t *testing.T) {
 		{
 			name: "IPv6",
 			pfx: Prefix{
-				addr: &IP{
+				addr: IP{
 					higher:   100,
 					lower:    200,
 					isLegacy: false,
@@ -124,7 +124,7 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 				Pfxlen: 24,
 			},
 			expected: Prefix{
-				addr: &IP{
+				addr: IP{
 					higher:   0,
 					lower:    2000,
 					isLegacy: true,
@@ -143,7 +143,7 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 				Pfxlen: 64,
 			},
 			expected: Prefix{
-				addr: &IP{
+				addr: IP{
 					higher:   1000,
 					lower:    2000,
 					isLegacy: false,
@@ -161,7 +161,7 @@ func TestNewPrefixFromProtoPrefix(t *testing.T) {
 
 func TestNewPfx(t *testing.T) {
 	p := NewPfx(IPv4(123), 11)
-	if *p.addr != IPv4(123) || p.pfxlen != 11 {
+	if p.addr != IPv4(123) || p.pfxlen != 11 {
 		t.Errorf("NewPfx() failed: Unexpected values")
 	}
 }
@@ -181,7 +181,7 @@ func TestAddr(t *testing.T) {
 
 	for _, test := range tests {
 		res := test.pfx.Addr()
-		assert.Equal(t, *res, test.expected, "Unexpected result for test %s", test.name)
+		assert.Equal(t, res, test.expected, "Unexpected result for test %s", test.name)
 	}
 }
 
@@ -214,75 +214,75 @@ func TestGetSupernet(t *testing.T) {
 		{
 			name: "Supernet of 10.0.0.0 and 11.100.123.0 -> 10.0.0.0/7",
 			a: &Prefix{
-				addr:   IPv4FromOctets(10, 0, 0, 0).Ptr(),
+				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 8,
 			},
 			b: &Prefix{
-				addr:   IPv4FromOctets(11, 100, 123, 0).Ptr(),
+				addr:   IPv4FromOctets(11, 100, 123, 0),
 				pfxlen: 24,
 			},
 			expected: &Prefix{
-				addr:   IPv4FromOctets(10, 0, 0, 0).Dedup(),
+				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 7,
 			},
 		},
 		{
 			name: "Supernet of 10.0.0.0 and 192.168.0.0 -> 0.0.0.0/0",
 			a: &Prefix{
-				addr:   IPv4FromOctets(10, 0, 0, 0).Ptr(),
+				addr:   IPv4FromOctets(10, 0, 0, 0),
 				pfxlen: 8,
 			},
 			b: &Prefix{
-				addr:   IPv4FromOctets(192, 168, 0, 0).Ptr(),
+				addr:   IPv4FromOctets(192, 168, 0, 0),
 				pfxlen: 24,
 			},
 			expected: &Prefix{
-				addr:   IPv4(0).Dedup(),
+				addr:   IPv4(0),
 				pfxlen: 0,
 			},
 		},
 		{
 			name: "Supernet of 2001:678:1e0:100:23::/64 and 2001:678:1e0:1ff::/64 -> 2001:678:1e0:100::/56",
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0x23, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0x23, 0, 0, 0),
 				pfxlen: 64,
 			},
 			b: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x1ff, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x1ff, 0, 0, 0, 0),
 				pfxlen: 64,
 			},
 			expected: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0).Dedup(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
 				pfxlen: 56,
 			},
 		},
 		{
 			name: "Supernet of 2001:678:1e0::/128 and 2001:678:1e0::1/128 -> 2001:678:1e0:100::/127",
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
 				pfxlen: 128,
 			},
 			b: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 1).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 1),
 				pfxlen: 128,
 			},
 			expected: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Dedup(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
 				pfxlen: 127,
 			},
 		},
 		{
 			name: "Supernet of all ones and all zeros -> ::/0",
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF).Ptr(),
+				addr:   IPv6FromBlocks(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF),
 				pfxlen: 128,
 			},
 			b: &Prefix{
-				addr:   IPv6(0, 0).Ptr(),
+				addr:   IPv6(0, 0),
 				pfxlen: 128,
 			},
 			expected: &Prefix{
-				addr:   IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0).Dedup(),
+				addr:   IPv6FromBlocks(0, 0, 0, 0, 0, 0, 0, 0),
 				pfxlen: 0,
 			},
 		},
@@ -306,132 +306,132 @@ func TestContains(t *testing.T) {
 	}{
 		{
 			a: &Prefix{
-				addr:   IPv4(0).Ptr(),
+				addr:   IPv4(0),
 				pfxlen: 0,
 			},
 			b: &Prefix{
-				addr:   IPv4(100).Ptr(),
+				addr:   IPv4(100),
 				pfxlen: 24,
 			},
 			expected: true,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv4(100).Ptr(),
+				addr:   IPv4(100),
 				pfxlen: 24,
 			},
 			b: &Prefix{
-				addr:   IPv4(0).Ptr(),
+				addr:   IPv4(0),
 				pfxlen: 0,
 			},
 			expected: false,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv4(167772160).Ptr(),
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: &Prefix{
-				addr:   IPv4(167772160).Ptr(),
+				addr:   IPv4(167772160),
 				pfxlen: 9,
 			},
 			expected: true,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv4(167772160).Ptr(),
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: &Prefix{
-				addr:   IPv4(174391040).Ptr(),
+				addr:   IPv4(174391040),
 				pfxlen: 24,
 			},
 			expected: true,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv4(167772160).Ptr(),
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: &Prefix{
-				addr:   IPv4(184549377).Ptr(),
+				addr:   IPv4(184549377),
 				pfxlen: 24,
 			},
 			expected: false,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv4(167772160).Ptr(),
+				addr:   IPv4(167772160),
 				pfxlen: 8,
 			},
 			b: &Prefix{
-				addr:   IPv4(191134464).Ptr(),
+				addr:   IPv4(191134464),
 				pfxlen: 24,
 			},
 			expected: false,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv4FromOctets(169, 0, 0, 0).Ptr(),
+				addr:   IPv4FromOctets(169, 0, 0, 0),
 				pfxlen: 25,
 			},
 			b: &Prefix{
-				addr:   IPv4FromOctets(169, 1, 1, 0).Ptr(),
+				addr:   IPv4FromOctets(169, 1, 1, 0),
 				pfxlen: 26,
 			},
 			expected: false,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0),
 				pfxlen: 48,
 			},
 			expected: true,
 			b: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
 				pfxlen: 56,
 			},
 		},
 		{
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0),
 				pfxlen: 56,
 			},
 			b: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
 				pfxlen: 64,
 			},
 			expected: false,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x200, 0, 0, 0, 0),
 				pfxlen: 65,
 			},
 			b: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 0, 0, 0, 0),
 				pfxlen: 64,
 			},
 			expected: false,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 0),
 				pfxlen: 72,
 			},
 			b: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 1).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 1),
 				pfxlen: 127,
 			},
 			expected: true,
 		},
 		{
 			a: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 0).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 0, 0),
 				pfxlen: 126,
 			},
 			b: &Prefix{
-				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 100, 1).Ptr(),
+				addr:   IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0x100, 100, 0, 100, 1),
 				pfxlen: 127,
 			},
 			expected: false,
@@ -662,32 +662,32 @@ func TestBaseAddr(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    *Prefix
-		expected *IP
+		expected IP
 	}{
 		{
 			name:     "Test #1",
-			input:    NewPfx(IPv4FromOctets(10, 1, 1, 0), 23).Dedup(),
-			expected: IPv4FromOctets(10, 1, 0, 0).Dedup(),
+			input:    NewPfx(IPv4FromOctets(10, 1, 1, 0), 23).Ptr(),
+			expected: IPv4FromOctets(10, 1, 0, 0),
 		},
 		{
 			name:     "Test #2",
-			input:    NewPfx(IPv4FromOctets(10, 1, 1, 2), 24).Dedup(),
-			expected: IPv4FromOctets(10, 1, 1, 0).Dedup(),
+			input:    NewPfx(IPv4FromOctets(10, 1, 1, 2), 24).Ptr(),
+			expected: IPv4FromOctets(10, 1, 1, 0),
 		},
 		{
 			name:     "Test #3",
-			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 0, 1), 64).Dedup(),
-			expected: IPv6FromBlocks(10, 10, 20, 20, 0, 0, 0, 0).Dedup(),
+			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 0, 1), 64).Ptr(),
+			expected: IPv6FromBlocks(10, 10, 20, 20, 0, 0, 0, 0),
 		},
 		{
 			name:     "Test #4",
-			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 0, 1), 48).Dedup(),
-			expected: IPv6FromBlocks(10, 10, 20, 0, 0, 0, 0, 0).Dedup(),
+			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 0, 1), 48).Ptr(),
+			expected: IPv6FromBlocks(10, 10, 20, 0, 0, 0, 0, 0),
 		},
 		{
 			name:     "Test #5",
-			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 5, 1), 126).Dedup(),
-			expected: IPv6FromBlocks(10, 10, 20, 20, 1, 0, 5, 0).Dedup(),
+			input:    NewPfx(IPv6FromBlocks(10, 10, 20, 20, 1, 0, 5, 1), 126).Ptr(),
+			expected: IPv6FromBlocks(10, 10, 20, 20, 1, 0, 5, 0),
 		},
 	}
 

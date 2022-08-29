@@ -12,7 +12,7 @@ import (
 
 // Prefix represents an IPv4 prefix
 type Prefix struct {
-	addr   *IP
+	addr   IP
 	pfxlen uint8
 }
 
@@ -53,7 +53,7 @@ func PrefixFromString(s string) (*Prefix, error) {
 	}
 
 	return &Prefix{
-		addr:   ip.Dedup(),
+		addr:   ip,
 		pfxlen: uint8(l),
 	}, nil
 }
@@ -69,7 +69,7 @@ func (p Prefix) ToProto() *api.Prefix {
 // NewPfx creates a new Prefix
 func NewPfx(addr IP, pfxlen uint8) Prefix {
 	return Prefix{
-		addr:   addr.Dedup(),
+		addr:   addr,
 		pfxlen: pfxlen,
 	}
 }
@@ -80,7 +80,7 @@ func NewPfxFromIPNet(ipNet *gonet.IPNet) *Prefix {
 	ip, _ := IPFromBytes(ipNet.IP)
 
 	return &Prefix{
-		addr:   ip.Dedup(),
+		addr:   ip,
 		pfxlen: uint8(ones),
 	}
 }
@@ -110,7 +110,7 @@ func StrToAddr(x string) (uint32, error) {
 }
 
 // Addr returns the address of the prefix
-func (pfx *Prefix) Addr() *IP {
+func (pfx *Prefix) Addr() IP {
 	return pfx.addr
 }
 
@@ -121,7 +121,7 @@ func (pfx *Prefix) Pfxlen() uint8 {
 
 // String returns a string representation of pfx
 func (pfx *Prefix) String() string {
-	return fmt.Sprintf("%s/%d", pfx.addr, pfx.pfxlen)
+	return fmt.Sprintf("%s/%d", pfx.addr.String(), pfx.pfxlen)
 }
 
 // GetIPNet returns the gonet.IP object for a Prefix object
@@ -197,7 +197,7 @@ func (pfx *Prefix) supernetIPv4(x *Prefix) Prefix {
 	}
 
 	return Prefix{
-		addr:   IPv4(a << (32 - maxPfxLen)).Dedup(),
+		addr:   IPv4(a << (32 - maxPfxLen)),
 		pfxlen: maxPfxLen,
 	}
 }
@@ -266,7 +266,7 @@ func checkLastNBitsUint64(x uint64, n uint8) bool {
 }
 
 // BaseAddr gets the base address of the prefix
-func (p *Prefix) BaseAddr() *IP {
+func (p *Prefix) BaseAddr() IP {
 	if p.addr.isLegacy {
 		return p.baseAddr4()
 	}
@@ -274,7 +274,7 @@ func (p *Prefix) BaseAddr() *IP {
 	return p.baseAddr6()
 }
 
-func (p *Prefix) baseAddr4() *IP {
+func (p *Prefix) baseAddr4() IP {
 	addr := p.addr.copy()
 
 	addr.lower = addr.lower >> (32 - p.pfxlen)
@@ -283,7 +283,7 @@ func (p *Prefix) baseAddr4() *IP {
 	return addr
 }
 
-func (p *Prefix) baseAddr6() *IP {
+func (p *Prefix) baseAddr6() IP {
 	addr := p.addr.copy()
 
 	if p.pfxlen <= 64 {

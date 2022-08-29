@@ -111,7 +111,7 @@ func TestIPFromProtoIP(t *testing.T) {
 	tests := []struct {
 		name     string
 		proto    api.IP
-		expected *IP
+		expected IP
 	}{
 		{
 			name: "Test IPv4",
@@ -120,7 +120,7 @@ func TestIPFromProtoIP(t *testing.T) {
 				Higher:  0,
 				Version: api.IP_IPv4,
 			},
-			expected: &IP{
+			expected: IP{
 				lower:    100,
 				higher:   0,
 				isLegacy: true,
@@ -133,7 +133,7 @@ func TestIPFromProtoIP(t *testing.T) {
 				Higher:  200,
 				Version: api.IP_IPv6,
 			},
-			expected: &IP{
+			expected: IP{
 				lower:    100,
 				higher:   200,
 				isLegacy: false,
@@ -593,23 +593,23 @@ func TestSizeBytes(t *testing.T) {
 func TestNext(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *IP
-		expected *IP
+		input    IP
+		expected IP
 	}{
 		{
 			name:     "Test #1",
-			input:    IPv4FromOctets(10, 0, 0, 1).Dedup(),
-			expected: IPv4FromOctets(10, 0, 0, 2).Dedup(),
+			input:    IPv4FromOctets(10, 0, 0, 1),
+			expected: IPv4FromOctets(10, 0, 0, 2),
 		},
 		{
 			name:     "Test #2",
-			input:    IPv6FromBlocks(10, 20, 30, 40, 50, 60, 70, 80).Dedup(),
-			expected: IPv6FromBlocks(10, 20, 30, 40, 50, 60, 70, 81).Dedup(),
+			input:    IPv6FromBlocks(10, 20, 30, 40, 50, 60, 70, 80),
+			expected: IPv6FromBlocks(10, 20, 30, 40, 50, 60, 70, 81),
 		},
 		{
 			name:     "Test #3",
-			input:    IPv6FromBlocks(10, 20, 30, 40, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF).Dedup(),
-			expected: IPv6FromBlocks(10, 20, 30, 41, 0, 0, 0, 0).Dedup(),
+			input:    IPv6FromBlocks(10, 20, 30, 40, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF),
+			expected: IPv6FromBlocks(10, 20, 30, 41, 0, 0, 0, 0),
 		},
 	}
 
@@ -621,51 +621,51 @@ func TestNext(t *testing.T) {
 func TestMaskLastNBits(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *IP
+		input    IP
 		maskBits uint8
-		expected *IP
+		expected IP
 	}{
 		{
 			name:     "Test #1",
-			input:    IPv4FromOctets(10, 1, 1, 1).Dedup(),
+			input:    IPv4FromOctets(10, 1, 1, 1),
 			maskBits: 8,
-			expected: IPv4FromOctets(10, 1, 1, 0).Dedup(),
+			expected: IPv4FromOctets(10, 1, 1, 0),
 		},
 		{
 			name:     "Test #2",
-			input:    IPv4FromOctets(185, 65, 241, 123).Dedup(),
+			input:    IPv4FromOctets(185, 65, 241, 123),
 			maskBits: 9,
-			expected: IPv4FromOctets(185, 65, 240, 0).Dedup(),
+			expected: IPv4FromOctets(185, 65, 240, 0),
 		},
 		{
 			name:     "Test #3",
-			input:    IPv4FromOctets(185, 65, 241, 123).Dedup(),
+			input:    IPv4FromOctets(185, 65, 241, 123),
 			maskBits: 32,
-			expected: IPv4FromOctets(0, 0, 0, 0).Dedup(),
+			expected: IPv4FromOctets(0, 0, 0, 0),
 		},
 		{
 			name:     "Test #4",
-			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab),
 			maskBits: 16,
-			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0x0000).Dedup(),
+			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0x0000),
 		},
 		{
 			name:     "Test #5",
-			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab),
 			maskBits: 64,
-			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x0000, 0x0000, 0x0000, 0x0000).Dedup(),
+			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x0000, 0x0000, 0x0000, 0x0000),
 		},
 		{
 			name:     "Test #6",
-			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab),
 			maskBits: 80,
-			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000).Dedup(),
+			expected: IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000),
 		},
 		{
 			name:     "Test #7",
-			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab).Dedup(),
+			input:    IPv6FromBlocks(0x2001, 0xaaaa, 0x1234, 0x2222, 0x1111, 0x3333, 0xbbbb, 0xacab),
 			maskBits: 128,
-			expected: IPv6FromBlocks(0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000).Dedup(),
+			expected: IPv6FromBlocks(0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000),
 		},
 	}
 

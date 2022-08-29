@@ -28,7 +28,6 @@ func newPfxCache() *pfxCache {
 }
 
 func (pfxc *pfxCache) get(pfx Prefix) *Prefix {
-	pfx.addr = pfx.addr.Dedup()
 	pfxc.cacheMu.Lock()
 
 	if p, exists := pfxc.cache[pfx]; exists {
