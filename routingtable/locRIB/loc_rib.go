@@ -116,6 +116,7 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 		}
 	}
 
+	client.EndOfRIB()
 	return nil
 }
 
