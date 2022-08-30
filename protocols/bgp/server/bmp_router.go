@@ -23,6 +23,7 @@ type RouterInterface interface {
 	Address() net.IP
 	GetVRF(vrfID uint64) *vrf.VRF
 	GetVRFs() []*vrf.VRF
+	Ready(vrf uint64, afi uint16) bool
 }
 
 // Router represents a BMP enabled route in BMP context
@@ -86,6 +87,46 @@ func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI) *R
 		ribClients:       make(map[afiClient]struct{}),
 		adjRIBInFactory:  arif,
 	}
+}
+
+func (r *Router) Ready(vrf uint64, afi uint16) bool {
+	neighbors := r.neighborManager.list()
+	if len(neighbors) == 0 {
+		return false
+	}
+
+	if !neighborsIncludeVRF(neighbors, vrf) {
+		return false
+	}
+
+	for _, n := range neighbors {
+		if n.vrfID != vrf {
+			continue
+		}
+
+		var fsmAfi *fsmAddressFamily
+		if afi == 4 {
+			fsmAfi = n.fsm.ipv4Unicast
+		} else {
+			fsmAfi = n.fsm.ipv6Unicast
+		}
+
+		if !fsmAfi.endOfRIBMarkerReceived.Load() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func neighborsIncludeVRF(neighbors []*neighbor, vrfID uint64) bool {
+	for _, n := range neighbors {
+		if n.vrfID == vrfID {
+			return true
+		}
+	}
+
+	return false
 }
 
 // GetVRF get's a VRF
