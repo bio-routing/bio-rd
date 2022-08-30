@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
@@ -10,6 +11,8 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/stretchr/testify/assert"
+
+	biotesting "github.com/bio-routing/bio-rd/testing"
 )
 
 func TestFSMAFIInitDispose(t *testing.T) {
@@ -24,6 +27,9 @@ func TestFSMAFIInitDispose(t *testing.T) {
 				routerID:        100,
 				localASN:        15169,
 				adjRIBInFactory: adjRIBInFactory{},
+			},
+			con: &biotesting.MockConn{
+				Buf: bytes.NewBuffer(nil),
 			},
 		},
 		addPathTX: routingtable.ClientOptions{
