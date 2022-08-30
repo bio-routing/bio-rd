@@ -1,6 +1,7 @@
 package server
 
 import (
+	"sync/atomic"
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
@@ -35,7 +36,7 @@ type fsmAddressFamily struct {
 	multiProtocol bool
 
 	initialized            bool
-	endOfRIBMarkerReceived bool
+	endOfRIBMarkerReceived atomic.Bool
 }
 
 func newFSMAddressFamily(afi uint16, safi uint8, family *peerAddressFamily, fsm *FSM) *fsmAddressFamily {
@@ -181,7 +182,7 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool
 	f.multiProtocolUpdates(u, bmpPostPolicy, timestamp)
 	if f.afi == packet.AFIIPv4 {
 		if u.IsEndOfRIBMarker() {
-			f.endOfRIBMarkerReceived = true
+			f.endOfRIBMarkerReceived.Store(true)
 		}
 
 		f.withdraws(u, bmpPostPolicy)
@@ -226,7 +227,7 @@ func (f *fsmAddressFamily) multiProtocolUpdates(u *packet.BGPUpdate, bmpPostPoli
 
 	if mpReachNLRI != nil && mpUnreachNLRI != nil {
 		if mpReachNLRI.NLRI == nil && mpUnreachNLRI.NLRI == nil {
-			f.endOfRIBMarkerReceived = true
+			f.endOfRIBMarkerReceived.Store(true)
 		}
 	}
 }

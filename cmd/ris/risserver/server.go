@@ -57,6 +57,21 @@ func wrapGetRIBErr(err error, rtr string, vrfID uint64, version api.IP_Version) 
 	return fmt.Errorf("unable to get RIB (%s/%s/v%d): %w", rtr, vrf.RouteDistinguisherHumanReadable(vrfID), version, err)
 }
 
+func wrapRIBNotReadyErr(err error, rtr string, vrfID uint64, version api.IP_Version) error {
+	return fmt.Errorf("RIB not ready yet (%s/%s/v%d): %w", rtr, vrf.RouteDistinguisherHumanReadable(vrfID), version, err)
+}
+
+func ipVersionFromProto(v netapi.IP_Version) uint16 {
+	switch v {
+	case netapi.IP_IPv4:
+		return 4
+	case netapi.IP_IPv6:
+		return 6
+	}
+
+	return 0
+}
+
 func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*locRIB.LocRIB, error) {
 	r := s.bmp.GetRouter(rtr)
 	if r == nil {
@@ -177,6 +192,10 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 	rib, err := s.getRIB(req.Router, vrfID, ipVersion)
 	if err != nil {
 		return status.New(codes.Unavailable, wrapGetRIBErr(err, req.Router, vrfID, ipVersion).Error()).Err()
+	}
+
+	if !s.bmp.GetRouter(req.Router).Ready(vrfID, ipVersionFromProto(ipVersion)) {
+		return status.New(codes.Unavailable, wrapRIBNotReadyErr(err, req.Router, vrfID, ipVersion).Error()).Err()
 	}
 
 	risObserveFIBClients.WithLabelValues(req.Router, fmt.Sprintf("%d", req.VrfId), fmt.Sprintf("%d", req.Afisafi)).Inc()

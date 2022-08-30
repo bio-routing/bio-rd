@@ -71,7 +71,7 @@ func metricsForFamily(family *fsmAddressFamily) *metrics.BGPAddressFamilyMetrics
 		AFI:                    family.afi,
 		SAFI:                   family.safi,
 		RoutesReceived:         uint64(family.adjRIBIn.RouteCount()),
-		EndOfRIBMarkerReceived: family.endOfRIBMarkerReceived,
+		EndOfRIBMarkerReceived: family.endOfRIBMarkerReceived.Load(),
 	}
 
 	if family.adjRIBOut != nil {

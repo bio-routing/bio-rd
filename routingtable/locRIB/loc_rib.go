@@ -352,5 +352,6 @@ func (a *LocRIB) RefreshRoute(*net.Prefix, []*route.Path) {
 func (a *LocRIB) Dispose() {
 	for _, c := range a.clientManager.Clients() {
 		c.Dispose()
+		a.clientManager.Unregister(c)
 	}
 }

@@ -38,6 +38,10 @@ func (r *Router) Address() net.IP {
 	return r.address
 }
 
+func (r *Router) Ready(vrf uint64, afi uint16) bool {
+	return true
+}
+
 // GetVRF gets a VRF by its ID
 func (r *Router) GetVRF(vrfID uint64) *vrf.VRF {
 	return r.vrfRegistry.GetVRFByRD(vrfID)

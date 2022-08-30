@@ -30,9 +30,10 @@ func (c *ClientOptions) GetMaxPaths(ecmpPaths uint) uint {
 
 // ClientManager manages clients of routing tables (observer pattern)
 type ClientManager struct {
-	clients map[RouteTableClient]ClientOptions
-	master  ClientManagerMaster
-	mu      sync.RWMutex
+	clients   map[RouteTableClient]ClientOptions
+	master    ClientManagerMaster
+	mu        sync.RWMutex
+	endOfLife bool // do not accept new clients when EOL
 }
 
 // NewClientManager creates and initializes a new client manager
@@ -62,6 +63,11 @@ func (c *ClientManager) GetOptions(client RouteTableClient) ClientOptions {
 // RegisterWithOptions registers a client with options for updates
 func (c *ClientManager) RegisterWithOptions(client RouteTableClient, opt ClientOptions) {
 	c.mu.Lock()
+
+	if c.endOfLife {
+		return
+	}
+
 	c.clients[client] = opt
 	c.mu.Unlock()
 
@@ -72,6 +78,11 @@ func (c *ClientManager) RegisterWithOptions(client RouteTableClient, opt ClientO
 func (c *ClientManager) Unregister(client RouteTableClient) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	return c._unregister(client)
+}
+
+func (c *ClientManager) _unregister(client RouteTableClient) bool {
 	if _, ok := c.clients[client]; !ok {
 		return false
 	}
@@ -89,4 +100,15 @@ func (c *ClientManager) Clients() []RouteTableClient {
 	}
 
 	return ret
+}
+
+func (c *ClientManager) Dispose() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.endOfLife = true
+
+	for cli := range c.clients {
+		c._unregister(cli)
+	}
 }
