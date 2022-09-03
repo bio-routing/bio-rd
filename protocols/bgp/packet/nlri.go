@@ -118,7 +118,7 @@ func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, safi uint8) uint8 {
 		numBytes += 4
 	}
 
-	pfxLen := n.Prefix.Pfxlen()
+	pfxLen := n.Prefix.Len()
 	if safi == SAFILabeledUnicast {
 		pfxLen += uint8(len(n.LabelStack) * BitsPerLabel)
 	}
@@ -134,7 +134,7 @@ func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, safi uint8) uint8 {
 		}
 	}
 
-	pfxNumBytes := BytesInAddr(n.Prefix.Pfxlen())
+	pfxNumBytes := BytesInAddr(n.Prefix.Len())
 	buf.Write(n.Prefix.Addr().Bytes()[:pfxNumBytes])
 	numBytes += pfxNumBytes
 

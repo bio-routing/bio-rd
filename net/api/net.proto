@@ -5,7 +5,7 @@ option go_package = "github.com/bio-routing/bio-rd/net/api";
 
 message Prefix {
     IP address = 1;
-    uint32 pfxlen = 2;
+    uint32 length = 2;
 }
 
 message IP {

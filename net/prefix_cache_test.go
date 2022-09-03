@@ -13,7 +13,7 @@ func TestPrefixCache(t *testing.T) {
 			lower:    200,
 			isLegacy: false,
 		},
-		pfxlen: 64,
+		len: 64,
 	}
 	b := &Prefix{
 		addr: IP{
@@ -21,7 +21,7 @@ func TestPrefixCache(t *testing.T) {
 			lower:    200,
 			isLegacy: false,
 		},
-		pfxlen: 64,
+		len: 64,
 	}
 
 	x := a.Dedup()

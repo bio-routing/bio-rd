@@ -93,7 +93,7 @@ func (r *Route) Addr() *net.IP {
 
 // Pfxlen gets a routes prefix length
 func (r *Route) Pfxlen() uint8 {
-	return r.pfx.Pfxlen()
+	return r.pfx.Len()
 }
 
 // Paths returns a copy of the list of paths associated with route r

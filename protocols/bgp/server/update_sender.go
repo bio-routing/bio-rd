@@ -155,7 +155,7 @@ func (u *UpdateSender) _getUpdateInformation(pathNLRIs *pathPfxs) (*packet.PathA
 	updatesPrefixes := make([][]*bnet.Prefix, 0, 1)
 	prefixes := make([]*bnet.Prefix, 0, 1)
 	for _, pfx := range pathNLRIs.pfxs {
-		budget -= int(packet.BytesInAddr(pfx.Pfxlen())) + 1
+		budget -= int(packet.BytesInAddr(pfx.Len())) + 1
 
 		if u.options.UseAddPath {
 			budget -= packet.PathIdentifierLen

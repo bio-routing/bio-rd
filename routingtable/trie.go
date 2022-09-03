@@ -103,7 +103,7 @@ func (n *node) get(pfx *net.Prefix) *node {
 		return n
 	}
 
-	if n.route.Pfxlen() > pfx.Pfxlen() {
+	if n.route.Pfxlen() > pfx.Len() {
 		return nil
 	}
 
@@ -137,14 +137,14 @@ func (n *node) addPath(pfx *net.Prefix, p *route.Path) (*node, bool) {
 	b := pfx.Addr().BitAtPosition(n.route.Pfxlen() + 1)
 
 	if !b {
-		return n.insertLow(pfx, p, currentPfx.Pfxlen())
+		return n.insertLow(pfx, p, currentPfx.Len())
 	}
 	return n.insertHigh(pfx, p, n.route.Pfxlen())
 }
 
 func (n *node) insertLow(pfx *net.Prefix, p *route.Path, parentPfxLen uint8) (*node, bool) {
 	if n.l == nil {
-		n.l = newNode(pfx, p, pfx.Pfxlen()-parentPfxLen-1, false)
+		n.l = newNode(pfx, p, pfx.Len()-parentPfxLen-1, false)
 		return n, true
 	}
 
@@ -155,7 +155,7 @@ func (n *node) insertLow(pfx *net.Prefix, p *route.Path, parentPfxLen uint8) (*n
 
 func (n *node) insertHigh(pfx *net.Prefix, p *route.Path, parentPfxLen uint8) (*node, bool) {
 	if n.h == nil {
-		n.h = newNode(pfx, p, pfx.Pfxlen()-parentPfxLen-1, false)
+		n.h = newNode(pfx, p, pfx.Len()-parentPfxLen-1, false)
 		return n, true
 	}
 	newRoot, isNew := n.h.addPath(pfx, p)
@@ -166,7 +166,7 @@ func (n *node) insertHigh(pfx *net.Prefix, p *route.Path, parentPfxLen uint8) (*
 func (n *node) newSuperNode(pfx *net.Prefix, p *route.Path) *node {
 	superNet := pfx.GetSupernet(n.route.Prefix())
 
-	pfxLenDiff := n.route.Pfxlen() - superNet.Pfxlen()
+	pfxLenDiff := n.route.Pfxlen() - superNet.Len()
 	skip := n.skip - pfxLenDiff
 
 	pseudoNode := newNode(&superNet, nil, skip, true)
@@ -186,7 +186,7 @@ func (n *node) insertChildren(old *node, newPfx *net.Prefix, newPath *route.Path
 	}
 
 	// Place the new Prefix
-	newNode := newNode(newPfx, newPath, newPfx.Pfxlen()-n.route.Pfxlen()-1, false)
+	newNode := newNode(newPfx, newPath, newPfx.Len()-n.route.Pfxlen()-1, false)
 	b = newPfx.Addr().BitAtPosition(n.route.Pfxlen() + 1)
 	if !b {
 		n.l = newNode
@@ -198,17 +198,17 @@ func (n *node) insertChildren(old *node, newPfx *net.Prefix, newPath *route.Path
 func (n *node) insertBefore(pfx *net.Prefix, p *route.Path) *node {
 	tmp := n
 
-	pfxLenDiff := n.route.Pfxlen() - pfx.Pfxlen()
+	pfxLenDiff := n.route.Pfxlen() - pfx.Len()
 	skip := n.skip - pfxLenDiff
 	new := newNode(pfx, p, skip, false)
 
-	b := n.route.Prefix().Addr().BitAtPosition(pfx.Pfxlen() + 1)
+	b := n.route.Prefix().Addr().BitAtPosition(pfx.Len() + 1)
 	if !b {
 		new.l = tmp
-		new.l.skip = tmp.route.Pfxlen() - pfx.Pfxlen() - 1
+		new.l.skip = tmp.route.Pfxlen() - pfx.Len() - 1
 	} else {
 		new.h = tmp
-		new.h.skip = tmp.route.Pfxlen() - pfx.Pfxlen() - 1
+		new.h.skip = tmp.route.Pfxlen() - pfx.Len() - 1
 	}
 
 	return new

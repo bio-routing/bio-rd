@@ -35,7 +35,7 @@ func (rt *RoutingTable) AddPath(pfx *net.Prefix, p *route.Path) error {
 
 func (rt *RoutingTable) addPath(pfx *net.Prefix, p *route.Path) error {
 	if rt.root == nil {
-		rt.root = newNode(pfx, p, pfx.Pfxlen(), false)
+		rt.root = newNode(pfx, p, pfx.Len(), false)
 		atomic.AddInt64(&rt.routeCount, 1)
 		return nil
 	}
