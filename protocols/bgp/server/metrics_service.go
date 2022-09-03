@@ -41,9 +41,8 @@ func metricsForPeer(peer *peer) *metrics.BGPPeerMetrics {
 
 	fsm := fsms[0]
 	m.State = statusFromFSM(fsm)
-	m.Up = m.State == metrics.StateEstablished
 
-	if m.Up {
+	if m.State == metrics.StateEstablished {
 		m.Since = fsm.establishedTime
 	}
 

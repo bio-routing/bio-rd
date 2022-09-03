@@ -36,9 +36,6 @@ type BGPPeerMetrics struct {
 	// State of the BGP session (Down = 0, Idle = 1, Connect = 2, Active = 3, OpenSent = 4, OpenConfirm = 5, Established = 6)
 	State uint8
 
-	// Up returns if the session is established
-	Up bool
-
 	// UpdatesReceived is the number of update messages received on this session
 	UpdatesReceived uint64
 
