@@ -58,7 +58,6 @@ func TestMetrics(t *testing.T) {
 						UpdatesReceived: 3,
 						UpdatesSent:     4,
 						VRF:             "inet.0",
-						Up:              true,
 						State:           metrics.StateEstablished,
 						Since:           establishedTime,
 						AddressFamilies: []*metrics.BGPAddressFamilyMetrics{

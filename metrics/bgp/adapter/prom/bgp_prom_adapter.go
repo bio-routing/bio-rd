@@ -39,14 +39,12 @@ var (
 
 func init() {
 	labels := []string{"peer_ip", "local_asn", "peer_asn", "vrf"}
-	upDesc = prometheus.NewDesc(prefix+"up", "Returns if the session is up", labels, nil)
 	stateDesc = prometheus.NewDesc(prefix+"state", "State of the BGP session (Down = 0, Idle = 1, Connect = 2, Active = 3, OpenSent = 4, OpenConfirm = 5, Established = 6)", labels, nil)
 	uptimeDesc = prometheus.NewDesc(prefix+"uptime_second", "Time since the session was established in seconds", labels, nil)
 	updatesReceivedDesc = prometheus.NewDesc(prefix+"update_received_count", "Number of updates received", labels, nil)
 	updatesSentDesc = prometheus.NewDesc(prefix+"update_sent_count", "Number of updates sent", labels, nil)
 
 	labelsRouter := append(labels, "sys_name", "agent_address")
-	upDescRouter = prometheus.NewDesc(prefix+"up", "Returns if the session is up", labelsRouter, nil)
 	stateDescRouter = prometheus.NewDesc(prefix+"state", "State of the BGP session (Down = 0, Idle = 1, Connect = 2, Active = 3, OpenSent = 4, OpenConfirm = 5, Established = 6)", labelsRouter, nil)
 	uptimeDescRouter = prometheus.NewDesc(prefix+"uptime_second", "Time since the session was established in seconds", labelsRouter, nil)
 	updatesReceivedDescRouter = prometheus.NewDesc(prefix+"update_received_count", "Number of updates received", labelsRouter, nil)
@@ -79,7 +77,6 @@ type bgpCollector struct {
 
 // Describe conforms to the prometheus collector interface
 func (c *bgpCollector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- upDesc
 	ch <- stateDesc
 	ch <- uptimeDesc
 	ch <- updatesReceivedDesc
@@ -92,7 +89,6 @@ func (c *bgpCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func DescribeRouter(ch chan<- *prometheus.Desc) {
-	ch <- upDescRouter
 	ch <- stateDescRouter
 	ch <- uptimeDescRouter
 	ch <- updatesReceivedDescRouter
@@ -125,13 +121,10 @@ func collectForPeer(ch chan<- prometheus.Metric, peer *metrics.BGPPeerMetrics) {
 		peer.VRF,
 	}
 
-	var up float64
 	var uptime float64
-	if peer.Up {
-		up = 1
+	if peer.State == metrics.StateEstablished {
 		uptime = float64(time.Since(peer.Since) * time.Second)
 	}
-	ch <- prometheus.MustNewConstMetric(upDesc, prometheus.GaugeValue, up, l...)
 	ch <- prometheus.MustNewConstMetric(uptimeDesc, prometheus.GaugeValue, uptime, l...)
 	ch <- prometheus.MustNewConstMetric(stateDesc, prometheus.GaugeValue, float64(peer.State), l...)
 
@@ -153,13 +146,10 @@ func CollectForPeerRouter(ch chan<- prometheus.Metric, sysName string, agentAddr
 		agentAddress,
 	}
 
-	var up float64
 	var uptime float64
-	if peer.Up {
-		up = 1
+	if peer.State == metrics.StateEstablished {
 		uptime = float64(time.Since(peer.Since) * time.Second)
 	}
-	ch <- prometheus.MustNewConstMetric(upDescRouter, prometheus.GaugeValue, up, l...)
 	ch <- prometheus.MustNewConstMetric(uptimeDescRouter, prometheus.GaugeValue, uptime, l...)
 	ch <- prometheus.MustNewConstMetric(stateDescRouter, prometheus.GaugeValue, float64(peer.State), l...)
 
