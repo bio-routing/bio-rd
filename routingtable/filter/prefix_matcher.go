@@ -21,7 +21,7 @@ func NewInRangeMatcher(min, max uint8) *InRangeMatcher {
 
 func (i *InRangeMatcher) Match(pattern, prefix *net.Prefix) bool {
 	contains := pattern.Equal(prefix) || pattern.Contains(prefix)
-	return contains && prefix.Pfxlen() >= i.min && prefix.Pfxlen() <= i.max
+	return contains && prefix.Len() >= i.min && prefix.Len() <= i.max
 }
 
 func (i *InRangeMatcher) equal(x PrefixMatcher) bool {
@@ -86,7 +86,7 @@ func NewLongerMatcher() *LongerMatcher {
 }
 
 func (e *LongerMatcher) Match(pattern, prefix *net.Prefix) bool {
-	return pattern.Contains(prefix) && prefix.Pfxlen() > pattern.Pfxlen()
+	return pattern.Contains(prefix) && prefix.Len() > pattern.Len()
 }
 
 func (e *LongerMatcher) equal(x PrefixMatcher) bool {

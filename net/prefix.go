@@ -12,8 +12,8 @@ import (
 
 // Prefix represents an IPv4 prefix
 type Prefix struct {
-	addr   IP
-	pfxlen uint8
+	addr IP
+	len  uint8
 }
 
 // Dedup gets a copy of Prefix from the cache.
@@ -30,8 +30,8 @@ func (p Prefix) Ptr() *Prefix {
 // NewPrefixFromProtoPrefix creates a Prefix from a proto Prefix
 func NewPrefixFromProtoPrefix(pfx *api.Prefix) *Prefix {
 	return &Prefix{
-		addr:   IPFromProtoIP(pfx.Address),
-		pfxlen: uint8(pfx.Pfxlen),
+		addr: IPFromProtoIP(pfx.Address),
+		len:  uint8(pfx.Length),
 	}
 }
 
@@ -53,8 +53,8 @@ func PrefixFromString(s string) (*Prefix, error) {
 	}
 
 	return &Prefix{
-		addr:   ip,
-		pfxlen: uint8(l),
+		addr: ip,
+		len:  uint8(l),
 	}, nil
 }
 
@@ -62,15 +62,15 @@ func PrefixFromString(s string) (*Prefix, error) {
 func (p Prefix) ToProto() *api.Prefix {
 	return &api.Prefix{
 		Address: p.addr.ToProto(),
-		Pfxlen:  uint32(p.pfxlen),
+		Length:  uint32(p.len),
 	}
 }
 
 // NewPfx creates a new Prefix
-func NewPfx(addr IP, pfxlen uint8) Prefix {
+func NewPfx(addr IP, len uint8) Prefix {
 	return Prefix{
-		addr:   addr,
-		pfxlen: pfxlen,
+		addr: addr,
+		len:  len,
 	}
 }
 
@@ -80,8 +80,8 @@ func NewPfxFromIPNet(ipNet *gonet.IPNet) *Prefix {
 	ip, _ := IPFromBytes(ipNet.IP)
 
 	return &Prefix{
-		addr:   ip,
-		pfxlen: uint8(ones),
+		addr: ip,
+		len:  uint8(ones),
 	}
 }
 
@@ -115,13 +115,13 @@ func (pfx *Prefix) Addr() IP {
 }
 
 // Pfxlen returns the length of the prefix
-func (pfx *Prefix) Pfxlen() uint8 {
-	return pfx.pfxlen
+func (pfx *Prefix) Len() uint8 {
+	return pfx.len
 }
 
 // String returns a string representation of pfx
 func (pfx *Prefix) String() string {
-	return fmt.Sprintf("%s/%d", pfx.addr.String(), pfx.pfxlen)
+	return fmt.Sprintf("%s/%d", pfx.addr.String(), pfx.len)
 }
 
 // GetIPNet returns the gonet.IP object for a Prefix object
@@ -129,7 +129,7 @@ func (pfx *Prefix) GetIPNet() *gonet.IPNet {
 	var dstNetwork gonet.IPNet
 	dstNetwork.IP = pfx.Addr().Bytes()
 
-	pfxLen := int(pfx.Pfxlen())
+	pfxLen := int(pfx.Len())
 	if pfx.Addr().IsIPv4() {
 		dstNetwork.Mask = gonet.CIDRMask(pfxLen, 32)
 	} else {
@@ -141,7 +141,7 @@ func (pfx *Prefix) GetIPNet() *gonet.IPNet {
 
 // Contains checks if x is a subnet of or equal to pfx
 func (pfx *Prefix) Contains(x *Prefix) bool {
-	if x.pfxlen <= pfx.pfxlen {
+	if x.len <= pfx.len {
 		return false
 	}
 
@@ -153,18 +153,18 @@ func (pfx *Prefix) Contains(x *Prefix) bool {
 }
 
 func (pfx *Prefix) containsIPv4(x *Prefix) bool {
-	mask := uint32((math.MaxUint32 << (32 - pfx.pfxlen)))
+	mask := uint32((math.MaxUint32 << (32 - pfx.len)))
 	return (pfx.addr.ToUint32() & mask) == (x.addr.ToUint32() & mask)
 }
 
 func (pfx *Prefix) containsIPv6(x *Prefix) bool {
 	var maskHigh, maskLow uint64
-	if pfx.pfxlen <= 64 {
-		maskHigh = math.MaxUint32 << (64 - pfx.pfxlen)
+	if pfx.len <= 64 {
+		maskHigh = math.MaxUint32 << (64 - pfx.len)
 		maskLow = uint64(0)
 	} else {
 		maskHigh = math.MaxUint32
-		maskLow = math.MaxUint32 << (128 - pfx.pfxlen)
+		maskLow = math.MaxUint32 << (128 - pfx.len)
 	}
 
 	return pfx.addr.higher&maskHigh&maskHigh == x.addr.higher&maskHigh&maskHigh &&
@@ -173,7 +173,7 @@ func (pfx *Prefix) containsIPv6(x *Prefix) bool {
 
 // Equal checks if pfx and x are equal
 func (pfx *Prefix) Equal(x *Prefix) bool {
-	return pfx.addr.Equal(x.addr) && pfx.pfxlen == x.pfxlen
+	return pfx.addr.Equal(x.addr) && pfx.len == x.len
 }
 
 // GetSupernet gets the next common supernet of pfx and x
@@ -186,7 +186,7 @@ func (pfx *Prefix) GetSupernet(x *Prefix) Prefix {
 }
 
 func (pfx *Prefix) supernetIPv4(x *Prefix) Prefix {
-	maxPfxLen := min(pfx.pfxlen, x.pfxlen) - 1
+	maxPfxLen := min(pfx.len, x.len) - 1
 	a := pfx.addr.ToUint32() >> (32 - maxPfxLen)
 	b := x.addr.ToUint32() >> (32 - maxPfxLen)
 
@@ -197,13 +197,13 @@ func (pfx *Prefix) supernetIPv4(x *Prefix) Prefix {
 	}
 
 	return Prefix{
-		addr:   IPv4(a << (32 - maxPfxLen)),
-		pfxlen: maxPfxLen,
+		addr: IPv4(a << (32 - maxPfxLen)),
+		len:  maxPfxLen,
 	}
 }
 
 func (pfx *Prefix) supernetIPv6(x *Prefix) Prefix {
-	maxPfxLen := min(pfx.pfxlen, x.pfxlen)
+	maxPfxLen := min(pfx.len, x.len)
 
 	a := pfx.addr.BitAtPosition(1)
 	b := x.addr.BitAtPosition(1)
@@ -236,18 +236,18 @@ func (pfx *Prefix) supernetIPv6(x *Prefix) Prefix {
 // Valid checks if all bits outside of the prefix lengths range are zero (no host bit set)
 func (p *Prefix) Valid() bool {
 	if p.addr.isLegacy {
-		return checkLastNBitsUint32(uint32(p.addr.lower), 32-p.pfxlen)
+		return checkLastNBitsUint32(uint32(p.addr.lower), 32-p.len)
 	}
 
-	if p.pfxlen <= 64 {
+	if p.len <= 64 {
 		if p.addr.lower != 0 {
 			return false
 		}
 
-		return checkLastNBitsUint64(p.addr.higher, 64-p.pfxlen)
+		return checkLastNBitsUint64(p.addr.higher, 64-p.len)
 	}
 
-	return checkLastNBitsUint64(p.addr.lower, 64-(p.pfxlen-64))
+	return checkLastNBitsUint64(p.addr.lower, 64-(p.len-64))
 }
 
 func min(a uint8, b uint8) uint8 {
@@ -277,8 +277,8 @@ func (p *Prefix) BaseAddr() IP {
 func (p *Prefix) baseAddr4() IP {
 	addr := p.addr.copy()
 
-	addr.lower = addr.lower >> (32 - p.pfxlen)
-	addr.lower = addr.lower << (32 - p.pfxlen)
+	addr.lower = addr.lower >> (32 - p.len)
+	addr.lower = addr.lower << (32 - p.len)
 
 	return addr
 }
@@ -286,13 +286,13 @@ func (p *Prefix) baseAddr4() IP {
 func (p *Prefix) baseAddr6() IP {
 	addr := p.addr.copy()
 
-	if p.pfxlen <= 64 {
+	if p.len <= 64 {
 		addr.lower = 0
-		addr.higher = addr.higher >> (64 - p.pfxlen)
-		addr.higher = addr.higher << (64 - p.pfxlen)
+		addr.higher = addr.higher >> (64 - p.len)
+		addr.higher = addr.higher << (64 - p.len)
 	} else {
-		addr.lower = addr.lower >> (128 - p.pfxlen)
-		addr.lower = addr.lower << (128 - p.pfxlen)
+		addr.lower = addr.lower >> (128 - p.len)
+		addr.lower = addr.lower << (128 - p.len)
 	}
 
 	return addr
