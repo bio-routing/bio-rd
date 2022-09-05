@@ -1,5 +1,141 @@
 package server
 
+import (
+	"sync/atomic"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestReady(t *testing.T) {
+	atomicTrue := atomic.Bool{}
+	atomicTrue.Store(true)
+
+	tests := []struct {
+		name     string
+		r        *Router
+		vrf      uint64
+		afi      uint16
+		expected bool
+	}{
+		{
+			name: "No neighbors",
+			r: &Router{
+				neighborManager: &neighborManager{
+					neighbors: []*neighbor{},
+				},
+			},
+			vrf:      100,
+			afi:      4,
+			expected: false,
+		},
+		{
+			name: "No neighbor matches VRF",
+			r: &Router{
+				neighborManager: &neighborManager{
+					neighbors: []*neighbor{
+						{
+							vrfID: 99,
+						},
+					},
+				},
+			},
+			vrf:      100,
+			afi:      4,
+			expected: false,
+		},
+		{
+			name: "Neighbors not ready",
+			r: &Router{
+				neighborManager: &neighborManager{
+					neighbors: []*neighbor{
+						{
+							vrfID: 100,
+							fsm: &FSM{
+								ipv4Unicast: &fsmAddressFamily{
+									endOfRIBMarkerReceived: atomic.Bool{},
+								},
+							},
+						},
+						{
+							vrfID: 99,
+							fsm: &FSM{
+								ipv4Unicast: &fsmAddressFamily{
+									endOfRIBMarkerReceived: atomic.Bool{},
+								},
+							},
+						},
+					},
+				},
+			},
+			vrf:      100,
+			afi:      4,
+			expected: false,
+		},
+		{
+			name: "Neighbors half ready",
+			r: &Router{
+				neighborManager: &neighborManager{
+					neighbors: []*neighbor{
+						{
+							vrfID: 100,
+							fsm: &FSM{
+								ipv4Unicast: &fsmAddressFamily{
+									endOfRIBMarkerReceived: atomic.Bool{},
+								},
+							},
+						},
+						{
+							vrfID: 99,
+							fsm: &FSM{
+								ipv4Unicast: &fsmAddressFamily{
+									endOfRIBMarkerReceived: atomicTrue,
+								},
+							},
+						},
+					},
+				},
+			},
+			vrf:      100,
+			afi:      4,
+			expected: false,
+		},
+		{
+			name: "Neighbors ready",
+			r: &Router{
+				neighborManager: &neighborManager{
+					neighbors: []*neighbor{
+						{
+							vrfID: 100,
+							fsm: &FSM{
+								ipv4Unicast: &fsmAddressFamily{
+									endOfRIBMarkerReceived: atomicTrue,
+								},
+							},
+						},
+						{
+							vrfID: 100,
+							fsm: &FSM{
+								ipv4Unicast: &fsmAddressFamily{
+									endOfRIBMarkerReceived: atomicTrue,
+								},
+							},
+						},
+					},
+				},
+			},
+			vrf:      100,
+			afi:      4,
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		res := test.r.Ready(test.vrf, test.afi)
+		assert.Equal(t, test.expected, res, test.name)
+	}
+}
+
 /*func TestBMPRouterServe(t *testing.T) {
 	tests := []struct {
 		name     string
