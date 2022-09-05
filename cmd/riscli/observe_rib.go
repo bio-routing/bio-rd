@@ -79,6 +79,12 @@ func observeRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID u
 			return fmt.Errorf("Receive failed: %w", err)
 		}
 
-		printRoute(r.Route)
+		if r.EndOfRib {
+			fmt.Printf("Received End-Of-RIB marker\n")
+		}
+
+		if r.Route != nil {
+			printRoute(r.Route)
+		}
 	}
 }
