@@ -210,6 +210,10 @@ func (r *Router) processMsg(msg []byte) {
 func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	atomic.AddUint64(&r.counters.routeMonitoringMessages, 1)
 
+	if !msg.PerPeerHeader.GetLFlag() { // we're only interested in post-policy routes
+		return
+	}
+
 	n := r.neighborManager.getNeighbor(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if n == nil {
 		log.Errorf("Received route monitoring message for non-existent neighbor %d/%v on %s", msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress, r.address.String())
