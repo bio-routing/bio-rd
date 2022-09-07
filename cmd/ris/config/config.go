@@ -9,7 +9,8 @@ import (
 
 // RISConfig is the config of RIS instance
 type RISConfig struct {
-	BMPServers []BMPServer `yaml:"bmp_servers"`
+	BMPServers     []BMPServer `yaml:"bmp_servers"`
+	IgnorePeerASNs []uint32    `yaml:"ignore_peer_asns"`
 }
 
 // BMPServer represent a BMP enable Router
