@@ -48,6 +48,8 @@ type Router struct {
 	ribClients      map[afiClient]struct{}
 	ribClientsMu    sync.Mutex
 	adjRIBInFactory adjRIBInFactoryI
+	ignorePeerASNs  []uint32
+	ignoredPeers    map[bnet.IP]struct{}
 
 	counters routerCounters
 }
@@ -72,7 +74,7 @@ type neighbor struct {
 	opt         *packet.DecodeOptions
 }
 
-func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI) *Router {
+func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI, ignorePeerASNs []uint32) *Router {
 	return &Router{
 		address:          addr,
 		port:             port,
@@ -86,6 +88,8 @@ func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI) *R
 		stop:             make(chan struct{}),
 		ribClients:       make(map[afiClient]struct{}),
 		adjRIBInFactory:  arif,
+		ignorePeerASNs:   ignorePeerASNs,
+		ignoredPeers:     make(map[bnet.IP]struct{}),
 	}
 }
 
@@ -214,6 +218,10 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 		return
 	}
 
+	if _, exists := r.ignoredPeers[peerAddrToBNetAddr(msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.GetIPVersion())]; exists {
+		return
+	}
+
 	n := r.neighborManager.getNeighbor(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if n == nil {
 		log.Errorf("Received route monitoring message for non-existent neighbor %d/%v on %s", msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress, r.address.String())
@@ -306,10 +314,37 @@ func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
 	}).Infof("peer down notification received")
 	atomic.AddUint64(&r.counters.peerDownNotificationMessages, 1)
 
+	peerAddr := peerAddrToBNetAddr(msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.GetIPVersion())
+	if _, exists := r.ignoredPeers[peerAddr]; exists {
+		delete(r.ignoredPeers, peerAddr)
+		return
+	}
+
 	err := r.neighborManager.neighborDown(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if err != nil {
 		log.Errorf("Failed to process peer down notification: %v", err)
 	}
+}
+
+func peerAddrToBNetAddr(a [16]byte, ipVersion uint8) bnet.IP {
+	addrLen := net.IPv4len
+	if ipVersion == 6 {
+		addrLen = net.IPv6len
+	}
+
+	// bnet.IPFromBytes can only fail if length of argument is not 4 or 16. However, length is ensured here.
+	ip, _ := bnet.IPFromBytes(a[16-addrLen:])
+	return ip
+}
+
+func (r *Router) isIgnoredPeerASN(asn uint32) bool {
+	for _, x := range r.ignorePeerASNs {
+		if x == asn {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error {
@@ -320,6 +355,14 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
 		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
 	}).Infof("peer up notification received")
+
+	peerAddress := peerAddrToBNetAddr(msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.GetIPVersion())
+	localAddress := peerAddrToBNetAddr(msg.LocalAddress, msg.PerPeerHeader.GetIPVersion())
+
+	if r.isIgnoredPeerASN(msg.PerPeerHeader.PeerAS) {
+		r.ignoredPeers[peerAddress] = struct{}{}
+		return nil
+	}
 
 	if len(msg.SentOpenMsg) < packet.MinOpenLen {
 		return fmt.Errorf("received peer up notification for %v: Invalid sent open message: %v", msg.PerPeerHeader.PeerAddress, msg.SentOpenMsg)
@@ -338,15 +381,6 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 	if err != nil {
 		return fmt.Errorf("unable to decode received open message sent from %v to %v: %w", msg.PerPeerHeader.PeerAddress, r.address.String(), err)
 	}
-
-	addrLen := net.IPv4len
-	if msg.PerPeerHeader.GetIPVersion() == 6 {
-		addrLen = net.IPv6len
-	}
-
-	// bnet.IPFromBytes can only fail if length of argument is not 4 or 16. However, length is ensured here.
-	peerAddress, _ := bnet.IPFromBytes(msg.PerPeerHeader.PeerAddress[16-addrLen:])
-	localAddress, _ := bnet.IPFromBytes(msg.LocalAddress[16-addrLen:])
 
 	fsm := &FSM{
 		isBMP:            true,

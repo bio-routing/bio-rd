@@ -34,11 +34,13 @@ type BMPServer struct {
 	listener        net.Listener
 	adjRIBInFactory adjRIBInFactoryI
 	acceptAny       bool
+	ignorePeerASNs  []uint32
 }
 
 type BMPServerConfig struct {
 	KeepalivePeriod time.Duration
 	AcceptAny       bool
+	IgnorePeerASNs  []uint32
 }
 
 type afiClient struct {
@@ -54,6 +56,7 @@ func NewServer(cfg BMPServerConfig) *BMPServer {
 		keepalivePeriod: cfg.KeepalivePeriod,
 		adjRIBInFactory: adjRIBInFactory{},
 		acceptAny:       cfg.AcceptAny,
+		ignorePeerASNs:  cfg.IgnorePeerASNs,
 	}
 
 	b.metrics = &bmpMetricsService{b}
@@ -226,7 +229,7 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool, dynamic bo
 }
 
 func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
-	r := newRouter(addr, port, passive, b.adjRIBInFactory)
+	r := newRouter(addr, port, passive, b.adjRIBInFactory, b.ignorePeerASNs)
 	if _, exists := b.routers[r.address.String()]; exists {
 		return fmt.Errorf("router %s already configured,", r.address.String())
 	}

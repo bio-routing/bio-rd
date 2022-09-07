@@ -6,6 +6,7 @@ import (
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBMPServer(t *testing.T) {
@@ -13,7 +14,7 @@ func TestBMPServer(t *testing.T) {
 		KeepalivePeriod: time.Second,
 	})
 
-	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119, false, &adjRIBInFactory{})
+	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119, false, &adjRIBInFactory{}, []uint32{13335})
 	_, pipe := net.Pipe()
 	rtr.con = pipe
 	srv.routers[rtr.address.String()] = rtr
@@ -175,6 +176,97 @@ func TestBMPServer(t *testing.T) {
 		0, // Ops Param Len
 	}
 	rtr.processMsg(peerUpC)
+
+	peerUpD := []byte{
+		3,            // Version
+		0, 0, 0, 126, // Length
+		3, // Msg Type (peer up)
+
+		0,                      // Peer Type (global instance peer)
+		0,                      // Peer Flags
+		0, 0, 0, 0, 0, 0, 0, 0, // Peer Distinguisher
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 100, // Peer Address (10.1.2.100)
+		0, 0, 52, 23, // Peer AS = 13335
+		0, 0, 0, 233, // Peer BGP ID = 240
+		0, 0, 0, 0, // Timestamp seconds
+		0, 0, 0, 0, // Timestamp microseconds
+
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 200, // Local Address (10.1.2.200)
+		0, 222, // Local Port
+		0, 179, // Remote Port
+
+		// Sent OPEN
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, // Marker
+		0, 29, // Length
+		1,      // Type (OPEN)
+		4,      // BGP Version
+		0, 100, // ASN
+		0, 180, // Hold Time
+		1, 0, 0, 100, // BGP ID
+		0, // Ops Param Len
+
+		// Received OPEN
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, // Marker
+		0, 29, // Length
+		1,      // Type (OPEN)
+		4,      // BGP Version
+		0, 233, // ASN
+		0, 180, // Hold Time
+		1, 0, 0, 222, // BGP ID
+		0, // Ops Param Len
+	}
+	rtr.processMsg(peerUpD)
+
+	assert.Equal(t, rtr.ignoredPeers, map[bnet.IP]struct{}{
+		bnet.IPv4FromOctets(10, 1, 2, 100): {},
+	})
+
+	updateD1 := []byte{
+		3,            // Version
+		0, 0, 0, 100, // Length
+		0, // Msg Type (route monitoring)
+
+		0,                        // Peer Type (global instance peer)
+		0b01100000,               // Peer Flags
+		0, 0, 0, 0, 0, 0, 0, 123, // Peer Distinguisher
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 100, // Peer Address (10.1.2.100)
+		0, 0, 0, 200, // Peer AS = 200
+		0, 0, 0, 200, // Peer BGP ID = 200
+		0, 0, 0, 0, // Timestamp seconds
+		0, 0, 0, 0, // Timestamp microseconds
+
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, // Marker
+		0, 52, // Length
+		2, // Type (UPDATE)
+
+		0, 0, // Withdraw length
+		0, 27, // Total Path Attribute Length
+
+		0, // Attribute flags
+		3, // Attribute Type code (Next Hop)
+		4, // Length
+		10, 0, 0, 0,
+
+		255,  // Attribute flags
+		1,    // Attribute Type code (ORIGIN)
+		0, 1, // Length
+		2, // INCOMPLETE
+
+		0,      // Attribute flags
+		2,      // Attribute Type code (AS Path)
+		12,     // Length
+		2,      // Type = AS_SEQUENCE
+		2,      // Path Segment Length
+		59, 65, // AS15169
+		12, 248, // AS3320
+		1,      // Type = AS_SET
+		2,      // Path Segment Length
+		59, 65, // AS15169
+		12, 248, // AS3320
+
+		8, 20, // 20.0.0.0/8
+	}
+	rtr.processMsg(updateD1)
 
 	aaaaVRFs = aaaa.GetVRFs()
 	if len(aaaaVRFs) != 2 {
