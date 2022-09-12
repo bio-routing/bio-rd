@@ -62,3 +62,16 @@ func decodePeerDownNotification(buf *bytes.Buffer, ch *CommonHeader) (*PeerDownN
 
 	return p, nil
 }
+
+func (p *PeerDownNotification) Serialize(buf *bytes.Buffer) {
+	p.setSizes()
+
+	p.CommonHeader.Serialize(buf)
+	p.PerPeerHeader.Serialize(buf)
+	buf.WriteByte(p.Reason)
+	buf.Write(p.Data)
+}
+
+func (p *PeerDownNotification) setSizes() {
+	p.CommonHeader.MsgLength = CommonHeaderLen + PerPeerHeaderLen + 1 + uint32(len(p.Data))
+}

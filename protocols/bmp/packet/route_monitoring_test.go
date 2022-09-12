@@ -18,6 +18,67 @@ func TestRouteMonitoringMsgType(t *testing.T) {
 		t.Errorf("Unexpected result")
 	}
 }
+
+func TestSerializeRouteMonitoringMsg(t *testing.T) {
+	tests := []struct {
+		name     string
+		rm       *RouteMonitoringMsg
+		expected []byte
+	}{
+		{
+			name: "Test case #1",
+			rm: &RouteMonitoringMsg{
+				CommonHeader: &CommonHeader{
+					Version: 1,
+					MsgType: RouteMonitoringType,
+				},
+				PerPeerHeader: &PerPeerHeader{
+					PeerType:              0,
+					PeerFlags:             0b10000000,
+					PeerDistinguisher:     23,
+					PeerAddress:           [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 3},
+					PeerAS:                13335,
+					PeerBGPID:             1337,
+					Timestamp:             1662995552,
+					TimestampMicroSeconds: 42,
+				},
+				BGPUpdate: []byte{
+					0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+					0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+					0x0, 0x0, // Withdraw length
+					0x0, 0x0, // Path attributes length
+				},
+			},
+			expected: []byte{
+				// Common header
+				0x1,                 // Version
+				0x0, 0x0, 0x0, 0x44, // Length
+				0x0, // Type
+
+				// Per peer header
+				0x0,                                     // peer type
+				0x80,                                    // peer flags
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x17, // Peer Distinguisher
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa, 0x1, 0x2, 0x3, // Peer address
+				0x0, 0x0, 0x34, 0x17, // Peer AS
+				0x0, 0x0, 0x5, 0x39, // Peer BGP ID
+				0x63, 0x1f, 0x4c, 0x60, // Timestamp seconds
+				0x0, 0x0, 0x0, 0x2a, // Timestamp microseconds
+
+				// BGP Update
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				0x0, 0x0, 0x0, 0x0,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		test.rm.Serialize(buf)
+		assert.Equal(t, test.expected, buf.Bytes(), test.name)
+	}
+}
+
 func TestDecodeRouteMonitoringMsg(t *testing.T) {
 	tests := []struct {
 		name     string

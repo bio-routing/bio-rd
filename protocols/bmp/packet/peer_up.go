@@ -5,11 +5,14 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/util/decoder"
+	"github.com/bio-routing/tflow2/convert"
 )
 
 const (
 	// OpenMsgMinLen is the minimal length of a BGP open message
 	OpenMsgMinLen = 29
+
+	PeerUpNotificationMinLen = 20
 )
 
 // PeerUpNotification represents a peer up notification
@@ -106,4 +109,22 @@ func getOpenMsg(buf *bytes.Buffer) ([]byte, error) {
 
 	msg = append(msg, optParams...)
 	return msg, nil
+}
+
+func (p *PeerUpNotification) Serialize(buf *bytes.Buffer) {
+	p.setSizes()
+
+	p.CommonHeader.Serialize(buf)
+	p.PerPeerHeader.Serialize(buf)
+	buf.Write(p.LocalAddress[:])
+	buf.Write(convert.Uint16Byte(p.LocalPort))
+	buf.Write(convert.Uint16Byte(p.RemotePort))
+	buf.Write(p.SentOpenMsg)
+	buf.Write(p.ReceivedOpenMsg)
+	buf.Write(p.Information)
+}
+
+func (p *PeerUpNotification) setSizes() {
+	p.CommonHeader.MsgLength = CommonHeaderLen + PerPeerHeaderLen + PeerUpNotificationMinLen
+	p.CommonHeader.MsgLength += uint32(len(p.SentOpenMsg)) + uint32(len(p.ReceivedOpenMsg)) + uint32(len(p.Information))
 }
