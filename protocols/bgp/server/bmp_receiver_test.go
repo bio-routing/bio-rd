@@ -10,7 +10,7 @@ import (
 )
 
 func TestBMPServer(t *testing.T) {
-	srv := NewServer(BMPServerConfig{
+	srv := NewBMPReceiver(BMPReceiverConfig{
 		KeepalivePeriod: time.Second,
 	})
 

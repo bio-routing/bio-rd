@@ -14,7 +14,7 @@ import (
 func main() {
 	logrus.Printf("This is a BMP speaker\n")
 
-	b := server.NewServer(server.BMPServerConfig{
+	b := server.NewBMPReceiver(server.BMPReceiverConfig{
 		KeepalivePeriod: time.Second,
 	})
 	b.AddRouter(net.IP{10, 0, 255, 1}, 30119, false, false)

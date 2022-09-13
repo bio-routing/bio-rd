@@ -49,7 +49,7 @@ func main() {
 		cfg = c
 	}
 
-	b := server.NewServer(server.BMPServerConfig{
+	b := server.NewBMPReceiver(server.BMPReceiverConfig{
 		KeepalivePeriod:  time.Duration(*tcpKeepaliveInterval) * time.Second,
 		AcceptAny:        *allowAny,
 		IgnorePeerASNs:   cfg.IgnorePeerASNs,

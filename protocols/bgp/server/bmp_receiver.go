@@ -19,13 +19,13 @@ const (
 	defaultBufferLen = 4096
 )
 
-type BMPServerInterface interface {
+type BMPReceiverInterface interface {
 	GetRouter(rtr string) RouterInterface
 	GetRouters() []RouterInterface
 }
 
-// BMPServer represents a BMP server
-type BMPServer struct {
+// BMPReceiver represents a BMP receiver
+type BMPReceiver struct {
 	routers          map[string]*Router
 	routersMu        sync.RWMutex
 	ribClients       map[string]map[afiClient]struct{}
@@ -39,7 +39,7 @@ type BMPServer struct {
 	ignorePostPolicy bool
 }
 
-type BMPServerConfig struct {
+type BMPReceiverConfig struct {
 	KeepalivePeriod  time.Duration
 	AcceptAny        bool
 	IgnorePeerASNs   []uint32
@@ -52,9 +52,9 @@ type afiClient struct {
 	client routingtable.RouteTableClient
 }
 
-// NewServer creates a new BMP server
-func NewServer(cfg BMPServerConfig) *BMPServer {
-	b := &BMPServer{
+// NewBMPReceiver creates a new BMP receiver
+func NewBMPReceiver(cfg BMPReceiverConfig) *BMPReceiver {
+	b := &BMPReceiver{
 		routers:          make(map[string]*Router),
 		ribClients:       make(map[string]map[afiClient]struct{}),
 		keepalivePeriod:  cfg.KeepalivePeriod,
@@ -69,20 +69,20 @@ func NewServer(cfg BMPServerConfig) *BMPServer {
 	return b
 }
 
-func NewServerWithAdjRIBInFactory(cfg BMPServerConfig, adjRIBInFactory adjRIBInFactoryI) *BMPServer {
-	b := NewServer(cfg)
+func NewBMPReceiverWithAdjRIBInFactory(cfg BMPReceiverConfig, adjRIBInFactory adjRIBInFactoryI) *BMPReceiver {
+	b := NewBMPReceiver(cfg)
 	b.adjRIBInFactory = adjRIBInFactory
 
 	return b
 }
 
 // Listen starts a listener for routers to start the BMP connection
-// the listener needs to be closed by calling Close() on the BMPServer
-func (b *BMPServer) Listen(addr string) error {
+// the listener needs to be closed by calling Close() on the BMPReceiver
+func (b *BMPReceiver) Listen(addr string) error {
 	tcp, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{
-			"component": "bmp_server",
+			"component": "bmp_receiver",
 			"address":   addr,
 		}).Info("Unable to resolve address")
 		return err
@@ -90,7 +90,7 @@ func (b *BMPServer) Listen(addr string) error {
 	l, err := net.ListenTCP("tcp", tcp)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{
-			"component": "bmp_server",
+			"component": "bmp_receiver",
 			"address":   addr,
 		}).Infof("Unable to listen on %s", tcp.String())
 		return err
@@ -99,14 +99,14 @@ func (b *BMPServer) Listen(addr string) error {
 	return nil
 }
 
-// Serve accepts all incoming connections for the BMP server until Close() is called.
-func (b *BMPServer) Serve() error {
+// Serve accepts all incoming connections for the BMP receiver until Close() is called.
+func (b *BMPReceiver) Serve() error {
 	l := b.listener
 	for {
 		c, err := l.Accept()
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
-				"component": "bmp_server",
+				"component": "bmp_receiver",
 				"address":   b.LocalAddr(),
 			}).Infof("Unable to accept on %s", b.LocalAddr())
 			return err
@@ -143,18 +143,18 @@ func (b *BMPServer) Serve() error {
 	}
 }
 
-// LocalAddr returns the local address the server is listening to.
-func (b *BMPServer) LocalAddr() net.Addr {
+// LocalAddr returns the local address the receiver is listening to.
+func (b *BMPReceiver) LocalAddr() net.Addr {
 	if b.listener != nil {
 		return b.listener.Addr()
 	}
 	return nil
 }
 
-func (b *BMPServer) validateConnection(r *Router, c net.Conn) bool {
+func (b *BMPReceiver) validateConnection(r *Router, c net.Conn) bool {
 	if !r.passive {
 		log.WithFields(log.Fields{
-			"component":      "bmp_server",
+			"component":      "bmp_receiver",
 			"remote_address": c.RemoteAddr(),
 		}).Error("dropping unconfigured connection")
 		c.Close()
@@ -163,7 +163,7 @@ func (b *BMPServer) validateConnection(r *Router, c net.Conn) bool {
 
 	if atomic.LoadUint32(&r.established) == 1 {
 		log.WithFields(log.Fields{
-			"component":      "bmp_server",
+			"component":      "bmp_receiver",
 			"remote_address": c.RemoteAddr(),
 			"router":         r.Name(),
 		}).Error("router already connected, dropping connection")
@@ -174,7 +174,7 @@ func (b *BMPServer) validateConnection(r *Router, c net.Conn) bool {
 	return true
 }
 
-func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool, dynamic bool) error {
+func (b *BMPReceiver) handleConnection(c net.Conn, r *Router, passive bool, dynamic bool) error {
 	if b.keepalivePeriod != 0 {
 		if err := c.(*net.TCPConn).SetKeepAlive(true); err != nil {
 			log.WithError(err).Error("Unable to enable keepalive")
@@ -187,7 +187,7 @@ func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool, dynami
 	}
 
 	log.WithFields(log.Fields{
-		"component": "bmp_server",
+		"component": "bmp_receiver",
 		"address":   c.RemoteAddr().String(),
 		"passive":   passive,
 	}).Info("Connected")
@@ -201,7 +201,7 @@ func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool, dynami
 			defer b.RemoveRouter(r.address)
 
 			log.WithFields(log.Fields{
-				"component": "bmp_server",
+				"component": "bmp_receiver",
 				"address":   c.RemoteAddr().String(),
 				"router":    r.Name(),
 				"passive":   passive,
@@ -210,7 +210,7 @@ func (b *BMPServer) handleConnection(c net.Conn, r *Router, passive bool, dynami
 
 		} else {
 			log.WithFields(log.Fields{
-				"component": "bmp_server",
+				"component": "bmp_receiver",
 				"address":   c.RemoteAddr().String(),
 				"router":    r.Name(),
 				"passive":   passive,
@@ -227,14 +227,14 @@ func conString(host string, port uint16) string {
 }
 
 // AddRouter adds a router to which we connect with BMP
-func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
+func (b *BMPReceiver) AddRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
 	b.routersMu.Lock()
 	defer b.routersMu.Unlock()
 
 	return b._addRouter(addr, port, passive, dynamic)
 }
 
-func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
+func (b *BMPReceiver) _addRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
 	rCfg := RouterConfig{
 		Passive:          passive,
 		IgnorePeerASNs:   b.ignorePeerASNs,
@@ -258,13 +258,13 @@ func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic b
 			select {
 			case <-r.stop:
 				log.WithFields(log.Fields{
-					"component": "bmp_server",
+					"component": "bmp_receiver",
 					"address":   conString(r.address.String(), r.port),
 				}).Info("Stop event: Stopping reconnect routine")
 				return
 			case <-r.reconnectTimer.C:
 				log.WithFields(log.Fields{
-					"component": "bmp_server",
+					"component": "bmp_receiver",
 					"address":   conString(r.address.String(), r.port),
 				}).Info("Reconnect timer expired: Establishing connection")
 			}
@@ -272,7 +272,7 @@ func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic b
 			c, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", r.address.String(), r.port), r.dialTimeout)
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
-					"component": "bmp_server",
+					"component": "bmp_receiver",
 					"address":   conString(r.address.String(), r.port),
 				}).Info("Unable to connect to BMP router")
 				if r.reconnectTime == 0 {
@@ -294,7 +294,7 @@ func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic b
 	return nil
 }
 
-func (b *BMPServer) deleteRouter(addr net.IP) {
+func (b *BMPReceiver) deleteRouter(addr net.IP) {
 	b.routersMu.Lock()
 	defer b.routersMu.Unlock()
 
@@ -302,7 +302,7 @@ func (b *BMPServer) deleteRouter(addr net.IP) {
 }
 
 // RemoveRouter removes a BMP monitored router
-func (b *BMPServer) RemoveRouter(addr net.IP) {
+func (b *BMPReceiver) RemoveRouter(addr net.IP) {
 	id := addr.String()
 	r := b.routers[id]
 	close(r.stop)
@@ -310,7 +310,7 @@ func (b *BMPServer) RemoveRouter(addr net.IP) {
 	b.deleteRouter(addr)
 }
 
-func (b *BMPServer) getRouters() []*Router {
+func (b *BMPReceiver) getRouters() []*Router {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 
@@ -322,7 +322,7 @@ func (b *BMPServer) getRouters() []*Router {
 	return ret
 }
 
-func (b *BMPServer) getRouter(name string) *Router {
+func (b *BMPReceiver) getRouter(name string) *Router {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 
@@ -357,7 +357,7 @@ func recvBMPMsg(c net.Conn) (msg []byte, err error) {
 }
 
 // GetRouters gets all routers
-func (b *BMPServer) GetRouters() []RouterInterface {
+func (b *BMPReceiver) GetRouters() []RouterInterface {
 	b.routersMu.RLock()
 	defer b.routersMu.RUnlock()
 
@@ -370,23 +370,23 @@ func (b *BMPServer) GetRouters() []RouterInterface {
 }
 
 // GetRouter gets a router
-func (b *BMPServer) GetRouter(name string) RouterInterface {
+func (b *BMPReceiver) GetRouter(name string) RouterInterface {
 	if r := b.getRouter(name); r != nil {
 		return r
 	}
 	return nil
 }
 
-// Metrics gets BMP server metrics
-func (b *BMPServer) Metrics() (*metrics.BMPMetrics, error) {
+// Metrics gets BMP receiver metrics
+func (b *BMPReceiver) Metrics() (*metrics.BMPMetrics, error) {
 	if b.metrics == nil {
-		return nil, fmt.Errorf("server not started yet")
+		return nil, fmt.Errorf("BMP receiver not started yet")
 	}
 
 	return b.metrics.metrics(), nil
 }
 
 // Close tears down all open connections
-func (b *BMPServer) Close() error {
+func (b *BMPReceiver) Close() error {
 	return b.listener.Close()
 }
