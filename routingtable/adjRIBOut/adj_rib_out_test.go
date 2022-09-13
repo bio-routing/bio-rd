@@ -597,7 +597,7 @@ func TestBestPathOnlyIBGP(t *testing.T) {
  */
 
 func TestBestPathOnlyRRClient(t *testing.T) {
-	peerAttrsBestOnlyRR := routingtable.SessionAttrs{
+	sessionAttrsBestOnlyRR := routingtable.SessionAttrs{
 		Type:                 route.BGPPathType,
 		LocalIP:              net.IPv4FromOctets(127, 0, 0, 1).Ptr(),
 		PeerIP:               net.IPv4FromOctets(127, 0, 0, 2).Ptr(),
@@ -608,7 +608,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 		ClusterID:            net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32(),
 	}
 
-	adjRIBOut := New(nil, peerAttrsBestOnlyRR, filter.NewAcceptAllFilterChain())
+	adjRIBOut := New(nil, sessionAttrsBestOnlyRR, filter.NewAcceptAllFilterChain())
 
 	tests := []struct {
 		name          string
@@ -641,7 +641,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						},
 						ASPath: &types.ASPath{},
 						ClusterList: &types.ClusterList{
-							peerAttrsBestOnlyRR.ClusterID,
+							sessionAttrsBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -695,7 +695,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							peerAttrsBestOnlyRR.ClusterID,
+							sessionAttrsBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -756,7 +756,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							peerAttrsBestOnlyRR.ClusterID,
+							sessionAttrsBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -789,7 +789,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							peerAttrsBestOnlyRR.ClusterID,
+							sessionAttrsBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -850,7 +850,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						},
 						PathIdentifier: 0,
 						ClusterList: &types.ClusterList{
-							peerAttrsBestOnlyRR.ClusterID,
+							sessionAttrsBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -877,7 +877,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						},
 						PathIdentifier: 0,
 						ClusterList: &types.ClusterList{
-							peerAttrsBestOnlyRR.ClusterID,
+							sessionAttrsBestOnlyRR.ClusterID,
 						},
 					},
 				}),
@@ -919,7 +919,7 @@ func TestBestPathOnlyRRClient(t *testing.T) {
 						UnknownAttributes: nil,
 						PathIdentifier:    0,
 						ClusterList: &types.ClusterList{
-							peerAttrsBestOnlyRR.ClusterID,
+							sessionAttrsBestOnlyRR.ClusterID,
 							23,
 						},
 					},
