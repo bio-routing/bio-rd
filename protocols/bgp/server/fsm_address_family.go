@@ -80,25 +80,25 @@ func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
 }
 
 type adjRIBInFactoryI interface {
-	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn
+	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, sessionAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn
 }
 
 type adjRIBInFactory struct{}
 
-func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, peerAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn {
-	return adjRIBIn.New(exportFilterChain, contributingASNs, peerAttrs)
+func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, sessionAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn {
+	return adjRIBIn.New(exportFilterChain, contributingASNs, sessionAttrs)
 }
 
 func (f *fsmAddressFamily) init() {
 	contributingASNs := f.rib.GetContributingASNs()
-	peerAttrs := f.getSessionAttrs()
+	sessionAttrs := f.getSessionAttrs()
 
-	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, peerAttrs)
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, sessionAttrs)
 	contributingASNs.Add(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Register(f.rib)
 
-	f.adjRIBOut = adjRIBOut.New(f.rib, peerAttrs, f.exportFilterChain)
+	f.adjRIBOut = adjRIBOut.New(f.rib, sessionAttrs, f.exportFilterChain)
 
 	f.updateSender = newUpdateSender(f)
 	f.updateSender.Start(time.Millisecond * 5)
