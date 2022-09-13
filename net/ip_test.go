@@ -374,11 +374,29 @@ func TestIPFromBytes(t *testing.T) {
 		wantFail bool
 	}{
 		{
-			name:  "IPV4: 172.217.16.195",
+			name:  "IPv4, 4 bytes: 172.217.16.195",
 			bytes: []byte{172, 217, 16, 195},
 			expected: IP{
 				higher:   0,
 				lower:    2899906755,
+				isLegacy: true,
+			},
+		},
+		{
+			name:  "IPv4, 16 bytes: 172.217.16.195",
+			bytes: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 172, 217, 16, 195},
+			expected: IP{
+				higher:   0,
+				lower:    2899906755,
+				isLegacy: true,
+			},
+		},
+		{
+			name:  "IPv4, from Go net.IPv4()",
+			bytes: net.IPv4(224, 0, 0, 1),
+			expected: IP{
+				higher:   0,
+				lower:    3758096385,
 				isLegacy: true,
 			},
 		},

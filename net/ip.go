@@ -112,8 +112,9 @@ func IPv4FromBytes(b []byte) IP {
 
 // IPFromBytes returns an IP address for a byte slice
 func IPFromBytes(b []byte) (IP, error) {
-	if len(b) == 4 {
-		return IPv4FromOctets(b[0], b[1], b[2], b[3]), nil
+	ip4 := net.IP(b).To4()
+	if ip4 != nil {
+		return IPv4FromOctets(ip4[0], ip4[1], ip4[2], ip4[3]), nil
 	}
 
 	if len(b) == 16 {
