@@ -26,6 +26,14 @@ type RouterInterface interface {
 	Ready(vrf uint64, afi uint16) bool
 }
 
+// RouterConfig represents the configuration required for BMP router
+type RouterConfig struct {
+	Passive          bool
+	IgnorePeerASNs   []uint32
+	IgnorePrePolicy  bool
+	IgnorePostPolicy bool
+}
+
 // Router represents a BMP enabled route in BMP context
 type Router struct {
 	name             string
@@ -45,11 +53,13 @@ type Router struct {
 	runMu            sync.Mutex
 	stop             chan struct{}
 
-	ribClients      map[afiClient]struct{}
-	ribClientsMu    sync.Mutex
-	adjRIBInFactory adjRIBInFactoryI
-	ignorePeerASNs  []uint32
-	ignoredPeers    map[bnet.IP]struct{}
+	ribClients       map[afiClient]struct{}
+	ribClientsMu     sync.Mutex
+	adjRIBInFactory  adjRIBInFactoryI
+	ignorePeerASNs   []uint32
+	ignoredPeers     map[bnet.IP]struct{}
+	ignorePrePolicy  bool
+	ignorePostPolicy bool
 
 	counters routerCounters
 }
@@ -74,11 +84,11 @@ type neighbor struct {
 	opt         *packet.DecodeOptions
 }
 
-func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI, ignorePeerASNs []uint32) *Router {
+func newRouter(addr net.IP, port uint16, arif adjRIBInFactoryI, config RouterConfig) *Router {
 	return &Router{
 		address:          addr,
 		port:             port,
-		passive:          passive,
+		passive:          config.Passive,
 		reconnectTimeMin: 30,  // Suggested by RFC 7854
 		reconnectTimeMax: 720, // Suggested by RFC 7854
 		reconnectTimer:   time.NewTimer(time.Duration(0)),
@@ -88,8 +98,10 @@ func newRouter(addr net.IP, port uint16, passive bool, arif adjRIBInFactoryI, ig
 		stop:             make(chan struct{}),
 		ribClients:       make(map[afiClient]struct{}),
 		adjRIBInFactory:  arif,
-		ignorePeerASNs:   ignorePeerASNs,
+		ignorePeerASNs:   config.IgnorePeerASNs,
 		ignoredPeers:     make(map[bnet.IP]struct{}),
+		ignorePrePolicy:  config.IgnorePrePolicy,
+		ignorePostPolicy: config.IgnorePostPolicy,
 	}
 }
 
@@ -214,7 +226,11 @@ func (r *Router) processMsg(msg []byte) {
 func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	atomic.AddUint64(&r.counters.routeMonitoringMessages, 1)
 
-	if !msg.PerPeerHeader.GetLFlag() { // we're only interested in post-policy routes
+	// Ignore pre- / post-policy UPDATEs if configured
+	if r.ignorePrePolicy && !msg.PerPeerHeader.GetLFlag() {
+		return
+	}
+	if r.ignorePostPolicy && msg.PerPeerHeader.GetLFlag() {
 		return
 	}
 
