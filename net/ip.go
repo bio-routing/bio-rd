@@ -209,6 +209,16 @@ func (ip IP) Bytes() []byte {
 	return ip.bytesIPv4()
 }
 
+func (ip IP) To16BytesArray() [16]byte {
+	ret := [16]byte{}
+
+	for i, x := range ip.bytesIPv6() {
+		ret[i] = x
+	}
+
+	return ret
+}
+
 func (ip *IP) bytesIPv4() []byte {
 	u := ip.ToUint32()
 	return []byte{
