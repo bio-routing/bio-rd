@@ -341,3 +341,65 @@ func TestDecodePeerUp(t *testing.T) {
 		assert.Equalf(t, test.expected, pu, "Test %q", test.name)
 	}
 }
+
+func TestSerializePeerUpNotification(t *testing.T) {
+	tests := []struct {
+		name     string
+		pun      *PeerUpNotification
+		expected []byte
+	}{
+		{
+			name: "Test #1",
+			pun: &PeerUpNotification{
+				CommonHeader: &CommonHeader{
+					Version: 1,
+					MsgType: PeerDownNotificationType,
+				},
+				PerPeerHeader: &PerPeerHeader{
+					PeerType:              0,
+					PeerFlags:             0b10000000,
+					PeerDistinguisher:     23,
+					PeerAddress:           [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 3},
+					PeerAS:                13335,
+					PeerBGPID:             1337,
+					Timestamp:             1662995552,
+					TimestampMicroSeconds: 42,
+				},
+				LocalAddress: [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 3},
+				LocalPort:    179,
+				RemotePort:   54321,
+				SentOpenMsg: []byte{
+					0xff, 0xff,
+				},
+				ReceivedOpenMsg: []byte{
+					0xfe, 0xfe,
+				},
+				Information: []byte{
+					0xaa, 0xbb,
+				},
+			},
+			expected: []byte{
+				0x1,
+				0x0, 0x0, 0x0, 0x4a,
+				0x2,
+				0x0, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+				0x0, 0x17, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa, 0x1,
+				0x2, 0x3, 0x0, 0x0, 0x34, 0x17, 0x0, 0x0,
+				0x5, 0x39, 0x63, 0x1f, 0x4c, 0x60, 0x0, 0x0,
+				0x0, 0x2a, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+				0x0, 0x0, 0x0, 0x0, 0x0, 0xa, 0x1, 0x2, 0x3,
+				0x0, 0xb3, 0xd4, 0x31,
+				0xff, 0xff,
+				0xfe, 0xfe,
+				0xaa, 0xbb,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		test.pun.Serialize(buf)
+		assert.Equal(t, test.expected, buf.Bytes(), test.name)
+	}
+}

@@ -166,3 +166,51 @@ func TestDecodePeerDownNotification(t *testing.T) {
 		assert.Equalf(t, test.expected, p, "Test %q", test.name)
 	}
 }
+
+func TestSerializePeerDownNotification(t *testing.T) {
+	tests := []struct {
+		name     string
+		pdn      *PeerDownNotification
+		expected []byte
+	}{
+		{
+			name: "Test #1",
+			pdn: &PeerDownNotification{
+				CommonHeader: &CommonHeader{
+					Version: 1,
+					MsgType: PeerDownNotificationType,
+				},
+				PerPeerHeader: &PerPeerHeader{
+					PeerType:              0,
+					PeerFlags:             0b10000000,
+					PeerDistinguisher:     23,
+					PeerAddress:           [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 2, 3},
+					PeerAS:                13335,
+					PeerBGPID:             1337,
+					Timestamp:             1662995552,
+					TimestampMicroSeconds: 42,
+				},
+				Reason: 3,
+				Data:   []byte{23, 42},
+			},
+			expected: []byte{
+				0x1,
+				0x0, 0x0, 0x0, 0x33,
+				0x2,
+				0x0, 0x80,
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x17,
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+				0x0, 0x0, 0x0, 0x0, 0xa, 0x1, 0x2, 0x3,
+				0x0, 0x0, 0x34, 0x17, 0x0, 0x0, 0x5, 0x39,
+				0x63, 0x1f, 0x4c, 0x60, 0x0, 0x0, 0x0, 0x2a,
+				0x3,
+				0x17, 0x2a},
+		},
+	}
+
+	for _, test := range tests {
+		buf := bytes.NewBuffer(nil)
+		test.pdn.Serialize(buf)
+		assert.Equal(t, test.expected, buf.Bytes(), test.name)
+	}
+}

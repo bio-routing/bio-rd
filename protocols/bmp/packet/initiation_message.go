@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/bio-routing/tflow2/convert"
 )
 
 // InitiationMessage represents an initiation message
@@ -36,4 +38,23 @@ func decodeInitiationMessage(buf *bytes.Buffer, ch *CommonHeader) (Msg, error) {
 	}
 
 	return im, nil
+}
+
+func (im *InitiationMessage) Serialize(buf *bytes.Buffer) {
+	im.setSizes()
+	im.CommonHeader.Serialize(buf)
+
+	for _, tlv := range im.TLVs {
+		buf.Write(convert.Uint16Byte(tlv.InformationType))
+		buf.Write(convert.Uint16Byte(tlv.InformationLength))
+		buf.Write(tlv.Information)
+	}
+}
+
+func (im *InitiationMessage) setSizes() {
+	im.CommonHeader.MsgLength = CommonHeaderLen
+	for _, tlv := range im.TLVs {
+		tlv.InformationLength = uint16(len(tlv.Information))
+		im.CommonHeader.MsgLength += uint32(MinInformationTLVLen + tlv.InformationLength)
+	}
 }
