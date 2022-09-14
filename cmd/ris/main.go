@@ -50,9 +50,11 @@ func main() {
 	}
 
 	b := server.NewServer(server.BMPServerConfig{
-		KeepalivePeriod: time.Duration(*tcpKeepaliveInterval) * time.Second,
-		AcceptAny:       *allowAny,
-		IgnorePeerASNs:  cfg.IgnorePeerASNs,
+		KeepalivePeriod:  time.Duration(*tcpKeepaliveInterval) * time.Second,
+		AcceptAny:        *allowAny,
+		IgnorePeerASNs:   cfg.IgnorePeerASNs,
+		IgnorePrePolicy:  true,
+		IgnorePostPolicy: false,
 	})
 
 	if *bmpListenAddr != "" {

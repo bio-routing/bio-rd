@@ -26,21 +26,25 @@ type BMPServerInterface interface {
 
 // BMPServer represents a BMP server
 type BMPServer struct {
-	routers         map[string]*Router
-	routersMu       sync.RWMutex
-	ribClients      map[string]map[afiClient]struct{}
-	keepalivePeriod time.Duration
-	metrics         *bmpMetricsService
-	listener        net.Listener
-	adjRIBInFactory adjRIBInFactoryI
-	acceptAny       bool
-	ignorePeerASNs  []uint32
+	routers          map[string]*Router
+	routersMu        sync.RWMutex
+	ribClients       map[string]map[afiClient]struct{}
+	keepalivePeriod  time.Duration
+	metrics          *bmpMetricsService
+	listener         net.Listener
+	adjRIBInFactory  adjRIBInFactoryI
+	acceptAny        bool
+	ignorePeerASNs   []uint32
+	ignorePrePolicy  bool
+	ignorePostPolicy bool
 }
 
 type BMPServerConfig struct {
-	KeepalivePeriod time.Duration
-	AcceptAny       bool
-	IgnorePeerASNs  []uint32
+	KeepalivePeriod  time.Duration
+	AcceptAny        bool
+	IgnorePeerASNs   []uint32
+	IgnorePrePolicy  bool
+	IgnorePostPolicy bool
 }
 
 type afiClient struct {
@@ -51,12 +55,14 @@ type afiClient struct {
 // NewServer creates a new BMP server
 func NewServer(cfg BMPServerConfig) *BMPServer {
 	b := &BMPServer{
-		routers:         make(map[string]*Router),
-		ribClients:      make(map[string]map[afiClient]struct{}),
-		keepalivePeriod: cfg.KeepalivePeriod,
-		adjRIBInFactory: adjRIBInFactory{},
-		acceptAny:       cfg.AcceptAny,
-		ignorePeerASNs:  cfg.IgnorePeerASNs,
+		routers:          make(map[string]*Router),
+		ribClients:       make(map[string]map[afiClient]struct{}),
+		keepalivePeriod:  cfg.KeepalivePeriod,
+		adjRIBInFactory:  adjRIBInFactory{},
+		acceptAny:        cfg.AcceptAny,
+		ignorePeerASNs:   cfg.IgnorePeerASNs,
+		ignorePrePolicy:  cfg.IgnorePrePolicy,
+		ignorePostPolicy: cfg.IgnorePostPolicy,
 	}
 
 	b.metrics = &bmpMetricsService{b}
@@ -229,7 +235,13 @@ func (b *BMPServer) AddRouter(addr net.IP, port uint16, passive bool, dynamic bo
 }
 
 func (b *BMPServer) _addRouter(addr net.IP, port uint16, passive bool, dynamic bool) error {
-	r := newRouter(addr, port, passive, b.adjRIBInFactory, b.ignorePeerASNs)
+	rCfg := RouterConfig{
+		Passive:          passive,
+		IgnorePeerASNs:   b.ignorePeerASNs,
+		IgnorePrePolicy:  b.ignorePrePolicy,
+		IgnorePostPolicy: b.ignorePostPolicy,
+	}
+	r := newRouter(addr, port, b.adjRIBInFactory, rCfg)
 	if _, exists := b.routers[r.address.String()]; exists {
 		return fmt.Errorf("router %s already configured,", r.address.String())
 	}

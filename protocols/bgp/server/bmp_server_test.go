@@ -14,7 +14,11 @@ func TestBMPServer(t *testing.T) {
 		KeepalivePeriod: time.Second,
 	})
 
-	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119, false, &adjRIBInFactory{}, []uint32{13335})
+	rCfg := RouterConfig{
+		Passive:        false,
+		IgnorePeerASNs: []uint32{13335},
+	}
+	rtr := newRouter(net.IP{10, 0, 255, 1}, 30119, &adjRIBInFactory{}, rCfg)
 	_, pipe := net.Pipe()
 	rtr.con = pipe
 	srv.routers[rtr.address.String()] = rtr
