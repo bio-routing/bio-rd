@@ -713,3 +713,28 @@ func TestIPv4FromBytes(t *testing.T) {
 	resultInvalid := IPv4FromBytes([]byte{1, 2, 3, 4, 5})
 	assert.Equal(t, expectedInvalid, resultInvalid)
 }
+
+func TestTo16BytesArray(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       IP
+		expected [16]byte
+	}{
+		{
+			name:     "IPv4 172.217.16.195",
+			ip:       IPv4(2899906755),
+			expected: [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 172, 217, 16, 195},
+		},
+		{
+			name:     "IPv6 2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
+			ip:       IPv6(2306131596687708724, 6230974922281175806),
+			expected: [16]byte{32, 1, 6, 120, 1, 224, 18, 52, 86, 120, 222, 173, 190, 239, 202, 254},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, test.ip.To16BytesArray())
+		})
+	}
+}
