@@ -183,21 +183,67 @@ func (ip IP) String() string {
 }
 
 func (ip IP) stringIPv6() string {
-	return fmt.Sprintf("%X:%X:%X:%X:%X:%X:%X:%X",
-		ip.higher&0xFFFF000000000000>>48,
-		ip.higher&0x0000FFFF00000000>>32,
-		ip.higher&0x00000000FFFF0000>>16,
-		ip.higher&0x000000000000FFFF,
-		ip.lower&0xFFFF000000000000>>48,
-		ip.lower&0x0000FFFF00000000>>32,
-		ip.lower&0x00000000FFFF0000>>16,
-		ip.lower&0x000000000000FFFF)
+	p := ip.Bytes()
+	// Find longest run of zeros.
+	e0 := -1
+	e1 := -1
+	for i := 0; i < int(ip.SizeBytes()); i += 2 {
+		j := i
+		for j < int(ip.SizeBytes()) && p[j] == 0 && p[j+1] == 0 {
+			j += 2
+		}
+		if j > i && j-i > e1-e0 {
+			e0 = i
+			e1 = j
+			i = j
+		}
+	}
+	// The symbol "::" MUST NOT be used to shorten just one 16 bit 0 field.
+	if e1-e0 <= 2 {
+		e0 = -1
+		e1 = -1
+	}
+
+	const maxLen = len("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+	b := make([]byte, 0, maxLen)
+
+	// Print with possible :: in place of run of zeros
+	for i := 0; i < int(ip.SizeBytes()); i += 2 {
+		if i == e0 {
+			b = append(b, ':', ':')
+			i = e1
+			if i >= int(ip.SizeBytes()) {
+				break
+			}
+		} else if i > 0 {
+			b = append(b, ':')
+		}
+		b = appendHex(b, (uint32(p[i])<<8)|uint32(p[i+1]))
+	}
+
+	return string(b)
 }
 
 func (ip IP) stringIPv4() string {
 	b := ip.Bytes()
 
 	return fmt.Sprintf("%d.%d.%d.%d", b[0], b[1], b[2], b[3])
+}
+
+// Convert i to a hexadecimal string. Leading zeros are not printed.
+func appendHex(dst []byte, i uint32) []byte {
+	if i == 0 {
+		return append(dst, '0')
+	}
+
+	const hexDigit = "0123456789abcdef"
+	for j := 7; j >= 0; j-- {
+		v := i >> uint(j*4)
+		if v > 0 {
+			dst = append(dst, hexDigit[v&0xf])
+		}
+	}
+	return dst
 }
 
 // Bytes returns the byte representation of an IP address
