@@ -174,7 +174,7 @@ func (ip *IP) Compare(other *IP) int8 {
 }
 
 // String returns string representation of an IP address
-func (ip *IP) String() string {
+func (ip IP) String() string {
 	if !ip.isLegacy {
 		return ip.stringIPv6()
 	}
@@ -182,7 +182,7 @@ func (ip *IP) String() string {
 	return ip.stringIPv4()
 }
 
-func (ip *IP) stringIPv6() string {
+func (ip IP) stringIPv6() string {
 	return fmt.Sprintf("%X:%X:%X:%X:%X:%X:%X:%X",
 		ip.higher&0xFFFF000000000000>>48,
 		ip.higher&0x0000FFFF00000000>>32,
@@ -194,7 +194,7 @@ func (ip *IP) stringIPv6() string {
 		ip.lower&0x000000000000FFFF)
 }
 
-func (ip *IP) stringIPv4() string {
+func (ip IP) stringIPv4() string {
 	b := ip.Bytes()
 
 	return fmt.Sprintf("%d.%d.%d.%d", b[0], b[1], b[2], b[3])
