@@ -620,15 +620,15 @@ func TestBGPPathString(t *testing.T) {
 				Communities:      &types.Communities{},
 				LargeCommunities: &types.LargeCommunities{},
 			},
-			expectedString: "Local Pref: 0, Origin: IGP, AS Path: , BGP type: external, NEXT HOP: 0:0:0:0:0:0:0:0, MED: 0, Path ID: 0, Source: 0:0:0:0:0:0:0:0, OnlyToCustomer: 2342, Communities: [], LargeCommunities: [], OriginatorID: 0.0.0.23, ClusterList 0.0.0.10 0.0.0.20",
+			expectedString: "Local Pref: 0, Origin: IGP, AS Path: , BGP type: external, NEXT HOP: ::, MED: 0, Path ID: 0, Source: ::, OnlyToCustomer: 2342, Communities: [], LargeCommunities: [], OriginatorID: 0.0.0.23, ClusterList 0.0.0.10 0.0.0.20",
 			expectedPrint: `		Local Pref: 0
 		Origin: IGP
 		AS Path: 
 		BGP type: external
-		NEXT HOP: 0:0:0:0:0:0:0:0
+		NEXT HOP: ::
 		MED: 0
 		Path ID: 0
-		Source: 0:0:0:0:0:0:0:0
+		Source: ::
 		OnlyToCustomer: 2342
 		Communities: []
 		LargeCommunities: []

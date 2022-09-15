@@ -242,15 +242,19 @@ func TestIPString(t *testing.T) {
 		},
 		{
 			ip:       IPv6(0, 0),
-			expected: "0:0:0:0:0:0:0:0",
+			expected: "::",
+		},
+		{
+			ip:       IPv6FromBlocks(9026, 2069, 0, 0, 0, 0, 0, 4369),
+			expected: "2342:815::1111",
 		},
 		{
 			ip:       IPv6(2306131596687708724, 6230974922281175806),
-			expected: "2001:678:1E0:1234:5678:DEAD:BEEF:CAFE",
+			expected: "2001:678:1e0:1234:5678:dead:beef:cafe",
 		},
 		{
 			ip:       IPv6(^uint64(0), ^uint64(0)),
-			expected: "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF",
+			expected: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		},
 	}
 
