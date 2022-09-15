@@ -39,13 +39,13 @@ func init() {
 }
 
 // NewCollector creates a new collector instance for the given BMP server
-func NewCollector(server *server.BMPServer) prometheus.Collector {
+func NewCollector(server *server.BMPReceiver) prometheus.Collector {
 	return &bmpCollector{server}
 }
 
 // bmpCollector provides a collector for BGP metrics of BIO to use with Prometheus
 type bmpCollector struct {
-	server *server.BMPServer
+	server *server.BMPReceiver
 }
 
 // Describe conforms to the prometheus collector interface

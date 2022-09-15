@@ -9,7 +9,7 @@ import (
 )
 
 type bmpMetricsService struct {
-	server *BMPServer
+	server *BMPReceiver
 }
 
 func (b *bmpMetricsService) metrics() *bgp_metrics.BMPMetrics {

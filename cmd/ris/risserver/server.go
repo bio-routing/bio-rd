@@ -43,11 +43,11 @@ func init() {
 // Server represents an RoutingInformationService server
 type Server struct {
 	pb.UnimplementedRoutingInformationServiceServer
-	bmp server.BMPServerInterface
+	bmp server.BMPReceiverInterface
 }
 
 // NewServer creates a new server
-func NewServer(b server.BMPServerInterface) *Server {
+func NewServer(b server.BMPReceiverInterface) *Server {
 	return &Server{
 		bmp: b,
 	}
