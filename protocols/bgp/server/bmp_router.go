@@ -248,7 +248,13 @@ func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	opt := s.fsm.decodeOptions()
 	opt.Use32BitASN = !msg.PerPeerHeader.GetAFlag()
 
-	s.msgReceived(msg.BGPUpdate, opt, msg.PerPeerHeader.GetLFlag(), msg.PerPeerHeader.Timestamp)
+	// Make sure timestamp is set even if the router didn't set it
+	ts := msg.PerPeerHeader.Timestamp
+	if ts == 0 {
+		ts = uint32(time.Now().Unix())
+	}
+
+	s.msgReceived(msg.BGPUpdate, opt, msg.PerPeerHeader.GetLFlag(), ts)
 }
 
 func (r *Router) processInitiationMsg(msg *bmppkt.InitiationMessage) {
