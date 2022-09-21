@@ -185,14 +185,15 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool
 			f.endOfRIBMarkerReceived.Store(true)
 		}
 
-		f.withdraws(u, bmpPostPolicy)
+		f.withdraws(u, bmpPostPolicy, timestamp)
 		f.updates(u, bmpPostPolicy, timestamp)
 	}
 }
 
-func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate, bmpPostPolicy bool) {
+func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate, bmpPostPolicy bool, timestamp uint32) {
 	for r := u.WithdrawnRoutes; r != nil; r = r.Next {
 		f.adjRIBIn.RemovePath(r.Prefix, &route.Path{
+			LTime: timestamp,
 			BGPPath: &route.BGPPath{
 				BMPPostPolicy:  bmpPostPolicy,
 				PathIdentifier: r.PathIdentifier,
