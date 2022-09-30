@@ -226,14 +226,12 @@ func (r *Router) processMsg(msg []byte) {
 func (r *Router) processRouteMonitoringMsg(msg *bmppkt.RouteMonitoringMsg) {
 	atomic.AddUint64(&r.counters.routeMonitoringMessages, 1)
 
-	// Ignore pre- / post-policy UPDATEs if configured
-	if r.ignorePrePolicy && !msg.PerPeerHeader.GetLFlag() {
-		return
-	}
-	if r.ignorePostPolicy && msg.PerPeerHeader.GetLFlag() {
+	// Ignore pre / post policy messages if configured
+	if r.ignorePrePolicy && !msg.PerPeerHeader.GetLFlag() || r.ignorePostPolicy && msg.PerPeerHeader.GetLFlag() {
 		return
 	}
 
+	// Ignore messages for peers with ASN found in ignorePeerASNs
 	if _, exists := r.ignoredPeers[peerAddrToBNetAddr(msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.GetIPVersion())]; exists {
 		return
 	}
@@ -328,19 +326,16 @@ func (r *Router) processTerminationMsg(msg *bmppkt.TerminationMessage) {
 }
 
 func (r *Router) processPeerDownNotification(msg *bmppkt.PeerDownNotification) {
-	log.WithFields(log.Fields{
-		"address":            r.address.String(),
-		"router":             r.name,
-		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
-		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
-	}).Infof("peer down notification received")
 	atomic.AddUint64(&r.counters.peerDownNotificationMessages, 1)
 
 	peerAddr := peerAddrToBNetAddr(msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.GetIPVersion())
 	if _, exists := r.ignoredPeers[peerAddr]; exists {
 		delete(r.ignoredPeers, peerAddr)
+		logPeerUpDownNotification(r, msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.PeerDistinguisher, false, true)
 		return
 	}
+
+	logPeerUpDownNotification(r, msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.PeerDistinguisher, false, false)
 
 	err := r.neighborManager.neighborDown(msg.PerPeerHeader.PeerDistinguisher, msg.PerPeerHeader.PeerAddress)
 	if err != nil {
@@ -371,20 +366,17 @@ func (r *Router) isIgnoredPeerASN(asn uint32) bool {
 
 func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error {
 	atomic.AddUint64(&r.counters.peerUpNotificationMessages, 1)
-	log.WithFields(log.Fields{
-		"address":            r.address.String(),
-		"router":             r.name,
-		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher),
-		"peer_address":       addrToNetIP(msg.PerPeerHeader.PeerAddress).String(),
-	}).Infof("peer up notification received")
 
 	peerAddress := peerAddrToBNetAddr(msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.GetIPVersion())
 	localAddress := peerAddrToBNetAddr(msg.LocalAddress, msg.PerPeerHeader.GetIPVersion())
 
 	if r.isIgnoredPeerASN(msg.PerPeerHeader.PeerAS) {
 		r.ignoredPeers[peerAddress] = struct{}{}
+		logPeerUpDownNotification(r, msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.PeerDistinguisher, true, true)
 		return nil
 	}
+
+	logPeerUpDownNotification(r, msg.PerPeerHeader.PeerAddress, msg.PerPeerHeader.PeerDistinguisher, true, false)
 
 	if len(msg.SentOpenMsg) < packet.MinOpenLen {
 		return fmt.Errorf("received peer up notification for %v: Invalid sent open message: %v", msg.PerPeerHeader.PeerAddress, msg.SentOpenMsg)
@@ -542,4 +534,19 @@ func addrToNetIP(a [16]byte) net.IP {
 	}
 
 	return net.IP(a[12:])
+}
+
+func logPeerUpDownNotification(r *Router, peerAddr [16]byte, RD uint64, up bool, ignored bool) {
+	msg := "peer down notification received"
+	if up {
+		msg = "peer up notification received"
+	}
+
+	log.WithFields(log.Fields{
+		"address":            r.address.String(),
+		"router":             r.name,
+		"peer_address":       addrToNetIP(peerAddr).String(),
+		"peer_distinguisher": vrf.RouteDistinguisherHumanReadable(RD),
+		"ignored":            ignored,
+	}).Infof(msg)
 }
