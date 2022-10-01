@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/route/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,6 +64,26 @@ func TestPathCopy(t *testing.T) {
 		{
 			name: "nil test",
 		},
+		{
+			name:     "Empty path",
+			p:        &Path{},
+			expected: &Path{},
+		},
+		{
+			name:     "Static path",
+			p:        &Path{Type: StaticPathType},
+			expected: &Path{Type: StaticPathType},
+		},
+		{
+			name:     "BGP path",
+			p:        &Path{Type: BGPPathType},
+			expected: &Path{Type: BGPPathType},
+		},
+		{
+			name:     "FIB path",
+			p:        &Path{Type: FIBPathType},
+			expected: &Path{Type: FIBPathType},
+		},
 	}
 
 	for _, test := range tests {
@@ -79,10 +100,87 @@ func TestEqual(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "Different types",
-			p:        &Path{Type: 100},
-			q:        &Path{Type: 200},
+			name:     "Both nil",
 			expected: false,
+		},
+		{
+			name:     "p nil",
+			q:        &Path{Type: StaticPathType},
+			expected: false,
+		},
+		{
+			name:     "q nil",
+			p:        &Path{Type: StaticPathType},
+			expected: false,
+		},
+
+		{
+			name:     "Different types BGP/Static",
+			p:        &Path{Type: BGPPathType},
+			q:        &Path{Type: StaticPathType},
+			expected: false,
+		},
+		{
+			name:     "Different types OSPF/Static",
+			p:        &Path{Type: OSPFPathType},
+			q:        &Path{Type: StaticPathType},
+			expected: false,
+		},
+
+		{
+			name:     "Both Static Paths",
+			p:        &Path{Type: StaticPathType, StaticPath: &StaticPath{NextHop: &bnet.IP{}}},
+			q:        &Path{Type: StaticPathType, StaticPath: &StaticPath{NextHop: &bnet.IP{}}},
+			expected: true,
+		},
+		{
+			name: "Both BGP Paths",
+			p: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						LocalPref: 100,
+						MED:       1,
+						Origin:    123,
+						NextHop:   bnet.IPv4(0).Ptr(),
+						Source:    bnet.IPv4(0).Ptr(),
+					},
+					ASPathLen: 10,
+				},
+			},
+			q: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						LocalPref: 100,
+						MED:       1,
+						Origin:    123,
+						NextHop:   bnet.IPv4(0).Ptr(),
+						Source:    bnet.IPv4(0).Ptr(),
+					},
+					ASPathLen: 10,
+				},
+			},
+			expected: true,
+		},
+
+		{
+			name: "Both FIB paths",
+			p: &Path{
+				Type: FIBPathType,
+				FIBPath: &FIBPath{
+					NextHop: bnet.IPv4(0).Ptr(),
+					Src:     bnet.IPv4(0).Ptr(),
+				},
+			},
+			q: &Path{
+				Type: FIBPathType,
+				FIBPath: &FIBPath{
+					NextHop: bnet.IPv4(0).Ptr(),
+					Src:     bnet.IPv4(0).Ptr(),
+				},
+			},
+			expected: true,
 		},
 	}
 
@@ -746,6 +844,19 @@ func TestPathHiddenReasonString(t *testing.T) {
 		reason string
 	}{
 		{
+			name: "Unknown",
+			source: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: bnet.IPv4(123).Ptr(),
+					},
+				},
+				HiddenReason: 255,
+			},
+			reason: "unknown",
+		},
+		{
 			name: "BGPPath without hidden reason",
 			source: &Path{
 				Type: BGPPathType,
@@ -839,5 +950,239 @@ func TestPathHiddenReasonString(t *testing.T) {
 
 	for _, test := range tests {
 		assert.Equalf(t, test.reason, test.source.HiddenReasonString(), test.name)
+	}
+}
+
+func TestString(t *testing.T) {
+	staticPath := &Path{
+		Type: StaticPathType,
+		StaticPath: &StaticPath{
+			NextHop: &bnet.IP{},
+		},
+	}
+
+	bgpPath := &Path{
+		Type: BGPPathType,
+		BGPPath: &BGPPath{
+			BGPPathA: &BGPPathA{},
+		},
+	}
+
+	fibPath := &Path{
+		Type: FIBPathType,
+		FIBPath: &FIBPath{
+			Src:     &bnet.IP{},
+			NextHop: &bnet.IP{},
+		},
+	}
+
+	tests := []struct {
+		name   string
+		path   *Path
+		result string
+	}{
+		{
+			name:   "unknown",
+			path:   &Path{},
+			result: "Unknown path type. Probably not implemented yet (0)",
+		},
+		{
+			name:   "Static Path",
+			path:   staticPath,
+			result: staticPath.String(),
+		},
+		{
+			name:   "BGP path",
+			path:   bgpPath,
+			result: bgpPath.BGPPath.String(),
+		},
+		{
+			name:   "FIB path",
+			path:   fibPath,
+			result: fibPath.String(),
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equalf(t, test.result, test.path.String(), test.name)
+	}
+}
+
+func TestPrint(t *testing.T) {
+	tests := []struct {
+		name   string
+		path   *Path
+		result string
+	}{
+		{
+			name:   "unknown",
+			path:   &Path{},
+			result: "\tProtocol: unknown\n\tHidden: no\n",
+		},
+		{
+			name:   "Static Path",
+			path:   &Path{Type: StaticPathType, StaticPath: &StaticPath{NextHop: &bnet.IP{}}},
+			result: "\tProtocol: static\n\tHidden: no\n\t\tNext hop: ::\n",
+		},
+		{
+			name: "Static Path (hidden)",
+			path: &Path{
+				Type:         StaticPathType,
+				StaticPath:   &StaticPath{NextHop: &bnet.IP{}},
+				HiddenReason: HiddenReasonFilteredByPolicy,
+			},
+			result: "\tProtocol: static\n\tHidden: yes (Filtered by Policy)\n\t\tNext hop: ::\n",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equalf(t, test.result, test.path.Print(), test.name)
+	}
+}
+
+func TestToProto(t *testing.T) {
+	ip := bnet.IPv4FromOctets(10, 0, 0, 0).Ptr()
+	bgpPath := &Path{
+		Type: BGPPathType,
+		BGPPath: &BGPPath{
+			BGPPathA: &BGPPathA{},
+		},
+	}
+
+	tests := []struct {
+		name   string
+		path   *Path
+		result *api.Path
+	}{
+		{
+			name:   "Empty path",
+			path:   &Path{},
+			result: &api.Path{},
+		},
+
+		{
+			name: "Static Path (empty)",
+			path: &Path{
+				Type:       StaticPathType,
+				StaticPath: nil,
+			},
+			result: &api.Path{
+				Type:       api.Path_Static,
+				StaticPath: nil,
+			},
+		},
+		{
+			name: "Static Path with NH, LTime",
+			path: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: ip,
+				},
+				LTime: 2342,
+			},
+			result: &api.Path{
+				Type: api.Path_Static,
+				StaticPath: &api.StaticPath{
+					NextHop: ip.ToProto(),
+				},
+				TimeLearned: 2342,
+			},
+		},
+
+		{
+			name: "BGP path",
+			path: bgpPath,
+			result: &api.Path{
+				Type:    api.Path_BGP,
+				BgpPath: bgpPath.BGPPath.ToProto(),
+			},
+		},
+
+		/*
+		 * Hidden paths
+		 */
+		{
+			name: "Not hidden",
+			path: &Path{
+				HiddenReason: HiddenReasonNone,
+			},
+			result: &api.Path{
+				HiddenReason: api.Path_HiddenReasonNone,
+			},
+		},
+		{
+			name: "Hidden: NH unreach",
+			path: &Path{
+				HiddenReason: HiddenReasonNextHopUnreachable,
+			},
+			result: &api.Path{
+				HiddenReason: api.Path_HiddenReasonNextHopUnreachable,
+			},
+		},
+		{
+			name: "Hidden: Filtered",
+			path: &Path{
+				HiddenReason: HiddenReasonFilteredByPolicy,
+			},
+			result: &api.Path{
+				HiddenReason: api.Path_HiddenReasonFilteredByPolicy,
+			},
+		},
+		{
+			name: "Hidden: AS loop",
+			path: &Path{
+				HiddenReason: HiddenReasonASLoop,
+			},
+			result: &api.Path{
+				HiddenReason: api.Path_HiddenReasonASLoop,
+			},
+		},
+		{
+			name: "Hidden: Our originator ID",
+			path: &Path{
+				HiddenReason: HiddenReasonOurOriginatorID,
+			},
+			result: &api.Path{
+				HiddenReason: api.Path_HiddenReasonOurOriginatorID,
+			},
+		},
+		{
+			name: "Hidden: Cluster loop",
+			path: &Path{
+				HiddenReason: HiddenReasonClusterLoop,
+			},
+			result: &api.Path{
+				HiddenReason: api.Path_HiddenReasonClusterLoop,
+			},
+		},
+		{
+			name: "Hidden: OTC mismatch",
+			path: &Path{
+				HiddenReason: HiddenReasonOTCMismatch,
+			},
+			result: &api.Path{
+				HiddenReason: api.Path_HiddenReasonOTCMismatch,
+			},
+		},
+
+		/*
+			{
+				name:   "Static Path",
+				path:   &Path{Type: StaticPathType, StaticPath: &StaticPath{NextHop: &bnet.IP{}}},
+				result: "\tProtocol: static\n\tHidden: no\n\t\tNext hop: ::\n",
+			},
+			{
+				name: "Static Path (hidden)",
+				path: &Path{
+					Type:         StaticPathType,
+					StaticPath:   &StaticPath{NextHop: &bnet.IP{}},
+					HiddenReason: HiddenReasonFilteredByPolicy,
+				},
+				result: "\tProtocol: static\n\tHidden: yes (Filtered by Policy)\n\t\tNext hop: ::\n",
+			},*/
+	}
+
+	for _, test := range tests {
+		assert.Equalf(t, test.result, test.path.ToProto(), test.name)
 	}
 }

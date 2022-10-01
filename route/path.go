@@ -177,7 +177,7 @@ func pathsContains(needle *Path, haystack []*Path) bool {
 func (p *Path) String() string {
 	switch p.Type {
 	case StaticPathType:
-		return "not implemented yet"
+		return p.StaticPath.String()
 	case BGPPathType:
 		return p.BGPPath.String()
 	case FIBPathType:
@@ -191,7 +191,7 @@ func (p *Path) String() string {
 func (p *Path) Print() string {
 	buf := &strings.Builder{}
 
-	protocol := ""
+	protocol := "unknown"
 	switch p.Type {
 	case StaticPathType:
 		protocol = "static"
@@ -203,9 +203,10 @@ func (p *Path) Print() string {
 
 	fmt.Fprintf(buf, "\tProtocol: %s\n", protocol)
 
-	hr := p.HiddenReasonString()
-	if hr != "" {
-		fmt.Fprintf(buf, "\tHidden Reason: %s\n", hr)
+	if p.IsHidden() {
+		fmt.Fprintf(buf, "\tHidden: yes (%s)\n", p.HiddenReasonString())
+	} else {
+		fmt.Fprintf(buf, "\tHidden: no\n")
 	}
 
 	if p.LTime != 0 {
@@ -215,7 +216,7 @@ func (p *Path) Print() string {
 
 	switch p.Type {
 	case StaticPathType:
-		buf.WriteString("Not implemented yet")
+		buf.WriteString(p.StaticPath.Print())
 	case BGPPathType:
 		buf.WriteString(p.BGPPath.Print())
 	case FIBPathType:
