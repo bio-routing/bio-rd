@@ -1,6 +1,9 @@
 package route
 
 import (
+	"fmt"
+	"strings"
+
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route/api"
 )
@@ -30,6 +33,10 @@ func (s *StaticPath) Compare(t *StaticPath) bool {
 
 // Equal returns true if s and t are euqal
 func (s *StaticPath) Equal(t *StaticPath) bool {
+	if s == nil || t == nil {
+		return false
+	}
+
 	return s.NextHop.Compare(t.NextHop) == 0
 }
 
@@ -45,6 +52,20 @@ func (s *StaticPath) Copy() *StaticPath {
 
 	cp := *s
 	return &cp
+}
+
+// Print all known information about a route in logfile friendly format
+func (s *StaticPath) String() string {
+	return fmt.Sprintf("Next hop: %s, ", s.NextHop)
+}
+
+// Print all known information about a route in human readable form
+func (s *StaticPath) Print() string {
+	buf := &strings.Builder{}
+
+	fmt.Fprintf(buf, "\t\tNext hop: %s\n", s.NextHop)
+
+	return buf.String()
 }
 
 // ToProto converts StaticPath to proto static path
