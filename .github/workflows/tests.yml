@@ -24,11 +24,8 @@ jobs:
 
       # Upload Coverage Report
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
-          file: ./coverage.txt
-          flags: unittests
-          name: codecov-${{ matrix.platform }}-${{ matrix.go-version }}
           fail_ci_if_error: true
 
       - name: Build examples
