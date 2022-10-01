@@ -76,7 +76,7 @@ func observeRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID u
 			if err == io.EOF {
 				return nil
 			}
-			return fmt.Errorf("Receive failed: %w", err)
+			return fmt.Errorf("receive failed: %w", err)
 		}
 
 		if r.EndOfRib {

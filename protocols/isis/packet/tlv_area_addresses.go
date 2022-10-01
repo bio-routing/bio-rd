@@ -69,9 +69,8 @@ func (a *AreaAddressesTLV) Copy() TLV {
 		AreaIDs:   make([]types.AreaID, 0, len(a.AreaIDs)),
 	}
 
-	for _, aid := range a.AreaIDs {
-		res.AreaIDs = append(res.AreaIDs, aid)
-	}
+	res.AreaIDs = append(res.AreaIDs, a.AreaIDs...)
+
 	return res
 }
 

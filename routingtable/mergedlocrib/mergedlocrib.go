@@ -42,7 +42,7 @@ func (rtm *MergedLocRIB) DropAllBySrc(src interface{}) {
 func (rtm *MergedLocRIB) AddRoute(cc interface{}, r *routeapi.Route) error {
 	h, err := hashRoute(r)
 	if err != nil {
-		return fmt.Errorf("Hashing failed: %w", err)
+		return fmt.Errorf("hashing failed: %w", err)
 	}
 
 	rtm.routesMu.Lock()
@@ -63,7 +63,7 @@ func (rtm *MergedLocRIB) AddRoute(cc interface{}, r *routeapi.Route) error {
 func (rtm *MergedLocRIB) RemoveRoute(cc interface{}, r *routeapi.Route) error {
 	h, err := hashRoute(r)
 	if err != nil {
-		return fmt.Errorf("Hashing failed: %w", err)
+		return fmt.Errorf("hashing failed: %w", err)
 	}
 
 	rtm.routesMu.Lock()
@@ -92,13 +92,13 @@ func (rtm *MergedLocRIB) _delRoute(h [sha1.Size]byte, src interface{}, r *routea
 func hashRoute(route *routeapi.Route) ([sha1.Size]byte, error) {
 	m, err := proto.Marshal(route)
 	if err != nil {
-		return [sha1.Size]byte{}, fmt.Errorf("Proto marshal failed: %w", err)
+		return [sha1.Size]byte{}, fmt.Errorf("proto marshal failed: %w", err)
 	}
 
 	h := sha1.New()
 	_, err = h.Write(m)
 	if err != nil {
-		return [sha1.Size]byte{}, fmt.Errorf("Write failed: %w", err)
+		return [sha1.Size]byte{}, fmt.Errorf("write failed: %w", err)
 	}
 	res := [sha1.Size]byte{}
 	x := h.Sum(nil)

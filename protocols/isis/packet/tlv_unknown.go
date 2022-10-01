@@ -25,7 +25,7 @@ func readUnknownTLV(buf *bytes.Buffer, tlvType uint8, tlvLength uint8) (*Unknown
 	}
 
 	if n != int(tlvLength) {
-		return nil, fmt.Errorf("Read of TLVType %d incomplete", pdu.TLVType)
+		return nil, fmt.Errorf("read of TLVType %d incomplete", pdu.TLVType)
 	}
 
 	return pdu, nil

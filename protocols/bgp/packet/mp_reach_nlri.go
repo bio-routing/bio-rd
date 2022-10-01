@@ -42,7 +42,7 @@ func deserializeMultiProtocolReachNLRI(b []byte, opt *DecodeOptions) (MultiProto
 
 	variableLength := len(b) - 4 // 4 <- AFI + SAFI + NextHopLength
 	if variableLength <= 0 {
-		return n, fmt.Errorf("Invalid length of MP_REACH_NLRI: expected more than 4 bytes but got %d", len(b))
+		return n, fmt.Errorf("invalid length of MP_REACH_NLRI: expected more than 4 bytes but got %d", len(b))
 	}
 
 	variable := make([]byte, variableLength)
@@ -60,7 +60,7 @@ func deserializeMultiProtocolReachNLRI(b []byte, opt *DecodeOptions) (MultiProto
 	budget := variableLength
 	if budget < int(nextHopLength) {
 		return MultiProtocolReachNLRI{},
-			fmt.Errorf("Failed to decode next hop IP: expected %d bytes for NLRI, only %d remaining", nextHopLength, budget)
+			fmt.Errorf("failed to decode next hop IP: expected %d bytes for NLRI, only %d remaining", nextHopLength, budget)
 	}
 
 	firstNextHopLength := nextHopLength
@@ -70,7 +70,7 @@ func deserializeMultiProtocolReachNLRI(b []byte, opt *DecodeOptions) (MultiProto
 	}
 	nh, err := bnet.IPFromBytes(variable[:firstNextHopLength])
 	if err != nil {
-		return MultiProtocolReachNLRI{}, fmt.Errorf("Failed to decode next hop IP: %w", err)
+		return MultiProtocolReachNLRI{}, fmt.Errorf("failed to decode next hop IP: %w", err)
 	}
 	n.NextHop = nh.Dedup()
 	budget -= int(nextHopLength)

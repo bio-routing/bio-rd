@@ -42,7 +42,7 @@ func Decode(msg []byte) (Msg, error) {
 	}
 
 	if ch.Version != BMPVersion {
-		return nil, fmt.Errorf("Unsupported BMP version: %d", ch.Version)
+		return nil, fmt.Errorf("unsupported BMP version: %d", ch.Version)
 	}
 
 	switch ch.MsgType {
@@ -96,7 +96,7 @@ func Decode(msg []byte) (Msg, error) {
 
 		return rm, nil
 	default:
-		return nil, fmt.Errorf("Unexpected message type: %d", ch.MsgType)
+		return nil, fmt.Errorf("unexpected message type: %d", ch.MsgType)
 
 	}
 }

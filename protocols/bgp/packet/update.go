@@ -48,17 +48,17 @@ func (b *BGPUpdate) SerializeUpdate(opt *EncodeOptions) ([]byte, error) {
 
 	withdrawnRoutesLen := withdrawBuf.Len()
 	if withdrawnRoutesLen > 65535 {
-		return nil, fmt.Errorf("Invalid Withdrawn Routes Length: %d", withdrawnRoutesLen)
+		return nil, fmt.Errorf("invalid Withdrawn Routes Length: %d", withdrawnRoutesLen)
 	}
 
 	totalPathAttributesLen := pathAttributesBuf.Len()
 	if totalPathAttributesLen > 65535 {
-		return nil, fmt.Errorf("Invalid Total Path Attribute Length: %d", totalPathAttributesLen)
+		return nil, fmt.Errorf("invalid Total Path Attribute Length: %d", totalPathAttributesLen)
 	}
 
 	totalLength := 2 + withdrawnRoutesLen + totalPathAttributesLen + 2 + nlriBuf.Len() + 19
 	if totalLength > 4096 {
-		return nil, fmt.Errorf("Update too long: %d bytes", totalLength)
+		return nil, fmt.Errorf("update too long: %d bytes", totalLength)
 	}
 
 	serializeHeader(buf, uint16(totalLength), UpdateMsg)

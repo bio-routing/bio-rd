@@ -36,7 +36,7 @@ func (e *Handler) MCastJoin(addr MACAddr) error {
 
 	err := syscall.SetsockoptString(e.socket, syscall.SOL_PACKET, syscall.PACKET_ADD_MEMBERSHIP, string(mreq.serialize()))
 	if err != nil {
-		return fmt.Errorf("Setsockopt failed: %w", err)
+		return fmt.Errorf("setsockopt failed: %w", err)
 	}
 
 	return nil

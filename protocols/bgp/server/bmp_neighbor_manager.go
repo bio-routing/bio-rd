@@ -85,9 +85,7 @@ func (nm *neighborManager) list() []*neighbor {
 	defer nm.neighborsMu.Unlock()
 
 	ret := make([]*neighbor, len(nm.neighbors))
-	for i := range nm.neighbors {
-		ret[i] = nm.neighbors[i]
-	}
+	copy(ret, nm.neighbors)
 
 	return ret
 }

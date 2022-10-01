@@ -23,31 +23,19 @@ func decodePathAttrFlags(buf *bytes.Buffer, pa *PathAttribute) error {
 }
 
 func isOptional(x uint8) bool {
-	if x&128 == 128 {
-		return true
-	}
-	return false
+	return x&128 == 128
 }
 
 func isTransitive(x uint8) bool {
-	if x&64 == 64 {
-		return true
-	}
-	return false
+	return x&64 == 64
 }
 
 func isPartial(x uint8) bool {
-	if x&32 == 32 {
-		return true
-	}
-	return false
+	return x&32 == 32
 }
 
 func isExtendedLength(x uint8) bool {
-	if x&16 == 16 {
-		return true
-	}
-	return false
+	return x&16 == 16
 }
 
 func setOptional(x uint8) uint8 {

@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/types"
 	"github.com/bio-routing/tflow2/convert"
@@ -499,7 +498,7 @@ func TestDecodeUpdateMsg(t *testing.T) {
 							ExtendedLength: false,
 							Length:         4,
 							TypeCode:       3,
-							Value:          net.IPv4FromOctets(10, 20, 30, 40).Ptr(),
+							Value:          bnet.IPv4FromOctets(10, 20, 30, 40).Ptr(),
 						},
 					},
 				},

@@ -159,16 +159,6 @@ func (p *peer) replaceExportFilterChain(c filter.Chain) {
 	}
 }
 
-type peerAddressFamily struct {
-	rib *locRIB.LocRIB
-
-	importFilterChain filter.Chain
-	exportFilterChain filter.Chain
-
-	addPathSend    routingtable.ClientOptions
-	addPathReceive bool
-}
-
 func (p *peer) dumpRIBIn(afi uint16, safi uint8) []*route.Route {
 	if len(p.fsms) != 1 {
 		return nil
@@ -195,6 +185,16 @@ func (p *peer) dumpRIBOut(afi uint16, safi uint8) []*route.Route {
 	}
 
 	return f.dumpRIBOut()
+}
+
+type peerAddressFamily struct {
+	rib *locRIB.LocRIB
+
+	importFilterChain filter.Chain
+	exportFilterChain filter.Chain
+
+	addPathSend    routingtable.ClientOptions
+	addPathReceive bool
 }
 
 func (p *peer) addressFamily(afi uint16, safi uint8) *peerAddressFamily {

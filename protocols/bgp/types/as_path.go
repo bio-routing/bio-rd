@@ -144,9 +144,7 @@ func ASPathFromProtoASPath(segments []*api.ASPathSegment) *ASPath {
 			s.Type = ASSequence
 		}
 
-		for j := range segments[i].Asns {
-			s.ASNs[j] = segments[i].Asns[j]
-		}
+		copy(s.ASNs, segments[i].Asns)
 
 		asPath[i] = s
 	}

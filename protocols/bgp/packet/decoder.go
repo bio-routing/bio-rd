@@ -17,12 +17,12 @@ const (
 func Decode(buf *bytes.Buffer, opt *DecodeOptions) (*BGPMessage, error) {
 	hdr, err := decodeHeader(buf)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to decode header: %w", err)
+		return nil, fmt.Errorf("failed to decode header: %w", err)
 	}
 
 	body, err := decodeMsgBody(buf, hdr.Type, hdr.Length-MinLen, opt)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to decode message: %w", err)
+		return nil, fmt.Errorf("failed to decode message: %w", err)
 	}
 
 	return &BGPMessage{
@@ -42,7 +42,7 @@ func decodeMsgBody(buf *bytes.Buffer, msgType uint8, l uint16, opt *DecodeOption
 	case NotificationMsg:
 		return decodeNotificationMsg(buf)
 	}
-	return nil, fmt.Errorf("Unknown message type: %d", msgType)
+	return nil, fmt.Errorf("unknown message type: %d", msgType)
 }
 
 func decodeUpdateMsg(buf *bytes.Buffer, l uint16, opt *DecodeOptions) (*BGPUpdate, error) {
@@ -93,7 +93,7 @@ func decodeNotificationMsg(buf *bytes.Buffer) (*BGPNotification, error) {
 	}
 
 	if msg.ErrorCode > Cease {
-		return msg, fmt.Errorf("Invalid error code: %d", msg.ErrorSubcode)
+		return msg, fmt.Errorf("invalid error code: %d", msg.ErrorSubcode)
 	}
 
 	switch msg.ErrorCode {
@@ -130,7 +130,7 @@ func decodeNotificationMsg(buf *bytes.Buffer) (*BGPNotification, error) {
 }
 
 func invalidErrCode(n *BGPNotification) (*BGPNotification, error) {
-	return n, fmt.Errorf("Invalid error sub code: %d/%d", n.ErrorCode, n.ErrorSubcode)
+	return n, fmt.Errorf("invalid error sub code: %d/%d", n.ErrorCode, n.ErrorSubcode)
 }
 
 // DecodeOpenMsg decodes a BGP OPEN message
@@ -201,7 +201,7 @@ func decodeOptParams(buf *bytes.Buffer, optParmLen uint8) ([]OptParam, error) {
 				read += cap.Length + 2
 			}
 		default:
-			return nil, fmt.Errorf("Unrecognized option: %d", o.Type)
+			return nil, fmt.Errorf("unrecognized option: %d", o.Type)
 		}
 
 	}
@@ -266,7 +266,7 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 		for i := uint8(0); i < cap.Length; i++ {
 			_, err := buf.ReadByte()
 			if err != nil {
-				return cap, fmt.Errorf("Read failed: %w", err)
+				return cap, fmt.Errorf("read failed: %w", err)
 			}
 		}
 	}
@@ -293,7 +293,7 @@ func decodeAddPathCapability(buf *bytes.Buffer, capLength uint8) (AddPathCapabil
 	addPathCaps := make(AddPathCapability, 0)
 
 	if capLength%addPathTupleSize != 0 {
-		return nil, fmt.Errorf("Invalid caplength %d, must be multiple of %d", capLength, addPathTupleSize)
+		return nil, fmt.Errorf("invalid caplength %d, must be multiple of %d", capLength, addPathTupleSize)
 	}
 
 	for ; capLength >= addPathTupleSize; capLength -= addPathTupleSize {
@@ -347,14 +347,14 @@ func validateOpen(msg *BGPOpen) error {
 		return BGPError{
 			ErrorCode:    OpenMessageError,
 			ErrorSubCode: UnsupportedVersionNumber,
-			ErrorStr:     fmt.Sprintf("Unsupported version number"),
+			ErrorStr:     "unsupported version number",
 		}
 	}
 	if !isValidIdentifier(msg.BGPIdentifier) {
 		return BGPError{
 			ErrorCode:    OpenMessageError,
 			ErrorSubCode: BadBGPIdentifier,
-			ErrorStr:     fmt.Sprintf("Invalid BGP identifier"),
+			ErrorStr:     "invalid BGP identifier",
 		}
 	}
 
@@ -399,7 +399,7 @@ func decodeHeader(buf *bytes.Buffer) (*BGPHeader, error) {
 			return nil, BGPError{
 				ErrorCode:    MessageHeaderError,
 				ErrorSubCode: ConnectionNotSync,
-				ErrorStr:     fmt.Sprintf("Invalid marker"),
+				ErrorStr:     "invalid marker",
 			}
 		}
 	}

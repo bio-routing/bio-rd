@@ -96,7 +96,7 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 	switch pa.TypeCode {
 	case OriginAttr:
 		if err := pa.decodeOrigin(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode Origin: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode Origin: %w", err)
 		}
 	case ASPathAttr:
 		asnLength := uint8(2)
@@ -105,62 +105,62 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 		}
 
 		if err := pa.decodeASPath(buf, asnLength); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode AS Path: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode AS Path: %w", err)
 		}
 	/* Don't decodeAS4Paths yet: The rest of the software does not support it right yet!
 	case AS4PathAttr:
 		if err := pa.decodeASPath(buf, 4); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode AS4 Path: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode AS4 Path: %w", err)
 		}*/
 	case NextHopAttr:
 		if err := pa.decodeNextHop(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode Next-Hop: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode Next-Hop: %w", err)
 		}
 	case MEDAttr:
 		if err := pa.decodeMED(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode MED: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode MED: %w", err)
 		}
 	case LocalPrefAttr:
 		if err := pa.decodeLocalPref(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode local pref: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode local pref: %w", err)
 		}
 	case AggregatorAttr:
 		if err := pa.decodeAggregator(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode Aggregator: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode Aggregator: %w", err)
 		}
 	case AtomicAggrAttr:
 		// Nothing to do for 0 octet long attribute
 	case CommunitiesAttr:
 		if err := pa.decodeCommunities(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode Community: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode Community: %w", err)
 		}
 	case OriginatorIDAttr:
 		if err := pa.decodeOriginatorID(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode OriginatorID: %w", err)
 		}
 	case ClusterListAttr:
 		if err := pa.decodeClusterList(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode OriginatorID: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode OriginatorID: %w", err)
 		}
 	case MultiProtocolReachNLRIAttr:
 		if err := pa.decodeMultiProtocolReachNLRI(buf, opt); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to multi protocol reachable NLRI: %w", err)
+			return nil, consumed, fmt.Errorf("failed to multi protocol reachable NLRI: %w", err)
 		}
 	case MultiProtocolUnreachNLRIAttr:
 		if err := pa.decodeMultiProtocolUnreachNLRI(buf, opt); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to multi protocol unreachable NLRI: %w", err)
+			return nil, consumed, fmt.Errorf("failed to multi protocol unreachable NLRI: %w", err)
 		}
 	case AS4AggregatorAttr:
 		if err := pa.decodeAS4Aggregator(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to skip not supported AS4Aggregator: %w", err)
+			return nil, consumed, fmt.Errorf("failed to skip not supported AS4Aggregator: %w", err)
 		}
 	case LargeCommunitiesAttr:
 		if err := pa.decodeLargeCommunities(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode large communities: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode large communities: %w", err)
 		}
 	default:
 		if err := pa.decodeUnknown(buf); err != nil {
-			return nil, consumed, fmt.Errorf("Failed to decode unknown attribute: %w", err)
+			return nil, consumed, fmt.Errorf("failed to decode unknown attribute: %w", err)
 		}
 	}
 
@@ -252,11 +252,11 @@ func (pa *PathAttribute) decodeASPath(buf *bytes.Buffer, asnLength uint8) error 
 		p += 2
 
 		if segment.Type != types.ASSet && segment.Type != types.ASSequence {
-			return fmt.Errorf("Invalid AS Path segment type: %d", segment.Type)
+			return fmt.Errorf("invalid AS Path segment type: %d", segment.Type)
 		}
 
 		if count == 0 {
-			return fmt.Errorf("Invalid AS Path segment length: %d", count)
+			return fmt.Errorf("invalid AS Path segment length: %d", count)
 		}
 
 		segment.ASNs = make([]uint32, count)

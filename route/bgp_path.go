@@ -94,16 +94,12 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 
 	if a.ClusterList != nil {
 		a.ClusterList = make([]uint32, len(*b.ClusterList))
-		for i := range *b.ClusterList {
-			a.ClusterList[i] = (*b.ClusterList)[i]
-		}
+		copy(a.ClusterList, *b.ClusterList)
 	}
 
 	if b.Communities != nil {
 		a.Communities = make([]uint32, len(*b.Communities))
-		for i := range *b.Communities {
-			a.Communities[i] = (*b.Communities)[i]
-		}
+		copy(a.Communities, *b.Communities)
 	}
 
 	if b.LargeCommunities != nil {

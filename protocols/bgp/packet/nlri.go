@@ -97,6 +97,9 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 
 	r, err := buf.Read(bytes)
 	consumed += uint8(r)
+	if err != nil {
+		return nil, consumed, err
+	}
 	if r < int(numBytes) {
 		return nil, consumed, fmt.Errorf("expected %d bytes for NLRI, only %d remaining", numBytes, r)
 	}

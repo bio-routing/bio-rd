@@ -271,19 +271,6 @@ func (a *AdjRIBOut) removePathsForPrefix(pfx *bnet.Prefix) bool {
 	return true
 }
 
-func (a *AdjRIBOut) isOwnPath(p *route.Path) bool {
-	if p.Type != a.sessionAttrs.Type {
-		return false
-	}
-
-	switch p.Type {
-	case route.BGPPathType:
-		return p.BGPPath.BGPPathA.Source == a.sessionAttrs.PeerIP
-	}
-
-	return false
-}
-
 func (a *AdjRIBOut) removePathsFromClients(pfx *bnet.Prefix, paths []*route.Path) {
 	for _, p := range paths {
 		a.removePathFromClients(pfx, p)

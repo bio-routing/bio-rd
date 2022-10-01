@@ -80,7 +80,7 @@ func (e *Handler) init(b *BPF) error {
 		Ifindex:  int(e.ifIndex),
 	})
 	if err != nil {
-		return fmt.Errorf("Bind failed: %w", err)
+		return fmt.Errorf("bind failed: %w", err)
 	}
 
 	return nil

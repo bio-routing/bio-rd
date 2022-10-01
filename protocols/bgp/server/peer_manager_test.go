@@ -17,7 +17,7 @@ func TestAdd(t *testing.T) {
 	m := newPeerManager()
 	m.add(p)
 
-	found, _ := m.peers[*ip]
+	found := m.peers[*ip]
 	assert.Exactly(t, p, found)
 }
 

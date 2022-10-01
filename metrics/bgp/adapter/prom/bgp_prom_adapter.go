@@ -15,12 +15,10 @@ const (
 )
 
 var (
-	upDesc                    *prometheus.Desc
 	stateDesc                 *prometheus.Desc
 	uptimeDesc                *prometheus.Desc
 	updatesReceivedDesc       *prometheus.Desc
 	updatesSentDesc           *prometheus.Desc
-	upDescRouter              *prometheus.Desc
 	stateDescRouter           *prometheus.Desc
 	uptimeDescRouter          *prometheus.Desc
 	updatesReceivedDescRouter *prometheus.Desc

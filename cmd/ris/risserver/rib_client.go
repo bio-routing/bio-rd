@@ -7,12 +7,6 @@ import (
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
 
-type update struct {
-	advertisement bool
-	prefix        net.Prefix
-	path          *route.Path
-}
-
 type ribClient struct {
 	fifo    *updateFIFO
 	stopped chan struct{}
