@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	"github.com/bio-routing/bio-rd/protocols/bgp/api"
-	"github.com/bio-routing/bio-rd/route"
 
 	bnet "github.com/bio-routing/bio-rd/net"
-	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
 
 type BGPAPIServer struct {
@@ -61,13 +59,4 @@ func (s *BGPAPIServer) DumpRIBOut(in *api.DumpRIBRequest, stream api.BgpService_
 	}
 
 	return nil
-}
-
-func routesToProto(dump []*route.Route) []*routeapi.Route {
-	routes := make([]*routeapi.Route, len(dump))
-	for i := range dump {
-		routes[i] = dump[i].ToProto()
-	}
-
-	return routes
 }

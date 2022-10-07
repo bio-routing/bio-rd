@@ -37,9 +37,5 @@ func (a *SetMEDAction) Equal(b Action) bool {
 		return false
 	}
 
-	if a.med != b.(*SetMEDAction).med {
-		return false
-	}
-
-	return true
+	return a.med == b.(*SetMEDAction).med
 }

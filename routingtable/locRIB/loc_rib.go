@@ -303,7 +303,7 @@ func (a *LocRIB) String() string {
 		if idx < len(routes)-1 {
 			ret += fmt.Sprintf("%s, ", r.Prefix().String())
 		} else {
-			ret += fmt.Sprintf("%s", r.Prefix().String())
+			ret += r.Prefix().String()
 		}
 	}
 
@@ -338,16 +338,6 @@ func (a *LocRIB) Unregister(client routingtable.RouteTableClient) {
 	a.clientManager.Unregister(client)
 }
 
-// ReplaceFilterChain is here to fulfill an interface
-func (a *LocRIB) ReplaceFilterChain(filter.Chain) {
-	return
-}
-
-// RefreshRoute is here to fulfill an interface
-func (a *LocRIB) RefreshRoute(*net.Prefix, []*route.Path) {
-
-}
-
 // Dispose tells all clients that this LocRIB is not to be used anymore (this can happen when RIS loses a BMP connection)
 func (a *LocRIB) Dispose() {
 	for _, c := range a.clientManager.Clients() {
@@ -355,3 +345,9 @@ func (a *LocRIB) Dispose() {
 		a.clientManager.Unregister(c)
 	}
 }
+
+// ReplaceFilterChain is here to fulfill an interface
+func (a *LocRIB) ReplaceFilterChain(filter.Chain) {}
+
+// RefreshRoute is here to fulfill an interface
+func (a *LocRIB) RefreshRoute(*net.Prefix, []*route.Path) {}

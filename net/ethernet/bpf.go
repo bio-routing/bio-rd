@@ -84,12 +84,12 @@ func (e *Handler) loadBPF(b *BPF) error {
 	case 8:
 		buf.Write(bnet.BigEndianToLocal(convert.Uint64Byte(uint64(uintptr(p)))))
 	default:
-		return errors.New("Unknown word width")
+		return errors.New("unknown word width")
 	}
 
 	err := syscall.SetsockoptString(e.socket, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, string(buf.Bytes()))
 	if err != nil {
-		return fmt.Errorf("Setsockopt failed (SO_ATTACH_FILTER): %w", err)
+		return fmt.Errorf("setsockopt failed (SO_ATTACH_FILTER): %w", err)
 	}
 
 	return nil

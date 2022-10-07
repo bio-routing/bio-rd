@@ -258,7 +258,7 @@ func TestASPathToProto(t *testing.T) {
 	}
 	actual := a.ToProto()
 
-	expected := make([]*api.ASPathSegment, 2, 2)
+	expected := make([]*api.ASPathSegment, 2)
 	expected[0] = &api.ASPathSegment{
 		AsSequence: true,
 		Asns:       []uint32{3, 4},
@@ -272,7 +272,7 @@ func TestASPathToProto(t *testing.T) {
 }
 
 func TestASPathFromProtoASPath(t *testing.T) {
-	p := make([]*api.ASPathSegment, 2, 2)
+	p := make([]*api.ASPathSegment, 2)
 	p[0] = &api.ASPathSegment{
 		AsSequence: true,
 		Asns:       []uint32{3, 4},

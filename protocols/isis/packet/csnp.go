@@ -36,11 +36,7 @@ func compareLSPIDs(lspIDA, lspIDB LSPID) bool {
 		}
 	}
 
-	if lspIDA.PseudonodeID < lspIDB.PseudonodeID {
-		return true
-	}
-
-	return false
+	return lspIDA.PseudonodeID < lspIDB.PseudonodeID
 }
 
 // NewCSNPs creates the necessary number of CSNP PDUs to carry all LSPEntries
@@ -64,11 +60,7 @@ func NewCSNPs(sourceID types.SourceID, lspEntries []*LSPEntry, maxPDULen int) []
 			}
 		}
 
-		if lspEntries[a].LSPID.PseudonodeID < lspEntries[b].LSPID.PseudonodeID {
-			return true
-		}
-
-		return false
+		return lspEntries[a].LSPID.PseudonodeID < lspEntries[b].LSPID.PseudonodeID
 	})
 
 	for i := 0; i < numCSNPs; i++ {

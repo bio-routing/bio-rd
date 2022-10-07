@@ -39,7 +39,7 @@ func NewPrefixFromProtoPrefix(pfx *api.Prefix) *Prefix {
 func PrefixFromString(s string) (*Prefix, error) {
 	parts := strings.Split(s, "/")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("Invalid format: %q", s)
+		return nil, fmt.Errorf("invalid format: %q", s)
 	}
 
 	ip, err := IPFromString(parts[0])
@@ -89,7 +89,7 @@ func NewPfxFromIPNet(ipNet *gonet.IPNet) *Prefix {
 func StrToAddr(x string) (uint32, error) {
 	parts := strings.Split(x, ".")
 	if len(parts) != 4 {
-		return 0, fmt.Errorf("Invalid format")
+		return 0, fmt.Errorf("invalid format")
 	}
 
 	ret := uint32(0)

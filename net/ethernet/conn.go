@@ -37,7 +37,7 @@ func (e *Handler) NewConn(dest MACAddr) net.Conn {
 
 // Read is there to fulfill the net.Conn interface
 func (c *Conn) Read(b []byte) (n int, err error) {
-	return 0, fmt.Errorf("Not supported")
+	return 0, fmt.Errorf("not supported")
 }
 
 // Write sends b on the Conn
@@ -52,7 +52,7 @@ func (c *Conn) Write(b []byte) (n int, err error) {
 
 // Close is here to fulfill the net.Conn interface
 func (c *Conn) Close() error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }
 
 // LocalAddr returns the local address
@@ -67,15 +67,15 @@ func (c *Conn) RemoteAddr() net.Addr {
 
 // SetDeadline is here to fulfill the net.Conn interface
 func (c *Conn) SetDeadline(t time.Time) error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }
 
 // SetReadDeadline is here to fulfill the net.Conn interface
 func (c *Conn) SetReadDeadline(t time.Time) error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }
 
 // SetWriteDeadline is here to fulfill the net.Conn interface
 func (c *Conn) SetWriteDeadline(t time.Time) error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }

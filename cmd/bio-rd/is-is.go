@@ -13,7 +13,7 @@ import (
 
 func configureProtocolsISIS(isis *config.ISIS) error {
 	if len(isis.NETs) == 0 {
-		return fmt.Errorf("No Network Entity Titles (NETs, ISO addresses) given")
+		return fmt.Errorf("no Network Entity Titles (NETs, ISO addresses) given")
 	}
 
 	nets, err := parseNETs(isis.NETs)

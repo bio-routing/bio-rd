@@ -108,7 +108,7 @@ func (v *VRF) ribForAddressFamily(family addressFamily) *locRIB.LocRIB {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 
-	rib, _ := v.ribs[family]
+	rib := v.ribs[family]
 
 	return rib
 }
@@ -154,7 +154,7 @@ func RouteDistinguisherHumanReadable(rdi uint64) string {
 func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
 	parts := strings.Split(x, ":")
 	if len(parts) != 2 {
-		return 0, fmt.Errorf("Invalid format")
+		return 0, fmt.Errorf("invalid format")
 	}
 
 	asn, err := strconv.Atoi(parts[0])
@@ -164,7 +164,7 @@ func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
 
 	maxUint32 := int(^uint32(0))
 	if asn > maxUint32 {
-		return 0, fmt.Errorf("Invalid format: ASN > max uint32")
+		return 0, fmt.Errorf("invalid format: ASN > max uint32")
 	}
 
 	netID, err := strconv.Atoi(parts[1])
@@ -173,7 +173,7 @@ func ParseHumanReadableRouteDistinguisher(x string) (uint64, error) {
 	}
 
 	if netID > maxUint32 {
-		return 0, fmt.Errorf("Invalid format: Network ID > max uint32")
+		return 0, fmt.Errorf("invalid format: Network ID > max uint32")
 	}
 
 	ret := uint64(0)

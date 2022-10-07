@@ -16,7 +16,6 @@ import (
 
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	bnet "github.com/bio-routing/bio-rd/net"
-	"github.com/bio-routing/bio-rd/net/api"
 	netapi "github.com/bio-routing/bio-rd/net/api"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 )
@@ -53,11 +52,11 @@ func NewServer(b server.BMPReceiverInterface) *Server {
 	}
 }
 
-func wrapGetRIBErr(err error, rtr string, vrfID uint64, version api.IP_Version) error {
+func wrapGetRIBErr(err error, rtr string, vrfID uint64, version netapi.IP_Version) error {
 	return fmt.Errorf("unable to get RIB (%s/%s/v%d): %w", rtr, vrf.RouteDistinguisherHumanReadable(vrfID), version, err)
 }
 
-func wrapRIBNotReadyErr(err error, rtr string, vrfID uint64, version api.IP_Version) error {
+func wrapRIBNotReadyErr(err error, rtr string, vrfID uint64, version netapi.IP_Version) error {
 	return fmt.Errorf("RIB not ready yet (%s/%s/v%d): %w", rtr, vrf.RouteDistinguisherHumanReadable(vrfID), version, err)
 }
 
@@ -90,7 +89,7 @@ func (s Server) getRIB(rtr string, vrfID uint64, ipVersion netapi.IP_Version) (*
 	case netapi.IP_IPv6:
 		rib = v.IPv6UnicastRIB()
 	default:
-		return nil, fmt.Errorf("Unknown afi")
+		return nil, fmt.Errorf("unknown afi")
 	}
 
 	if rib == nil {
@@ -138,7 +137,7 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
 	if route == nil {
 		return &pb.GetResponse{
-			Routes: make([]*routeapi.Route, 0, 0),
+			Routes: make([]*routeapi.Route, 0),
 		}, nil
 	}
 
@@ -250,7 +249,7 @@ func (s *Server) DumpRIB(req *pb.DumpRIBRequest, stream pb.RoutingInformationSer
 	case pb.DumpRIBRequest_IPv6Unicast:
 		ipVersion = netapi.IP_IPv6
 	default:
-		return fmt.Errorf("Unknown AFI/SAFI")
+		return fmt.Errorf("uknown AFI/SAFI")
 	}
 
 	rib, err := s.getRIB(req.Router, vrfID, ipVersion)

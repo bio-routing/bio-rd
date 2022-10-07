@@ -3,7 +3,6 @@ package kernel
 import (
 	"fmt"
 
-	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/vishvananda/netlink"
 
@@ -22,7 +21,7 @@ func (k *Kernel) init() error {
 
 	err = lk.init()
 	if err != nil {
-		return fmt.Errorf("Init failed: %w", err)
+		return fmt.Errorf("init failed: %w", err)
 	}
 	k.osKernel = lk
 	return nil
@@ -48,7 +47,7 @@ func newLinuxKernel() (*linuxKernel, error) {
 func (lk *linuxKernel) init() error {
 	err := lk.cleanup()
 	if err != nil {
-		return fmt.Errorf("Cleanup failed: %w", err)
+		return fmt.Errorf("cleanup failed: %w", err)
 	}
 
 	return nil
@@ -78,7 +77,7 @@ func (lk *linuxKernel) cleanup() error {
 	return nil
 }
 
-func (lk *linuxKernel) AddPath(pfx *net.Prefix, path *route.Path) error {
+func (lk *linuxKernel) AddPath(pfx *bnet.Prefix, path *route.Path) error {
 	r := &netlink.Route{
 		Protocol: protoBio,
 		Dst:      pfx.GetIPNet(),
@@ -103,7 +102,7 @@ func (lk *linuxKernel) AddPath(pfx *net.Prefix, path *route.Path) error {
 	return nil
 }
 
-func (lk *linuxKernel) RemovePath(pfx *net.Prefix, path *route.Path) bool {
+func (lk *linuxKernel) RemovePath(pfx *bnet.Prefix, path *route.Path) bool {
 	if _, found := lk.routes[pfx]; !found {
 		return false
 	}

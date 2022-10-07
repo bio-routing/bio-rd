@@ -21,10 +21,6 @@ func (m *mockAdapter) start() error {
 	return nil
 }
 
-func (m *mockAdapter) loadAdapter() error {
-	return nil
-}
-
 func TestStart(t *testing.T) {
 	tests := []struct {
 		name     string

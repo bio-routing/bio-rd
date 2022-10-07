@@ -34,7 +34,7 @@ func deserializeMultiProtocolUnreachNLRI(b []byte, opt *DecodeOptions) (MultiPro
 
 	prefixesLength := len(b) - 3 // 3 <- AFI + SAFI
 	if prefixesLength < 0 {
-		return n, fmt.Errorf("Invalid length of MP_UNREACH_NLRI: expected more than 3 bytes but got %d", len(b))
+		return n, fmt.Errorf("invalid length of MP_UNREACH_NLRI: expected more than 3 bytes but got %d", len(b))
 	}
 
 	nlris := make([]byte, prefixesLength)

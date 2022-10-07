@@ -86,7 +86,7 @@ func dumpRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint
 			if err == io.EOF {
 				return nil
 			}
-			return fmt.Errorf("Received failed: %w", err)
+			return fmt.Errorf("received failed: %w", err)
 		}
 
 		printRoute(r.Route)

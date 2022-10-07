@@ -95,9 +95,7 @@ func (d *Device) copy() *Device {
 	}
 
 	copy(n.HardwareAddr, d.HardwareAddr)
-	for i, a := range d.addrs {
-		n.addrs[i] = a
-	}
+	copy(n.addrs, d.addrs)
 
 	return n
 }

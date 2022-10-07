@@ -31,7 +31,7 @@ func newOSAdapterLinux(srv *Server) (*osAdapterLinux, error) {
 
 	h, err := netlink.NewHandle()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create netlink handle: %w", err)
+		return nil, fmt.Errorf("failed to create netlink handle: %w", err)
 	}
 
 	o.handle = h
@@ -53,7 +53,7 @@ func (o *osAdapterLinux) start() error {
 
 	err = o.init()
 	if err != nil {
-		return fmt.Errorf("Init failed: %w", err)
+		return fmt.Errorf("init failed: %w", err)
 	}
 
 	go o.monitorLinks(chLU)

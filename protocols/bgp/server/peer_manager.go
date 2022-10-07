@@ -35,7 +35,7 @@ func (m *peerManager) get(neighborIP *bnet.IP) *peer {
 	m.peersMu.RLock()
 	defer m.peersMu.RUnlock()
 
-	p, _ := m.peers[*neighborIP]
+	p := m.peers[*neighborIP]
 	return p
 }
 

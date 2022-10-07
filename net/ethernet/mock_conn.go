@@ -17,7 +17,7 @@ type MockConn struct {
 
 // Read is there to fulfill the net.Conn interface
 func (c *MockConn) Read(b []byte) (n int, err error) {
-	return 0, fmt.Errorf("Not supported")
+	return 0, fmt.Errorf("not supported")
 }
 
 // Write sends b on the Conn
@@ -27,7 +27,7 @@ func (c *MockConn) Write(b []byte) (n int, err error) {
 
 // Close is here to fulfill the net.Conn interface
 func (c *MockConn) Close() error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }
 
 // LocalAddr returns the local address
@@ -42,15 +42,15 @@ func (c *MockConn) RemoteAddr() net.Addr {
 
 // SetDeadline is here to fulfill the net.Conn interface
 func (c *MockConn) SetDeadline(t time.Time) error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }
 
 // SetReadDeadline is here to fulfill the net.Conn interface
 func (c *MockConn) SetReadDeadline(t time.Time) error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }
 
 // SetWriteDeadline is here to fulfill the net.Conn interface
 func (c *MockConn) SetWriteDeadline(t time.Time) error {
-	return fmt.Errorf("Not supported")
+	return fmt.Errorf("not supported")
 }

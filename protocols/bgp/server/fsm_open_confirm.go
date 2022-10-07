@@ -58,14 +58,6 @@ func (s *openConfirmState) manualStop() (state, string) {
 	return newIdleState(s.fsm), "Manual stop event"
 }
 
-func (s *openConfirmState) automaticStop() (state, string) {
-	s.fsm.sendNotification(packet.Cease, 0)
-	stopTimer(s.fsm.connectRetryTimer)
-	s.fsm.con.Close()
-	s.fsm.connectRetryCounter++
-	return newIdleState(s.fsm), "Automatic stop event"
-}
-
 func (s *openConfirmState) cease() (state, string) {
 	s.fsm.sendNotification(packet.Cease, 0)
 	s.fsm.con.Close()
