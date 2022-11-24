@@ -1,52 +1,28 @@
-//go:build !ipv6
-// +build !ipv6
-
 package main
 
 import (
-	"net"
 	"time"
-
-	"github.com/bio-routing/bio-rd/routingtable/vrf"
-	"google.golang.org/grpc"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
-	"github.com/sirupsen/logrus"
-
-	api "github.com/bio-routing/bio-rd/protocols/bgp/api"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
-func startServer(b server.BGPServer, v *vrf.VRF) {
-	apiSrv := server.NewBGPAPIServer(b)
-
-	lis, err := net.Listen("tcp", ":1337")
-	if err != nil {
-		logrus.Fatalf("failed to listen: %v", err)
-	}
-	grpcServer := grpc.NewServer()
-	api.RegisterBgpServiceServer(grpcServer, apiSrv)
-	go grpcServer.Serve(lis)
-
-	err = b.Start()
-	if err != nil {
-		logrus.Fatalf("Unable to start BGP server: %v", err)
-	}
-
+func addPeersIPv6(b server.BGPServer, v *vrf.VRF) {
 	b.AddPeer(server.PeerConfig{
 		AdminEnabled:      true,
 		LocalAS:           65200,
 		PeerAS:            65300,
-		PeerAddress:       bnet.IPv4FromOctets(172, 17, 0, 3).Ptr(),
-		LocalAddress:      bnet.IPv4FromOctets(169, 254, 200, 0).Ptr(),
+		PeerAddress:       bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 1).Ptr(),
+		LocalAddress:      bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
 		ReconnectInterval: time.Second * 15,
 		HoldTime:          time.Second * 90,
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		IPv4: &server.AddressFamilyConfig{
+		IPv6: &server.AddressFamilyConfig{
 			ImportFilterChain: filter.NewAcceptAllFilterChain(),
 			ExportFilterChain: filter.NewAcceptAllFilterChain(),
 			AddPathSend: routingtable.ClientOptions{
@@ -60,16 +36,15 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 	b.AddPeer(server.PeerConfig{
 		AdminEnabled:      true,
 		LocalAS:           65200,
-		PeerAS:            65100,
-		PeerAddress:       bnet.IPv4FromOctets(172, 17, 0, 2).Ptr(),
-		LocalAddress:      bnet.IPv4FromOctets(169, 254, 100, 1).Ptr(),
+		PeerAS:            65400,
+		PeerAddress:       bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0xcafe, 0, 0, 0, 5).Ptr(),
+		LocalAddress:      bnet.IPv6FromBlocks(0x2001, 0x678, 0x1e0, 0, 0, 0, 0, 0xcafe).Ptr(),
 		ReconnectInterval: time.Second * 15,
 		HoldTime:          time.Second * 90,
 		KeepAlive:         time.Second * 30,
 		Passive:           true,
 		RouterID:          b.RouterID(),
-		RouteServerClient: true,
-		IPv4: &server.AddressFamilyConfig{
+		IPv6: &server.AddressFamilyConfig{
 			ImportFilterChain: filter.NewAcceptAllFilterChain(),
 			ExportFilterChain: filter.NewAcceptAllFilterChain(),
 			AddPathSend: routingtable.ClientOptions{
@@ -77,6 +52,7 @@ func startServer(b server.BGPServer, v *vrf.VRF) {
 			},
 			AddPathRecv: true,
 		},
-		VRF: v,
+		RouteServerClient: true,
+		VRF:               v,
 	})
 }
