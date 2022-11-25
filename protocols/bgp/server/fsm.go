@@ -95,7 +95,7 @@ func NewPassiveFSM(peer *peer, con *net.TCPConn) *FSM {
 	return fsm
 }
 
-// NewActiveFSM initiates a new passive FSM
+// NewActiveFSM initiates a new active FSM
 func NewActiveFSM(peer *peer) *FSM {
 	fsm := newFSM(peer)
 	fsm.active = true

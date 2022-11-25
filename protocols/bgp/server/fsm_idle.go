@@ -16,7 +16,7 @@ func newIdleState(fsm *FSM) *idleState {
 }
 
 func (s idleState) run() (state, string) {
-	if s.fsm.peer.reconnectInterval != 0 {
+	if !s.fsm.peer.passive && s.fsm.peer.reconnectInterval != 0 {
 		time.Sleep(s.fsm.peer.reconnectInterval)
 		go s.fsm.activate()
 	}
