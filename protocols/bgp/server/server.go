@@ -20,16 +20,17 @@ const (
 )
 
 type bgpServer struct {
-	listenAddrs []string
-	listeners   []*TCPListener
-	acceptCh    chan net.Conn
-	peers       *peerManager
-	routerID    uint32
-	metrics     *metricsService
+	listeners []listener
+	acceptCh  chan net.Conn
+	peers     *peerManager
+	routerID  uint32
+	metrics   *metricsService
 }
 
 type BGPServer interface {
 	RouterID() uint32
+	AddListener(l ...net.Listener) error
+	AddListenerFromAddrString(addr ...string) error
 	Start() error
 	AddPeer(PeerConfig) error
 	GetPeerConfig(*bnet.IP) *PeerConfig
@@ -44,18 +45,19 @@ type BGPServer interface {
 }
 
 // NewBGPServer creates a new instance of bgpServer
-func NewBGPServer(routerID uint32, addrs []string) BGPServer {
-	return newBGPServer(routerID, addrs)
+func NewBGPServer(routerID uint32) BGPServer {
+	return newBGPServer(routerID)
 }
 
-func newBGPServer(routerID uint32, addrs []string) *bgpServer {
+func newBGPServer(routerID uint32) *bgpServer {
 	server := &bgpServer{
-		peers:       newPeerManager(),
-		routerID:    routerID,
-		listenAddrs: addrs,
+		peers:     newPeerManager(),
+		routerID:  routerID,
+		listeners: make([]listener, 0),
 	}
 
 	server.metrics = &metricsService{server}
+
 	return server
 }
 
@@ -74,15 +76,66 @@ func (b *bgpServer) GetPeers() []*bnet.IP {
 	return ret
 }
 
+type listener interface {
+	net.Listener
+	setTCPMD5(net.IP, string) error
+}
+
+type dummyListener struct {
+	net.Listener
+}
+
+func (d *dummyListener) setTCPMD5(net.IP, string) error {
+	log.Debug("setTCPMD5 called on dummyListener, ignoring...")
+
+	return nil
+}
+
+func (b *bgpServer) AddListener(l ...net.Listener) error {
+	for _, l := range l {
+		if ll, ok := l.(listener); ok {
+			b.listeners = append(b.listeners, ll)
+		} else {
+			d := &dummyListener{l}
+			b.listeners = append(b.listeners, d)
+		}
+	}
+
+	return nil
+}
+
+func (b *bgpServer) AddListenerFromAddrString(addrs ...string) error {
+	for _, addr := range addrs {
+		l, err := NewTCPListener(addr)
+		if err != nil {
+			return fmt.Errorf("failed to start TCPListener for %s: %w", addr, err)
+		}
+
+		if err := b.AddListener(l); err != nil {
+			return fmt.Errorf("failed to add listener: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (b *bgpServer) Start() error {
-	if len(b.listenAddrs) > 0 {
+	if len(b.listeners) > 0 {
 		acceptCh := make(chan net.Conn, 4096)
-		for _, addr := range b.listenAddrs {
-			l, err := NewTCPListener(addr, acceptCh)
-			if err != nil {
-				return fmt.Errorf("failed to start TCPListener for %s: %w", addr, err)
-			}
-			b.listeners = append(b.listeners, l)
+
+		for _, addr := range b.listeners {
+			go func(addr listener) {
+				for {
+					conn, err := addr.Accept()
+
+					if err != nil {
+						log.Errorf("failed to accept connection: %v", err)
+						continue
+					}
+
+					acceptCh <- conn
+				}
+			}(addr)
 		}
 		b.acceptCh = acceptCh
 
