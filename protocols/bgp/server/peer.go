@@ -269,6 +269,7 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 		server:               server,
 		config:               &c,
 		addr:                 c.PeerAddress,
+		localAddr:            c.LocalAddress,
 		ttl:                  c.TTL,
 		passive:              c.Passive,
 		peerASN:              c.PeerAS,
