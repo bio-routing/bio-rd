@@ -6,6 +6,10 @@ func init() {
 	logger = NewLogrusWrapper(logrus.New())
 }
 
+func GetLogger() LoggerInterface {
+	return logger
+}
+
 type logrusWrapper struct {
 	logger *logrus.Entry
 }

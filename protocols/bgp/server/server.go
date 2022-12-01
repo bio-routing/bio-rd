@@ -25,6 +25,7 @@ type bgpServer struct {
 	peers     *peerManager
 	routerID  uint32
 	metrics   *metricsService
+	logger    log.LoggerInterface
 }
 
 type BGPServer interface {
@@ -54,6 +55,9 @@ func newBGPServer(routerID uint32) *bgpServer {
 		peers:     newPeerManager(),
 		routerID:  routerID,
 		listeners: make([]listener, 0),
+		logger: log.GetLogger().WithFields(log.Fields{
+			"router_id": bnet.IPv4(routerID).String(),
+		}),
 	}
 
 	server.metrics = &metricsService{server}
@@ -83,10 +87,11 @@ type listener interface {
 
 type dummyListener struct {
 	net.Listener
+	logger log.LoggerInterface
 }
 
 func (d *dummyListener) setTCPMD5(net.IP, string) error {
-	log.Debug("setTCPMD5 called on dummyListener, ignoring...")
+	d.logger.Debug("setTCPMD5 called on dummyListener, ignoring...")
 
 	return nil
 }
@@ -96,7 +101,9 @@ func (b *bgpServer) AddListener(l ...net.Listener) error {
 		if ll, ok := l.(listener); ok {
 			b.listeners = append(b.listeners, ll)
 		} else {
-			d := &dummyListener{l}
+			d := &dummyListener{
+				Listener: l,
+				logger:   b.logger}
 			b.listeners = append(b.listeners, d)
 		}
 	}
@@ -129,7 +136,7 @@ func (b *bgpServer) Start() error {
 					conn, err := addr.Accept()
 
 					if err != nil {
-						log.Errorf("failed to accept connection: %v", err)
+						b.logger.Errorf("failed to accept connection: %v", err)
 						continue
 					}
 
@@ -213,17 +220,17 @@ func (b *bgpServer) incomingConnectionWorker() {
 		peer := b.peers.get(peerAddr.Dedup())
 		if peer == nil {
 			c.Close()
-			log.WithFields(log.Fields{
+			b.logger.WithFields(log.Fields{
 				"source": c.RemoteAddr(),
 			}).Info("TCP connection from unknown source")
 			continue
 		}
 
-		log.WithFields(log.Fields{
+		b.logger.WithFields(log.Fields{
 			"source": c.RemoteAddr(),
 		}).Info("Incoming TCP connection")
 
-		log.WithFields(log.Fields{
+		b.logger.WithFields(log.Fields{
 			"peer": peerAddr,
 		}).Debug("Sending incoming TCP connection to fsm for peer")
 		fsm := NewActiveFSM(peer)
@@ -271,7 +278,7 @@ func (b *bgpServer) AddPeer(c PeerConfig) error {
 		peer.Start()
 	}
 
-	log.WithFields(log.Fields{
+	b.logger.WithFields(log.Fields{
 		"peer_address":  c.PeerAddress,
 		"local_address": c.LocalAddress,
 		"peer_as":       c.PeerAS,
@@ -297,7 +304,7 @@ func (b *bgpServer) DisposePeer(addr *bnet.IP) {
 		return
 	}
 
-	log.Infof("disposing BGP session with %s", addr.String())
+	b.logger.Infof("disposing BGP session with %s", addr.String())
 	p.stop()
 	b.peers.remove(addr)
 }
