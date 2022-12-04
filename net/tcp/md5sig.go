@@ -39,7 +39,7 @@ func buildTCPMD5Sig(addr net.IP, key string) tcpMD5sig {
 	if family == unix.AF_INET {
 		copy(t.ss[2:], addr.To4())
 	} else {
-		copy(t.ss[2:], addr.To16())
+		copy(t.ss[6:], addr.To16())
 	}
 
 	copy(t.key[0:], key)
