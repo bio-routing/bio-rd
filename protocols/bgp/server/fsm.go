@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bio-routing/bio-rd/net/tcp"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/util/log"
@@ -167,12 +166,12 @@ func (fsm *FSM) addressFamily(afi uint16, safi uint8) *fsmAddressFamily {
 	}
 }
 
-func (fsm *FSM) start() {
+func (fsm *FSM) start(dialFunc func() (net.Conn, error)) {
 	ctx, cancel := context.WithCancel(context.Background())
 	fsm.connectionCancelFunc = cancel
 
 	go fsm.run()
-	go fsm.tcpConnector(ctx)
+	go fsm.tcpConnector(ctx, dialFunc)
 }
 
 func (fsm *FSM) activate() {
@@ -270,11 +269,11 @@ func (fsm *FSM) sockSettings(c net.Conn) error {
 	return nil
 }
 
-func (fsm *FSM) tcpConnector(ctx context.Context) {
+func (fsm *FSM) tcpConnector(ctx context.Context, dialFunc func() (net.Conn, error)) {
 	for {
 		select {
 		case <-fsm.initiateCon:
-			c, err := tcp.Dial(&net.TCPAddr{IP: fsm.local}, &net.TCPAddr{IP: fsm.peer.addr.ToNetIP(), Port: BGPPORT}, fsm.peer.ttl, fsm.peer.config.AuthenticationKey, fsm.peer.ttl == 0)
+			c, err := dialFunc()
 			if err != nil {
 				select {
 				case fsm.conErrCh <- err:

@@ -35,7 +35,10 @@ func main() {
 		listen = append(listen, "[::]:179")
 	}
 
-	b := server.NewBGPServer(0, listen)
+	b := server.NewBGPServer(0)
+
+	b.AddListenerFromAddrString(listen...)
+
 	v, err := vrf.New("master", 0)
 	if err != nil {
 		logrus.Fatal(err)

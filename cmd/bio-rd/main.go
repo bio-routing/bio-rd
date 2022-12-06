@@ -61,13 +61,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	bgpSrv = bgpserver.NewBGPServer(
-		startCfg.RoutingOptions.RouterIDUint32,
-		[]string{
-			"[::]:179",
-			"0.0.0.0:179",
-		},
-	)
+	bgpSrv = bgpserver.NewBGPServer(startCfg.RoutingOptions.RouterIDUint32)
+
+	bgpSrv.AddListenerFromAddrString("[::]:179", "0.0.0.0:179")
 
 	err = bgpSrv.Start()
 	if err != nil {

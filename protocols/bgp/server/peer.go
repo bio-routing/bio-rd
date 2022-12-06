@@ -2,10 +2,12 @@ package server
 
 import (
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/net/tcp"
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
@@ -50,6 +52,10 @@ type peer struct {
 	adjRIBInFactory adjRIBInFactoryI
 }
 
+type peerDialer interface {
+	DialWithLocalAddr(localAddr net.Addr) (net.Conn, error)
+}
+
 // PeerConfig defines the configuration for a BGP session
 type PeerConfig struct {
 	AuthenticationKey          string
@@ -59,6 +65,7 @@ type PeerConfig struct {
 	HoldTime                   time.Duration
 	LocalAddress               *bnet.IP
 	PeerAddress                *bnet.IP
+	TCPDialer                  peerDialer // TCPDialer is used to dial the peer. If nil, normal bio-rd TCP dialer is used
 	TTL                        uint8
 	LocalAS                    uint32
 	PeerAS                     uint32
@@ -438,7 +445,19 @@ func (p *peer) GetAddr() *bnet.IP {
 }
 
 func (p *peer) Start() {
-	p.fsms[0].start()
+	// standard TCP connection
+	dial := func() (net.Conn, error) {
+		return tcp.Dial(&net.TCPAddr{IP: p.fsms[0].local}, &net.TCPAddr{IP: p.addr.ToNetIP(), Port: BGPPORT}, p.ttl, p.config.AuthenticationKey, p.ttl == 0)
+	}
+
+	// in-memory TCP connection
+	if p.config.TCPDialer != nil {
+		dial = func() (net.Conn, error) {
+			return p.config.TCPDialer.DialWithLocalAddr(&net.TCPAddr{IP: p.config.LocalAddress.ToNetIP()})
+		}
+	}
+
+	p.fsms[0].start(dial)
 }
 
 // Stop stops a peer BGP session

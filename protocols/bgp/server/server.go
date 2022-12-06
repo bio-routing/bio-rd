@@ -20,21 +20,25 @@ const (
 )
 
 type bgpServer struct {
-	listenAddrs []string
-	listeners   []*TCPListener
-	acceptCh    chan net.Conn
-	peers       *peerManager
-	routerID    uint32
-	metrics     *metricsService
+	addListeners      chan listener
+	acceptedListeners []listener
+	acceptCh          chan net.Conn
+	peers             *peerManager
+	routerID          uint32
+	metrics           *metricsService
+	logger            log.LoggerInterface
 }
 
 type BGPServer interface {
 	RouterID() uint32
+	AddListener(l ...net.Listener) error
+	AddListenerFromAddrString(addr ...string) error
 	Start() error
 	AddPeer(PeerConfig) error
 	GetPeerConfig(*bnet.IP) *PeerConfig
 	DisposePeer(*bnet.IP)
 	GetPeers() []*bnet.IP
+	GetPeerStatus(*bnet.IP) string
 	Metrics() (*metrics.BGPMetrics, error)
 	GetRIBIn(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBIn.AdjRIBIn
 	GetRIBOut(peerIP *bnet.IP, afi uint16, safi uint8) *adjRIBOut.AdjRIBOut
@@ -44,18 +48,23 @@ type BGPServer interface {
 }
 
 // NewBGPServer creates a new instance of bgpServer
-func NewBGPServer(routerID uint32, addrs []string) BGPServer {
-	return newBGPServer(routerID, addrs)
+func NewBGPServer(routerID uint32) BGPServer {
+	return newBGPServer(routerID)
 }
 
-func newBGPServer(routerID uint32, addrs []string) *bgpServer {
+func newBGPServer(routerID uint32) *bgpServer {
 	server := &bgpServer{
-		peers:       newPeerManager(),
-		routerID:    routerID,
-		listenAddrs: addrs,
+		peers:             newPeerManager(),
+		routerID:          routerID,
+		addListeners:      make(chan listener, 256),
+		acceptedListeners: make([]listener, 0),
+		logger: log.GetLogger().WithFields(log.Fields{
+			"router_id": bnet.IPv4(routerID).String(),
+		}),
 	}
 
 	server.metrics = &metricsService{server}
+
 	return server
 }
 
@@ -74,20 +83,76 @@ func (b *bgpServer) GetPeers() []*bnet.IP {
 	return ret
 }
 
-func (b *bgpServer) Start() error {
-	if len(b.listenAddrs) > 0 {
-		acceptCh := make(chan net.Conn, 4096)
-		for _, addr := range b.listenAddrs {
-			l, err := NewTCPListener(addr, acceptCh)
-			if err != nil {
-				return fmt.Errorf("failed to start TCPListener for %s: %w", addr, err)
-			}
-			b.listeners = append(b.listeners, l)
-		}
-		b.acceptCh = acceptCh
+type listener interface {
+	net.Listener
+	setTCPMD5(net.IP, string) error
+}
 
-		go b.incomingConnectionWorker()
+type dummyListener struct {
+	net.Listener
+	logger log.LoggerInterface
+}
+
+func (d *dummyListener) setTCPMD5(net.IP, string) error {
+	d.logger.Debug("setTCPMD5 called on dummyListener, ignoring...")
+
+	return nil
+}
+
+func (b *bgpServer) AddListener(l ...net.Listener) error {
+	for _, l := range l {
+		if ll, ok := l.(listener); ok {
+			b.addListeners <- ll
+		} else {
+			d := &dummyListener{
+				Listener: l,
+				logger:   b.logger}
+			b.addListeners <- d
+		}
 	}
+
+	return nil
+}
+
+func (b *bgpServer) AddListenerFromAddrString(addrs ...string) error {
+	for _, addr := range addrs {
+		l, err := NewTCPListener(addr)
+		if err != nil {
+			return fmt.Errorf("failed to start TCPListener for %s: %w", addr, err)
+		}
+
+		if err := b.AddListener(l); err != nil {
+			return fmt.Errorf("failed to add listener: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (b *bgpServer) accept(addr listener, acceptCh chan net.Conn) {
+	for {
+		conn, err := addr.Accept()
+
+		if err != nil {
+			b.logger.Errorf("failed to accept connection: %v", err)
+			continue
+		}
+
+		acceptCh <- conn
+	}
+}
+
+func (b *bgpServer) Start() error {
+	b.acceptCh = make(chan net.Conn, 4096)
+
+	go b.incomingConnectionWorker()
+
+	go func() {
+		for addr := range b.addListeners {
+			go b.accept(addr, b.acceptCh)
+			b.acceptedListeners = append(b.acceptedListeners, addr)
+		}
+	}()
 
 	return nil
 }
@@ -160,17 +225,17 @@ func (b *bgpServer) incomingConnectionWorker() {
 		peer := b.peers.get(peerAddr.Dedup())
 		if peer == nil {
 			c.Close()
-			log.WithFields(log.Fields{
+			b.logger.WithFields(log.Fields{
 				"source": c.RemoteAddr(),
 			}).Info("TCP connection from unknown source")
 			continue
 		}
 
-		log.WithFields(log.Fields{
+		b.logger.WithFields(log.Fields{
 			"source": c.RemoteAddr(),
 		}).Info("Incoming TCP connection")
 
-		log.WithFields(log.Fields{
+		b.logger.WithFields(log.Fields{
 			"peer": peerAddr,
 		}).Debug("Sending incoming TCP connection to fsm for peer")
 		fsm := NewActiveFSM(peer)
@@ -204,7 +269,7 @@ func (b *bgpServer) AddPeer(c PeerConfig) error {
 	}
 
 	if c.AuthenticationKey != "" {
-		for _, l := range b.listeners {
+		for _, l := range b.acceptedListeners {
 			err = l.setTCPMD5(c.PeerAddress.ToNetIP(), c.AuthenticationKey)
 			if err != nil {
 				return fmt.Errorf("unable to set TCP MD5 secret: %w", err)
@@ -218,7 +283,7 @@ func (b *bgpServer) AddPeer(c PeerConfig) error {
 		peer.Start()
 	}
 
-	log.WithFields(log.Fields{
+	b.logger.WithFields(log.Fields{
 		"peer_address":  c.PeerAddress,
 		"local_address": c.LocalAddress,
 		"peer_as":       c.PeerAS,
@@ -238,13 +303,26 @@ func (b *bgpServer) GetPeerConfig(addr *bnet.IP) *PeerConfig {
 	return nil
 }
 
+// GetPeerStatus gets the status of a BGP peer by its address
+func (b *bgpServer) GetPeerStatus(addr *bnet.IP) string {
+	p := b.peers.get(addr)
+	if p != nil {
+		p.fsms[0].stateMu.RLock()
+		defer p.fsms[0].stateMu.RUnlock()
+
+		return stateName(p.fsms[0].state)
+	}
+
+	return ""
+}
+
 func (b *bgpServer) DisposePeer(addr *bnet.IP) {
 	p := b.peers.get(addr)
 	if p == nil {
 		return
 	}
 
-	log.Infof("disposing BGP session with %s", addr.String())
+	b.logger.Infof("disposing BGP session with %s", addr.String())
 	p.stop()
 	b.peers.remove(addr)
 }
