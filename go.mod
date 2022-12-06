@@ -2,13 +2,15 @@ module github.com/bio-routing/bio-rd
 
 replace github.com/valyala/fasthttp => github.com/tobikris/fasthttp v0.0.0-20221130175052-07711a7959b1
 
+replace github.com/stretchr/testify => github.com/tobikris/testify v0.0.0-20221024223348-988ad3449f13
+
 require (
 	github.com/bio-routing/tflow2 v0.0.0-20181230153523-2e308a4a3c3a
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/prometheus/client_golang v1.0.0
 	github.com/sirupsen/logrus v1.3.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/urfave/cli v1.21.0
 	github.com/valyala/fasthttp v1.41.0
 	github.com/vishvananda/netlink v1.0.0
@@ -34,7 +36,7 @@ require (
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 go 1.18
