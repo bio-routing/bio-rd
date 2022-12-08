@@ -169,7 +169,7 @@ func collectForFamily(ch chan<- prometheus.Metric, family *metrics.BGPAddressFam
 	if family.EndOfRIBMarkerReceived {
 		eor = 1
 	}
-	ch <- prometheus.MustNewConstMetric(endOfRIBMarkerDesc, prometheus.GaugeValue, float64(eor))
+	ch <- prometheus.MustNewConstMetric(endOfRIBMarkerDesc, prometheus.GaugeValue, float64(eor), l...)
 }
 
 func collectForFamilyRouter(ch chan<- prometheus.Metric, family *metrics.BGPAddressFamilyMetrics, l []string) {
