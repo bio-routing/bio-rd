@@ -62,12 +62,12 @@ func TestUnregister(t *testing.T) {
 	_, err = New(vrfName, 10)
 	assert.NotNil(t, err, "error must not be nil on second invokation")
 
-	_, found := globalRegistry.vrfs[10]
+	_, found := globalRegistry.vrfs[vrfName]
 	assert.True(t, found, "vrf must be in global registry")
 
 	v.Unregister()
 
-	_, found = globalRegistry.vrfs[10]
+	_, found = globalRegistry.vrfs[vrfName]
 	assert.False(t, found, "vrf must not be in global registry")
 
 }
@@ -85,6 +85,11 @@ func TestRouteDistinguisherHumanReadable(t *testing.T) {
 		},
 		{
 			name:     "Test #2",
+			rdi:      123,
+			expected: "0:123",
+		},
+		{
+			name:     "Test #3",
 			rdi:      220434901565105,
 			expected: "51324:65201",
 		},
