@@ -147,7 +147,7 @@ func neighborsIncludeVRF(neighbors []*neighbor, vrfID uint64) bool {
 
 // GetVRF get's a VRF
 func (r *Router) GetVRF(rd uint64) *vrf.VRF {
-	return r.vrfRegistry.GetVRFByRD(rd)
+	return r.vrfRegistry.GetVRFByName(vrf.RouteDistinguisherHumanReadable(rd))
 }
 
 // GetVRFs gets all VRFs
@@ -408,7 +408,7 @@ func (r *Router) processPeerUpNotification(msg *bmppkt.PeerUpNotification) error
 			localASN:        uint32(sentOpen.ASN),
 			ipv4:            &peerAddressFamily{},
 			ipv6:            &peerAddressFamily{},
-			vrf:             r.vrfRegistry.CreateVRFIfNotExists(fmt.Sprintf("%d", msg.PerPeerHeader.PeerDistinguisher), msg.PerPeerHeader.PeerDistinguisher),
+			vrf:             r.vrfRegistry.CreateVRFIfNotExists(vrf.RouteDistinguisherHumanReadable(msg.PerPeerHeader.PeerDistinguisher), msg.PerPeerHeader.PeerDistinguisher),
 			adjRIBInFactory: r.adjRIBInFactory,
 		},
 	}

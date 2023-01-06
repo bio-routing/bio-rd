@@ -9,6 +9,8 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 )
 
+const DefaultVRFName = "main"
+
 const (
 	afiIPv4     = 1
 	afiIPv6     = 2

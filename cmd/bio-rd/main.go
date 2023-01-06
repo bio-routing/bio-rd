@@ -75,7 +75,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	vrfReg.CreateVRFIfNotExists("master", 0)
+	vrfReg.CreateVRFIfNotExists(vrf.DefaultVRFName, 0)
 
 	go configReloader()
 	sigHUP <- syscall.SIGHUP
@@ -182,7 +182,7 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 	// Tear down peers that need new sessions as they changed too significantly
 	for _, g := range bgp.Groups {
 		for _, n := range g.Neighbors {
-			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByRD(0))
+			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByName(vrf.DefaultVRFName))
 			oldCfg := bgpSrv.GetPeerConfig(n.PeerAddressIP)
 			if oldCfg == nil {
 				continue
@@ -205,7 +205,7 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 				continue
 			}
 
-			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByRD(0))
+			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByName(vrf.DefaultVRFName))
 			err := bgpSrv.AddPeer(*newCfg)
 			if err != nil {
 				return fmt.Errorf("unable to add BGP peer: %w", err)
