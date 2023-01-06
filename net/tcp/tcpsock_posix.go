@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string, noRoute bool) (*Conn, error) {
+func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string, noRoute bool, bindDev string) (*Conn, error) {
 	fd, err := unix.Socket(int(afi), unix.SOCK_STREAM, unix.IPPROTO_TCP)
 	if err != nil {
 		return nil, fmt.Errorf("socket() failed: %w", err)
@@ -36,6 +36,13 @@ func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string,
 		err = c.SetDontRoute()
 		if err != nil {
 			return nil, fmt.Errorf("unable to set SO_DONTROUTE: %w", err)
+		}
+	}
+
+	if bindDev != "" {
+		err = c.SetBindToDev(bindDev)
+		if err != nil {
+			return nil, fmt.Errorf("unable to set SO_BINDTODEV: %w", err)
 		}
 	}
 
