@@ -454,3 +454,11 @@ func (p *peer) stop() {
 func (p *peer) isEBGP() bool {
 	return p.localASN != p.peerASN
 }
+
+func (p *peer) getBindDev() string {
+	if p.vrf.Name() != vrf.DefaultVRFName {
+		return p.vrf.Name()
+	}
+
+	return ""
+}

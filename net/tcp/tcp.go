@@ -24,7 +24,7 @@ type Conn struct {
 }
 
 // Dial established a new TCP connection
-func Dial(laddr, raddr *net.TCPAddr, ttl uint8, md5Secret string, noRoute bool) (*Conn, error) {
+func Dial(laddr, raddr *net.TCPAddr, ttl uint8, md5Secret string, noRoute bool, bindDev string) (*Conn, error) {
 	if raddr == nil {
 		return nil, fmt.Errorf("raddr is mandatory")
 	}
@@ -34,7 +34,7 @@ func Dial(laddr, raddr *net.TCPAddr, ttl uint8, md5Secret string, noRoute bool) 
 		afi = unix.AF_INET6
 	}
 
-	c, err := dialTCP(afi, laddr, raddr, ttl, md5Secret, noRoute)
+	c, err := dialTCP(afi, laddr, raddr, ttl, md5Secret, noRoute, bindDev)
 	if err != nil {
 		return nil, fmt.Errorf("dialing failed: %w", err)
 	}
@@ -111,4 +111,9 @@ func (c *Conn) SetDontRoute() error {
 // SetNoDelay sets the TCP_NODELAY option
 func (c *Conn) SetNoDelay() error {
 	return unix.SetsockoptInt(c.fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+}
+
+// SetBindToDev sets the SO_BINDTODEVICE option
+func (c *Conn) SetBindToDev(devName string) error {
+	return unix.SetsockoptString(c.fd, unix.IPPROTO_TCP, unix.SO_BINDTODEVICE, devName)
 }
