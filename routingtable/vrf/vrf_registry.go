@@ -93,18 +93,6 @@ func GetGlobalRegistry() *VRFRegistry {
 }
 
 // GetVRFByRD gets a VRF by route distinguisher
-/*func (r *VRFRegistry) GetVRFByRD(rd uint64) *VRF {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if _, ok := r.vrfs[rd]; ok {
-		return r.vrfs[rd]
-	}
-
-	return nil
-}*/
-
-// GetVRFByRD gets a VRF by route distinguisher
 func (r *VRFRegistry) GetVRFByName(name string) *VRF {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

@@ -17,7 +17,7 @@ func TestAdd(t *testing.T) {
 	m := newPeerManager()
 	m.add(p)
 
-	found := m.peers[*ip]
+	found := m.peers[p.peerKey()]
 	assert.Exactly(t, p, found)
 }
 
@@ -28,9 +28,9 @@ func TestRemove(t *testing.T) {
 	}
 
 	m := newPeerManager()
-	m.peers[*ip] = p
+	m.peers[p.peerKey()] = p
 
-	m.remove(ip)
+	m.remove(p.peerKey())
 
 	assert.Empty(t, m.peers)
 }
@@ -42,9 +42,9 @@ func TestGet(t *testing.T) {
 	}
 
 	m := newPeerManager()
-	m.peers[*ip] = p
+	m.peers[p.peerKey()] = p
 
-	found := m.get(ip)
+	found := m.get(nil, ip)
 	assert.Exactly(t, p, found)
 }
 
@@ -57,8 +57,8 @@ func TestList(t *testing.T) {
 	}
 
 	m := newPeerManager()
-	m.peers[*p1.GetAddr()] = p1
-	m.peers[*p2.GetAddr()] = p2
+	m.peers[p1.peerKey()] = p1
+	m.peers[p2.peerKey()] = p2
 
 	list := m.list()
 	assert.Contains(t, list, p1)

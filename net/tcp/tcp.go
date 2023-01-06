@@ -16,6 +16,21 @@ const (
 	SOL_IPV6 = 0x29
 )
 
+type ConnI interface {
+	Write(b []byte) (n int, err error)
+	Read(b []byte) (n int, err error)
+	Close() error
+	LocalAddr() net.Addr
+	RemoteAddr() net.Addr
+	SetDeadline(t time.Time) error
+	SetReadDeadline(t time.Time) error
+	SetWriteDeadline(t time.Time) error
+	SetTTL(ttl uint8) error
+	SetDontRoute() error
+	SetNoDelay() error
+	SetBindToDev(devName string) error
+}
+
 // Conn is TCP connection
 type Conn struct {
 	fd    int
@@ -116,4 +131,103 @@ func (c *Conn) SetNoDelay() error {
 // SetBindToDev sets the SO_BINDTODEVICE option
 func (c *Conn) SetBindToDev(devName string) error {
 	return unix.SetsockoptString(c.fd, unix.IPPROTO_TCP, unix.SO_BINDTODEVICE, devName)
+}
+
+// MockConn is mocked TCP connection
+type MockConn struct {
+	chOut  chan []byte
+	chIn   chan byte
+	laddr  *net.TCPAddr
+	raddr  *net.TCPAddr
+	closed bool
+}
+
+func NewMockConn(srcIP net.IP, srcPort uint16, dstIP net.IP, dstPort uint16) *MockConn {
+	return &MockConn{
+		chOut: make(chan []byte),
+		chIn:  make(chan byte),
+		laddr: &net.TCPAddr{
+			IP:   srcIP,
+			Port: int(srcPort),
+		},
+		raddr: &net.TCPAddr{
+			IP:   dstIP,
+			Port: int(dstPort),
+		},
+	}
+}
+
+// Write writes to a TCP connection
+func (c *MockConn) Write(b []byte) (n int, err error) {
+	if c.closed {
+		return 0, fmt.Errorf("connection is closed")
+	}
+
+	c.chOut <- b
+	return len(b), nil
+}
+
+// Read reads from a TCP connection
+func (c *MockConn) Read(b []byte) (n int, err error) {
+	if c.closed {
+		return 0, fmt.Errorf("connection is closed")
+	}
+
+	for i := range b {
+		b[i] = <-c.chIn
+	}
+
+	return len(b), nil
+}
+
+func (c *MockConn) WriteFromOtherEnd(b []byte) {
+	for _, x := range b {
+		c.chIn <- x
+	}
+}
+
+func (c *MockConn) ReadFromOtherEnd() []byte {
+	return <-c.chOut
+}
+
+func (c *MockConn) Close() error {
+	c.closed = true
+	return nil
+}
+
+func (c *MockConn) LocalAddr() net.Addr {
+	return c.laddr
+}
+
+func (c *MockConn) RemoteAddr() net.Addr {
+	return c.raddr
+}
+
+// SetDeadline is here to fulfill net.Conn interface
+func (c *MockConn) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (c *MockConn) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (c *MockConn) SetWriteDeadline(t time.Time) error {
+	return nil
+}
+
+func (c *MockConn) SetTTL(ttl uint8) error {
+	return nil
+}
+
+func (c *MockConn) SetDontRoute() error {
+	return nil
+}
+
+func (c *MockConn) SetNoDelay() error {
+	return nil
+}
+
+func (c *MockConn) SetBindToDev(devName string) error {
+	return nil
 }
