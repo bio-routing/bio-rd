@@ -266,7 +266,9 @@ func TestAddPath(t *testing.T) {
 			ClusterID: clusterID,
 			AddPathRX: test.addPath,
 		}
-		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf.NewUntrackedVRF("vrf0", 0), sessionAttrs)
+		vrf := vrf.NewUntrackedVRF("vrf0", 0)
+		vrf.AddContributingClusterID(clusterID)
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf, sessionAttrs)
 		mc := routingtable.NewRTMockClient()
 		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
