@@ -462,3 +462,10 @@ func (p *peer) getBindDev() string {
 
 	return ""
 }
+
+func (p *peer) peerKey() PeerKey {
+	return PeerKey{
+		vrf:        p.vrf,
+		neighborIP: p.addr.Dedup(),
+	}
+}

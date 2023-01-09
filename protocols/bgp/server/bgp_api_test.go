@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBIn"
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -23,6 +25,8 @@ import (
 )
 
 func TestDumpRIBInOut(t *testing.T) {
+	vrf.GetGlobalRegistry().CreateVRFIfNotExists(vrf.DefaultVRFName, 0)
+
 	sessionAttrs := routingtable.SessionAttrs{
 		RouterID:  0,
 		ClusterID: 0,
@@ -43,9 +47,10 @@ func TestDumpRIBInOut(t *testing.T) {
 			apisrv: &BGPAPIServer{
 				srv: &bgpServer{
 					peers: &peerManager{
-						peers: map[bnet.IP]*peer{},
+						peers: map[PeerKey]*peer{},
 					},
 				},
+				vrfReg: vrf.GetGlobalRegistry(),
 			},
 			addRoutes: []*route.Route{},
 			req: &api.DumpRIBRequest{
@@ -54,15 +59,18 @@ func TestDumpRIBInOut(t *testing.T) {
 				Safi: packet.SAFIUnicast,
 			},
 			expected: []*routeapi.Route{},
-			wantFail: false,
+			wantFail: true,
 		},
 		{
 			name: "Test #1: No routes given",
 			apisrv: &BGPAPIServer{
 				srv: &bgpServer{
 					peers: &peerManager{
-						peers: map[bnet.IP]*peer{
-							bnet.IPv4FromOctets(10, 0, 0, 0): {
+						peers: map[PeerKey]*peer{
+							{
+								vrf:        vrf.GetGlobalRegistry().GetVRFByName(vrf.DefaultVRFName),
+								neighborIP: bnet.IPv4FromOctets(10, 0, 0, 0).Dedup(),
+							}: {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
@@ -75,6 +83,7 @@ func TestDumpRIBInOut(t *testing.T) {
 						},
 					},
 				},
+				vrfReg: vrf.GetGlobalRegistry(),
 			},
 			addRoutes: []*route.Route{},
 			req: &api.DumpRIBRequest{
@@ -90,8 +99,11 @@ func TestDumpRIBInOut(t *testing.T) {
 			apisrv: &BGPAPIServer{
 				srv: &bgpServer{
 					peers: &peerManager{
-						peers: map[bnet.IP]*peer{
-							bnet.IPv4FromOctets(10, 0, 0, 0): {
+						peers: map[PeerKey]*peer{
+							{
+								vrf:        vrf.GetGlobalRegistry().GetVRFByName(vrf.DefaultVRFName),
+								neighborIP: bnet.IPv4FromOctets(10, 0, 0, 0).Dedup(),
+							}: {
 								addr: bnet.IPv4(123).Ptr(),
 								fsms: []*FSM{
 									0: {
@@ -105,6 +117,7 @@ func TestDumpRIBInOut(t *testing.T) {
 						},
 					},
 				},
+				vrfReg: vrf.GetGlobalRegistry(),
 			},
 			addRoutes: []*route.Route{
 				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).Ptr(), &route.Path{
@@ -119,9 +132,10 @@ func TestDumpRIBInOut(t *testing.T) {
 				}),
 			},
 			req: &api.DumpRIBRequest{
-				Peer: bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
-				Afi:  packet.AFIIPv4,
-				Safi: packet.SAFIUnicast,
+				Peer:    bnet.IPv4FromOctets(10, 0, 0, 0).ToProto(),
+				Afi:     packet.AFIIPv4,
+				Safi:    packet.SAFIUnicast,
+				VrfName: vrf.DefaultVRFName,
 			},
 			expected: []*routeapi.Route{
 				{
@@ -150,8 +164,11 @@ func TestDumpRIBInOut(t *testing.T) {
 			apisrv: &BGPAPIServer{
 				srv: &bgpServer{
 					peers: &peerManager{
-						peers: map[bnet.IP]*peer{
-							bnet.IPv4FromOctets(10, 0, 0, 0): {
+						peers: map[PeerKey]*peer{
+							{
+								vrf:        vrf.GetGlobalRegistry().GetVRFByName(vrf.DefaultVRFName),
+								neighborIP: bnet.IPv4FromOctets(10, 0, 0, 0).Dedup(),
+							}: {
 								addr: bnet.IPv4(123).Ptr(),
 								fsms: []*FSM{
 									0: {
@@ -165,6 +182,7 @@ func TestDumpRIBInOut(t *testing.T) {
 						},
 					},
 				},
+				vrfReg: vrf.GetGlobalRegistry(),
 			},
 			addRoutes: []*route.Route{
 				route.NewRoute(bnet.NewPfx(bnet.IPv4FromOctets(20, 0, 0, 0), 16).Ptr(), &route.Path{
@@ -258,7 +276,11 @@ func TestDumpRIBInOut(t *testing.T) {
 	for _, test := range tests {
 		for _, r := range test.addRoutes {
 			for _, p := range r.Paths() {
-				test.apisrv.srv.(*bgpServer).peers.peers[bnet.IPv4FromOctets(10, 0, 0, 0)].fsms[0].ipv4Unicast.adjRIBIn.AddPath(r.Prefix(), p)
+				pk := PeerKey{
+					vrf:        vrf.GetGlobalRegistry().GetVRFByName(vrf.DefaultVRFName),
+					neighborIP: bnet.IPv4FromOctets(10, 0, 0, 0).Dedup(),
+				}
+				test.apisrv.srv.(*bgpServer).peers.peers[pk].fsms[0].ipv4Unicast.adjRIBIn.AddPath(r.Prefix(), p)
 			}
 		}
 
@@ -291,6 +313,10 @@ func TestDumpRIBInOut(t *testing.T) {
 		for {
 			r, err := streamClient.Recv()
 			if err != nil {
+				if err != io.EOF && !test.wantFail {
+					t.Fatalf("stream RPC ended with non EOF error for test %q: %v", test.name, err)
+				}
+
 				break
 			}
 
@@ -313,7 +339,11 @@ func TestDumpRIBInOut(t *testing.T) {
 	for _, test := range tests {
 		for _, r := range test.addRoutes {
 			for _, p := range r.Paths() {
-				test.apisrv.srv.(*bgpServer).peers.peers[bnet.IPv4FromOctets(10, 0, 0, 0)].fsms[0].ipv4Unicast.adjRIBOut.AddPath(r.Prefix(), p)
+				pk := PeerKey{
+					vrf:        vrf.GetGlobalRegistry().GetVRFByName(vrf.DefaultVRFName),
+					neighborIP: bnet.IPv4FromOctets(10, 0, 0, 0).Dedup(),
+				}
+				test.apisrv.srv.(*bgpServer).peers.peers[pk].fsms[0].ipv4Unicast.adjRIBOut.AddPath(r.Prefix(), p)
 			}
 		}
 

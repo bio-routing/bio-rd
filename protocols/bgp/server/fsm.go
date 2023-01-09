@@ -279,7 +279,7 @@ func (fsm *FSM) tcpConnector(ctx context.Context) {
 			}
 			rAddr := net.TCPAddr{
 				IP:   fsm.peer.addr.ToNetIP(),
-				Port: BGPPORT,
+				Port: tcp.BGPPORT,
 			}
 
 			c, err := tcp.Dial(&lAddr, &rAddr, fsm.peer.ttl, fsm.peer.config.AuthenticationKey, fsm.peer.ttl == 0, fsm.peer.getBindDev())

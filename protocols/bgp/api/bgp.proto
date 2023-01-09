@@ -24,6 +24,7 @@ message DumpRIBRequest {
     bio.net.IP peer = 1;
     uint32 afi = 2;
     uint32 safi = 3;
+    string vrf_name = 4;
 }
 
 service BgpService {

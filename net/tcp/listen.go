@@ -4,8 +4,24 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"golang.org/x/sys/unix"
 )
+
+type ListenerFactoryI interface {
+	NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8) (ListenerI, error)
+}
+
+type ListenerFactory struct{}
+
+func NewListenerFactory() *ListenerFactory {
+	return &ListenerFactory{}
+}
+
+type ListenerI interface {
+	SetTCPMD5(peerAddr net.IP, secret string) error
+	AcceptTCP() (ConnI, error)
+}
 
 // Listener listens for TCP clients
 type Listener struct {
@@ -13,8 +29,8 @@ type Listener struct {
 	laddr *net.TCPAddr
 }
 
-// Listen starts a TCPListener
-func Listen(laddr *net.TCPAddr, ttl uint8) (*Listener, error) {
+// NewListener starts a TCPListener
+func (lf *ListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8) (ListenerI, error) {
 	l := &Listener{
 		laddr: laddr,
 	}
@@ -49,6 +65,14 @@ func Listen(laddr *net.TCPAddr, ttl uint8) (*Listener, error) {
 		if err != nil {
 			unix.Close(fd)
 			return nil, fmt.Errorf("unable to set IP_TTL: %w", err)
+		}
+	}
+
+	if v.Name() != vrf.DefaultVRFName {
+		err = unix.SetsockoptString(fd, SOL_IP, unix.SO_BINDTODEVICE, v.Name())
+		if err != nil {
+			unix.Close(fd)
+			return nil, fmt.Errorf("unable to set SO_BINDTODEVICE (%s): %v", v.Name(), err)
 		}
 	}
 
@@ -93,7 +117,7 @@ func (l *Listener) SetTCPMD5(peerAddr net.IP, secret string) error {
 }
 
 // AcceptTCP accepts a new TCP connection
-func (l *Listener) AcceptTCP() (*Conn, error) {
+func (l *Listener) AcceptTCP() (ConnI, error) {
 	fd, sa, err := unix.Accept(l.fd)
 	if err != nil {
 		return nil, err
@@ -119,4 +143,39 @@ func (l *Listener) AcceptTCP() (*Conn, error) {
 		laddr: l.laddr,
 		raddr: raddr,
 	}, nil
+}
+
+type MockListenerFactory struct{}
+
+func NewMockListenerFactory() *MockListenerFactory {
+	return &MockListenerFactory{}
+}
+
+type MockListener struct {
+	localAddr net.IP
+	localPort uint16
+	connCh    chan *MockConn
+}
+
+func (lf *MockListenerFactory) NewMockListener(localAddr net.IP, localPort uint16) *MockListener {
+	return &MockListener{
+		localAddr: localAddr,
+		localPort: localPort,
+		connCh:    make(chan *MockConn, 100),
+	}
+}
+
+func (l *MockListener) SetTCPMD5(peerAddr net.IP, secret string) error {
+	return nil
+}
+
+// AcceptTCP accepts a new TCP connection
+func (l *MockListener) AcceptTCP() (ConnI, error) {
+	return <-l.connCh, nil
+}
+
+func (l *MockListener) Connect(addr net.IP, port uint16) *MockConn {
+	mc := NewMockConn(l.localAddr, l.localPort, addr, port)
+	l.connCh <- mc
+	return mc
 }

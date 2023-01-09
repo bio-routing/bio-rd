@@ -4,16 +4,30 @@ import (
 	"sync"
 
 	bnet "github.com/bio-routing/bio-rd/net"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
+type PeerKey struct {
+	vrf        *vrf.VRF
+	neighborIP *bnet.IP
+}
+
+func (pk PeerKey) VRF() *vrf.VRF {
+	return pk.vrf
+}
+
+func (pk PeerKey) Addr() *bnet.IP {
+	return pk.neighborIP
+}
+
 type peerManager struct {
-	peers   map[bnet.IP]*peer
+	peers   map[PeerKey]*peer
 	peersMu sync.RWMutex
 }
 
 func newPeerManager() *peerManager {
 	return &peerManager{
-		peers: make(map[bnet.IP]*peer),
+		peers: make(map[PeerKey]*peer),
 	}
 }
 
@@ -21,21 +35,24 @@ func (m *peerManager) add(p *peer) {
 	m.peersMu.Lock()
 	defer m.peersMu.Unlock()
 
-	m.peers[*p.GetAddr()] = p
+	m.peers[p.peerKey()] = p
 }
 
-func (m *peerManager) remove(neighborIP *bnet.IP) {
+func (m *peerManager) remove(pk PeerKey) {
 	m.peersMu.Lock()
 	defer m.peersMu.Unlock()
 
-	delete(m.peers, *neighborIP)
+	delete(m.peers, pk)
 }
 
-func (m *peerManager) get(neighborIP *bnet.IP) *peer {
+func (m *peerManager) get(vrf *vrf.VRF, neighborIP *bnet.IP) *peer {
 	m.peersMu.RLock()
 	defer m.peersMu.RUnlock()
 
-	p := m.peers[*neighborIP]
+	p := m.peers[PeerKey{
+		vrf:        vrf,
+		neighborIP: neighborIP.Dedup(),
+	}]
 	return p
 }
 

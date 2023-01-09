@@ -61,12 +61,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	bgpSrv = bgpserver.NewBGPServer(
-		startCfg.RoutingOptions.RouterIDUint32,
-		[]string{
+	listenAddrsByVRF := map[string][]string{
+		vrf.DefaultVRFName: {
 			"[::]:179",
 			"0.0.0.0:179",
 		},
+	}
+
+	bgpSrv = bgpserver.NewBGPServer(
+		startCfg.RoutingOptions.RouterIDUint32,
+		vrfReg.CreateVRFIfNotExists(vrf.DefaultVRFName, 0),
+		listenAddrsByVRF,
 	)
 
 	err = bgpSrv.Start()
@@ -75,13 +80,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	vrfReg.CreateVRFIfNotExists(vrf.DefaultVRFName, 0)
-
 	go configReloader()
 	sigHUP <- syscall.SIGHUP
 	installSignalHandler()
 
-	s := bgpserver.NewBGPAPIServer(bgpSrv)
+	s := bgpserver.NewBGPAPIServer(bgpSrv, vrfReg)
 	isisAPISrv := isisserver.NewISISAPIServer(isisSrv)
 	unaryInterceptors := []grpc.UnaryServerInterceptor{}
 	streamInterceptors := []grpc.StreamServerInterceptor{}
@@ -135,7 +138,6 @@ func configReloader() {
 }
 
 func loadConfig(cfg *config.Config) error {
-
 	for _, ri := range cfg.RoutingInstances {
 		err := configureRoutingInstance(ri)
 		_ = err
@@ -167,7 +169,7 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 		found := false
 		for _, g := range bgp.Groups {
 			for _, n := range g.Neighbors {
-				if n.PeerAddressIP == p {
+				if n.PeerAddressIP == p.Addr() && p.VRF() == bgpSrv.GetDefaultVRF() {
 					found = true
 					break
 				}
@@ -175,33 +177,33 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 		}
 
 		if !found {
-			bgpSrv.DisposePeer(p)
+			bgpSrv.DisposePeer(bgpSrv.GetDefaultVRF(), p.Addr())
 		}
 	}
 
 	// Tear down peers that need new sessions as they changed too significantly
 	for _, g := range bgp.Groups {
 		for _, n := range g.Neighbors {
-			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByName(vrf.DefaultVRFName))
-			oldCfg := bgpSrv.GetPeerConfig(n.PeerAddressIP)
+			newCfg := BGPPeerConfig(n, bgpSrv.GetDefaultVRF())
+			oldCfg := bgpSrv.GetPeerConfig(bgpSrv.GetDefaultVRF(), n.PeerAddressIP)
 			if oldCfg == nil {
 				continue
 			}
 
 			if !oldCfg.NeedsRestart(newCfg) {
-				bgpSrv.ReplaceImportFilterChain(n.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
-				bgpSrv.ReplaceExportFilterChain(n.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
+				bgpSrv.ReplaceImportFilterChain(bgpSrv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
+				bgpSrv.ReplaceExportFilterChain(bgpSrv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
 				continue
 			}
 
-			bgpSrv.DisposePeer(oldCfg.PeerAddress)
+			bgpSrv.DisposePeer(bgpSrv.GetDefaultVRF(), oldCfg.PeerAddress)
 		}
 	}
 
 	// Turn up all sessions that are missing
 	for _, g := range bgp.Groups {
 		for _, n := range g.Neighbors {
-			if bgpSrv.GetPeerConfig(n.PeerAddressIP) != nil {
+			if bgpSrv.GetPeerConfig(bgpSrv.GetDefaultVRF(), n.PeerAddressIP) != nil {
 				continue
 			}
 

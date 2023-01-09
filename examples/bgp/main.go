@@ -35,14 +35,15 @@ func main() {
 		listen = append(listen, "[::]:179")
 	}
 
-	b := server.NewBGPServer(0, listen)
-	v, err := vrf.New("master", 0)
+	v, err := vrf.New(vrf.DefaultVRFName, 0)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
+	b := server.NewBGPServer(0, v, map[string][]string{vrf.DefaultVRFName: listen})
+
 	go startMetricsEndpoint(b)
-	go startAPIEndpoint(b)
+	go startAPIEndpoint(b, vrf.GetGlobalRegistry())
 
 	if err := b.Start(); err != nil {
 		log.Fatalf("Unable to start BGP server: %v", err)
@@ -69,8 +70,8 @@ func startMetricsEndpoint(server server.BGPServer) {
 	logrus.Error(http.ListenAndServe(":8080", nil))
 }
 
-func startAPIEndpoint(b server.BGPServer) {
-	apiSrv := server.NewBGPAPIServer(b)
+func startAPIEndpoint(b server.BGPServer, vrfReg *vrf.VRFRegistry) {
+	apiSrv := server.NewBGPAPIServer(b, vrfReg)
 
 	lis, err := net.Listen("tcp", ":1337")
 	if err != nil {
