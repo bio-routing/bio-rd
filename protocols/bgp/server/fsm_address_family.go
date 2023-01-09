@@ -95,6 +95,9 @@ func (f *fsmAddressFamily) init() {
 
 	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, f.fsm.peer.vrf, sessionAttrs)
 	f.fsm.peer.vrf.AddContributingASN(f.fsm.peer.localASN)
+	if f.fsm.peer.routeReflectorClient {
+		f.fsm.peer.vrf.AddContributingClusterID(f.fsm.peer.clusterID)
+	}
 
 	f.adjRIBIn.Register(f.rib)
 
@@ -163,6 +166,10 @@ func (f *fsmAddressFamily) dispose() {
 	}
 
 	f.fsm.peer.vrf.RemoveContributingASN(f.fsm.peer.localASN)
+	if f.fsm.peer.routeReflectorClient {
+		f.fsm.peer.vrf.RemoveContributingClusterID(f.fsm.peer.clusterID)
+	}
+
 	f.adjRIBIn.Unregister(f.rib)
 	f.rib.Unregister(f.adjRIBOut)
 	f.adjRIBOut.Unregister(f.updateSender)

@@ -296,10 +296,10 @@ func (a *AdjRIBIn) validatePath(p *route.Path) uint8 {
 		return route.HiddenReasonOurOriginatorID
 	}
 
-	// RFC4456 Sect. 8: Ignore routes which contain our ClusterID in their ClusterList
+	// RFC4456 Sect. 8: Ignore routes which contains any ClusterID used within this VRF in their ClusterList
 	if p.BGPPath.ClusterList != nil && len(*p.BGPPath.ClusterList) > 0 {
 		for _, cid := range *p.BGPPath.ClusterList {
-			if cid == a.sessionAttrs.ClusterID {
+			if a.vrf.IsContributingClusterID(cid) {
 				return route.HiddenReasonClusterLoop
 			}
 		}
