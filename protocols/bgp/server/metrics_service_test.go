@@ -17,6 +17,12 @@ func TestMetrics(t *testing.T) {
 	vrf := vrf.NewUntrackedVRF("inet.0", 0)
 	establishedTime := time.Now()
 
+	BGPServerConfig := BGPServerConfig{
+		ListenAddrsByVRF: nil,
+		DefaultVRF:       vrf,
+		RouterID:         0,
+	}
+
 	tests := []struct {
 		name               string
 		peer               *peer
@@ -242,7 +248,7 @@ func TestMetrics(t *testing.T) {
 				fsm.establishedTime = establishedTime
 			}
 
-			s := newBGPServer(0, vrf, nil)
+			s := newBGPServer(BGPServerConfig)
 			s.peers.add(test.peer)
 
 			actual, err := s.Metrics()

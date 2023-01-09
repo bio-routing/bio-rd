@@ -68,11 +68,12 @@ func main() {
 		},
 	}
 
-	bgpSrv = bgpserver.NewBGPServer(
-		startCfg.RoutingOptions.RouterIDUint32,
-		vrfReg.CreateVRFIfNotExists(vrf.DefaultVRFName, 0),
-		listenAddrsByVRF,
-	)
+	bgpSrvCfg := bgpserver.BGPServerConfig{
+		RouterID:         startCfg.RoutingOptions.RouterIDUint32,
+		DefaultVRF:       vrfReg.CreateVRFIfNotExists(vrf.DefaultVRFName, 0),
+		ListenAddrsByVRF: listenAddrsByVRF,
+	}
+	bgpSrv = bgpserver.NewBGPServer(bgpSrvCfg)
 
 	err = bgpSrv.Start()
 	if err != nil {

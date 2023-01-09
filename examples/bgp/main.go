@@ -40,7 +40,12 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	b := server.NewBGPServer(0, v, map[string][]string{vrf.DefaultVRFName: listen})
+	bCfg := server.BGPServerConfig{
+		RouterID:         0,
+		DefaultVRF:       v,
+		ListenAddrsByVRF: map[string][]string{vrf.DefaultVRFName: listen},
+	}
+	b := server.NewBGPServer(bCfg)
 
 	go startMetricsEndpoint(b)
 	go startAPIEndpoint(b, vrf.GetGlobalRegistry())

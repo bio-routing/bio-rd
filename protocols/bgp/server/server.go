@@ -17,14 +17,24 @@ import (
 )
 
 const (
-	BGPVersion = 4
+	BGPVersion            = 4
+	DefaultLocaPreference = 100
 )
 
+type BGPServerConfig struct {
+	// Mandatory attributes
+	RouterID         uint32
+	ListenAddrsByVRF map[string][]string
+	DefaultVRF       *vrf.VRF
+
+	// Optional attributes
+	DefaultLocalPreference *uint32
+}
+
 type bgpServer struct {
+	config          BGPServerConfig
 	listenerManager tcp.ListenerManagerI
-	defaultVRF      *vrf.VRF
 	peers           *peerManager
-	routerID        uint32
 	metrics         *metricsService
 }
 
@@ -43,17 +53,21 @@ type BGPServer interface {
 	GetDefaultVRF() *vrf.VRF
 }
 
-// NewBGPServer creates a new instance of bgpServer
-func NewBGPServer(routerID uint32, defaultVRF *vrf.VRF, listenAddrsByVRF map[string][]string) BGPServer {
-	return newBGPServer(routerID, defaultVRF, listenAddrsByVRF)
+// NewBGPServer creates a new instance of BGPServer with the given BGPServerConfig
+func NewBGPServer(config BGPServerConfig) BGPServer {
+	if config.DefaultLocalPreference == nil {
+		hundret := uint32(100)
+		config.DefaultLocalPreference = &hundret
+	}
+
+	return newBGPServer(config)
 }
 
-func newBGPServer(routerID uint32, defaultVRF *vrf.VRF, listenAddrsByVRF map[string][]string) *bgpServer {
+func newBGPServer(config BGPServerConfig) *bgpServer {
 	server := &bgpServer{
+		config:          config,
 		peers:           newPeerManager(),
-		routerID:        routerID,
-		listenerManager: tcp.NewListenerManager(listenAddrsByVRF),
-		defaultVRF:      defaultVRF,
+		listenerManager: tcp.NewListenerManager(config.ListenAddrsByVRF),
 	}
 
 	server.metrics = &metricsService{server}
@@ -61,11 +75,11 @@ func newBGPServer(routerID uint32, defaultVRF *vrf.VRF, listenAddrsByVRF map[str
 }
 
 func (b *bgpServer) GetDefaultVRF() *vrf.VRF {
-	return b.defaultVRF
+	return b.config.DefaultVRF
 }
 
 func (b *bgpServer) RouterID() uint32 {
-	return b.routerID
+	return b.config.RouterID
 }
 
 // GetPeers gets a list of all peers
@@ -83,7 +97,7 @@ func (b *bgpServer) GetPeers() []PeerKey {
 func (b *bgpServer) ReplaceImportFilterChain(vrf *vrf.VRF, peerIP *bnet.IP, c filter.Chain) error {
 	p := b.peers.get(vrf, peerIP)
 	if p == nil {
-		return fmt.Errorf("peer %q not found", peerIP.String())
+		return fmt.Errorf("peer %q not found in VRF %q", peerIP.String(), vrf.Name())
 	}
 
 	p.replaceImportFilterChain(c)
@@ -94,7 +108,7 @@ func (b *bgpServer) ReplaceImportFilterChain(vrf *vrf.VRF, peerIP *bnet.IP, c fi
 func (b *bgpServer) ReplaceExportFilterChain(vrf *vrf.VRF, peerIP *bnet.IP, c filter.Chain) error {
 	p := b.peers.get(vrf, peerIP)
 	if p == nil {
-		return fmt.Errorf("peer %q not found", peerIP.String())
+		return fmt.Errorf("peer %q not found in VRF %q", peerIP.String(), vrf.Name())
 	}
 
 	p.replaceExportFilterChain(c)
