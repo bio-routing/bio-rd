@@ -115,7 +115,7 @@ func (f *fsmAddressFamily) init() {
 func (f *fsmAddressFamily) getSessionAttrs() routingtable.SessionAttrs {
 	rip, _ := bnet.IPFromBytes(f.fsm.bmpRouterAddress)
 
-	return routingtable.SessionAttrs{
+	sa := routingtable.SessionAttrs{
 		RouterID:             f.fsm.peer.routerID,
 		PeerIP:               f.fsm.peer.addr,
 		LocalIP:              f.fsm.peer.localAddr,
@@ -138,6 +138,13 @@ func (f *fsmAddressFamily) getSessionAttrs() routingtable.SessionAttrs {
 		// Only relevant for BMP use
 		RouterIP: rip,
 	}
+
+	// Only set Default Local Preference for BGP and when peer is fully set up (may not be the case in tests, to be fixed)
+	if !f.fsm.isBMP && f.fsm.peer.server != nil {
+		sa.DefaultLocalPreference = *f.fsm.peer.server.config.DefaultLocalPreference
+	}
+
+	return sa
 }
 
 func (f *fsmAddressFamily) bmpInit() {

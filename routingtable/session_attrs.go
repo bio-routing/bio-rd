@@ -7,6 +7,9 @@ type SessionAttrs struct {
 	// RouterID is the ID of the local router
 	RouterID uint32
 
+	// The default local-preference value if none is learned via eBGP
+	DefaultLocalPreference uint32
+
 	// PeerIP is the IP address of the neighbor
 	PeerIP *bnet.IP
 
