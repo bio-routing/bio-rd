@@ -8,6 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/bio-rd/util/log"
 )
 
@@ -17,16 +18,16 @@ type AdjRIBIn struct {
 	rt                *routingtable.RoutingTable
 	mu                sync.RWMutex
 	exportFilterChain filter.Chain
-	contributingASNs  *routingtable.ContributingASNs
+	vrf               *vrf.VRF
 	sessionAttrs      routingtable.SessionAttrs
 }
 
 // New creates a new Adjacency RIB In
-func New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, sessionAttrs routingtable.SessionAttrs) *AdjRIBIn {
+func New(exportFilterChain filter.Chain, vrf *vrf.VRF, sessionAttrs routingtable.SessionAttrs) *AdjRIBIn {
 	a := &AdjRIBIn{
 		rt:                routingtable.NewRoutingTable(),
 		exportFilterChain: exportFilterChain,
-		contributingASNs:  contributingASNs,
+		vrf:               vrf,
 		sessionAttrs:      sessionAttrs,
 	}
 	a.clientManager = routingtable.NewClientManager(a)
@@ -319,7 +320,7 @@ func (a *AdjRIBIn) ourASNsInPath(p *route.Path) bool {
 
 	for _, pathSegment := range *p.BGPPath.ASPath {
 		for _, asn := range pathSegment.ASNs {
-			if a.contributingASNs.IsContributingASN(asn) {
+			if a.vrf.IsContributingASN(asn) {
 				return true
 			}
 		}

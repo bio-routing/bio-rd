@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/route"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -265,7 +266,7 @@ func TestAddPath(t *testing.T) {
 			ClusterID: clusterID,
 			AddPathRX: test.addPath,
 		}
-		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), sessionAttrs)
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf.NewUntrackedVRF("vrf0", 0), sessionAttrs)
 		mc := routingtable.NewRTMockClient()
 		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
@@ -495,7 +496,7 @@ func TestRemovePath(t *testing.T) {
 			ClusterID: 2,
 			AddPathRX: test.addPath,
 		}
-		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), sessionAttrs)
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf.NewUntrackedVRF("vrf0", 0), sessionAttrs)
 		for _, route := range test.routes {
 			adjRIBIn.AddPath(route.Prefix().Ptr(), route.Paths()[0])
 		}
@@ -523,7 +524,7 @@ func TestRemovePath(t *testing.T) {
 }
 
 func TestUnregister(t *testing.T) {
-	adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), routingtable.SessionAttrs{})
+	adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf.NewUntrackedVRF("vrf0", 0), routingtable.SessionAttrs{})
 	mc := routingtable.NewRTMockClient()
 	adjRIBIn.Register(mc)
 
@@ -839,7 +840,7 @@ func TestPeerRoleOTC(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		adjRIBIn := New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), test.sessionAttrs)
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf.NewUntrackedVRF("vrf0", 0), test.sessionAttrs)
 		mc := routingtable.NewRTMockClient()
 		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 

@@ -13,6 +13,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/adjRIBOut"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
 // fsmAddressFamily holds RIBs and the UpdateSender of an peer for an AFI/SAFI combination
@@ -80,21 +81,20 @@ func (f *fsmAddressFamily) dumpRIBIn() []*route.Route {
 }
 
 type adjRIBInFactoryI interface {
-	New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, sessionAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn
+	New(exportFilterChain filter.Chain, vrf *vrf.VRF, sessionAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn
 }
 
 type adjRIBInFactory struct{}
 
-func (a adjRIBInFactory) New(exportFilterChain filter.Chain, contributingASNs *routingtable.ContributingASNs, sessionAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn {
-	return adjRIBIn.New(exportFilterChain, contributingASNs, sessionAttrs)
+func (a adjRIBInFactory) New(exportFilterChain filter.Chain, vrf *vrf.VRF, sessionAttrs routingtable.SessionAttrs) routingtable.AdjRIBIn {
+	return adjRIBIn.New(exportFilterChain, vrf, sessionAttrs)
 }
 
 func (f *fsmAddressFamily) init() {
-	contributingASNs := f.rib.GetContributingASNs()
 	sessionAttrs := f.getSessionAttrs()
 
-	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, contributingASNs, sessionAttrs)
-	contributingASNs.Add(f.fsm.peer.localASN)
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(f.importFilterChain, f.fsm.peer.vrf, sessionAttrs)
+	f.fsm.peer.vrf.AddContributingASN(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Register(f.rib)
 
@@ -138,7 +138,7 @@ func (f *fsmAddressFamily) getSessionAttrs() routingtable.SessionAttrs {
 }
 
 func (f *fsmAddressFamily) bmpInit() {
-	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(filter.NewAcceptAllFilterChain(), &routingtable.ContributingASNs{}, f.getSessionAttrs())
+	f.adjRIBIn = f.fsm.peer.adjRIBInFactory.New(filter.NewAcceptAllFilterChain(), f.fsm.peer.vrf, f.getSessionAttrs())
 
 	if f.rib != nil {
 		f.adjRIBIn.Register(f.rib)
@@ -148,7 +148,7 @@ func (f *fsmAddressFamily) bmpInit() {
 }
 
 func (f *fsmAddressFamily) bmpDispose() {
-	f.rib.GetContributingASNs().Remove(f.fsm.peer.localASN)
+	f.fsm.peer.vrf.RemoveContributingASN(f.fsm.peer.localASN)
 
 	f.adjRIBIn.Flush()
 
@@ -162,7 +162,7 @@ func (f *fsmAddressFamily) dispose() {
 		return
 	}
 
-	f.rib.GetContributingASNs().Remove(f.fsm.peer.localASN)
+	f.fsm.peer.vrf.RemoveContributingASN(f.fsm.peer.localASN)
 	f.adjRIBIn.Unregister(f.rib)
 	f.rib.Unregister(f.adjRIBOut)
 	f.adjRIBOut.Unregister(f.updateSender)
