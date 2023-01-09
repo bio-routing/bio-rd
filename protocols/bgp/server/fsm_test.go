@@ -9,6 +9,7 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,6 +24,7 @@ func TestFSM255UpdatesIPv4(t *testing.T) {
 			exportFilterChain: filter.NewAcceptAllFilterChain(),
 		},
 		adjRIBInFactory: adjRIBInFactory{},
+		vrf:             vrf.NewUntrackedVRF("vrf0", 0),
 	})
 
 	fsmA.holdTime = time.Second * 180
@@ -142,6 +144,7 @@ func TestFSM255UpdatesIPv6(t *testing.T) {
 			exportFilterChain: filter.NewAcceptAllFilterChain(),
 		},
 		adjRIBInFactory: adjRIBInFactory{},
+		vrf:             vrf.NewUntrackedVRF("vrf0", 0),
 	})
 
 	fsmA.ipv6Unicast.multiProtocol = true

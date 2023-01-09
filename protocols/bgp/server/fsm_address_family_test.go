@@ -10,6 +10,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/stretchr/testify/assert"
 
 	biotesting "github.com/bio-routing/bio-rd/testing"
@@ -27,6 +28,7 @@ func TestFSMAFIInitDispose(t *testing.T) {
 				routerID:        100,
 				localASN:        15169,
 				adjRIBInFactory: adjRIBInFactory{},
+				vrf:             vrf.NewUntrackedVRF("vrf0", 0),
 			},
 			con: &biotesting.MockConn{
 				Buf: bytes.NewBuffer(nil),
@@ -41,8 +43,8 @@ func TestFSMAFIInitDispose(t *testing.T) {
 
 	f.init()
 	assert.NotEqual(t, nil, f.adjRIBIn)
-	assert.Equal(t, true, f.rib.GetContributingASNs().IsContributingASN(15169))
-	assert.NotEqual(t, true, f.rib.GetContributingASNs().IsContributingASN(15170))
+	assert.Equal(t, true, f.fsm.peer.vrf.IsContributingASN(15169))
+	assert.NotEqual(t, true, f.fsm.peer.vrf.IsContributingASN(15170))
 
 	assert.NotEqual(t, nil, f.adjRIBOut)
 	assert.NotEqual(t, nil, f.updateSender)
@@ -57,7 +59,7 @@ func TestFSMAFIInitDispose(t *testing.T) {
 	f.dispose()
 
 	f.updateSender.wg.Wait()
-	assert.Equal(t, false, f.rib.GetContributingASNs().IsContributingASN(15169))
+	assert.Equal(t, false, f.fsm.peer.vrf.IsContributingASN(15169))
 	assert.Equal(t, uint64(0), f.rib.ClientCount())
 	assert.Equal(t, nil, f.adjRIBOut)
 	assert.Equal(t, false, f.initialized)

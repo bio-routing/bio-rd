@@ -34,6 +34,8 @@ func TestDumpRIBInOut(t *testing.T) {
 		AddPathTX: true,
 	}
 
+	v, _ := vrf.New("vrf0", 0)
+
 	tests := []struct {
 		name      string
 		apisrv    *BGPAPIServer
@@ -74,7 +76,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, sessionAttrs),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), v, sessionAttrs),
 											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType}, filter.NewAcceptAllFilterChain()),
 										},
 									},
@@ -108,7 +110,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), nil, sessionAttrs),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), v, sessionAttrs),
 											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(0).Ptr()}, filter.NewAcceptAllFilterChain()),
 										},
 									},
@@ -173,7 +175,7 @@ func TestDumpRIBInOut(t *testing.T) {
 								fsms: []*FSM{
 									0: {
 										ipv4Unicast: &fsmAddressFamily{
-											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), routingtable.NewContributingASNs(), sessionAttrs),
+											adjRIBIn:  adjRIBIn.New(filter.NewAcceptAllFilterChain(), v, sessionAttrs),
 											adjRIBOut: adjRIBOut.New(nil, routingtable.SessionAttrs{Type: route.BGPPathType, RouteServerClient: true, PeerIP: bnet.IPv4(123).Ptr()}, filter.NewAcceptAllFilterChain()),
 										},
 									},

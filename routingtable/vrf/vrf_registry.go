@@ -31,7 +31,7 @@ func (r *VRFRegistry) CreateVRFIfNotExists(name string, rd uint64) *VRF {
 		return r.vrfs[name]
 	}
 
-	r.vrfs[name] = newUntrackedVRF(name, rd)
+	r.vrfs[name] = NewUntrackedVRF(name, rd)
 	r.vrfs[name].CreateIPv4UnicastLocRIB("inet.0")
 	r.vrfs[name].CreateIPv6UnicastLocRIB("inet6.0")
 

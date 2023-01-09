@@ -4,17 +4,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/stretchr/testify/assert"
 
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/protocols/bgp/metrics"
+	"github.com/bio-routing/bio-rd/protocols/bgp/packet"
 )
 
 func TestMetrics(t *testing.T) {
-	vrf, _ := vrf.New("inet.0", 0)
+	vrf := vrf.NewUntrackedVRF("inet.0", 0)
 	establishedTime := time.Now()
 
 	tests := []struct {

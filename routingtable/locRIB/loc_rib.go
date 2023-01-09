@@ -14,12 +14,11 @@ import (
 
 // LocRIB represents a routing information base
 type LocRIB struct {
-	name             string
-	clientManager    *routingtable.ClientManager
-	rt               *routingtable.RoutingTable
-	mu               sync.RWMutex
-	contributingASNs *routingtable.ContributingASNs
-	countTarget      *countTarget
+	name          string
+	clientManager *routingtable.ClientManager
+	rt            *routingtable.RoutingTable
+	mu            sync.RWMutex
+	countTarget   *countTarget
 }
 
 type countTarget struct {
@@ -30,9 +29,8 @@ type countTarget struct {
 // New creates a new routing information base
 func New(name string) *LocRIB {
 	a := &LocRIB{
-		name:             name,
-		rt:               routingtable.NewRoutingTable(),
-		contributingASNs: routingtable.NewContributingASNs(),
+		name: name,
+		rt:   routingtable.NewRoutingTable(),
 	}
 	a.clientManager = routingtable.NewClientManager(a)
 
@@ -49,11 +47,6 @@ func (a *LocRIB) EndOfRIB() {}
 // ClientCount gets the number of registered clients
 func (a *LocRIB) ClientCount() uint64 {
 	return a.clientManager.ClientCount()
-}
-
-// GetContributingASNs returns a pointer to the list of contributing ASNs
-func (a *LocRIB) GetContributingASNs() *routingtable.ContributingASNs {
-	return a.contributingASNs
 }
 
 // Count routes from the LocRIB

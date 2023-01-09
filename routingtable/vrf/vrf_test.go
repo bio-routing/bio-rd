@@ -15,7 +15,7 @@ func TestNewWithDuplicate(t *testing.T) {
 }
 
 func TestIPv4UnicastRIBWith(t *testing.T) {
-	v := newUntrackedVRF("master", 0)
+	v := NewUntrackedVRF("master", 0)
 	rib, err := v.CreateIPv4UnicastLocRIB("inet.0")
 
 	assert.Equal(t, rib, v.IPv4UnicastRIB())
@@ -23,7 +23,7 @@ func TestIPv4UnicastRIBWith(t *testing.T) {
 }
 
 func TestIPv6UnicastRIB(t *testing.T) {
-	v := newUntrackedVRF("master", 0)
+	v := NewUntrackedVRF("master", 0)
 	rib, err := v.CreateIPv6UnicastLocRIB("inet6.0")
 
 	assert.Equal(t, rib, v.IPv6UnicastRIB())
@@ -31,7 +31,7 @@ func TestIPv6UnicastRIB(t *testing.T) {
 }
 
 func TestCreateLocRIBTwice(t *testing.T) {
-	v := newUntrackedVRF("master", 0)
+	v := NewUntrackedVRF("master", 0)
 	_, err := v.CreateIPv6UnicastLocRIB("inet6.0")
 	assert.Nil(t, err, "error must be nil on first invokation")
 
@@ -40,7 +40,7 @@ func TestCreateLocRIBTwice(t *testing.T) {
 }
 
 func TestRIBByName(t *testing.T) {
-	v := newUntrackedVRF("master", 0)
+	v := NewUntrackedVRF("master", 0)
 	rib, _ := v.CreateIPv6UnicastLocRIB("inet6.0")
 	assert.NotNil(t, rib, "rib must not be nil after creation")
 
@@ -50,7 +50,7 @@ func TestRIBByName(t *testing.T) {
 }
 
 func TestName(t *testing.T) {
-	v := newUntrackedVRF("foo", 0)
+	v := NewUntrackedVRF("foo", 0)
 	assert.Equal(t, "foo", v.Name())
 }
 

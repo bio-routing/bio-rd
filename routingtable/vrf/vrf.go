@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
+	"github.com/bio-routing/bio-rd/util/refcounter"
 )
 
 const DefaultVRFName = "main"
@@ -29,11 +30,12 @@ type VRF struct {
 	ribs               map[addressFamily]*locRIB.LocRIB
 	mu                 sync.Mutex
 	ribNames           map[string]*locRIB.LocRIB
+	contributingASNs   *refcounter.RefcounterUint32
 }
 
 // New creates a new VRF. The VRF is registered automatically to the global VRF registry.
 func New(name string, rd uint64) (*VRF, error) {
-	v := newUntrackedVRF(name, rd)
+	v := NewUntrackedVRF(name, rd)
 	v.CreateIPv4UnicastLocRIB("inet.0")
 	v.CreateIPv6UnicastLocRIB("inet6.0")
 
@@ -45,12 +47,13 @@ func New(name string, rd uint64) (*VRF, error) {
 	return v, nil
 }
 
-func newUntrackedVRF(name string, rd uint64) *VRF {
+func NewUntrackedVRF(name string, rd uint64) *VRF {
 	return &VRF{
 		name:               name,
 		routeDistinguisher: rd,
 		ribs:               make(map[addressFamily]*locRIB.LocRIB),
 		ribNames:           make(map[string]*locRIB.LocRIB),
+		contributingASNs:   refcounter.NewRefCounterUint32(),
 	}
 }
 
@@ -119,6 +122,21 @@ func (v *VRF) ribForAddressFamily(family addressFamily) *locRIB.LocRIB {
 func (v *VRF) RIBByName(name string) (rib *locRIB.LocRIB, found bool) {
 	rib, found = v.ribNames[name]
 	return rib, found
+}
+
+// AddContributingASN adds the given ASN to the list of ASNs is used by this BGP speaker somewhere within this VRF
+func (v *VRF) AddContributingASN(asn uint32) {
+	v.contributingASNs.Add(asn)
+}
+
+// RemoveContributingASN removes the given ASN from the list of ASNs is used by this BGP speaker somewhere within this VRF
+func (v *VRF) RemoveContributingASN(asn uint32) {
+	v.contributingASNs.Remove(asn)
+}
+
+// IsContributingASN returns wether the given ASN is used by this BGP speaker somewhere within this VRF
+func (v *VRF) IsContributingASN(asn uint32) bool {
+	return v.contributingASNs.IsPresent(asn)
 }
 
 func (v *VRF) nameForRIB(rib *locRIB.LocRIB) string {
