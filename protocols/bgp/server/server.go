@@ -40,7 +40,7 @@ type bgpServer struct {
 
 type BGPServer interface {
 	RouterID() uint32
-	Start() error
+	Start()
 	AddPeer(PeerConfig) error
 	GetPeerConfig(*vrf.VRF, *bnet.IP) *PeerConfig
 	DisposePeer(*vrf.VRF, *bnet.IP)
@@ -51,6 +51,7 @@ type BGPServer interface {
 	ReplaceImportFilterChain(vrf *vrf.VRF, peer *bnet.IP, c filter.Chain) error
 	ReplaceExportFilterChain(vrf *vrf.VRF, peer *bnet.IP, c filter.Chain) error
 	GetDefaultVRF() *vrf.VRF
+	SetListenerManager(lm tcp.ListenerManagerI)
 }
 
 // NewBGPServer creates a new instance of BGPServer with the given BGPServerConfig
@@ -72,6 +73,10 @@ func newBGPServer(config BGPServerConfig) *bgpServer {
 
 	server.metrics = &metricsService{server}
 	return server
+}
+
+func (b *bgpServer) SetListenerManager(lm tcp.ListenerManagerI) {
+	b.listenerManager = lm
 }
 
 func (b *bgpServer) GetDefaultVRF() *vrf.VRF {
@@ -187,10 +192,8 @@ func (b *bgpServer) incomingConnectionWorker() {
 	}
 }
 
-func (b *bgpServer) Start() error {
+func (b *bgpServer) Start() {
 	go b.incomingConnectionWorker()
-
-	return nil
 }
 
 func (b *bgpServer) AddPeer(c PeerConfig) error {

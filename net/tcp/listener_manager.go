@@ -34,7 +34,12 @@ func NewListenerManager(listenAddrsByVRF map[string][]string) *ListenerManager {
 		listenAddrsByVRF: listenAddrsByVRF,
 		listenersByVRF:   make(map[string][]ListenerI),
 		listenerFactory:  NewListenerFactory(),
+		acceptCh:         make(chan ConnWithVRF),
 	}
+}
+
+func (lm *ListenerManager) SetListenerFactory(lf ListenerFactoryI) {
+	lm.listenerFactory = lf
 }
 
 func (lm *ListenerManager) ListenAddrsPerVRF(vrf *vrf.VRF) []string {

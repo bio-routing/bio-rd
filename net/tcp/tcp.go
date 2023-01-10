@@ -144,8 +144,8 @@ type MockConn struct {
 
 func NewMockConn(srcIP net.IP, srcPort uint16, dstIP net.IP, dstPort uint16) *MockConn {
 	return &MockConn{
-		chOut: make(chan []byte),
-		chIn:  make(chan byte),
+		chOut: make(chan []byte, 10),
+		chIn:  make(chan byte, 1000),
 		laddr: &net.TCPAddr{
 			IP:   srcIP,
 			Port: int(srcPort),

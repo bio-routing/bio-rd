@@ -22,6 +22,11 @@ func (s openConfirmState) run() (state, string) {
 	opt := s.fsm.decodeOptions()
 
 	for {
+		keepaliveTimerCh := make(<-chan time.Time)
+		if s.fsm.keepaliveTimer != nil {
+			keepaliveTimerCh = s.fsm.keepaliveTimer.C
+		}
+
 		select {
 		case e := <-s.fsm.eventCh:
 			switch e {
@@ -34,7 +39,7 @@ func (s openConfirmState) run() (state, string) {
 			}
 		case <-time.After(time.Second):
 			return s.checkHoldtimer()
-		case <-s.fsm.keepaliveTimer.C:
+		case <-keepaliveTimerCh:
 			return s.keepaliveTimerExpired()
 		case recvMsg := <-s.fsm.msgRecvCh:
 			return s.msgReceived(recvMsg, opt)

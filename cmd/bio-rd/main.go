@@ -74,12 +74,7 @@ func main() {
 		ListenAddrsByVRF: listenAddrsByVRF,
 	}
 	bgpSrv = bgpserver.NewBGPServer(bgpSrvCfg)
-
-	err = bgpSrv.Start()
-	if err != nil {
-		log.Errorf("Unable to start BGP server: %v", err)
-		os.Exit(1)
-	}
+	bgpSrv.Start()
 
 	go configReloader()
 	sigHUP <- syscall.SIGHUP
