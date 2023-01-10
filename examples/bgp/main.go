@@ -50,10 +50,7 @@ func main() {
 	go startMetricsEndpoint(b)
 	go startAPIEndpoint(b, vrf.GetGlobalRegistry())
 
-	if err := b.Start(); err != nil {
-		log.Fatalf("Unable to start BGP server: %v", err)
-	}
-
+	b.Start()
 	if *ipv4 {
 		addPeersIPv4(b, v)
 	}

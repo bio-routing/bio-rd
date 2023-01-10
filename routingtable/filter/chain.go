@@ -22,7 +22,7 @@ func (c Chain) Process(p *net.Prefix, pa *route.Path) (modPath *route.Path, reje
 	return mp, false
 }
 
-// Equal compares twp filter chains
+// Equal compares two filter chains
 func (c Chain) Equal(d Chain) bool {
 	if len(c) != len(d) {
 		return false

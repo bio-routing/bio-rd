@@ -28,6 +28,11 @@ func (s establishedState) run() (state, string) {
 		}
 	}
 
+	keepaliveTimerC := make(<-chan time.Time)
+	if s.fsm.keepaliveTimer != nil {
+		keepaliveTimerC = s.fsm.keepaliveTimer.C
+	}
+
 	opt := s.fsm.decodeOptions()
 	for {
 		select {
@@ -42,7 +47,7 @@ func (s establishedState) run() (state, string) {
 			default:
 				continue
 			}
-		case <-s.fsm.keepaliveTimer.C:
+		case <-keepaliveTimerC:
 			return s.keepaliveTimerExpired()
 		case <-time.After(time.Second):
 			return s.checkHoldtimer()
@@ -53,7 +58,7 @@ func (s establishedState) run() (state, string) {
 }
 
 func (s *establishedState) checkHoldtimer() (state, string) {
-	if time.Since(s.fsm.lastUpdateOrKeepalive) > s.fsm.holdTime {
+	if s.fsm.keepaliveTimer != nil && time.Since(s.fsm.lastUpdateOrKeepalive) > s.fsm.holdTime {
 		return s.holdTimerExpired()
 	}
 

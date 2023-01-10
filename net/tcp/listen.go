@@ -157,12 +157,12 @@ type MockListener struct {
 	connCh    chan *MockConn
 }
 
-func (lf *MockListenerFactory) NewMockListener(localAddr net.IP, localPort uint16) *MockListener {
+func (lf *MockListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8) (ListenerI, error) {
 	return &MockListener{
-		localAddr: localAddr,
-		localPort: localPort,
+		localAddr: laddr.IP,
+		localPort: uint16(laddr.Port),
 		connCh:    make(chan *MockConn, 100),
-	}
+	}, nil
 }
 
 func (l *MockListener) SetTCPMD5(peerAddr net.IP, secret string) error {
