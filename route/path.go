@@ -279,3 +279,27 @@ func (p *Path) HiddenReasonString() string {
 		return "unknown"
 	}
 }
+
+func (p *Path) GetNextHop() *bnet.IP {
+	switch p.Type {
+	case BGPPathType:
+		return p.BGPPath.GetNextHop()
+	case StaticPathType:
+		return p.StaticPath.GetNextHop()
+	}
+
+	return nil
+}
+
+func (p *Path) SetNextHop(newNH *bnet.IP) {
+	switch p.Type {
+	case BGPPathType:
+		if p.BGPPath != nil && p.BGPPath.BGPPathA != nil {
+			p.BGPPath.BGPPathA.NextHop = newNH
+		}
+	case StaticPathType:
+		if p.StaticPath != nil {
+			p.StaticPath.NextHop = newNH
+		}
+	}
+}

@@ -795,3 +795,11 @@ func (b *BGPPath) LargeCommunitiesString() string {
 
 	return str.String()
 }
+
+func (b *BGPPath) GetNextHop() *bnet.IP {
+	if b == nil || b.BGPPathA == nil {
+		return nil
+	}
+
+	return b.BGPPathA.NextHop
+}
