@@ -1242,6 +1242,25 @@ func TestGetNextHop(t *testing.T) {
 			},
 			result: ip,
 		},
+
+		{
+			name: "GRP Path (empty)",
+			path: &Path{
+				Type:       GRPPathType,
+				StaticPath: nil,
+			},
+			result: nil,
+		},
+		{
+			name: "GRP Path with NH",
+			path: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: ip,
+				},
+			},
+			result: ip,
+		},
 	}
 
 	for _, test := range tests {
@@ -1277,6 +1296,7 @@ func TestSetNextHop(t *testing.T) {
 		},
 		{
 			name: "Static Path with NH",
+
 			path: &Path{
 				Type: StaticPathType,
 				StaticPath: &StaticPath{
@@ -1327,11 +1347,98 @@ func TestSetNextHop(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			name: "GRP path (empty)",
+			path: &Path{
+				Type:    GRPPathType,
+				GRPPath: &GRPPath{},
+			},
+			result: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: newNh,
+				},
+			},
+		},
+		{
+			name: "BGP path with NH",
+			path: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: ip,
+				},
+			},
+			result: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: newNh,
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		test.path.SetNextHop(newNh)
 
+		assert.Equalf(t, test.result, test.path, test.name)
+	}
+}
+
+func TestPurgePathInformation(t *testing.T) {
+	ip := bnet.IPv4FromOctets(10, 0, 0, 0).Ptr()
+
+	tests := []struct {
+		name            string
+		path            *Path
+		pathTypeToPurge uint8
+		result          *Path
+	}{
+		{
+			name: "Static Path",
+			path: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: ip,
+				},
+			},
+			pathTypeToPurge: StaticPathType,
+			result: &Path{
+				Type: StaticPathType,
+			},
+		},
+		{
+			name: "BGP path with NH",
+			path: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: ip,
+					},
+				},
+			},
+			pathTypeToPurge: BGPPathType,
+			result: &Path{
+				Type: BGPPathType,
+			},
+		},
+		{
+			name: "GRP Path with NH",
+			path: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: ip,
+				},
+			},
+			pathTypeToPurge: GRPPathType,
+			result: &Path{
+				Type: GRPPathType,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.path.PurgePathInformation(test.pathTypeToPurge)
 		assert.Equalf(t, test.result, test.path, test.name)
 	}
 }

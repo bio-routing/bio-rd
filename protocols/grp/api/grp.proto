@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package bio.bgp;
+
+import "net/api/net.proto";
+import "route/api/route.proto";
+
+option go_package = "github.com/bio-routing/bio-rd/protocols/grpcrp/api";
+
+message GRPRoute {
+    string vrf = 1;
+    bio.net.Prefix pfx = 2;
+    bio.net.IP next_hop = 3;
+    string device = 4;
+    map<string,string> meta_data = 5;
+}
+
+service GRPService {
+    rpc Sync(stream GRPRoute) returns (stream GRPRoute) {}
+}
