@@ -85,3 +85,11 @@ func StaticPathFromProtoStaticPath(pb *api.StaticPath, dedup bool) *StaticPath {
 		NextHop: bnet.IPFromProtoIP(pb.NextHop).Ptr(),
 	}
 }
+
+func (s *StaticPath) GetNextHop() *bnet.IP {
+	if s == nil {
+		return nil
+	}
+
+	return s.NextHop
+}

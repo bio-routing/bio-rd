@@ -1186,3 +1186,152 @@ func TestToProto(t *testing.T) {
 		assert.Equalf(t, test.result, test.path.ToProto(), test.name)
 	}
 }
+
+func TestGetNextHop(t *testing.T) {
+	ip := bnet.IPv4FromOctets(10, 0, 0, 0).Ptr()
+
+	tests := []struct {
+		name   string
+		path   *Path
+		result *bnet.IP
+	}{
+		{
+			name:   "Empty path",
+			path:   &Path{},
+			result: nil,
+		},
+
+		{
+			name: "Static Path (empty)",
+			path: &Path{
+				Type:       StaticPathType,
+				StaticPath: nil,
+			},
+			result: nil,
+		},
+		{
+			name: "Static Path with NH",
+			path: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: ip,
+				},
+			},
+			result: ip,
+		},
+
+		{
+			name: "BGP path (empty)",
+			path: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{},
+				},
+			},
+			result: nil,
+		},
+		{
+			name: "BGP path with NH",
+			path: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: ip,
+					},
+				},
+			},
+			result: ip,
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equalf(t, test.result, test.path.GetNextHop(), test.name)
+	}
+}
+
+func TestSetNextHop(t *testing.T) {
+	ip := bnet.IPv4FromOctets(10, 0, 0, 0).Ptr()
+	newNh := bnet.IPv4FromOctets(0, 0, 0, 1).Ptr()
+
+	tests := []struct {
+		name   string
+		path   *Path
+		result *Path
+	}{
+		{
+			name:   "Empty path",
+			path:   &Path{},
+			result: &Path{},
+		},
+
+		{
+			name: "Static Path (empty)",
+			path: &Path{
+				Type:       StaticPathType,
+				StaticPath: nil,
+			},
+			result: &Path{
+				Type:       StaticPathType,
+				StaticPath: nil,
+			},
+		},
+		{
+			name: "Static Path with NH",
+			path: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: ip,
+				},
+			},
+			result: &Path{
+				Type: StaticPathType,
+				StaticPath: &StaticPath{
+					NextHop: newNh,
+				},
+			},
+		},
+
+		{
+			name: "BGP path (empty)",
+			path: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{},
+				},
+			},
+			result: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: newNh,
+					},
+				},
+			},
+		},
+		{
+			name: "BGP path with NH",
+			path: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: ip,
+					},
+				},
+			},
+			result: &Path{
+				Type: BGPPathType,
+				BGPPath: &BGPPath{
+					BGPPathA: &BGPPathA{
+						NextHop: newNh,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.path.SetNextHop(newNh)
+
+		assert.Equalf(t, test.result, test.path, test.name)
+	}
+}
