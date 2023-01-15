@@ -105,8 +105,9 @@ func (a *LocRIB) UpdateNewClient(client routingtable.RouteTableClient) error {
 		}
 
 		for _, p := range r.Paths()[:n] {
-			client.AddPathInitialDump(r.Prefix(), p)
+			client.AddPathInitialDump(r.Prefix(), p.Copy())
 		}
+
 	}
 
 	client.EndOfRIB()
@@ -311,6 +312,9 @@ func (a *LocRIB) Print() string {
 	routes := a.rt.Dump()
 	for _, r := range routes {
 		ret += fmt.Sprintf("%s\n", r.Prefix().String())
+		for _, p := range r.Paths() {
+			ret += fmt.Sprintf("  %s\n", p.String())
+		}
 	}
 
 	return ret
