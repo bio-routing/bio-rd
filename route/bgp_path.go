@@ -685,6 +685,7 @@ func (b *BGPPath) Copy() *BGPPath {
 	}
 
 	cp := *b
+	cp.BGPPathA = b.BGPPathA.Copy()
 
 	if cp.ASPath != nil {
 		asPath := make(types.ASPath, len(*cp.ASPath))
@@ -711,6 +712,16 @@ func (b *BGPPath) Copy() *BGPPath {
 	}
 
 	return &cp
+}
+
+func (bpa *BGPPathA) Copy() *BGPPathA {
+	if bpa == nil {
+		return nil
+	}
+
+	newBPA := *bpa
+
+	return &newBPA
 }
 
 // ComputeHash computes an hash over all attributes of the path
