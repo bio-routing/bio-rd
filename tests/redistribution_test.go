@@ -1,4 +1,4 @@
-package routingtable
+package tests
 
 import (
 	"fmt"
