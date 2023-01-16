@@ -50,7 +50,7 @@ func (t *Term) processActions(p *net.Prefix, pa *route.Path) TermResult {
 		res := action.Do(p, pa)
 		if res.Terminate {
 			return TermResult{
-				Path:      pa,
+				Path:      res.Path,
 				Terminate: true,
 				Reject:    res.Reject,
 			}
