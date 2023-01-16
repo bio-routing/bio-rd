@@ -40,6 +40,13 @@ type BGPPathA struct {
 	OnlyToCustomer  uint32
 }
 
+func NewBGPPath() *BGPPath {
+	return &BGPPath{
+		ASPath:   types.NewASPath([]uint32{}),
+		BGPPathA: NewBGPPathA(),
+	}
+}
+
 // NewBGPPathA creates a new BGPPathA
 func NewBGPPathA() *BGPPathA {
 	defaultAddr := bnet.IPv4(0)
