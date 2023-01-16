@@ -193,3 +193,16 @@ func (pa ASPath) Length() (ret uint16) {
 
 	return
 }
+
+func NewASPath(asns []uint32) *ASPath {
+	asp := ASPath{
+		ASPathSegment{
+			Type: ASSequence,
+			ASNs: []uint32{},
+		},
+	}
+
+	asp[0].ASNs = append(asp[0].ASNs, asns...)
+
+	return &asp
+}

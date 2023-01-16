@@ -371,3 +371,34 @@ func TestASPathLength(t *testing.T) {
 	actual := a.Length()
 	assert.Equal(t, uint16(5), actual)
 }
+
+func TestNewASPathSeqFromOctets(t *testing.T) {
+	tests := []struct {
+		name     string
+		asns     []uint32
+		expected *ASPath
+	}{
+		{
+			name: "single ASN",
+			asns: []uint32{42},
+			expected: &ASPath{
+				ASPathSegment{
+					Type: ASSequence,
+					ASNs: []uint32{42},
+				}},
+		},
+		{
+			name: "two ASNs",
+			asns: []uint32{23, 42},
+			expected: &ASPath{
+				ASPathSegment{
+					Type: ASSequence,
+					ASNs: []uint32{23, 42},
+				}},
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expected, NewASPath(test.asns), test.name)
+	}
+}
