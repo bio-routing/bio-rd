@@ -21,12 +21,13 @@ const (
 
 // Path represents a network path
 type Path struct {
-	Type         uint8
-	HiddenReason uint8  // If set, Path is hidden and ineligible to be installed in LocRIB and used for path selection
-	LTime        uint32 // The time we learned this path, as unix epoch (seconds)
-	StaticPath   *StaticPath
-	BGPPath      *BGPPath
-	FIBPath      *FIBPath
+	Type              uint8
+	RedistributedFrom uint8
+	HiddenReason      uint8  // If set, Path is hidden and ineligible to be installed in LocRIB and used for path selection
+	LTime             uint32 // The time we learned this path, as unix epoch (seconds)
+	StaticPath        *StaticPath
+	BGPPath           *BGPPath
+	FIBPath           *FIBPath
 }
 
 // Select returns negative if p < q, 0 if paths are equal, positive if p > q
@@ -175,33 +176,27 @@ func pathsContains(needle *Path, haystack []*Path) bool {
 
 // Print all known information about a route in logfile friendly format
 func (p *Path) String() string {
+	pathInfo := ""
+
 	switch p.Type {
 	case StaticPathType:
-		return p.StaticPath.String()
+		pathInfo = p.StaticPath.String()
 	case BGPPathType:
-		return p.BGPPath.String()
+		pathInfo = p.BGPPath.String()
 	case FIBPathType:
-		return p.FIBPath.String()
+		pathInfo = p.FIBPath.String()
 	default:
 		return fmt.Sprintf("Unknown path type. Probably not implemented yet (%d)", p.Type)
 	}
+
+	return fmt.Sprintf("Protocol: %s, %s", GetPathTypeName(p.Type), pathInfo)
 }
 
 // Print all known information about a route in human readable form
 func (p *Path) Print() string {
 	buf := &strings.Builder{}
 
-	protocol := "unknown"
-	switch p.Type {
-	case StaticPathType:
-		protocol = "static"
-	case BGPPathType:
-		protocol = "BGP"
-	case FIBPathType:
-		protocol = "Netlink"
-	}
-
-	fmt.Fprintf(buf, "\tProtocol: %s\n", protocol)
+	fmt.Fprintf(buf, "\tProtocol: %s\n", GetPathTypeName(p.Type))
 
 	if p.IsHidden() {
 		fmt.Fprintf(buf, "\tHidden: yes (%s)\n", p.HiddenReasonString())
@@ -302,4 +297,42 @@ func (p *Path) SetNextHop(newNH *bnet.IP) {
 			p.StaticPath.NextHop = newNH
 		}
 	}
+}
+
+func GetPathTypeName(t uint8) string {
+	switch t {
+	case BGPPathType:
+		return "BGP"
+	case FIBPathType:
+		return "Netlink"
+	case StaticPathType:
+		return "static"
+	default:
+		return "unknown"
+	}
+}
+
+// CheckRedistribute checks if the give paths needs to be redistributed and updates the path type, if so.
+// It always returns a copy of the given Path which needs to be deduped by the receiver.
+func (p *Path) CheckRedistribute(newPathType uint8) (*Path, bool) {
+	// We must never manipulate the existing path
+	p = p.Copy()
+
+	if p.Type == newPathType {
+		p.RedistributedFrom = 0
+		return p, false
+	}
+
+	// Store previous path type so we know where to look for attributes, which we might want to copy over,
+	// derive values from, or work with otherwise, e.g. in filters. Protocol dependent redistribution logic
+	// needs to be implemented in the respective routing tables, e.g. AdjRIBOut, as we might need protocol
+	// specific information to compute path attributes.
+	p.RedistributedFrom = p.Type
+	p.Type = newPathType
+
+	return p, true
+}
+
+func (p *Path) IsRedistributed() bool {
+	return p.RedistributedFrom != 0
 }

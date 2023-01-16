@@ -76,8 +76,6 @@ func (a *AdjRIBOut) checkPropagateUpdate(pfx *bnet.Prefix, p *route.Path) (retPa
 		return nil, false
 	}
 
-	p = p.Copy()
-
 	if a.sessionAttrs.IBGP {
 		return a.checkPropagateUpdateIBGP(pfx, p)
 	}
@@ -86,6 +84,11 @@ func (a *AdjRIBOut) checkPropagateUpdate(pfx *bnet.Prefix, p *route.Path) (retPa
 }
 
 func (a *AdjRIBOut) checkPropagateUpdateIBGP(pfx *bnet.Prefix, p *route.Path) (retPath *route.Path, propagate bool) {
+	// If this path was redistributed into BGP, we always propagate it via iBGP
+	if p.IsRedistributed() {
+		return p, true
+	}
+
 	// Don't export routes learned via iBGP to an iBGP neighbor which is NOT a route reflection client
 	if !p.BGPPath.BGPPathA.EBGP && a.sessionAttrs.IBGP && !a.sessionAttrs.RouteReflectorClient {
 		return nil, false
@@ -155,6 +158,14 @@ func (a *AdjRIBOut) AddPathInitialDump(pfx *bnet.Prefix, p *route.Path) error {
 
 // AddPath adds path p to prefix `pfx`
 func (a *AdjRIBOut) AddPath(pfx *bnet.Prefix, p *route.Path) error {
+	p, redist := p.CheckRedistribute(route.BGPPathType)
+	if redist {
+		err := a.redistributePath(p)
+		if err != nil {
+			return err
+		}
+	}
+
 	p, propagate := a.checkPropagateUpdate(pfx, p)
 	if !propagate {
 		return nil
@@ -292,6 +303,9 @@ func (a *AdjRIBOut) Print() string {
 	routes := a.rt.Dump()
 	for _, r := range routes {
 		ret += fmt.Sprintf("%s\n", r.Prefix().String())
+		for _, p := range r.Paths() {
+			ret += fmt.Sprintf("  %s\n", p.String())
+		}
 	}
 
 	return ret
@@ -381,3 +395,26 @@ func (a *AdjRIBOut) GetLonger(pfx *bnet.Prefix) (res []*route.Route) {
 // Dispose is here to fulfill an interface. We don't care if the RIB we're registred to
 // as a client is gone as this only happens in the BMP use case where AdjRIBOut is not used.
 func (a *AdjRIBOut) Dispose() {}
+
+func (a *AdjRIBOut) redistributePath(p *route.Path) error {
+	// We're working on a copy of the Path, so make sure we have a fresh start
+	p.BGPPath = route.NewBGPPath()
+
+	switch p.RedistributedFrom {
+	case route.StaticPathType:
+		a.redistributeFromStatic(p)
+	default:
+		return fmt.Errorf("redistribution from %s to BGP is not supported (yet?)", route.GetPathTypeName(p.Type))
+	}
+
+	return nil
+}
+
+func (a *AdjRIBOut) redistributeFromStatic(p *route.Path) {
+	if p.StaticPath == nil {
+		p.BGPPath.BGPPathA.NextHop = a.sessionAttrs.LocalIP
+		return
+	}
+
+	p.BGPPath.BGPPathA.NextHop = p.StaticPath.NextHop
+}

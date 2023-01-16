@@ -989,12 +989,12 @@ func TestString(t *testing.T) {
 		{
 			name:   "Static Path",
 			path:   staticPath,
-			result: staticPath.String(),
+			result: fmt.Sprintf("Protocol: static, %s", staticPath.StaticPath.String()),
 		},
 		{
 			name:   "BGP path",
 			path:   bgpPath,
-			result: bgpPath.BGPPath.String(),
+			result: fmt.Sprintf("Protocol: BGP, %s", bgpPath.BGPPath.String()),
 		},
 		{
 			name:   "FIB path",
