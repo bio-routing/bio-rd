@@ -1242,6 +1242,25 @@ func TestGetNextHop(t *testing.T) {
 			},
 			result: ip,
 		},
+
+		{
+			name: "GRP Path (empty)",
+			path: &Path{
+				Type:       GRPPathType,
+				StaticPath: nil,
+			},
+			result: nil,
+		},
+		{
+			name: "GRP Path with NH",
+			path: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: ip,
+				},
+			},
+			result: ip,
+		},
 	}
 
 	for _, test := range tests {
@@ -1324,6 +1343,35 @@ func TestSetNextHop(t *testing.T) {
 					BGPPathA: &BGPPathA{
 						NextHop: newNh,
 					},
+				},
+			},
+		},
+
+		{
+			name: "GRP path (empty)",
+			path: &Path{
+				Type:    GRPPathType,
+				GRPPath: &GRPPath{},
+			},
+			result: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: newNh,
+				},
+			},
+		},
+		{
+			name: "BGP path with NH",
+			path: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: ip,
+				},
+			},
+			result: &Path{
+				Type: GRPPathType,
+				GRPPath: &GRPPath{
+					NextHop: newNh,
 				},
 			},
 		},
