@@ -56,7 +56,11 @@ func (s *StaticPath) Copy() *StaticPath {
 
 // Print all known information about a route in logfile friendly format
 func (s *StaticPath) String() string {
-	return fmt.Sprintf("Next hop: %s, ", s.NextHop)
+	if s == nil {
+		return "path not present."
+	}
+
+	return fmt.Sprintf("Next hop: %s", s.NextHop)
 }
 
 // Print all known information about a route in human readable form
