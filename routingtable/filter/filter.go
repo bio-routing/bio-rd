@@ -36,11 +36,13 @@ func (f *Filter) Process(p *net.Prefix, pa *route.Path) FilterResult {
 		res := t.Process(p, pa)
 		if res.Terminate {
 			return FilterResult{
-				Path:      pa,
+				Path:      res.Path,
 				Terminate: res.Terminate,
 				Reject:    res.Reject,
 			}
 		}
+
+		pa = res.Path
 	}
 
 	return FilterResult{

@@ -14,7 +14,8 @@ func TestProcessTerms(t *testing.T) {
 		name           string
 		prefix         *net.Prefix
 		path           *route.Path
-		term           *Term
+		expectedPath   *route.Path
+		terms          []*Term
 		expectAccept   bool
 		expectModified bool
 	}{
@@ -22,9 +23,11 @@ func TestProcessTerms(t *testing.T) {
 			name:   "accept",
 			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
-			term: &Term{
-				then: []actions.Action{
-					&actions.AcceptAction{},
+			terms: []*Term{
+				{
+					then: []actions.Action{
+						&actions.AcceptAction{},
+					},
 				},
 			},
 			expectAccept:   true,
@@ -34,9 +37,11 @@ func TestProcessTerms(t *testing.T) {
 			name:   "reject",
 			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
-			term: &Term{
-				then: []actions.Action{
-					&actions.RejectAction{},
+			terms: []*Term{
+				{
+					then: []actions.Action{
+						&actions.RejectAction{},
+					},
 				},
 			},
 			expectAccept:   false,
@@ -46,10 +51,12 @@ func TestProcessTerms(t *testing.T) {
 			name:   "accept before reject",
 			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
-			term: &Term{
-				then: []actions.Action{
-					&actions.AcceptAction{},
-					&actions.RejectAction{},
+			terms: []*Term{
+				{
+					then: []actions.Action{
+						&actions.AcceptAction{},
+						&actions.RejectAction{},
+					},
 				},
 			},
 			expectAccept:   true,
@@ -59,20 +66,85 @@ func TestProcessTerms(t *testing.T) {
 			name:   "modified",
 			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
 			path:   &route.Path{},
-			term: &Term{
-				then: []actions.Action{
-					&mockAction{},
-					&actions.AcceptAction{},
+			terms: []*Term{
+				{
+					then: []actions.Action{
+						&mockAction{},
+						&actions.AcceptAction{},
+					},
 				},
 			},
 			expectAccept:   true,
 			expectModified: true,
 		},
+		{
+			name:   "Overwrite Next-Hop",
+			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
+			path: &route.Path{
+				Type: route.StaticPathType,
+				StaticPath: &route.StaticPath{
+					NextHop: net.IPv4(0).Ptr(),
+				},
+			},
+			terms: []*Term{
+				{
+					then: []actions.Action{
+						actions.NewSetNextHopAction(net.IPv4(1).Ptr()),
+						&actions.AcceptAction{},
+					},
+				},
+			},
+			expectedPath: &route.Path{
+				Type: route.StaticPathType,
+				StaticPath: &route.StaticPath{
+					NextHop: net.IPv4(1).Ptr(),
+				},
+			},
+			expectAccept:   true,
+			expectModified: true,
+		},
+		{
+			name:   "Overwrite Next-Hop & Localpref",
+			prefix: net.NewPfx(net.IPv4(0), 0).Ptr(),
+			path: &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					BGPPathA: &route.BGPPathA{
+						LocalPref: 23,
+						NextHop:   net.IPv4(0).Ptr(),
+					},
+				},
+			},
+			terms: []*Term{
+				{
+					then: []actions.Action{
+						actions.NewSetNextHopAction(net.IPv4(1).Ptr()),
+					},
+				},
+				{
+					then: []actions.Action{
+						actions.NewSetLocalPrefAction(42),
+						&actions.AcceptAction{},
+					},
+				},
+			},
+			expectAccept:   true,
+			expectModified: true,
+			expectedPath: &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					BGPPathA: &route.BGPPathA{
+						LocalPref: 42,
+						NextHop:   net.IPv4(1).Ptr(),
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f := NewFilter("some Name", []*Term{test.term})
+			f := NewFilter("some Name", test.terms)
 			res := f.Process(test.prefix, test.path.Copy())
 			p := res.Path
 			reject := res.Reject
@@ -81,6 +153,10 @@ func TestProcessTerms(t *testing.T) {
 
 			if test.expectModified {
 				assert.NotEqual(t, test.path, p, test.name)
+			}
+
+			if test.expectedPath != nil {
+				assert.Equal(t, test.expectedPath, p)
 			}
 		})
 	}
