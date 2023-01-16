@@ -10,6 +10,7 @@ type TermCondition struct {
 	routeFilters          []*RouteFilter
 	communityFilters      []*CommunityFilter
 	largeCommunityFilters []*LargeCommunityFilter
+	protocols             []uint8
 }
 
 func NewTermCondition(prefixLists []*PrefixList, routeFilters []*RouteFilter) *TermCondition {
@@ -31,11 +32,18 @@ func NewTermConditionWithPrefixLists(filters ...*PrefixList) *TermCondition {
 	}
 }
 
+func NewTermConditionWithProtocols(protocols ...uint8) *TermCondition {
+	return &TermCondition{
+		protocols: protocols,
+	}
+}
+
 func (f *TermCondition) Matches(p *net.Prefix, pa *route.Path) bool {
 	return f.matchesPrefixListFilters(p) &&
 		f.matchesRouteFilters(p) &&
 		f.matchesCommunityFilters(pa) &&
-		f.matchesLargeCommunityFilters(pa)
+		f.matchesLargeCommunityFilters(pa) &&
+		f.matchesProtocols(pa)
 }
 
 func (t *TermCondition) matchesPrefixListFilters(p *net.Prefix) bool {
@@ -95,6 +103,20 @@ func (t *TermCondition) matchesLargeCommunityFilters(pa *route.Path) bool {
 
 	for _, l := range t.largeCommunityFilters {
 		if l.Matches(pa.BGPPath.LargeCommunities) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (t *TermCondition) matchesProtocols(pa *route.Path) bool {
+	if len(t.protocols) == 0 {
+		return true
+	}
+
+	for _, protocol := range t.protocols {
+		if protocol == pa.Type {
 			return true
 		}
 	}
