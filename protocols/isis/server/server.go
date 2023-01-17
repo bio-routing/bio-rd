@@ -29,19 +29,20 @@ type ISISServer interface {
 
 // Server represents an ISIS server
 type Server struct {
-	running            bool
-	runningMu          sync.Mutex
-	nets               []*types.NET
-	lspLifetime        uint16
-	sequenceNumberL1   uint32
-	sequenceNumberL1Mu sync.Mutex
-	sequenceNumberL2   uint32
-	sequenceNumberL2Mu sync.Mutex
-	netIfaManager      *netIfaManager
-	lsdbL1             *lsdb
-	lsdbL2             *lsdb
-	stop               chan struct{}
-	ds                 device.Updater
+	running                  bool
+	runningMu                sync.Mutex
+	nets                     []*types.NET
+	lspLifetime              uint16
+	sequenceNumberL1         uint32
+	sequenceNumberL1Mu       sync.Mutex
+	sequenceNumberL2         uint32
+	sequenceNumberL2Mu       sync.Mutex
+	netIfaManager            *netIfaManager
+	lsdbL1                   *lsdb
+	lsdbL2                   *lsdb
+	stop                     chan struct{}
+	ds                       device.Updater
+	ethernetInterfaceFactory ethernet.EthernetInterfaceFactoryI
 }
 
 // Start starts the ISIS server
@@ -110,16 +111,30 @@ func New(nets []*types.NET, ds device.Updater, lspLifetime uint16) (*Server, err
 	}
 
 	s := &Server{
-		nets:        nets,
-		lspLifetime: lspLifetime,
-		ds:          ds,
-		stop:        make(chan struct{}),
+		nets:                     nets,
+		lspLifetime:              lspLifetime,
+		ds:                       ds,
+		stop:                     make(chan struct{}),
+		ethernetInterfaceFactory: ethernet.NewEthernetInterfaceFactory(),
 	}
 
 	s.netIfaManager = newNetIfaManager(s)
 	s.lsdbL2 = newLSDB(s)
 
 	return s, nil
+}
+
+func (s *Server) SetEthernetInterfaceFactory(f ethernet.EthernetInterfaceFactoryI) {
+	s.ethernetInterfaceFactory = f
+}
+
+func (s *Server) GetEthernetInterface(name string) ethernet.EthernetInterfaceI {
+	ifa := s.netIfaManager.getInterface(name)
+	if ifa == nil {
+		return nil
+	}
+
+	return ifa.ethernetInterface
 }
 
 // netsCompatible verifies if the system id is equal in all NETs

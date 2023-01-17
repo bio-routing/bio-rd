@@ -42,7 +42,7 @@ func (nifa *netIfa) sendPDU(pkt packet.Serializable, pduType uint8) error {
 	hdr.Serialize(hdrBuf)
 	hdrBuf.Write(buf.Bytes())
 
-	_, err := nifa.isP2PHelloCon.Write(hdrBuf.Bytes())
+	err := nifa.ethernetInterface.SendPacket(allISNetworkEntitiesAddr, hdrBuf.Bytes())
 	return err
 }
 

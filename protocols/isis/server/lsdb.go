@@ -259,7 +259,7 @@ func (l *lsdb) sendPSNPss() {
 		}
 
 		lspdus := l._getLSPWithSSNSet(ifa)
-		for _, psnp := range packet.NewPSNPs(srcID, lspdus, ifa.ethHandler.GetMTU()) {
+		for _, psnp := range packet.NewPSNPs(srcID, lspdus, ifa.ethernetInterface.GetMTU()) {
 			ifa.sendPSNP(&psnp, l.level())
 		}
 	}
@@ -303,7 +303,7 @@ func (l *lsdb) getCSNPs(ifa *netIfa) []packet.CSNP {
 		SystemID: l.srv.nets[0].SystemID,
 	}
 
-	return packet.NewCSNPs(srcID, l.getLSPEntries(), ifa.ethHandler.GetMTU())
+	return packet.NewCSNPs(srcID, l.getLSPEntries(), ifa.ethernetInterface.GetMTU())
 }
 
 func (l *lsdb) sendCSNPs(ifa *netIfa) {

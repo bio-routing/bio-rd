@@ -26,7 +26,7 @@ func (p packetMreq) serialize() []byte {
 }
 
 // MCastJoin joins a multicast group
-func (e *Handler) MCastJoin(addr MACAddr) error {
+func (e *EthernetInterface) MCastJoin(addr MACAddr) error {
 	mreq := packetMreq{
 		mrIfIndex: uint32(e.ifIndex),
 		mrType:    syscall.PACKET_MR_MULTICAST,
