@@ -61,7 +61,7 @@ func (b *BPF) serializeTerms() []byte {
 	return directives.Bytes()
 }
 
-func (e *Handler) loadBPF(b *BPF) error {
+func (e *EthernetInterface) loadBPF(b *BPF) error {
 	if b == nil {
 		return nil
 	}

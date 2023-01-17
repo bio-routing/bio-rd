@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
@@ -23,7 +22,6 @@ type InterfaceConfig struct {
 	PointToPoint bool
 	Level1       *InterfaceLevelConfig
 	Level2       *InterfaceLevelConfig
-	mock         bool
 }
 
 // holdingTimer() picks the maximum holding timer from Level1 and Level2 config
@@ -87,13 +85,12 @@ type netIfa struct {
 	done              chan struct{}
 	wg                sync.WaitGroup
 	helloTicker       btime.Ticker
-	isP2PHelloCon     net.Conn
 	neighborManagerL1 *neighborManager
 	neighborManagerL2 *neighborManager
 	mu                sync.RWMutex
 	initialized       bool
 	devStatus         device.DeviceInterface
-	ethHandler        ethernet.HandlerInterface
+	ethernetInterface ethernet.EthernetInterfaceI
 }
 
 func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
@@ -185,22 +182,16 @@ func (nifa *netIfa) _start() error {
 		return nil
 	}
 
-	if nifa.cfg.mock {
-		nifa.ethHandler = ethernet.NewMockHandler()
-	} else {
-		ethHandler, err := ethernet.NewHandler(nifa.name, getISISBPF(), getISISLLC())
-		if err != nil {
-			return fmt.Errorf("unable to create ethernet handler (%s): %w", nifa.name, err)
-		}
-		nifa.ethHandler = ethHandler
+	ethIfa, err := nifa.srv.ethernetInterfaceFactory.New(nifa.name, getISISBPF(), getISISLLC())
+	if err != nil {
+		return fmt.Errorf("unable to create ethernet handler (%s): %w", nifa.name, err)
 	}
-
-	nifa.isP2PHelloCon = nifa.ethHandler.NewConn(allISNetworkEntitiesAddr)
+	nifa.ethernetInterface = ethIfa
 
 	nifa.wg.Add(1)
 	go nifa.p2pHelloSender()
 
-	err := nifa.ethHandler.MCastJoin(allISNetworkEntitiesAddr)
+	err = nifa.ethernetInterface.MCastJoin(allISNetworkEntitiesAddr)
 	if err != nil {
 		nifa._stop()
 		return fmt.Errorf("unable to join IS p2p hello multicast group: %w", err)
@@ -230,7 +221,7 @@ func (nifa *netIfa) _stop() {
 	}
 
 	close(nifa.done)
-	nifa.ethHandler.Close()
+	nifa.ethernetInterface.Close()
 	nifa.wg.Wait()
 }
 

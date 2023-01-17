@@ -25,7 +25,7 @@ func (nifa *netIfa) receiver() {
 }
 
 func (nifa *netIfa) receive() error {
-	pkt, src, err := nifa.ethHandler.RecvPacket()
+	pkt, src, err := nifa.ethernetInterface.RecvPacket()
 	if err != nil {
 		return fmt.Errorf("Read failed: %w", err)
 	}

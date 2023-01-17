@@ -28,7 +28,7 @@ func (nifa *netIfa) p2pHelloSender() {
 			hdr.Serialize(hdrBuf)
 			hdrBuf.Write(helloBuf.Bytes())
 
-			_, err := nifa.isP2PHelloCon.Write(hdrBuf.Bytes())
+			err := nifa.ethernetInterface.SendPacket(allISNetworkEntitiesAddr, hdrBuf.Bytes())
 			if err != nil {
 				log.WithFields(nifa.fields()).WithError(err).Error("Unable to send hello packet")
 			}
