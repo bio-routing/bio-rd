@@ -401,6 +401,8 @@ func (a *AdjRIBOut) redistributePath(p *route.Path) error {
 	p.BGPPath = route.NewBGPPath()
 
 	switch p.RedistributedFrom {
+	case route.GRPPathType:
+		a.redistributeFromGRP(p)
 	case route.StaticPathType:
 		a.redistributeFromStatic(p)
 	default:
@@ -411,10 +413,9 @@ func (a *AdjRIBOut) redistributePath(p *route.Path) error {
 }
 
 func (a *AdjRIBOut) redistributeFromStatic(p *route.Path) {
-	if p.StaticPath == nil {
-		p.BGPPath.BGPPathA.NextHop = a.sessionAttrs.LocalIP
-		return
-	}
+	p.BGPPath.BGPPathA.NextHop = a.sessionAttrs.LocalIP
+}
 
-	p.BGPPath.BGPPathA.NextHop = p.StaticPath.NextHop
+func (a *AdjRIBOut) redistributeFromGRP(p *route.Path) {
+	p.BGPPath.BGPPathA.NextHop = a.sessionAttrs.LocalIP
 }
