@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"time"
 
 	netapi "github.com/bio-routing/bio-rd/net/api"
 	"github.com/bio-routing/bio-rd/protocols/isis/api"
@@ -41,7 +40,7 @@ func (s *ISISAPIServer) ListAdjacencies(context.Context, *api.ListAdjacenciesReq
 			Priority:           uint32(a.Priority),
 			IpAddresses:        addrs,
 			LastTransitionUnix: a.LastStateChange.Unix(),
-			ExpiresInSeconds:   uint32(a.Timeout.Sub(time.Now()).Seconds()),
+			ExpiresInSeconds:   uint32(a.Timeout.Sub(clock.Now()).Seconds()),
 			Status:             api.Adjacency_State(a.Status),
 		}
 

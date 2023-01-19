@@ -8,10 +8,9 @@ import (
 )
 
 type netIfaManager struct {
-	srv           *Server
-	netIfas       map[string]*netIfa
-	netIfasMu     sync.Mutex
-	useMockTicker bool
+	srv       *Server
+	netIfas   map[string]*netIfa
+	netIfasMu sync.Mutex
 }
 
 func newNetIfaManager(srv *Server) *netIfaManager {

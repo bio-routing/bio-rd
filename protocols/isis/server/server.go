@@ -5,15 +5,24 @@ import (
 	"sync"
 	"time"
 
+	bbclock "github.com/benbjohnson/clock"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
-	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
+var (
+	clock = bbclock.New()
+)
+
+func SetClock(c bbclock.Clock) {
+	clock = c
+}
+
 const (
-	minimumLSPTransmissionInterval = time.Second * 5
+	//minimumLSPTransmissionInterval = time.Second * 5
+	minimumLSPTransmissionInterval = time.Second
 	csnpTransmissionInterval       = time.Second * 10
 )
 
@@ -22,7 +31,7 @@ type ISISServer interface {
 	AddInterface(*InterfaceConfig) error
 	RemoveInterface(name string) error
 	GetInterfaceNames() []string
-	Start() error
+	Start()
 	GetAdjacencies() []*Adjacency
 	GetLSDB() []*LSDBEntry
 }
@@ -46,7 +55,7 @@ type Server struct {
 }
 
 // Start starts the ISIS server
-func (s *Server) Start() error {
+func (s *Server) Start() {
 	s.runningMu.Lock()
 	defer s.runningMu.Unlock()
 
@@ -54,13 +63,13 @@ func (s *Server) Start() error {
 		s.running = true
 	}
 
-	decrementTicker := btime.NewBIOTicker(time.Second)
-	minLSPTransTicker := btime.NewBIOTicker(minimumLSPTransmissionInterval)
-	psnpTransTicker := btime.NewBIOTicker(time.Second * 5)
-	csnpTransTicker := btime.NewBIOTicker(csnpTransmissionInterval)
+	decrementTicker := clock.Ticker(time.Second)
+	minLSPTransTicker := clock.Ticker(minimumLSPTransmissionInterval)
+	psnpTransTicker := clock.Ticker(time.Second * 5)
+	csnpTransTicker := clock.Ticker(csnpTransmissionInterval)
 	s.lsdbL2.start(decrementTicker, minLSPTransTicker, psnpTransTicker, csnpTransTicker)
 
-	return nil
+	return
 }
 
 type Adjacency struct {
@@ -170,4 +179,8 @@ func (s *Server) GetInterfaceNames() []string {
 	}
 
 	return ret
+}
+
+func (s *Server) updateL2LSP() {
+	s.lsdbL2.updateL2LSP()
 }

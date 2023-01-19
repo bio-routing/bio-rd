@@ -28,10 +28,7 @@ func configureProtocolsISIS(isis *config.ISIS) error {
 			return fmt.Errorf("unable to create ISIS server: %w", err)
 		}
 
-		err = isisSrv.Start()
-		if err != nil {
-			return fmt.Errorf("unable to start ISIS server: %w", err)
-		}
+		isisSrv.Start()
 	}
 
 	configuredInterfaces := isisSrv.GetInterfaceNames()

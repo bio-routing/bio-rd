@@ -1,5 +1,7 @@
 package device
 
+import "github.com/bio-routing/bio-rd/net"
+
 type MockServer struct {
 	Called            bool
 	UnsubscribeCalled bool
@@ -23,9 +25,10 @@ func (ms *MockServer) Unsubscribe(c Client, n string) {
 	ms.UnsubscribeName = n
 }
 
-func (ms *MockServer) DeviceUpEvent(name string) {
+func (ms *MockServer) DeviceUpEvent(name string, addrs []*net.Prefix) {
 	ms.C.DeviceUpdate(&Device{
 		name:      name,
 		operState: IfOperUp,
+		addrs:     addrs,
 	})
 }
