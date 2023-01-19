@@ -113,11 +113,14 @@ func (b *BMPReceiver) Serve() error {
 		}
 
 		// Do we know this router from configuration or have seen it before?
-		r := b.getRouter(c.RemoteAddr().(*net.TCPAddr).IP.String())
+		remoteAddr := c.RemoteAddr().(*net.TCPAddr).IP.String()
+		r := b.getRouter(remoteAddr)
 		dynamic := false
 		if r == nil {
 			// If we don't know this router and don't accept connection from anyone, we drop it
 			if !b.acceptAny {
+				log.Infof("Drop connection from %v, not in routers and acceptAny disabled", remoteAddr)
+				c.Close()
 				continue
 			}
 
@@ -127,12 +130,15 @@ func (b *BMPReceiver) Serve() error {
 			err := b.AddRouter(tcpRemoteAddr.IP, localPort, true, dynamic)
 			if err != nil {
 				log.Errorf("failed to add router: %v", err)
+				c.Close()
 				continue
 			}
 
 			r = b.getRouter(tcpRemoteAddr.IP.String())
 			// Potentially we could have already removed this router if it were connecting twice and did not offer an init message
 			if r == nil {
+				log.Infof("Drop connection from %v, not in routers", remoteAddr)
+				c.Close()
 				continue
 			}
 		}
