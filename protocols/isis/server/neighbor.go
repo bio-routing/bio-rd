@@ -4,12 +4,12 @@ import (
 	"sync"
 	"time"
 
+	bbclock "github.com/benbjohnson/clock"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/log"
-	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
 const (
@@ -36,13 +36,12 @@ type neighbor struct {
 	ipAddresses            []bnet.IP
 	protocols              []uint8
 	areas                  []types.AreaID
-	adjCheckTicker         btime.Ticker
+	adjCheckTicker         *bbclock.Ticker
 	wg                     sync.WaitGroup
 	done                   chan struct{}
 }
 
 func (n *neighbor) getAdjacency() *Adjacency {
-
 	n.stateMu.RLock()
 	defer n.stateMu.RUnlock()
 
@@ -68,9 +67,9 @@ func (nm *neighborManager) neighborFromP2PHello(hello *packet.P2PHello, addr eth
 		addr:            addr,
 		sysID:           hello.SystemID,
 		nm:              nm,
-		lastStateChange: time.Now(),
+		lastStateChange: clock.Now(),
 		state:           packet.P2PAdjStateInit,
-		timeout:         time.Now().Add(time.Duration(hello.HoldingTimer) * time.Second),
+		timeout:         clock.Now().Add(time.Duration(hello.HoldingTimer) * time.Second),
 		ipAddresses:     make([]bnet.IP, 0),
 		protocols:       make([]uint8, 0),
 		areas:           make([]types.AreaID, 0),
@@ -119,7 +118,7 @@ func (n *neighbor) fields() log.Fields {
 		"component": "neighbor",
 		"interface": n.nm.netIfa.name,
 		"level":     n.nm.level,
-		"sysID":     n.sysID,
+		"sysID":     n.sysID.String(),
 	}
 }
 
@@ -128,7 +127,7 @@ func (n *neighbor) adjChecker() {
 	defer n.wg.Done()
 	defer log.WithFields(n.fields()).Debug("Stopping adjacency timeout checker")
 
-	n.adjCheckTicker = btime.NewBIOTicker(time.Second)
+	n.adjCheckTicker = clock.Ticker(time.Second)
 	defer n.adjCheckTicker.Stop()
 
 	log.WithFields(n.fields()).Debug("Starting adjacency timeout checker")
@@ -136,7 +135,7 @@ func (n *neighbor) adjChecker() {
 		select {
 		case <-n.done:
 			return
-		case <-n.adjCheckTicker.C():
+		case <-n.adjCheckTicker.C:
 			state, change := n.getStateAndTime()
 			if state == packet.P2PAdjStateUp {
 				if n.timedOut() {
@@ -146,7 +145,7 @@ func (n *neighbor) adjChecker() {
 			}
 
 			if state == packet.P2PAdjStateDown {
-				if time.Now().Sub(change) > time.Second*time.Duration(neighborDownTimeoutS) {
+				if clock.Now().Sub(change) > time.Second*time.Duration(neighborDownTimeoutS) {
 					n.dispose()
 					return
 				}
@@ -159,7 +158,7 @@ func (n *neighbor) timedOut() bool {
 	n.timeoutMu.Lock()
 	defer n.timeoutMu.Unlock()
 
-	return n.timeout.Before(time.Now())
+	return n.timeout.Before(clock.Now())
 }
 
 func (n *neighbor) updateTimeout(to time.Time) {
@@ -188,27 +187,30 @@ func (n *neighbor) setState(s uint8) {
 	n.stateMu.Lock()
 	defer n.stateMu.Unlock()
 
-	n.lastStateChange = time.Now()
+	n.lastStateChange = clock.Now()
 	n.state = s
 }
 
 func (n *neighbor) processP2PHello(hello *packet.P2PHello) error {
-	n.updateTimeout(time.Now().Add(time.Second * time.Duration(hello.HoldingTimer)))
+	n.updateTimeout(clock.Now().Add(time.Second * time.Duration(hello.HoldingTimer)))
 
 	p2pAdjState := getP2PAdjTLV(hello.TLVs)
 	if p2pAdjState == nil {
 		return nil
 	}
 
-	if !n.p2pAdjTLVContainsSelf(p2pAdjState) {
+	if n.getState() != packet.P2PAdjStateUp && n.p2pAdjTLVContainsSelf(p2pAdjState) {
+		log.WithFields(n.fields()).Infof("Adjacency reaches up state")
+		n.setState(packet.P2PAdjStateUp)
+		n.nm.server.updateL2LSP()
 		return nil
 	}
 
-	if n.getState() != packet.P2PAdjStateUp {
-		log.WithFields(n.fields()).Infof("Adjacency reaches up state")
-		n.setState(packet.P2PAdjStateUp)
-
-		// TODO: Generate LSP, send CSNP, etc, pp.
+	if n.getState() == packet.P2PAdjStateUp && !n.p2pAdjTLVContainsSelf(p2pAdjState) {
+		log.WithFields(n.fields()).Infof("Adjacency reaches down state")
+		n.setState(packet.P2PAdjStateDown)
+		n.nm.server.updateL2LSP()
+		return nil
 	}
 
 	return nil

@@ -18,7 +18,7 @@ func (nifa *netIfa) p2pHelloSender() {
 			nifa.helloTicker.Stop()
 			nifa.wg.Done()
 			return
-		case <-nifa.helloTicker.C():
+		case <-nifa.helloTicker.C:
 			hello := nifa.p2pHello()
 			helloBuf := bytes.NewBuffer(nil)
 			hello.Serialize(helloBuf)
@@ -35,6 +35,19 @@ func (nifa *netIfa) p2pHelloSender() {
 		}
 
 	}
+}
+
+func (nifa *netIfa) ipv4Addrs() []uint32 {
+	ipv4Addrs := make([]uint32, 0)
+	for _, a := range nifa.devStatus.GetAddrs() {
+		if !a.Addr().IsIPv4() {
+			continue
+		}
+
+		ipv4Addrs = append(ipv4Addrs, convert.Uint32(convert.Reverse(a.Addr().Bytes())))
+	}
+
+	return ipv4Addrs
 }
 
 func (nifa *netIfa) p2pHello() *packet.P2PHello {
@@ -56,7 +69,7 @@ func (nifa *netIfa) p2pHello() *packet.P2PHello {
 	}
 
 	n := nifa.getP2PNeighbor()
-	if n == nil {
+	if n == nil || n.state == packet.P2PAdjStateDown {
 		h.TLVs = append(h.TLVs, packet.NewP2PAdjacencyStateTLV(packet.DOWN_STATE, uint32(nifa.devStatus.GetIndex())))
 	} else {
 		p2pAdjTLV := packet.NewP2PAdjacencyStateTLV(n.getState(), uint32(nifa.devStatus.GetIndex()))
@@ -67,16 +80,7 @@ func (nifa *netIfa) p2pHello() *packet.P2PHello {
 	}
 
 	h.TLVs = append(h.TLVs, nifa.srv.getProtocolsSupportedTLV())
-
-	ipv4Addrs := make([]uint32, 0)
-	for _, a := range nifa.devStatus.GetAddrs() {
-		if !a.Addr().IsIPv4() {
-			continue
-		}
-
-		ipv4Addrs = append(ipv4Addrs, convert.Uint32(convert.Reverse(a.Addr().Bytes())))
-	}
-	h.TLVs = append(h.TLVs, packet.NewIPInterfaceAddressesTLV(ipv4Addrs))
+	h.TLVs = append(h.TLVs, packet.NewIPInterfaceAddressesTLV(nifa.ipv4Addrs()))
 
 	// TODO: Add IPv6 Interface Addresses TLV
 

@@ -8,7 +8,8 @@ import (
 	"github.com/bio-routing/bio-rd/net/ethernet"
 	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/util/log"
-	btime "github.com/bio-routing/bio-rd/util/time"
+
+	bbclock "github.com/benbjohnson/clock"
 )
 
 var (
@@ -84,7 +85,7 @@ type netIfa struct {
 	cfg               *InterfaceConfig
 	done              chan struct{}
 	wg                sync.WaitGroup
-	helloTicker       btime.Ticker
+	helloTicker       *bbclock.Ticker
 	neighborManagerL1 *neighborManager
 	neighborManagerL2 *neighborManager
 	mu                sync.RWMutex
@@ -109,11 +110,7 @@ func newNetIfa(srv *Server, cfg *InterfaceConfig) *netIfa {
 		ret.neighborManagerL2 = newNeighborManager(srv, ret, 2)
 	}
 
-	if srv.netIfaManager.useMockTicker {
-		ret.helloTicker = btime.NewMockTicker()
-	} else {
-		ret.helloTicker = btime.NewBIOTicker(time.Duration(cfg.getMinHelloInterval()) * time.Second)
-	}
+	ret.helloTicker = clock.Ticker(time.Duration(cfg.getMinHelloInterval()) * time.Second)
 
 	srv.ds.Subscribe(ret, cfg.Name)
 	return ret

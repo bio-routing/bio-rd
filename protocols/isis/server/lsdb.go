@@ -3,10 +3,10 @@ package server
 import (
 	"sync"
 
+	bbclock "github.com/benbjohnson/clock"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/log"
-	btime "github.com/bio-routing/bio-rd/util/time"
 )
 
 type lsdb struct {
@@ -44,7 +44,7 @@ func (l *lsdb) dispose() {
 	l.srv = nil
 }
 
-func (l *lsdb) start(decrementTicker btime.Ticker, minLSPTransTicker btime.Ticker, psnpTransTicker btime.Ticker, csnpTransTicker btime.Ticker) {
+func (l *lsdb) start(decrementTicker *bbclock.Ticker, minLSPTransTicker *bbclock.Ticker, psnpTransTicker *bbclock.Ticker, csnpTransTicker *bbclock.Ticker) {
 	l.wg.Add(1)
 	go l.decrementRemainingLifetimesRoutine(decrementTicker)
 
@@ -63,12 +63,12 @@ func (l *lsdb) stop() {
 	l.wg.Wait()
 }
 
-func (l *lsdb) decrementRemainingLifetimesRoutine(t btime.Ticker) {
+func (l *lsdb) decrementRemainingLifetimesRoutine(t *bbclock.Ticker) {
 	defer l.wg.Done()
 
 	for {
 		select {
-		case <-t.C():
+		case <-t.C:
 			l.decrementRemainingLifetimes()
 		case <-l.done:
 			return
@@ -98,12 +98,12 @@ func (l *lsdb) setSRMAllLSPs(ifa *netIfa) {
 	}
 }
 
-func (l *lsdb) sendLSPDUsRoutine(t btime.Ticker) {
+func (l *lsdb) sendLSPDUsRoutine(t *bbclock.Ticker) {
 	defer l.wg.Done()
 
 	for {
 		select {
-		case <-t.C():
+		case <-t.C:
 			l.sendLSPDUs()
 		case <-l.done:
 			return
@@ -209,12 +209,12 @@ func (l *lsdb) processPSNP(from *netIfa, psnp *packet.PSNP) {
 	}
 }
 
-func (l *lsdb) sendCSNPsRoutine(t btime.Ticker) {
+func (l *lsdb) sendCSNPsRoutine(t *bbclock.Ticker) {
 	defer l.wg.Done()
 
 	for {
 		select {
-		case <-t.C():
+		case <-t.C:
 			l.sendCSNPss()
 		case <-l.done:
 			return
@@ -232,12 +232,12 @@ func (l *lsdb) sendCSNPss() {
 	}
 }
 
-func (l *lsdb) sendPSNPsRoutine(t btime.Ticker) {
+func (l *lsdb) sendPSNPsRoutine(t *bbclock.Ticker) {
 	defer l.wg.Done()
 
 	for {
 		select {
-		case <-t.C():
+		case <-t.C:
 			l.sendPSNPss()
 		case <-l.done:
 			return
@@ -310,6 +310,20 @@ func (l *lsdb) sendCSNPs(ifa *netIfa) {
 	for _, c := range l.getCSNPs(ifa) {
 		ifa.sendCSNP(&c, l.level())
 	}
+}
+
+func (l *lsdb) updateL2LSP() {
+	l.lspsMu.Lock()
+	defer l.lspsMu.Unlock()
+
+	lspdu := l.srv.generateLocalLSP()
+	lsdbEntry := newLSDBEntry(lspdu)
+
+	for _, ifa := range l.srv.netIfaManager.getAllInterfaces() {
+		lsdbEntry.setSRM(ifa)
+	}
+
+	l.lsps[lspdu.LSPID] = lsdbEntry
 }
 
 func (l *lsdb) processLSP(ifa *netIfa, lspdu *packet.LSPDU) {
