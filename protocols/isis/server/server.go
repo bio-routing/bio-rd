@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -21,8 +22,7 @@ func SetClock(c bbclock.Clock) {
 }
 
 const (
-	//minimumLSPTransmissionInterval = time.Second * 5
-	minimumLSPTransmissionInterval = time.Second
+	minimumLSPTransmissionInterval = time.Second * 5
 	csnpTransmissionInterval       = time.Second * 10
 )
 
@@ -52,6 +52,7 @@ type Server struct {
 	stop                     chan struct{}
 	ds                       device.Updater
 	ethernetInterfaceFactory ethernet.EthernetInterfaceFactoryI
+	hostname                 func() (string, error)
 }
 
 // Start starts the ISIS server
@@ -125,6 +126,7 @@ func New(nets []*types.NET, ds device.Updater, lspLifetime uint16) (*Server, err
 		ds:                       ds,
 		stop:                     make(chan struct{}),
 		ethernetInterfaceFactory: ethernet.NewEthernetInterfaceFactory(),
+		hostname:                 os.Hostname,
 	}
 
 	s.netIfaManager = newNetIfaManager(s)
@@ -135,6 +137,10 @@ func New(nets []*types.NET, ds device.Updater, lspLifetime uint16) (*Server, err
 
 func (s *Server) SetEthernetInterfaceFactory(f ethernet.EthernetInterfaceFactoryI) {
 	s.ethernetInterfaceFactory = f
+}
+
+func (s *Server) SetHostnameFunc(f func() (string, error)) {
+	s.hostname = f
 }
 
 func (s *Server) GetEthernetInterface(name string) ethernet.EthernetInterfaceI {

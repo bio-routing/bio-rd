@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -25,6 +24,10 @@ type neighbor struct {
 }
 
 func TestServer(t *testing.T) {
+	hostnameFunc := func() (string, error) {
+		return "fuckup", nil
+	}
+
 	clock := bbclock.NewMock()
 	now, _ := time.Parse(testTimeLayout, "January 23, 2023 at 00:00:00.000")
 	clock.Set(now)
@@ -53,6 +56,7 @@ func TestServer(t *testing.T) {
 
 	s.Start()
 	s.SetEthernetInterfaceFactory(ethernet.NewMockEthernetInterfaceFactory())
+	s.SetHostnameFunc(hostnameFunc)
 
 	err = s.AddInterface(&server.InterfaceConfig{
 		Name:         "eth0",
@@ -163,6 +167,7 @@ func TestServer(t *testing.T) {
 		2,       // Area length
 		0x49, 0, // Area
 	})
+	time.Sleep(time.Second)
 
 	// checking if the adjancency exists
 	for _, a := range s.GetAdjacencies() {
@@ -258,6 +263,7 @@ func TestServer(t *testing.T) {
 		2,       // Area length
 		0x49, 0, // Area
 	})
+	time.Sleep(time.Second)
 
 	clock.Add(time.Second)
 	// checking if the adjancency is up
@@ -270,10 +276,6 @@ func TestServer(t *testing.T) {
 
 	clock.Add(time.Second * 3)
 	pkt = readNext(packet.L2_LS_PDU_TYPE, eth0)
-	hostname, err := os.Hostname()
-	if err != nil {
-		panic("no hostname")
-	}
 	expected := []byte{
 		// Header
 		131,  // Intradomain Routing Protocol Discriminator: ISIS
@@ -286,7 +288,7 @@ func TestServer(t *testing.T) {
 		0,    // Max. Area addresses
 		// LSP
 		0, 49, // Length
-		7, 7, // Remaining Lifetime
+		7, 6, // Remaining Lifetime
 		12, 12, 12, 13, 13, 13, 0, 0, // LSP ID
 		0, 0, 0, 1, // Sequence number
 		229, 53, // Checksum
@@ -303,9 +305,63 @@ func TestServer(t *testing.T) {
 		169, 254, 100, 0, // IP
 		137, // Hostname
 		6,   // Length
+		0x66, 0x75, 0x63, 0x6b, 0x75, 0x70,
 	}
-	expected = append(expected, []byte(hostname)...)
 	if !assert.Equal(t, expected, pkt) {
+		return
+	}
+
+	// lets provoke a timeout of the adjacency
+	clock.Add(time.Second * 17)
+
+	// checking if the adjancency is down
+	for _, a := range s.GetAdjacencies() {
+		assert.Equal(t, neighborA.mac.String(), a.Address.String())
+		assert.Equal(t, "eth0", a.InterfaceName)
+		assert.Equal(t, neighborA.systemID.String(), a.SystemID.String())
+		assert.Equal(t, packet.P2PAdjStateDown, int(a.Status))
+	}
+
+	// check if hello does not contain a neighbor anymore
+	pkt = readNext(packet.P2P_HELLO, eth0)
+	if !assert.Equal(t, []byte{
+		// ISO 10589 header
+		0x83, // Intradomain Routing Protocol Discriminator: ISIS
+		0x14, // Length indicator
+		0x01, // Version / Protocol ID Extension
+		0x00, // ID Length
+		0x11, // Type
+		0x01, // Version
+		0x00, // Reserved
+		0x00, // Maximum Area Addresses
+		// ISIS hello
+		0x02,                               // Level 2 only
+		0x0c, 0x0c, 0x0c, 0x0d, 0x0d, 0x0d, // System ID
+		0x00, 0x10, // Holding timer
+		0x00, 0x34, // PDU length
+		0x01, // Local Circuit ID
+		// P2P Adj. State TLV <--- Important part
+		0xf0,       // Type
+		0x0f,       // Length
+		0x00,       // Adj State down
+		0, 0, 0, 0, // extended local circuit id
+		222, 173, 190, 239, 255, 1, // Neighbor system ID
+		0, 0, 0, 0, // Neighbor extended local circuit id
+		// Protocols supported TLV
+		129, // Type
+		2,   // Length
+		204, // IPv4
+		142, // IPv6
+		// IP Interface addresses TLV
+		132,              // Type
+		4,                // Length
+		169, 254, 100, 0, // IP Address
+		// Area Addresses TLV
+		1,       // Type
+		3,       // Length
+		2,       // Area length
+		0x49, 0, // Area
+	}, pkt) {
 		return
 	}
 }

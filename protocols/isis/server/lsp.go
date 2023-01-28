@@ -1,8 +1,6 @@
 package server
 
 import (
-	"os"
-
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 )
 
@@ -46,7 +44,7 @@ func (s *Server) generateLocalLSP() *packet.LSPDU {
 		},
 	}
 
-	hostname, err := os.Hostname()
+	hostname, err := s.hostname()
 	if err == nil {
 		l.TLVs = append(l.TLVs, packet.NewDynamicHostnameTLV([]byte(hostname)))
 	}
