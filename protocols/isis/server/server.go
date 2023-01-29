@@ -187,6 +187,17 @@ func (s *Server) GetInterfaceNames() []string {
 	return ret
 }
 
+// updateL2LSP updates the systems L2 LSP. This is triggered when:
+// 1. Router starts up (todo)
+// 2. Periodic refresh timer expired (done)
+// 3. A new adjacency is formed (done)
+// 4. An adjacency goes down (done)
+// 5. A link goes down (done)
+// 6. Metric associated with a link or reachable address changes (todo)
+// 7. The routers sysID changes  (todo)
+// 8. The router is elected or superseded as the DIS (todo)
+// 9. An area address associated with the router is added or removed (todo)
+// 10. The overload status of the database changes (todo)
 func (s *Server) updateL2LSP() {
-	s.lsdbL2.updateL2LSP()
+	s.lsdbL2.requestL2LSPUpdate()
 }

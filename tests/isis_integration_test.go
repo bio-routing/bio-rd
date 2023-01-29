@@ -29,8 +29,8 @@ func TestISISServer(t *testing.T) {
 	}
 
 	clock := bbclock.NewMock()
-	now, _ := time.Parse(testTimeLayout, "January 23, 2023 at 00:00:00.000")
-	clock.Set(now)
+	start, _ := time.Parse(testTimeLayout, "January 23, 2023 at 00:00:00.000")
+	clock.Set(start)
 	server.SetClock(clock)
 
 	neighborA := neighbor{
@@ -167,8 +167,7 @@ func TestISISServer(t *testing.T) {
 		2,       // Area length
 		0x49, 0, // Area
 	})
-	time.Sleep(time.Second)
-
+	time.Sleep(time.Millisecond * 10)
 	// checking if the adjancency exists
 	for _, a := range s.GetAdjacencies() {
 		assert.Equal(t, neighborA.mac.String(), a.Address.String())
@@ -179,7 +178,7 @@ func TestISISServer(t *testing.T) {
 
 	// let's see if the neighborA is not listed in the hello packet
 	clock.Add(time.Second * 4)
-	dst, pkt = eth0.ReceiveAtRemote()
+	pkt = readNext(packet.P2P_HELLO, eth0)
 	if !assert.Equal(t, []byte{
 		// ISO 10589 header
 		131, // Intradomain Routing Protocol Discriminator: ISIS
@@ -263,7 +262,7 @@ func TestISISServer(t *testing.T) {
 		2,       // Area length
 		0x49, 0, // Area
 	})
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 10)
 
 	clock.Add(time.Second)
 	// checking if the adjancency is up
@@ -290,8 +289,8 @@ func TestISISServer(t *testing.T) {
 		0, 0x5f, // Length
 		7, 6, // Remaining Lifetime
 		12, 12, 12, 13, 13, 13, 0, 0, // LSP ID
-		0, 0, 0, 1, // Sequence number
-		0x56, 0xc8, // Checksum
+		0, 0, 0, 2, // Sequence number
+		0x54, 0xc9, // Checksum
 		0, // Type block
 		// TLVs
 		1, // Area
@@ -334,6 +333,65 @@ func TestISISServer(t *testing.T) {
 	if !assert.Equal(t, expected, pkt) {
 		return
 	}
+
+	// let's check if the LSP gets regenerated when it's life time goes down to 5 minutes:
+	// We'll need to move the clock a few times and send a few hellos and then check for a fresh LSP packet with increased sequence number
+	remainingLifetime := s.GetLSDB()[0].GetLSPDU().RemainingLifetime
+	sequenceNumber := s.GetLSDB()[0].GetLSPDU().SequenceNumber
+	for {
+		clock.Add(time.Second * 4)
+		eth0.SendFromRemote(neighborA.mac, []byte{
+			0x00, // DSAP
+			0x00, // CSAP
+			0x00, // CF
+			// ISO 10589 header
+			131, // Intradomain Routing Protocol Discriminator: ISIS
+			20,  // Length indicator
+			1,   // Version / Protocol ID Extension
+			0,   // ID Length
+			17,  // Type
+			1,   // Version
+			0,   // Reserved
+			0,   // Maximum Area Addresses
+			// ISIS hello
+			2,                          // Level 2 only
+			222, 173, 190, 239, 255, 1, // System ID
+			0, 16, // Holding timer
+			0, 52, // PDU length
+			1, // Local Circuit ID
+			// P2P Adj. State TLV <--- Important part
+			240,          // Type
+			15,           // Length
+			1,            // Adj State down
+			0, 0, 0, 100, // extended local circuit id
+			12, 12, 12, 13, 13, 13, // Neighbor system ID
+			0, 0, 0, 0, // Neighbor extended local circuit id
+			// Protocols supported TLV
+			129, // Type
+			2,   // Length
+			204, // IPv4
+			142, // IPv6
+			// IP Interface addresses TLV
+			132,              // Type
+			4,                // Length
+			169, 254, 100, 1, // IP Address
+			// Area Addresses TLV
+			1,       // Type
+			3,       // Length
+			2,       // Area length
+			0x49, 0, // Area
+		})
+
+		eth0.DrainBuffer()
+		lspdu := s.GetLSDB()[0].GetLSPDU()
+		if lspdu.RemainingLifetime > remainingLifetime && lspdu.SequenceNumber > sequenceNumber {
+			break
+		}
+
+		remainingLifetime = lspdu.RemainingLifetime
+	}
+
+	time.Sleep(time.Millisecond * 10)
 
 	// lets provoke a timeout of the adjacency
 	clock.Add(time.Second * 17)
@@ -434,7 +492,7 @@ func TestISISServer(t *testing.T) {
 	})
 
 	clock.Add(time.Second * 4)
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 10)
 	for _, a := range s.GetAdjacencies() {
 		assert.Equal(t, neighborA.mac.String(), a.Address.String())
 		assert.Equal(t, "eth0", a.InterfaceName)
@@ -447,13 +505,14 @@ func TestISISServer(t *testing.T) {
 		bnet.NewPfx(bnet.IPv4FromOctets(169, 254, 100, 0), 31).Ptr(),
 	})
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 10)
 	for _, a := range s.GetAdjacencies() {
 		assert.Equal(t, neighborA.mac.String(), a.Address.String())
 		assert.Equal(t, "eth0", a.InterfaceName)
 		assert.Equal(t, neighborA.systemID.String(), a.SystemID.String())
 		assert.Equal(t, packet.P2PAdjStateDown, int(a.Status))
 	}
+
 }
 
 func readNext(typ uint8, mi *ethernet.MockEthernetInterface) []byte {

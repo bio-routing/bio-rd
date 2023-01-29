@@ -175,29 +175,30 @@ func (nifa *netIfa) _start() error {
 		return fmt.Errorf("already running")
 	}
 
-	if nifa.cfg.Passive {
-		return nil
+	if !nifa.cfg.Passive {
+		ethIfa, err := nifa.srv.ethernetInterfaceFactory.New(nifa.name, getISISBPF(), getISISLLC())
+		if err != nil {
+			return fmt.Errorf("unable to create ethernet handler (%s): %w", nifa.name, err)
+		}
+		nifa.ethernetInterface = ethIfa
+
+		nifa.wg.Add(1)
+		go nifa.p2pHelloSender()
+
+		err = nifa.ethernetInterface.MCastJoin(allISNetworkEntitiesAddr)
+		if err != nil {
+			nifa._stop()
+			return fmt.Errorf("unable to join IS p2p hello multicast group: %w", err)
+		}
+
+		nifa.wg.Add(1)
+		go nifa.receiver()
+
+		nifa.initialized = true
 	}
 
-	ethIfa, err := nifa.srv.ethernetInterfaceFactory.New(nifa.name, getISISBPF(), getISISLLC())
-	if err != nil {
-		return fmt.Errorf("unable to create ethernet handler (%s): %w", nifa.name, err)
-	}
-	nifa.ethernetInterface = ethIfa
+	nifa.srv.updateL2LSP()
 
-	nifa.wg.Add(1)
-	go nifa.p2pHelloSender()
-
-	err = nifa.ethernetInterface.MCastJoin(allISNetworkEntitiesAddr)
-	if err != nil {
-		nifa._stop()
-		return fmt.Errorf("unable to join IS p2p hello multicast group: %w", err)
-	}
-
-	nifa.wg.Add(1)
-	go nifa.receiver()
-
-	nifa.initialized = true
 	return nil
 }
 
@@ -219,6 +220,7 @@ func (nifa *netIfa) _stop() {
 
 	close(nifa.done)
 	nifa.ethernetInterface.Close()
+	nifa.srv.updateL2LSP()
 	nifa.wg.Wait()
 }
 

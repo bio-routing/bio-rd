@@ -19,6 +19,10 @@ type LSDBEntry struct {
 	ssnFlags []string
 }
 
+func (l *LSDBEntry) GetLSPDU() *packet.LSPDU {
+	return l.lspdu
+}
+
 func newLSDBEntry(lspdu *packet.LSPDU) *lsdbEntry {
 	return &lsdbEntry{
 		lspdu:    lspdu,
