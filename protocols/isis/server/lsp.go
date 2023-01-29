@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/bio-routing/bio-rd/protocols/device"
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 )
 
@@ -25,7 +26,6 @@ func (s *Server) nextL2SequencenNumber() uint32 {
 	return s.sequenceNumberL2
 }
 
-// TODO: Call this function
 func (s *Server) generateLocalLSP() *packet.LSPDU {
 	l := &packet.LSPDU{
 		RemainingLifetime: defaultLifetimeSeconds,
@@ -39,8 +39,8 @@ func (s *Server) generateLocalLSP() *packet.LSPDU {
 			packet.NewAreaAddressesTLV(s.areaIDs()),
 			s.getProtocolsSupportedTLV(),
 			packet.NewIPInterfaceAddressesTLV(s.netIfaManager.getAddressesIPv4()),
-			// TODO: Add ExtendedISReachabilityTLV
-			// TODO: Add ExtendedIPReachabilityTLV
+			s.extendedIPReachabilityTLV(),
+			s.extendedISReachabilityTLV(),
 		},
 	}
 
@@ -53,4 +53,35 @@ func (s *Server) generateLocalLSP() *packet.LSPDU {
 	l.SetChecksum()
 
 	return l
+}
+
+func (s *Server) extendedIPReachabilityTLV() *packet.ExtendedIPReachabilityTLV {
+	eipr := packet.NewExtendedIPReachabilityTLV()
+	for _, ifa := range s.netIfaManager.getAllInterfaces() {
+		if ifa.devStatus.GetOperState() != device.IfOperUp {
+			continue
+		}
+
+		for _, addr := range ifa.ipv4Addrs() {
+			eipr.AddExtendedIPReachability(
+				packet.NewExtendedIPReachability(
+					ifa.cfg.Level2.Metric,
+					addr.Len(),
+					addr.Addr().ToUint32()),
+			)
+		}
+	}
+
+	return eipr
+}
+
+func (s *Server) extendedISReachabilityTLV() *packet.ExtendedISReachabilityTLV {
+	eir := packet.NewExtendedISReachabilityTLV()
+	for _, ifa := range s.netIfaManager.getAllInterfaces() {
+		for _, n := range ifa.neighborManagerL2.getNeighborsUp() {
+			eir.AddNeighbor(n.extendedISReachabilityNeighbor())
+		}
+	}
+
+	return eir
 }
