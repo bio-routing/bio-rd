@@ -6,7 +6,8 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/isis/packet"
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/bio-routing/bio-rd/util/log"
-	"github.com/bio-routing/tflow2/convert"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func (nifa *netIfa) p2pHelloSender() {
@@ -37,14 +38,14 @@ func (nifa *netIfa) p2pHelloSender() {
 	}
 }
 
-func (nifa *netIfa) ipv4Addrs() []uint32 {
-	ipv4Addrs := make([]uint32, 0)
+func (nifa *netIfa) ipv4Addrs() []*bnet.Prefix {
+	ipv4Addrs := make([]*bnet.Prefix, 0)
 	for _, a := range nifa.devStatus.GetAddrs() {
 		if !a.Addr().IsIPv4() {
 			continue
 		}
 
-		ipv4Addrs = append(ipv4Addrs, convert.Uint32(convert.Reverse(a.Addr().Bytes())))
+		ipv4Addrs = append(ipv4Addrs, a)
 	}
 
 	return ipv4Addrs
@@ -76,6 +77,7 @@ func (nifa *netIfa) p2pHello() *packet.P2PHello {
 		p2pAdjTLV.NeighborSystemID = n.sysID
 		p2pAdjTLV.NeighborExtendedLocalCircuitID = n.extendedLocalCircuitID
 		p2pAdjTLV.TLVLength = packet.P2PAdjacencyStateTLVLenWithNeighbor
+
 		h.TLVs = append(h.TLVs, p2pAdjTLV)
 	}
 

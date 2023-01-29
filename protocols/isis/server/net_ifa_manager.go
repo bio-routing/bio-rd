@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/log"
 )
 
@@ -96,15 +97,15 @@ func (nima *netIfaManager) getAllInterfaces() []*netIfa {
 	return res
 }
 
-func (nima *netIfaManager) getAddressesIPv4() []uint32 {
+func (nima *netIfaManager) getAddressesIPv4() []*bnet.Prefix {
 	nima.netIfasMu.Lock()
 	defer nima.netIfasMu.Unlock()
 
-	res := make([]uint32, 0)
+	res := make([]*bnet.Prefix, 0)
 	for _, ifa := range nima.netIfas {
 		for _, addr := range ifa.devStatus.GetAddrs() {
 			if addr.Addr().IsIPv4() {
-				res = append(res, addr.Addr().ToUint32())
+				res = append(res, addr)
 			}
 		}
 	}

@@ -6,6 +6,8 @@ import (
 
 	"github.com/bio-routing/bio-rd/protocols/isis/types"
 	"github.com/stretchr/testify/assert"
+
+	bnet "github.com/bio-routing/bio-rd/net"
 )
 
 func TestGetIPInterfaceAddressesesTLV(t *testing.T) {
@@ -18,7 +20,7 @@ func TestGetIPInterfaceAddressesesTLV(t *testing.T) {
 			name: "Test #1",
 			hello: &P2PHello{
 				TLVs: []TLV{
-					NewIPInterfaceAddressesTLV([]uint32{111}),
+					NewIPInterfaceAddressesTLV([]*bnet.Prefix{bnet.NewPfx(bnet.IPv4(111), 32).Ptr()}),
 				},
 			},
 			expected: &IPInterfaceAddressesTLV{

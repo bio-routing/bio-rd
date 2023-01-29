@@ -74,3 +74,14 @@ func (mei *MockEthernetInterface) ReceiveAtRemote() (MACAddr, []byte) {
 	p := <-mei.sendCh
 	return p.mac, p.packet
 }
+
+func (mei *MockEthernetInterface) DrainBuffer() {
+	for {
+		select {
+		case <-mei.sendCh:
+			continue
+		default:
+			return
+		}
+	}
+}

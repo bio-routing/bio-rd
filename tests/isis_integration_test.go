@@ -23,7 +23,7 @@ type neighbor struct {
 	interfaceIP bnet.IP
 }
 
-func TestServer(t *testing.T) {
+func TestISISServer(t *testing.T) {
 	hostnameFunc := func() (string, error) {
 		return "fuckup", nil
 	}
@@ -151,7 +151,7 @@ func TestServer(t *testing.T) {
 		240, // Type
 		5,   // Length
 		2,   // Adj State down
-		0, 0, 0, 0,
+		0, 0, 0, 100,
 		// Protocols supported TLV
 		129, // Type
 		2,   // Length
@@ -202,7 +202,7 @@ func TestServer(t *testing.T) {
 		1,          // Adj State down
 		0, 0, 0, 0, // extended local circuit id
 		222, 173, 190, 239, 255, 1, // Neighbor system ID
-		0, 0, 0, 0, // Neighbor extended local circuit id
+		0, 0, 0, 100, // Neighbor extended local circuit id
 		// Protocols supported TLV
 		129, // Type
 		2,   // Length
@@ -242,10 +242,10 @@ func TestServer(t *testing.T) {
 		0, 52, // PDU length
 		1, // Local Circuit ID
 		// P2P Adj. State TLV <--- Important part
-		240,        // Type
-		15,         // Length
-		1,          // Adj State down
-		0, 0, 0, 0, // extended local circuit id
+		240,          // Type
+		15,           // Length
+		1,            // Adj State down
+		0, 0, 0, 100, // extended local circuit id
 		12, 12, 12, 13, 13, 13, // Neighbor system ID
 		0, 0, 0, 0, // Neighbor extended local circuit id
 		// Protocols supported TLV
@@ -287,11 +287,11 @@ func TestServer(t *testing.T) {
 		0,    // Reserved
 		0,    // Max. Area addresses
 		// LSP
-		0, 49, // Length
+		0, 0x5f, // Length
 		7, 6, // Remaining Lifetime
 		12, 12, 12, 13, 13, 13, 0, 0, // LSP ID
 		0, 0, 0, 1, // Sequence number
-		229, 53, // Checksum
+		0x56, 0xc8, // Checksum
 		0, // Type block
 		// TLVs
 		1, // Area
@@ -303,8 +303,32 @@ func TestServer(t *testing.T) {
 		132,              // IP interface addresses
 		4,                // Length
 		169, 254, 100, 0, // IP
-		137, // Hostname
-		6,   // Length
+		0x87,               // Extended IP reachability TLV
+		0x9,                // Length
+		0x0, 0x0, 0x0, 0xa, // Metric
+		0x1f,                  // Prefix length
+		0xa9, 0xfe, 0x64, 0x0, // IP address
+
+		0x16,                              // Extended IS Reachability TLV
+		0x21,                              // Length
+		0xde, 0xad, 0xbe, 0xef, 0xff, 0x1, // IS Neighbor ID
+		0x0, 0x0, 0x0, 0xa, // Metric
+		0x16, // Sub TLV length
+		0x6,  // IPv4 ainterface address sub TLV
+		0x4,  // length
+		0xa9, 0xfe, 0x64, 0x0,
+
+		0x8, // UPv4 neighbor address sub TLV
+		0x4, // length
+		0xa9, 0xfe, 0x64, 0x1,
+
+		0x4,                // Link local/remote identifiers sub TLV
+		0x8,                // length
+		0x0, 0x0, 0x0, 0x0, // Local id
+		0x0, 0x0, 0x0, 100, // Remote id
+
+		0x89, // Hostname
+		6,    // Length
 		0x66, 0x75, 0x63, 0x6b, 0x75, 0x70,
 	}
 	if !assert.Equal(t, expected, pkt) {
@@ -322,6 +346,9 @@ func TestServer(t *testing.T) {
 		assert.Equal(t, packet.P2PAdjStateDown, int(a.Status))
 	}
 
+	eth0.DrainBuffer() // discards all packets that have been sent meanwhile that we didn't receive yet
+	clock.Add(time.Second * 4)
+
 	// check if hello does not contain a neighbor anymore
 	pkt = readNext(packet.P2P_HELLO, eth0)
 	if !assert.Equal(t, []byte{
@@ -338,15 +365,13 @@ func TestServer(t *testing.T) {
 		0x02,                               // Level 2 only
 		0x0c, 0x0c, 0x0c, 0x0d, 0x0d, 0x0d, // System ID
 		0x00, 0x10, // Holding timer
-		0x00, 0x34, // PDU length
+		0x00, 0x2A, // PDU length
 		0x01, // Local Circuit ID
 		// P2P Adj. State TLV <--- Important part
 		0xf0,       // Type
-		0x0f,       // Length
-		0x00,       // Adj State down
+		0x05,       // Length
+		0x02,       // Adj State down
 		0, 0, 0, 0, // extended local circuit id
-		222, 173, 190, 239, 255, 1, // Neighbor system ID
-		0, 0, 0, 0, // Neighbor extended local circuit id
 		// Protocols supported TLV
 		129, // Type
 		2,   // Length
@@ -364,6 +389,7 @@ func TestServer(t *testing.T) {
 	}, pkt) {
 		return
 	}
+
 }
 
 func readNext(typ uint8, mi *ethernet.MockEthernetInterface) []byte {

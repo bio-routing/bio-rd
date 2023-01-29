@@ -4,18 +4,21 @@ import (
 	"bytes"
 	"testing"
 
+	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewIPInterfaceAddressTLV(t *testing.T) {
 	tests := []struct {
 		name     string
-		addrs    []uint32
+		addrs    []*bnet.Prefix
 		expected *IPInterfaceAddressesTLV
 	}{
 		{
-			name:  "Test #1",
-			addrs: []uint32{100},
+			name: "Test #1",
+			addrs: []*bnet.Prefix{
+				bnet.NewPfx(bnet.IPv4(100), 32).Ptr(),
+			},
 			expected: &IPInterfaceAddressesTLV{
 				TLVType:       132,
 				TLVLength:     4,

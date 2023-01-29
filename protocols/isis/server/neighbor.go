@@ -230,3 +230,26 @@ func getP2PAdjTLV(tlvs []packet.TLV) *packet.P2PAdjacencyStateTLV {
 func (n *neighbor) p2pAdjTLVContainsSelf(t *packet.P2PAdjacencyStateTLV) bool {
 	return t.NeighborSystemID == n.nm.netIfa.srv.nets[0].SystemID && t.NeighborExtendedLocalCircuitID == uint32(n.nm.netIfa.devStatus.GetIndex())
 }
+
+func (n *neighbor) extendedISReachabilityNeighbor() *packet.ExtendedISReachabilityNeighbor {
+	srcID := types.SourceID{
+		SystemID:  n.sysID,
+		CircuitID: 0, // TODO: Check if this needs to be adjusted
+	}
+
+	eirn := packet.NewExtendedISReachabilityNeighbor(srcID, n.nm.netIfa.cfg.Level2.Metric)
+
+	for _, pfx := range n.nm.netIfa.ipv4Addrs() {
+		eirn.AddSubTLV(packet.NewIPv4InterfaceAddressSubTLV(pfx.Addr().ToUint32()))
+	}
+
+	for _, a := range n.ipAddresses {
+		if a.IsIPv4() {
+			eirn.AddSubTLV(packet.NewIPv4NeighborAddressSubTLV(a.ToUint32()))
+		}
+	}
+
+	eirn.AddSubTLV(packet.NewLinkLocalRemoteIdentifiersSubTLV(uint32(n.nm.netIfa.devStatus.GetIndex()), n.extendedLocalCircuitID))
+
+	return eirn
+}
