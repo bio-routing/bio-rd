@@ -11,13 +11,13 @@ import (
 )
 
 func (nifa *netIfa) p2pHelloSender() {
+	defer nifa.wg.Done()
 	log.WithFields(nifa.fields()).Debug("Starting hello sender")
 
 	for {
 		select {
 		case <-nifa.done:
 			nifa.helloTicker.Stop()
-			nifa.wg.Done()
 			return
 		case <-nifa.helloTicker.C:
 			hello := nifa.p2pHello()
@@ -34,7 +34,6 @@ func (nifa *netIfa) p2pHelloSender() {
 				log.WithFields(nifa.fields()).WithError(err).Error("Unable to send hello packet")
 			}
 		}
-
 	}
 }
 

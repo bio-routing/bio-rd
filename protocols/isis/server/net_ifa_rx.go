@@ -11,6 +11,8 @@ import (
 )
 
 func (nifa *netIfa) receiver() {
+	defer nifa.wg.Done()
+
 	for {
 		select {
 		case <-nifa.done:
