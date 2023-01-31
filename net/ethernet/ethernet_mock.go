@@ -2,7 +2,6 @@ package ethernet
 
 import (
 	"fmt"
-	"sync/atomic"
 )
 
 const MockEthernetInterfaceBufferSize = 1024
@@ -11,7 +10,7 @@ type MockEthernetInterface struct {
 	joinedMCastGroups []MACAddr
 	sendCh            chan mockPkt
 	recvCh            chan mockPkt
-	closed            atomic.Bool
+	closedCh          chan struct{}
 }
 
 type mockPkt struct {
@@ -24,29 +23,29 @@ func NewMockEthernetInterface() *MockEthernetInterface {
 		joinedMCastGroups: make([]MACAddr, 0),
 		sendCh:            make(chan mockPkt, MockEthernetInterfaceBufferSize),
 		recvCh:            make(chan mockPkt, MockEthernetInterfaceBufferSize),
+		closedCh:          make(chan struct{}),
 	}
 }
 
 func (mei *MockEthernetInterface) RecvPacket() (pkt []byte, src MACAddr, err error) {
-	if mei.closed.Load() {
+	select {
+	case <-mei.closedCh:
 		return nil, MACAddr{}, fmt.Errorf("socket closed")
+	case p := <-mei.recvCh:
+		return p.packet, p.mac, nil
 	}
-
-	p := <-mei.recvCh
-	return p.packet, p.mac, nil
 }
 
 func (mei *MockEthernetInterface) SendPacket(dst MACAddr, pkt []byte) error {
-	if mei.closed.Load() {
+	select {
+	case <-mei.closedCh:
 		return fmt.Errorf("socket closed")
-	}
-
-	mei.sendCh <- mockPkt{
+	case mei.sendCh <- mockPkt{
 		mac:    dst,
 		packet: pkt,
+	}:
+		return nil
 	}
-
-	return nil
 }
 
 func (mei *MockEthernetInterface) MCastJoin(addr MACAddr) error {
@@ -60,7 +59,7 @@ func (mei *MockEthernetInterface) GetMTU() int {
 }
 
 func (mei *MockEthernetInterface) Close() {
-	mei.closed.Store(true)
+	close(mei.closedCh)
 }
 
 func (mei *MockEthernetInterface) SendFromRemote(src MACAddr, pkt []byte) {

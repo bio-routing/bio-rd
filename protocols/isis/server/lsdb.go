@@ -9,19 +9,23 @@ import (
 	"github.com/bio-routing/bio-rd/util/log"
 )
 
+const lspRefreshThresholdSeconds = 300
+
 type lsdb struct {
-	srv    *Server
-	lsps   map[packet.LSPID]*lsdbEntry
-	lspsMu sync.RWMutex
-	done   chan struct{}
-	wg     sync.WaitGroup
+	srv       *Server
+	lsps      map[packet.LSPID]*lsdbEntry
+	lspsMu    sync.RWMutex
+	done      chan struct{}
+	wg        sync.WaitGroup
+	refreshCh chan struct{}
 }
 
 func newLSDB(s *Server) *lsdb {
 	return &lsdb{
-		srv:  s,
-		lsps: make(map[packet.LSPID]*lsdbEntry),
-		done: make(chan struct{}),
+		srv:       s,
+		lsps:      make(map[packet.LSPID]*lsdbEntry),
+		done:      make(chan struct{}),
+		refreshCh: make(chan struct{}, 1),
 	}
 }
 
@@ -56,6 +60,9 @@ func (l *lsdb) start(decrementTicker *bbclock.Ticker, minLSPTransTicker *bbclock
 
 	l.wg.Add(1)
 	go l.sendCSNPsRoutine(csnpTransTicker)
+
+	l.wg.Add(1)
+	go l.l2LSPUpdater()
 }
 
 func (l *lsdb) stop() {
@@ -81,6 +88,10 @@ func (l *lsdb) decrementRemainingLifetimes() {
 	defer l.lspsMu.Unlock()
 
 	for lspid, lspdbEntry := range l.lsps {
+		if lspid.SystemID == l.srv.systemID() && lspdbEntry.lspdu.RemainingLifetime < lspRefreshThresholdSeconds {
+			l.requestL2LSPUpdate()
+		}
+
 		if lspdbEntry.lspdu.RemainingLifetime <= 1 {
 			delete(l.lsps, lspid)
 			continue
@@ -312,20 +323,6 @@ func (l *lsdb) sendCSNPs(ifa *netIfa) {
 	}
 }
 
-func (l *lsdb) updateL2LSP() {
-	l.lspsMu.Lock()
-	defer l.lspsMu.Unlock()
-
-	lspdu := l.srv.generateLocalLSP()
-	lsdbEntry := newLSDBEntry(lspdu)
-
-	for _, ifa := range l.srv.netIfaManager.getAllInterfaces() {
-		lsdbEntry.setSRM(ifa)
-	}
-
-	l.lsps[lspdu.LSPID] = lsdbEntry
-}
-
 func (l *lsdb) processLSP(ifa *netIfa, lspdu *packet.LSPDU) {
 	log.Debug("Processing received LSP")
 	l.lspsMu.Lock()
@@ -360,4 +357,41 @@ func (l *lsdb) processNewerLSPDU(ifa *netIfa, lspdu *packet.LSPDU) {
 
 	l.lsps[lspdu.LSPID] = lsdbEntry
 	return
+}
+
+// requestL2LSPUpdate queues an update request if none is pending
+func (l *lsdb) requestL2LSPUpdate() {
+	select {
+	case l.refreshCh <- struct{}{}:
+		return
+	default:
+		return
+	}
+}
+
+func (l *lsdb) l2LSPUpdater() {
+	defer l.wg.Done()
+
+	for {
+		select {
+		case <-l.done:
+			return
+		case <-l.refreshCh:
+			l.updateL2LSP()
+		}
+	}
+}
+
+func (l *lsdb) updateL2LSP() {
+	lspdu := l.srv.generateLocalLSP()
+	lsdbEntry := newLSDBEntry(lspdu)
+
+	for _, ifa := range l.srv.netIfaManager.getAllInterfaces() {
+		lsdbEntry.setSRM(ifa)
+	}
+
+	l.lspsMu.Lock()
+	defer l.lspsMu.Unlock()
+
+	l.lsps[lspdu.LSPID] = lsdbEntry
 }

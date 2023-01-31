@@ -32,3 +32,11 @@ func (ms *MockServer) DeviceUpEvent(name string, addrs []*net.Prefix) {
 		addrs:     addrs,
 	})
 }
+
+func (ms *MockServer) DeviceDownEvent(name string, addrs []*net.Prefix) {
+	ms.C.DeviceUpdate(&Device{
+		name:      name,
+		operState: IfOperDown,
+		addrs:     addrs,
+	})
+}
