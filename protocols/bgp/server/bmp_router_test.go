@@ -131,7 +131,7 @@ func TestReady(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res := test.r.Ready(test.vrf, test.afi)
+		res, _ := test.r.Ready(test.vrf, test.afi)
 		assert.Equal(t, test.expected, res, test.name)
 	}
 }
