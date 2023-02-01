@@ -38,8 +38,8 @@ func (r *Router) Address() net.IP {
 	return r.address
 }
 
-func (r *Router) Ready(vrf uint64, afi uint16) bool {
-	return true
+func (r *Router) Ready(vrf uint64, afi uint16) (bool, error) {
+	return true, nil
 }
 
 // GetVRF gets a VRF by its RD
