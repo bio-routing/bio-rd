@@ -101,14 +101,6 @@ func (l *lsdb) decrementRemainingLifetimes() {
 	}
 }
 
-func (l *lsdb) setSRMAllLSPs(ifa *netIfa) {
-	log.WithFields(l.fields()).Debugf("Setting SRM flags for interface %s", ifa.name)
-
-	for _, lsp := range l.lsps {
-		lsp.setSRM(ifa)
-	}
-}
-
 func (l *lsdb) sendLSPDUsRoutine(t *bbclock.Ticker) {
 	defer l.wg.Done()
 
@@ -150,7 +142,7 @@ func (l *lsdb) processCSNP(from *netIfa, csnp *packet.CSNP) {
 		// For any that we have but our neighbor doesn't we set SRM flag so
 		// the entry gets propagated.
 
-		if lsdbEntry.lspdu.RemainingLifetime <= 0 || lsdbEntry.lspdu.SequenceNumber <= 0 {
+		if lsdbEntry.lspdu.RemainingLifetime == 0 || lsdbEntry.lspdu.SequenceNumber == 0 {
 			continue
 		}
 
