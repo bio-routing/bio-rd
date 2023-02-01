@@ -71,6 +71,14 @@ func (l *lsdbEntry) dropInterface(ifa *netIfa) {
 }
 
 func (l *lsdbEntry) setSRM(ifa *netIfa) {
+	if ifa.cfg.Passive {
+		return
+	}
+
+	if len(ifa.neighborManagerL2.getNeighbors()) == 0 {
+		return
+	}
+
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 

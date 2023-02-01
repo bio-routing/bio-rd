@@ -104,7 +104,7 @@ func (nima *netIfaManager) getAddressesIPv4() []*bnet.Prefix {
 	res := make([]*bnet.Prefix, 0)
 	for _, ifa := range nima.netIfas {
 		for _, addr := range ifa.devStatus.GetAddrs() {
-			if addr.Addr().IsIPv4() {
+			if addr.Addr().IsIPv4() && !addr.Addr().IsLoopback() {
 				res = append(res, addr)
 			}
 		}
