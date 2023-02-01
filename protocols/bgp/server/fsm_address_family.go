@@ -202,6 +202,11 @@ func (f *fsmAddressFamily) processUpdate(u *packet.BGPUpdate, bmpPostPolicy bool
 		f.withdraws(u, bmpPostPolicy, timestamp)
 		f.updates(u, bmpPostPolicy, timestamp)
 	}
+	if f.afi == packet.AFIIPv6 {
+		if u.IsEndOfRIBMarker() {
+			f.endOfRIBMarkerReceived.Store(true)
+		}
+	}
 }
 
 func (f *fsmAddressFamily) withdraws(u *packet.BGPUpdate, bmpPostPolicy bool, timestamp uint32) {
