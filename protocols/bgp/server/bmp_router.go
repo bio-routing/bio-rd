@@ -23,7 +23,7 @@ type RouterInterface interface {
 	Address() net.IP
 	GetVRF(vrfID uint64) *vrf.VRF
 	GetVRFs() []*vrf.VRF
-	Ready(vrf uint64, afi uint16) bool
+	Ready(vrf uint64, afi uint16) (bool, error)
 }
 
 // RouterConfig represents the configuration required for BMP router
@@ -105,14 +105,14 @@ func newRouter(addr net.IP, port uint16, arif adjRIBInFactoryI, config RouterCon
 	}
 }
 
-func (r *Router) Ready(vrf uint64, afi uint16) bool {
+func (r *Router) Ready(vrf uint64, afi uint16) (bool, error) {
 	neighbors := r.neighborManager.list()
 	if len(neighbors) == 0 {
-		return false
+		return false, fmt.Errorf("no neighbor present")
 	}
 
 	if !neighborsIncludeVRF(neighbors, vrf) {
-		return false
+		return false, fmt.Errorf("vrf not present for neighbor")
 	}
 
 	for _, n := range neighbors {
@@ -128,11 +128,11 @@ func (r *Router) Ready(vrf uint64, afi uint16) bool {
 		}
 
 		if !fsmAfi.endOfRIBMarkerReceived.Load() {
-			return false
+			return false, fmt.Errorf("end of rib not yet received")
 		}
 	}
 
-	return true
+	return true, nil
 }
 
 func neighborsIncludeVRF(neighbors []*neighbor, vrfID uint64) bool {

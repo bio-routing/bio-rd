@@ -193,7 +193,7 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 		return status.New(codes.Unavailable, wrapGetRIBErr(err, req.Router, vrfID, ipVersion).Error()).Err()
 	}
 
-	if !s.bmp.GetRouter(req.Router).Ready(vrfID, ipVersionFromProto(ipVersion)) {
+	if ready, err := s.bmp.GetRouter(req.Router).Ready(vrfID, ipVersionFromProto(ipVersion)); !ready {
 		return status.New(codes.Unavailable, wrapRIBNotReadyErr(err, req.Router, vrfID, ipVersion).Error()).Err()
 	}
 
