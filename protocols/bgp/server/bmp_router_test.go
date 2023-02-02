@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"sync/atomic"
 	"testing"
 
@@ -12,11 +13,12 @@ func TestReady(t *testing.T) {
 	atomicTrue.Store(true)
 
 	tests := []struct {
-		name     string
-		r        *Router
-		vrf      uint64
-		afi      uint16
-		expected bool
+		name          string
+		r             *Router
+		vrf           uint64
+		afi           uint16
+		expected      bool
+		expectedError error
 	}{
 		{
 			name: "No neighbors",
@@ -25,9 +27,10 @@ func TestReady(t *testing.T) {
 					neighbors: []*neighbor{},
 				},
 			},
-			vrf:      100,
-			afi:      4,
-			expected: false,
+			vrf:           100,
+			afi:           4,
+			expected:      false,
+			expectedError: fmt.Errorf("no neighbor present"),
 		},
 		{
 			name: "No neighbor matches VRF",
@@ -40,9 +43,10 @@ func TestReady(t *testing.T) {
 					},
 				},
 			},
-			vrf:      100,
-			afi:      4,
-			expected: false,
+			vrf:           100,
+			afi:           4,
+			expected:      false,
+			expectedError: fmt.Errorf("vrf not present for neighbor"),
 		},
 		{
 			name: "Neighbors not ready",
@@ -68,9 +72,10 @@ func TestReady(t *testing.T) {
 					},
 				},
 			},
-			vrf:      100,
-			afi:      4,
-			expected: false,
+			vrf:           100,
+			afi:           4,
+			expected:      false,
+			expectedError: fmt.Errorf("end of rib not yet received"),
 		},
 		{
 			name: "Neighbors half ready",
@@ -96,9 +101,10 @@ func TestReady(t *testing.T) {
 					},
 				},
 			},
-			vrf:      100,
-			afi:      4,
-			expected: false,
+			vrf:           100,
+			afi:           4,
+			expected:      false,
+			expectedError: fmt.Errorf("end of rib not yet received"),
 		},
 		{
 			name: "Neighbors ready",
@@ -131,8 +137,13 @@ func TestReady(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, _ := test.r.Ready(test.vrf, test.afi)
+		res, err := test.r.Ready(test.vrf, test.afi)
 		assert.Equal(t, test.expected, res, test.name)
+		if test.expectedError != nil {
+			assert.Equal(t, test.expectedError, err)
+		} else {
+			assert.NoError(t, err)
+		}
 	}
 }
 
