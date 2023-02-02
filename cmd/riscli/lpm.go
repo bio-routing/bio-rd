@@ -9,7 +9,6 @@ import (
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/urfave/cli"
-	"google.golang.org/grpc"
 )
 
 // NewLPMCommand creates a new LPM command
@@ -23,11 +22,7 @@ func NewLPMCommand() cli.Command {
 	}
 
 	cmd.Action = func(c *cli.Context) error {
-		conn, err := grpc.Dial(c.GlobalString("ris"), grpc.WithInsecure())
-		if err != nil {
-			log.Errorf("GRPC dial failed: %v", err)
-			os.Exit(1)
-		}
+		conn := SetupGRPCClient(c)
 		defer conn.Close()
 
 		ipAddr, err := bnet.IPFromString(c.String("ip"))

@@ -9,7 +9,6 @@ import (
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/urfave/cli"
-	"google.golang.org/grpc"
 )
 
 // NewDumpLocRIBCommand creates a new dump local rib command
@@ -27,12 +26,9 @@ func NewDumpLocRIBCommand() cli.Command {
 	}
 
 	cmd.Action = func(c *cli.Context) error {
-		conn, err := grpc.Dial(c.GlobalString("ris"), grpc.WithInsecure())
-		if err != nil {
-			log.Errorf("GRPC dial failed: %v", err)
-			os.Exit(1)
-		}
+		conn := SetupGRPCClient(c)
 		defer conn.Close()
+		var err error
 
 		afisafis := make([]pb.DumpRIBRequest_AFISAFI, 0)
 		req_ipv4, req_ipv6 := c.Bool("4"), c.Bool("6")
