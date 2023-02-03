@@ -19,6 +19,7 @@ func NewObserveRIBCommand() cli.Command {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "4", Usage: "print IPv4 routes"},
 			&cli.BoolFlag{Name: "6", Usage: "print IPv6 routes"},
+			&cli.BoolFlag{Name: "allow-unready", Usage: "Do not wait for RIB readiness"},
 		},
 	}
 
@@ -42,7 +43,7 @@ func NewObserveRIBCommand() cli.Command {
 		client := pb.NewRoutingInformationServiceClient(conn)
 		for _, afisafi := range afisafis {
 			fmt.Printf(" --- Dump %s ---\n", pb.DumpRIBRequest_AFISAFI_name[int32(afisafi)])
-			err = observeRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), afisafi)
+			err = observeRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), afisafi, c.Bool("allow-unready"))
 			if err != nil {
 				log.Errorf("ObserveRIB failed: %v", err)
 				os.Exit(1)
@@ -55,13 +56,18 @@ func NewObserveRIBCommand() cli.Command {
 	return cmd
 }
 
-func observeRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, vrf string, afisafi pb.ObserveRIBRequest_AFISAFI) error {
-	client, err := c.ObserveRIB(context.Background(), &pb.ObserveRIBRequest{
-		Router:  routerName,
-		VrfId:   vrfID,
-		Vrf:     vrf,
-		Afisafi: afisafi,
-	})
+func observeRIB(c pb.RoutingInformationServiceClient, routerName string, vrfID uint64, vrf string, afisafi pb.ObserveRIBRequest_AFISAFI, allowUnready bool) error {
+	req := &pb.ObserveRIBRequest{
+		Router:          routerName,
+		VrfId:           vrfID,
+		Vrf:             vrf,
+		Afisafi:         afisafi,
+		AllowUnreadyRib: false,
+	}
+	if allowUnready {
+		req.AllowUnreadyRib = true
+	}
+	client, err := c.ObserveRIB(context.Background(), req)
 	if err != nil {
 		return fmt.Errorf("unable to get client: %w", err)
 	}

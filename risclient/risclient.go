@@ -29,16 +29,18 @@ type RISClient struct {
 
 // Request is a RISClient config
 type Request struct {
-	Router string
-	VRFRD  uint64
-	AFI    risapi.ObserveRIBRequest_AFISAFI
+	Router          string
+	VRFRD           uint64
+	AFI             risapi.ObserveRIBRequest_AFISAFI
+	AllowUnreadyRib bool
 }
 
 func (r *Request) toProtoRequest() *risapi.ObserveRIBRequest {
 	return &risapi.ObserveRIBRequest{
-		Router:  r.Router,
-		VrfId:   r.VRFRD,
-		Afisafi: r.AFI,
+		Router:          r.Router,
+		VrfId:           r.VRFRD,
+		Afisafi:         r.AFI,
+		AllowUnreadyRib: r.AllowUnreadyRib,
 	}
 }
 
