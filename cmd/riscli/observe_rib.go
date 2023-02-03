@@ -9,7 +9,6 @@ import (
 	pb "github.com/bio-routing/bio-rd/cmd/ris/api"
 	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/urfave/cli"
-	"google.golang.org/grpc"
 )
 
 // NewObserveRIBCommand creates a new observe rib command
@@ -24,12 +23,9 @@ func NewObserveRIBCommand() cli.Command {
 	}
 
 	cmd.Action = func(c *cli.Context) error {
-		conn, err := grpc.Dial(c.GlobalString("ris"), grpc.WithInsecure())
-		if err != nil {
-			log.Errorf("GRPC dial failed: %v", err)
-			os.Exit(1)
-		}
+		conn := SetupGRPCClient(c)
 		defer conn.Close()
+		var err error
 
 		afisafis := make([]pb.ObserveRIBRequest_AFISAFI, 0)
 		reqIPv4, reqIPv6 := c.Bool("4"), c.Bool("6")
@@ -48,7 +44,7 @@ func NewObserveRIBCommand() cli.Command {
 			fmt.Printf(" --- Dump %s ---\n", pb.DumpRIBRequest_AFISAFI_name[int32(afisafi)])
 			err = observeRIB(client, c.GlobalString("router"), c.GlobalUint64("vrf_id"), c.GlobalString("vrf"), afisafi)
 			if err != nil {
-				log.Errorf("DumpRIB failed: %v", err)
+				log.Errorf("ObserveRIB failed: %v", err)
 				os.Exit(1)
 			}
 		}
