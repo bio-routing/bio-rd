@@ -57,6 +57,7 @@ message ObserveRIBRequest {
         IPv6Unicast = 1;
     }
     AFISAFI afisafi = 3;
+    bool allow_unready_rib = 5;
 }
 
 message RIBFilter {

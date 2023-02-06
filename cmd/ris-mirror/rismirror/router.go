@@ -65,9 +65,10 @@ func (r *Router) addVRF(rd uint64, sources []*grpc.ClientConn) {
 
 func (r *Router) connectVRF(rd uint64, src *grpc.ClientConn, afi uint8) {
 	rc := risclient.New(&risclient.Request{
-		Router: r.name,
-		VRFRD:  rd,
-		AFI:    apiAFI(afi),
+		Router:          r.name,
+		VRFRD:           rd,
+		AFI:             apiAFI(afi),
+		AllowUnreadyRib: true,
 	}, src, r.vrfs[rd].getRIB(afi))
 
 	rc.Start()
