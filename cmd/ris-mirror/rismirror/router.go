@@ -1,7 +1,6 @@
 package rismirror
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/bio-routing/bio-rd/risclient"
@@ -53,7 +52,7 @@ func (r *Router) GetVRFs() []*vrf.VRF {
 }
 
 func (r *Router) addVRF(rd uint64, sources []*grpc.ClientConn) {
-	v := r.vrfRegistry.CreateVRFIfNotExists(fmt.Sprintf("%d", rd), rd)
+	v := r.vrfRegistry.CreateVRFIfNotExists(vrf.RouteDistinguisherHumanReadable(rd), rd)
 
 	r.vrfs[rd] = newVRF(v.IPv4UnicastRIB(), v.IPv6UnicastRIB())
 
