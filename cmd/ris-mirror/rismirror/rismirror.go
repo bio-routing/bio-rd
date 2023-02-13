@@ -1,12 +1,14 @@
 package rismirror
 
 import (
+	"fmt"
 	"net"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/cmd/ris-mirror/rismirror/metrics"
 	"github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/bio-routing/bio-rd/util/log"
 	"google.golang.org/grpc"
 )
 
@@ -33,6 +35,37 @@ func (rism *RISMirror) AddTarget(rtrName string, address net.IP, vrfRD uint64, s
 
 	r := rism.routers[rtrName].(*Router)
 	r.addVRF(vrfRD, sources)
+}
+
+func (rism *RISMirror) RemoveTarget(rtrName string, vrfRD uint64) error {
+	rism.routersMu.Lock()
+	defer rism.routersMu.Unlock()
+
+	if _, exists := rism.routers[rtrName]; !exists {
+		return fmt.Errorf("Router %s does not exist, cannot remove cleanly", rtrName)
+	}
+	r := rism.routers[rtrName].(*Router)
+	err := r.removeVRF(vrfRD)
+	if err != nil {
+		return err
+	}
+	if len(r.GetVRFs()) == 0 {
+		delete(rism.routers, rtrName)
+	}
+	return nil
+}
+
+func (rism *RISMirror) RemoveRouter(rtrName string) {
+	rism.routersMu.Lock()
+	defer rism.routersMu.Unlock()
+
+	if _, exists := rism.routers[rtrName]; !exists {
+		log.Errorf("Router %v does not exist, cannot remove cleanly", rtrName)
+		return
+	}
+	r := rism.routers[rtrName].(*Router)
+	r.dropAllVRFs()
+	delete(rism.routers, rtrName)
 }
 
 // GetRouter gets a router
