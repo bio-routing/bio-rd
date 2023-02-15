@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	logger := logrus.New()
 	logger.SetLevel(logrus.InfoLevel)
 	log.SetLogger(log.NewLogrusWrapper(logger))
@@ -49,6 +48,7 @@ func main() {
 		NewObserveRIBCommand(),
 		NewDumpLocRIBCommand(),
 		NewLPMCommand(),
+		NewGetRoutersCommand(),
 	}
 
 	err := app.Run(os.Args)
