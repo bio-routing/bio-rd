@@ -2,6 +2,7 @@ package rismirror
 
 import (
 	"net"
+	"sync"
 
 	"github.com/bio-routing/bio-rd/risclient"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
@@ -14,16 +15,17 @@ import (
 type Router struct {
 	name        string
 	address     net.IP
-	vrfRegistry *vrf.VRFRegistry
-	vrfs        map[uint64]*_vrf
+	vrfs        map[uint64]*vrfWithMergedLocRIBs // this is the authoritative data store for VRFs
+	vrfsMu      sync.RWMutex
+	vrfRegistry *vrf.VRFRegistry // this is only there so that the metrics functionality of the vrf package can be used
 }
 
 func newRouter(name string, address net.IP) *Router {
 	return &Router{
 		name:        name,
 		address:     address,
+		vrfs:        make(map[uint64]*vrfWithMergedLocRIBs),
 		vrfRegistry: vrf.NewVRFRegistry(),
-		vrfs:        make(map[uint64]*_vrf),
 	}
 }
 
@@ -43,18 +45,36 @@ func (r *Router) Ready(vrf uint64, afi uint16) (bool, error) {
 
 // GetVRF gets a VRF by its RD
 func (r *Router) GetVRF(rd uint64) *vrf.VRF {
-	return r.vrfRegistry.GetVRFByName(vrf.RouteDistinguisherHumanReadable(rd))
+	r.vrfsMu.RLock()
+	defer r.vrfsMu.RUnlock()
+
+	_vrf := r.vrfs[rd]
+	if _vrf == nil {
+		return nil
+	}
+
+	return _vrf.vrf
 }
 
 // GetVRFs gets all VRFs
 func (r *Router) GetVRFs() []*vrf.VRF {
-	return r.vrfRegistry.List()
+	r.vrfsMu.RLock()
+	defer r.vrfsMu.RUnlock()
+
+	ret := make([]*vrf.VRF, 0, len(r.vrfs))
+	for _, v := range r.vrfs {
+		ret = append(ret, v.vrf)
+	}
+
+	return ret
 }
 
 func (r *Router) addVRF(rd uint64, sources []*grpc.ClientConn) {
-	v := r.vrfRegistry.CreateVRFIfNotExists(vrf.RouteDistinguisherHumanReadable(rd), rd)
+	r.vrfsMu.Lock()
+	defer r.vrfsMu.Unlock()
 
-	r.vrfs[rd] = newVRF(v.IPv4UnicastRIB(), v.IPv6UnicastRIB())
+	v := r.vrfRegistry.CreateVRFIfNotExists(vrf.RouteDistinguisherHumanReadable(rd), rd)
+	r.vrfs[rd] = newVRFWithMergedLocRIBs(v.IPv4UnicastRIB(), v.IPv6UnicastRIB())
 
 	for _, src := range sources {
 		r.connectVRF(rd, src, 4)

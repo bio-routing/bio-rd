@@ -3,21 +3,23 @@ package rismirror
 import (
 	"github.com/bio-routing/bio-rd/routingtable/locRIB"
 	"github.com/bio-routing/bio-rd/routingtable/mergedlocrib"
+	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
-type _vrf struct {
+type vrfWithMergedLocRIBs struct {
+	vrf         *vrf.VRF
 	ipv4Unicast *mergedlocrib.MergedLocRIB
 	ipv6Unicast *mergedlocrib.MergedLocRIB
 }
 
-func newVRF(locRIBIPv4Unicast, locRIBIPv6Unicast *locRIB.LocRIB) *_vrf {
-	return &_vrf{
+func newVRFWithMergedLocRIBs(locRIBIPv4Unicast, locRIBIPv6Unicast *locRIB.LocRIB) *vrfWithMergedLocRIBs {
+	return &vrfWithMergedLocRIBs{
 		ipv4Unicast: mergedlocrib.New(locRIBIPv4Unicast),
 		ipv6Unicast: mergedlocrib.New(locRIBIPv6Unicast),
 	}
 }
 
-func (v *_vrf) getRIB(afi uint8) *mergedlocrib.MergedLocRIB {
+func (v *vrfWithMergedLocRIBs) getRIB(afi uint8) *mergedlocrib.MergedLocRIB {
 	if afi == 6 {
 		return v.ipv6Unicast
 	}
