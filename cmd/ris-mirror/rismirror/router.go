@@ -1,11 +1,13 @@
 package rismirror
 
 import (
+	"fmt"
 	"net"
 	"sync"
 
 	"github.com/bio-routing/bio-rd/risclient"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
+	"github.com/bio-routing/bio-rd/util/log"
 	"google.golang.org/grpc"
 
 	"github.com/bio-routing/bio-rd/cmd/ris/api"
@@ -74,15 +76,53 @@ func (r *Router) addVRF(rd uint64, sources []*grpc.ClientConn) {
 	defer r.vrfsMu.Unlock()
 
 	v := r.vrfRegistry.CreateVRFIfNotExists(vrf.RouteDistinguisherHumanReadable(rd), rd)
-	r.vrfs[rd] = newVRFWithMergedLocRIBs(v.IPv4UnicastRIB(), v.IPv6UnicastRIB())
+	r.vrfs[rd] = newVRFWithMergedLocRIBs(v.IPv4UnicastRIB(), v.IPv6UnicastRIB(), v)
 
 	for _, src := range sources {
-		r.connectVRF(rd, src, 4)
-		r.connectVRF(rd, src, 6)
+		rc4 := r._connectVRF(rd, src, 4)
+		rc6 := r._connectVRF(rd, src, 6)
+		// we cannot call v directly here, because the ris clients are only in the specific implementation of the vrf struct.
+		r.vrfs[rd].Clients = append(r.vrfs[rd].Clients, rc4, rc6)
 	}
 }
 
-func (r *Router) connectVRF(rd uint64, src *grpc.ClientConn, afi uint8) {
+func (r *Router) removeVRF(rd uint64) error {
+	r.vrfsMu.Lock()
+	defer r.vrfsMu.Unlock()
+	if r.GetVRF(rd) == nil {
+		return fmt.Errorf("VRF %v in Router %sv does not exist, cannot remove cleanly", rd, r.address.String())
+	}
+	// for removal, first stop all vrfs
+	r._stopVRF(rd)
+	// then we clean the map entries
+	vrf := r.vrfs[rd]
+	r.vrfRegistry.UnregisterVRF(vrf.vrf)
+	delete(r.vrfs, rd)
+	return nil
+}
+
+func (r *Router) dropAllVRFs() {
+	for _, vrf := range r.GetVRFs() {
+		r.removeVRF(vrf.RD())
+	}
+}
+
+func (r *Router) _stopVRF(rd uint64) {
+	// check if we even have an vrf for this rd
+	if _, exists := r.vrfs[rd]; !exists {
+		log.Errorf("Trying to stop invalid vrf %v", rd)
+		return
+	}
+	v := r.vrfs[rd]
+	// first step: stop all ris clients
+	for _, rc := range v.Clients {
+		rc.Stop()
+	}
+	// now we can clear the vrfClient list
+	r.vrfs[rd].Clients = make([]*risclient.RISClient, 0)
+}
+
+func (r *Router) _connectVRF(rd uint64, src *grpc.ClientConn, afi uint8) *risclient.RISClient {
 	rc := risclient.New(&risclient.Request{
 		Router:          r.name,
 		VRFRD:           rd,
@@ -91,6 +131,7 @@ func (r *Router) connectVRF(rd uint64, src *grpc.ClientConn, afi uint8) {
 	}, src, r.vrfs[rd].getRIB(afi))
 
 	rc.Start()
+	return rc
 }
 
 func apiAFI(afi uint8) api.ObserveRIBRequest_AFISAFI {
