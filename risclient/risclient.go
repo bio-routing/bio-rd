@@ -4,10 +4,12 @@ import (
 	"context"
 	"io"
 	"sync"
+	"time"
 
 	risapi "github.com/bio-routing/bio-rd/cmd/ris/api"
 	routeapi "github.com/bio-routing/bio-rd/route/api"
 	"github.com/bio-routing/bio-rd/util/log"
+	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/grpc"
 )
 
@@ -20,11 +22,12 @@ type Client interface {
 
 // RISClient represents a RIS client
 type RISClient struct {
-	req    *Request
-	cc     *grpc.ClientConn
-	c      Client
-	stopCh chan struct{}
-	wg     sync.WaitGroup
+	req     *Request
+	cc      *grpc.ClientConn
+	c       Client
+	backoff *backoff.ExponentialBackOff
+	stopCh  chan struct{}
+	wg      sync.WaitGroup
 }
 
 // Request is a RISClient config
@@ -80,26 +83,44 @@ func (r *RISClient) stopped() bool {
 	}
 }
 
-func (r *RISClient) run() {
-	for {
-		if r.stopped() {
-			return
-		}
+// this method is responible for actually calling the ORC. If it returns nil, the ris client shall be gracefully stopped.
+// if an error is returned, retry with backoff
+func (r *RISClient) runORC() error {
+	if r.stopped() {
+		return nil
+	}
 
-		risc := risapi.NewRoutingInformationServiceClient(r.cc)
+	risc := risapi.NewRoutingInformationServiceClient(r.cc)
 
-		orc, err := risc.ObserveRIB(context.Background(), r.req.toProtoRequest(), grpc.WaitForReady(true))
-		if err != nil {
-			log.WithError(err).Error("ObserveRIB call failed")
-			continue
-		}
+	orc, err := risc.ObserveRIB(context.Background(), r.req.toProtoRequest(), grpc.WaitForReady(true))
+	if err != nil {
+		log.WithError(err).Error("ObserveRIB call failed")
+		return err
+	}
 
-		err = r.serviceLoop(orc)
-		if err == nil {
-			return
-		}
-
+	err = r.serviceLoop(orc)
+	if err != nil {
 		r.serviceLoopLogging(err)
+		return err
+	}
+	// apparently, all went well. reset backoff.
+	// If we need to backoff again after here, it is a new error.
+	r.backoff.Reset()
+
+	return nil
+}
+
+func (r *RISClient) run() {
+	// initialize backoff
+	r.backoff = backoff.NewExponentialBackOff()
+	r.backoff.MaxElapsedTime = 0
+	r.backoff.MaxInterval = 5 * time.Minute
+	r.backoff.InitialInterval = 5 * time.Second
+
+	// execute runORC until in returns the error nil
+	err := backoff.Retry(r.runORC, r.backoff)
+	if err != nil {
+		log.WithError(err).Error("Running the observeRibClient with backoff failed.")
 	}
 }
 
