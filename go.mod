@@ -1,6 +1,7 @@
 module github.com/bio-routing/bio-rd
 
 require (
+	github.com/benbjohnson/clock v1.3.0
 	github.com/bio-routing/tflow2 v0.0.0-20181230153523-2e308a4a3c3a
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -10,14 +11,13 @@ require (
 	github.com/urfave/cli v1.21.0
 	github.com/vishvananda/netlink v1.0.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881
+	golang.org/x/sys v0.6.0
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.2.8
 )
 
 require (
-	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
