@@ -3,6 +3,7 @@ module github.com/bio-routing/bio-rd
 require (
 	github.com/benbjohnson/clock v1.3.0
 	github.com/bio-routing/tflow2 v0.0.0-20181230153523-2e308a4a3c3a
+	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/prometheus/client_golang v1.0.0
@@ -19,7 +20,6 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.0 // indirect
-	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
@@ -31,9 +31,10 @@ require (
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
-	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
