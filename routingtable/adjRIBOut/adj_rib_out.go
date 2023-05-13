@@ -144,7 +144,7 @@ func (a *AdjRIBOut) checkPropagateUpdateEBGP(pfx *bnet.Prefix, p *route.Path) (r
 		// 1. If peer is Customer, Peer, or RSClient and OTC is not present we MUST add it with our ASN
 		if p.BGPPath.BGPPathA.OnlyToCustomer == 0 &&
 			(pr == packet.PeerRoleRoleCustomer || pr == packet.PeerRoleRolePeer || pr == packet.PeerRoleRoleRSClient) {
-			p.BGPPath.BGPPathA.OnlyToCustomer = a.sessionAttrs.PeerASN
+			p.BGPPath.BGPPathA.OnlyToCustomer = a.sessionAttrs.LocalASN
 		}
 
 	}
