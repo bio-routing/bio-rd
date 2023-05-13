@@ -1601,7 +1601,7 @@ func TestOTC(t *testing.T) {
 				PeerRoleLocal:     packet.PeerRoleRoleProvider,
 				PeerRoleAdvByPeer: true,
 				PeerRoleRemote:    packet.PeerRoleRoleCustomer,
-				PeerASN:           41981,
+				PeerASN:           39225,
 			},
 			routesAdd: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
@@ -1648,7 +1648,7 @@ func TestOTC(t *testing.T) {
 				PeerRoleLocal:     packet.PeerRoleRolePeer,
 				PeerRoleAdvByPeer: true,
 				PeerRoleRemote:    packet.PeerRoleRolePeer,
-				PeerASN:           41981,
+				PeerASN:           39225,
 			},
 			routesAdd: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
@@ -1695,7 +1695,7 @@ func TestOTC(t *testing.T) {
 				PeerRoleLocal:     packet.PeerRoleRoleRS,
 				PeerRoleAdvByPeer: true,
 				PeerRoleRemote:    packet.PeerRoleRoleRSClient,
-				PeerASN:           41981,
+				PeerASN:           39225,
 			},
 			routesAdd: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
@@ -1744,7 +1744,7 @@ func TestOTC(t *testing.T) {
 				PeerRoleLocal:     packet.PeerRoleRoleCustomer,
 				PeerRoleAdvByPeer: true,
 				PeerRoleRemote:    packet.PeerRoleRoleProvider,
-				PeerASN:           41981,
+				PeerASN:           39225,
 			},
 			routesAdd: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
@@ -1772,7 +1772,7 @@ func TestOTC(t *testing.T) {
 				PeerRoleLocal:     packet.PeerRoleRolePeer,
 				PeerRoleAdvByPeer: true,
 				PeerRoleRemote:    packet.PeerRoleRolePeer,
-				PeerASN:           41981,
+				PeerASN:           39225,
 			},
 			routesAdd: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
@@ -1800,7 +1800,7 @@ func TestOTC(t *testing.T) {
 				PeerRoleLocal:     packet.PeerRoleRoleRSClient,
 				PeerRoleAdvByPeer: true,
 				PeerRoleRemote:    packet.PeerRoleRoleRS,
-				PeerASN:           41981,
+				PeerASN:           39225,
 			},
 			routesAdd: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
