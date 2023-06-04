@@ -7,6 +7,7 @@ import (
 
 	api "github.com/bio-routing/bio-rd/net/api"
 	bmath "github.com/bio-routing/bio-rd/util/math"
+	"go4.org/intern"
 )
 
 var (
@@ -42,7 +43,7 @@ func (ip IP) isLoopbackV6() bool {
 
 // Dedup gets a copy of IP from the cache
 func (ip IP) Dedup() *IP {
-	return ipc.get(ip)
+	return intern.Get(ip).Get().(*IP)
 }
 
 // Ptr returns a pointer to ip
