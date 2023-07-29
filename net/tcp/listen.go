@@ -69,7 +69,7 @@ func (lf *ListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8
 	}
 
 	if v.Name() != vrf.DefaultVRFName {
-		err = unix.SetsockoptString(fd, SOL_IP, unix.SO_BINDTODEVICE, v.Name())
+		err = bindToDev(fd, v.Name())
 		if err != nil {
 			unix.Close(fd)
 			return nil, fmt.Errorf("unable to set SO_BINDTODEVICE (%s): %v", v.Name(), err)

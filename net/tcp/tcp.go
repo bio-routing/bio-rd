@@ -130,7 +130,7 @@ func (c *Conn) SetNoDelay() error {
 
 // SetBindToDev sets the SO_BINDTODEVICE option
 func (c *Conn) SetBindToDev(devName string) error {
-	return unix.SetsockoptString(c.fd, unix.IPPROTO_TCP, unix.SO_BINDTODEVICE, devName)
+	return bindToDev(c.fd, devName)
 }
 
 // MockConn is mocked TCP connection
