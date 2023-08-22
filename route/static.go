@@ -60,14 +60,14 @@ func (s *StaticPath) String() string {
 		return "path not present."
 	}
 
-	return fmt.Sprintf("Next hop: %s", s.NextHop)
+	return fmt.Sprintf("Next hop: %s", s.NextHop.String())
 }
 
 // Print all known information about a route in human readable form
 func (s *StaticPath) Print() string {
 	buf := &strings.Builder{}
 
-	fmt.Fprintf(buf, "\t\tNext hop: %s\n", s.NextHop)
+	fmt.Fprintf(buf, "\t\tNext hop: %s\n", s.NextHop.String())
 
 	return buf.String()
 }
