@@ -26,9 +26,6 @@ const (
 
 	// FIBPathType indicates a path is a FIB path
 	FIBPathType
-
-	// GRPPathTyape indicates a path is a GRP path
-	GRPPathType
 )
 
 // Route links a prefix to paths
