@@ -28,7 +28,6 @@ type Path struct {
 	StaticPath        *StaticPath
 	BGPPath           *BGPPath
 	FIBPath           *FIBPath
-	GRPPath           *GRPPath
 }
 
 // Select returns negative if p < q, 0 if paths are equal, positive if p > q
@@ -58,8 +57,6 @@ func (p *Path) Select(q *Path) int8 {
 		return p.StaticPath.Select(q.StaticPath)
 	case FIBPathType:
 		return p.FIBPath.Select(q.FIBPath)
-	case GRPPathType:
-		return p.GRPPath.Select(q.GRPPath)
 	}
 
 	return 0
@@ -84,7 +81,6 @@ func (p *Path) ToProto() *api.Path {
 	a := &api.Path{
 		StaticPath:  p.StaticPath.ToProto(),
 		BgpPath:     p.BGPPath.ToProto(),
-		GrpPath:     p.GRPPath.ToProto(),
 		TimeLearned: p.LTime,
 	}
 
@@ -93,8 +89,6 @@ func (p *Path) ToProto() *api.Path {
 		a.Type = api.Path_Static
 	case BGPPathType:
 		a.Type = api.Path_BGP
-	case GRPPathType:
-		a.Type = api.Path_GRP
 	}
 
 	switch p.HiddenReason {
@@ -132,8 +126,6 @@ func (p *Path) Compare(q *Path) bool {
 		return p.BGPPath.Compare(q.BGPPath)
 	case StaticPathType:
 		return p.StaticPath.Compare(q.StaticPath)
-	case GRPPathType:
-		return p.GRPPath.Compare(q.GRPPath)
 	}
 
 	return false
@@ -154,8 +146,6 @@ func (p *Path) Equal(q *Path) bool {
 		return p.BGPPath.Equal(q.BGPPath)
 	case StaticPathType:
 		return p.StaticPath.Equal(q.StaticPath)
-	case GRPPathType:
-		return p.GRPPath.Equal(q.GRPPath)
 	}
 
 	return p.Select(q) == 0
@@ -195,8 +185,6 @@ func (p *Path) String() string {
 		pathInfo = p.BGPPath.String()
 	case FIBPathType:
 		pathInfo = p.FIBPath.String()
-	case GRPPathType:
-		pathInfo = p.GRPPath.String()
 	default:
 		return fmt.Sprintf("Unknown path type. Probably not implemented yet (%d)", p.Type)
 	}
@@ -228,8 +216,6 @@ func (p *Path) Print() string {
 		buf.WriteString(p.BGPPath.Print())
 	case FIBPathType:
 		buf.WriteString(p.FIBPath.Print())
-	case GRPPathType:
-		buf.WriteString(p.GRPPath.Print())
 	}
 
 	return buf.String()
@@ -244,7 +230,6 @@ func (p *Path) Copy() *Path {
 	cp := *p
 	cp.BGPPath = cp.BGPPath.Copy()
 	cp.StaticPath = cp.StaticPath.Copy()
-	cp.GRPPath = cp.GRPPath.Copy()
 
 	return &cp
 }
@@ -258,8 +243,6 @@ func (p *Path) NextHop() *bnet.IP {
 		return p.StaticPath.NextHop
 	case FIBPathType:
 		return p.FIBPath.NextHop
-	case GRPPathType:
-		return p.GRPPath.NextHop
 	}
 
 	panic("Unknown path type")
@@ -298,8 +281,6 @@ func (p *Path) GetNextHop() *bnet.IP {
 		return p.BGPPath.GetNextHop()
 	case StaticPathType:
 		return p.StaticPath.GetNextHop()
-	case GRPPathType:
-		return p.GRPPath.GetNextHop()
 	}
 
 	return nil
@@ -314,10 +295,6 @@ func (p *Path) SetNextHop(newNH *bnet.IP) {
 	case StaticPathType:
 		if p.StaticPath != nil {
 			p.StaticPath.NextHop = newNH
-		}
-	case GRPPathType:
-		if p.GRPPath != nil {
-			p.GRPPath.NextHop = newNH
 		}
 	}
 }
