@@ -17,6 +17,7 @@ const (
 	HiddenReasonOurOriginatorID
 	HiddenReasonClusterLoop
 	HiddenReasonOTCMismatch
+	HiddenReasonEmptyASPath
 )
 
 // Path represents a network path
@@ -270,6 +271,8 @@ func (p *Path) HiddenReasonString() string {
 		return "Found our cluster ID in cluster list"
 	case HiddenReasonOTCMismatch:
 		return "OTC mismatch"
+	case HiddenReasonEmptyASPath:
+		return "Empty eBGP AS Path"
 	default:
 		return "unknown"
 	}
