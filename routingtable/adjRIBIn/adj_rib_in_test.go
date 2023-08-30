@@ -16,17 +16,81 @@ import (
 func TestAddPath(t *testing.T) {
 	routerID := net.IPv4FromOctets(1, 1, 1, 1).Ptr().ToUint32()
 	clusterID := net.IPv4FromOctets(2, 2, 2, 2).Ptr().ToUint32()
+	// Tests will add more fields
+	sessionAttrs := routingtable.SessionAttrs{
+		RouterID:  routerID,
+		ClusterID: clusterID,
+		LocalASN:  201701,
+		PeerASN:   3320,
+	}
 
 	tests := []struct {
 		name       string
 		addPath    bool
+		iBGP       bool
 		routes     []*route.Route
 		removePfx  *net.Prefix
 		removePath *route.Path
 		expected   []*route.Route
 	}{
 		{
-			name: "Add route",
+			name: "Add route (eBGP w/ empty AS Path)",
+			iBGP: false,
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				}),
+			},
+			removePfx:  nil,
+			removePath: nil,
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type:         route.BGPPathType,
+					HiddenReason: route.HiddenReasonEmptyASPath,
+					BGPPath: &route.BGPPath{
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				}),
+			},
+		},
+		{
+			name: "Add route (eBGP)",
+			iBGP: false,
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{13335}),
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				}),
+			},
+			removePfx:  nil,
+			removePath: nil,
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{13335}),
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+						},
+					},
+				}),
+			},
+		},
+		{
+			name: "Add route (iBGP)",
+			iBGP: true,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
@@ -51,7 +115,8 @@ func TestAddPath(t *testing.T) {
 			},
 		},
 		{
-			name: "Overwrite routes",
+			name: "Overwrite routes (iBGP)",
+			iBGP: true,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
@@ -99,7 +164,61 @@ func TestAddPath(t *testing.T) {
 			},
 		},
 		{
-			name: "Add route with our RouterID as OriginatorID",
+			name: "Overwrite routes (eBGP)",
+			iBGP: false,
+			routes: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{13335}),
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						},
+					},
+				}),
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{13335}),
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						},
+					},
+				}),
+			},
+			removePfx: net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(),
+			removePath: &route.Path{
+				Type: route.BGPPathType,
+				BGPPath: &route.BGPPath{
+					ASPath: types.NewASPath([]uint32{13335}),
+					BGPPathA: &route.BGPPathA{
+						LocalPref: 100,
+						NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+					},
+				},
+			},
+			expected: []*route.Route{
+				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
+					Type: route.BGPPathType,
+					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{13335}),
+						BGPPathA: &route.BGPPathA{
+							LocalPref: 100,
+							NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+							Source:    net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
+						},
+					},
+				}),
+			},
+		},
+		{
+			name: "Add route with our RouterID as OriginatorID (iBGP)",
+			iBGP: true,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32).Ptr(), &route.Path{
 					Type: route.BGPPathType,
@@ -126,6 +245,7 @@ func TestAddPath(t *testing.T) {
 		},
 		{
 			name: "Add route with our ClusterID within ClusterList",
+			iBGP: true,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 32).Ptr(), &route.Path{
 					Type: route.BGPPathType,
@@ -158,12 +278,14 @@ func TestAddPath(t *testing.T) {
 			},
 		},
 		{
-			name:    "Add route (with BGP add path)",
+			name:    "Add eBGP route (with BGP add path)",
 			addPath: true,
+			iBGP:    false,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath:         types.NewASPath([]uint32{13335}),
 						PathIdentifier: 10,
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
@@ -175,6 +297,7 @@ func TestAddPath(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath:         types.NewASPath([]uint32{13335}),
 						PathIdentifier: 20,
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 200,
@@ -192,6 +315,7 @@ func TestAddPath(t *testing.T) {
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							PathIdentifier: 10,
+							ASPath:         types.NewASPath([]uint32{13335}),
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 100,
 								NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
@@ -203,6 +327,7 @@ func TestAddPath(t *testing.T) {
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
 							PathIdentifier: 20,
+							ASPath:         types.NewASPath([]uint32{13335}),
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 200,
 								NextHop:   net.IPv4FromOctets(20, 0, 0, 0).Ptr(),
@@ -214,12 +339,14 @@ func TestAddPath(t *testing.T) {
 			},
 		},
 		{
-			name:    "Add route (with BGP add path) twice",
+			name:    "Add eBGP route (with BGP add path) twice",
 			addPath: false,
+			iBGP:    false,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath:         types.NewASPath([]uint32{13335}),
 						PathIdentifier: 10,
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
@@ -231,6 +358,7 @@ func TestAddPath(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath:         types.NewASPath([]uint32{13335}),
 						PathIdentifier: 10,
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 200,
@@ -247,6 +375,7 @@ func TestAddPath(t *testing.T) {
 					{
 						Type: route.BGPPathType,
 						BGPPath: &route.BGPPath{
+							ASPath:         types.NewASPath([]uint32{13335}),
 							PathIdentifier: 10,
 							BGPPathA: &route.BGPPathA{
 								LocalPref: 200,
@@ -261,14 +390,13 @@ func TestAddPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		sessionAttrs := routingtable.SessionAttrs{
-			RouterID:  routerID,
-			ClusterID: clusterID,
-			AddPathRX: test.addPath,
-		}
+		sa := sessionAttrs
+		sa.AddPathRX = test.addPath
+		sa.IBGP = test.iBGP
+
 		vrf := vrf.NewUntrackedVRF("vrf0", 0)
 		vrf.AddContributingClusterID(clusterID)
-		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf, sessionAttrs)
+		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf, sa)
 		mc := routingtable.NewRTMockClient()
 		adjRIBIn.clientManager.RegisterWithOptions(mc, routingtable.ClientOptions{BestOnly: true})
 
@@ -302,7 +430,7 @@ func TestRemovePath(t *testing.T) {
 		wantPropagation bool
 	}{
 		{
-			name:    "Remove an a path from existing route",
+			name:    "Remove a path from existing route",
 			addPath: true,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
@@ -497,6 +625,7 @@ func TestRemovePath(t *testing.T) {
 			RouterID:  1,
 			ClusterID: 2,
 			AddPathRX: test.addPath,
+			IBGP:      true,
 		}
 		adjRIBIn := New(filter.NewAcceptAllFilterChain(), vrf.NewUntrackedVRF("vrf0", 0), sessionAttrs)
 		for _, route := range test.routes {
@@ -587,9 +716,11 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
-							OnlyToCustomer: 23},
+							OnlyToCustomer: 23,
+						},
 					},
 				}),
 			},
@@ -597,6 +728,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 23,
@@ -616,9 +748,11 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
-							OnlyToCustomer: 23},
+							OnlyToCustomer: 23,
+						},
 					},
 				}),
 			},
@@ -626,6 +760,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 23,
@@ -647,9 +782,11 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{23}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
-							OnlyToCustomer: 23},
+							OnlyToCustomer: 23,
+						},
 					},
 				}),
 			},
@@ -657,6 +794,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{23}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 23,
@@ -680,9 +818,11 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{23}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
-							OnlyToCustomer: 23},
+							OnlyToCustomer: 23,
+						},
 					},
 				}),
 			},
@@ -690,6 +830,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{23}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 23,
@@ -713,9 +854,11 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
-							OnlyToCustomer: 23},
+							OnlyToCustomer: 23,
+						},
 					},
 				}),
 			},
@@ -723,6 +866,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 23,
@@ -746,6 +890,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
 						},
@@ -756,6 +901,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 42,
@@ -779,6 +925,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
 						},
@@ -789,6 +936,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 42,
@@ -812,6 +960,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref: 100,
 						},
@@ -822,6 +971,7 @@ func TestPeerRoleOTC(t *testing.T) {
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
+						ASPath: types.NewASPath([]uint32{42}),
 						BGPPathA: &route.BGPPathA{
 							LocalPref:      100,
 							OnlyToCustomer: 42,

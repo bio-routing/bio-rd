@@ -270,9 +270,7 @@ func (a *AdjRIBIn) Unregister(client routingtable.RouteTableClient) {
 }
 
 // RefreshRoute is here to fultill an interface
-func (a *AdjRIBIn) RefreshRoute(*net.Prefix, []*route.Path) {
-
-}
+func (a *AdjRIBIn) RefreshRoute(*net.Prefix, []*route.Path) {}
 
 // LPM performs a longest prefix match on the routing table
 func (a *AdjRIBIn) LPM(pfx *net.Prefix) (res []*route.Route) {
@@ -291,6 +289,11 @@ func (a *AdjRIBIn) GetLonger(pfx *net.Prefix) (res []*route.Route) {
 
 // Validate path information
 func (a *AdjRIBIn) validatePath(p *route.Path) uint8 {
+	// RFC 4271 Sect. 5.1.2. demans eBGP speaker to add their ASN to the path
+	if !a.sessionAttrs.IBGP && (p.BGPPath.ASPath == nil || len(*p.BGPPath.ASPath) == 0) {
+		return route.HiddenReasonEmptyASPath
+	}
+
 	// Bail out - for all clients for now - if any of our ASNs is within the path
 	if a.ourASNsInPath(p) {
 		return route.HiddenReasonASLoop
