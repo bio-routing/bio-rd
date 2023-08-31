@@ -139,7 +139,8 @@ func (f *fsmAddressFamily) getSessionAttrs() routingtable.SessionAttrs {
 		RouterIP: rip,
 	}
 
-	// Only set Default Local Preference for BGP and when peer is fully set up (may not be the case in tests, to be fixed)
+	// Only set Default Local Preference for BGP and when peer is fully set up (may not be the case in all tests)
+	// Worry not, if Local Preference is 0, AdjRIBIn, will default it to 100.
 	if !f.fsm.isBMP && f.fsm.peer.server != nil {
 		sa.DefaultLocalPreference = *f.fsm.peer.server.config.DefaultLocalPreference
 	}
