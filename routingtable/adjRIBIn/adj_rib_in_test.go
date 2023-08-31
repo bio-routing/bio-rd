@@ -61,16 +61,14 @@ func TestAddPath(t *testing.T) {
 			},
 		},
 		{
-			name: "Add route (eBGP)",
+			name: "Add route (eBGP, w/o local pref)",
 			iBGP: false,
 			routes: []*route.Route{
 				route.NewRoute(net.NewPfx(net.IPv4FromOctets(10, 0, 0, 0), 8).Ptr(), &route.Path{
 					Type: route.BGPPathType,
 					BGPPath: &route.BGPPath{
-						ASPath: types.NewASPath([]uint32{13335}),
-						BGPPathA: &route.BGPPathA{
-							LocalPref: 100,
-						},
+						ASPath:   types.NewASPath([]uint32{13335}),
+						BGPPathA: &route.BGPPathA{},
 					},
 				}),
 			},

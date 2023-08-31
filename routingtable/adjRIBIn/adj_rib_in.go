@@ -30,6 +30,14 @@ func New(exportFilterChain filter.Chain, vrf *vrf.VRF, sessionAttrs routingtable
 		vrf:               vrf,
 		sessionAttrs:      sessionAttrs,
 	}
+
+	// RFC4277 Section 8. states that 100 is a - if not the - common value for Local
+	// Preference on eBGP sessions, where it would be 0 if none is set.
+	// If no value was specified via the BGP server config, default to 100 here.
+	if a.sessionAttrs.DefaultLocalPreference == 0 {
+		a.sessionAttrs.DefaultLocalPreference = 100
+	}
+
 	a.clientManager = routingtable.NewClientManager(a)
 	return a
 }
@@ -176,15 +184,17 @@ func (a *AdjRIBIn) addPath(pfx *net.Prefix, p *route.Path) error {
 		return nil
 	}
 
+	// RFC4277 Sect 8. suggest to set a  use Local Preference as default value for eBGP
+	// This needs to happen before policies are applied, so this has effect when doing
+	// relative changes to Local Preference.
+	if !a.sessionAttrs.IBGP && p.BGPPath.BGPPathA.LocalPref == 0 {
+		p.BGPPath.BGPPathA.LocalPref = a.sessionAttrs.DefaultLocalPreference
+	}
+
 	p, reject := a.exportFilterChain.Process(pfx, p)
 	if reject {
 		p.HiddenReason = route.HiddenReasonFilteredByPolicy
 		return nil
-	}
-
-	// RFC4277 Sect 8. suggest to set a  use Local Preference as default value for eBGP
-	if !a.sessionAttrs.IBGP && p.BGPPath.BGPPathA.LocalPref == 0 {
-		p.BGPPath.BGPPathA.LocalPref = a.sessionAttrs.DefaultLocalPreference
 	}
 
 	for _, client := range a.clientManager.Clients() {

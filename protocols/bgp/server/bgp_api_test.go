@@ -30,6 +30,8 @@ func TestDumpRIBInOut(t *testing.T) {
 	sessionAttrs := routingtable.SessionAttrs{
 		RouterID:  0,
 		ClusterID: 0,
+		LocalASN:  42,
+		PeerASN:   42,
 		AddPathRX: true,
 		AddPathTX: true,
 	}
