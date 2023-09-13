@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/bio-routing/bio-rd/net/api"
+	"go4.org/intern"
 )
 
 // Prefix represents an IPv4 prefix
@@ -19,7 +20,7 @@ type Prefix struct {
 // Dedup gets a copy of Prefix from the cache.
 // If Prefix is not in the cache it gets added.
 func (p Prefix) Dedup() *Prefix {
-	return pfxc.get(p)
+	return intern.Get(p).Get().(*Prefix)
 }
 
 // Ptr returns a pointer to p
