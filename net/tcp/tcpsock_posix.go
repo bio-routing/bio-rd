@@ -47,22 +47,7 @@ func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string,
 	}
 
 	if laddr != nil && laddr.IP != nil {
-		var bindSA unix.Sockaddr
-		if laddr.IP.To4() != nil {
-			la := ipv4AddrToArray(laddr.IP)
-			bindSA = &unix.SockaddrInet4{
-				Port: laddr.Port,
-				Addr: la,
-			}
-		} else {
-			la := ipv6AddrToArray(laddr.IP)
-			bindSA = &unix.SockaddrInet6{
-				Port: laddr.Port,
-				Addr: la,
-			}
-		}
-
-		err := unix.Bind(fd, bindSA)
+		err := unix.Bind(fd, netTCPAddrToSockAddr(laddr))
 		if err != nil {
 			return nil, fmt.Errorf("bind() failed: %w", err)
 		}
@@ -78,20 +63,7 @@ func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string,
 		}
 	}
 
-	var connectSA unix.Sockaddr
-	if raddr.IP.To4() != nil {
-		connectSA = &unix.SockaddrInet4{
-			Port: raddr.Port,
-			Addr: ipv4AddrToArray(raddr.IP),
-		}
-	} else {
-		connectSA = &unix.SockaddrInet6{
-			Port: raddr.Port,
-			Addr: ipv6AddrToArray(raddr.IP),
-		}
-	}
-
-	err = unix.Connect(fd, connectSA)
+	err = unix.Connect(fd, netTCPAddrToSockAddr(raddr))
 	if err != nil {
 		return nil, fmt.Errorf("connect() failed: %w", err)
 	}
@@ -103,15 +75,23 @@ func dialTCP(afi uint16, laddr, raddr *net.TCPAddr, ttl uint8, md5secret string,
 	}, nil
 }
 
-func ipv6AddrToArray(x net.IP) [16]byte {
-	return [16]byte{
-		x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],
-		x[8], x[9], x[10], x[11], x[12], x[13], x[14], x[15],
+func netTCPAddrToSockAddr(tcpAddr *net.TCPAddr) unix.Sockaddr {
+	ip := tcpAddr.IP
+	ip4 := ip.To4()
+	if ip4 != nil {
+		return &unix.SockaddrInet4{
+			Port: tcpAddr.Port,
+			Addr: [4]byte{
+				ip4[0], ip4[1], ip4[2], ip4[3],
+			},
+		}
 	}
-}
 
-func ipv4AddrToArray(x net.IP) [4]byte {
-	return [4]byte{
-		x[0], x[1], x[2], x[3],
+	return &unix.SockaddrInet6{
+		Port: tcpAddr.Port,
+		Addr: [16]byte{
+			ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7],
+			ip[8], ip[9], ip[10], ip[11], ip[12], ip[13], ip[14], ip[15],
+		},
 	}
 }
