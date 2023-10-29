@@ -76,17 +76,7 @@ func (lf *ListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8
 		}
 	}
 
-	if laddr.IP.To4() != nil {
-		err = unix.Bind(fd, &unix.SockaddrInet4{
-			Port: laddr.Port,
-			Addr: ipv4AddrToArray(laddr.IP),
-		})
-	} else {
-		err = unix.Bind(fd, &unix.SockaddrInet6{
-			Port: laddr.Port,
-			Addr: ipv6AddrToArray(laddr.IP),
-		})
-	}
+	err = unix.Bind(fd, netTCPAddrToSockAddr(laddr))
 	if err != nil {
 		unix.Close(fd)
 		return nil, fmt.Errorf("bind failed: %w", err)
