@@ -14,7 +14,6 @@ import (
 	"github.com/bio-routing/bio-rd/protocols/device"
 	isisapi "github.com/bio-routing/bio-rd/protocols/isis/api"
 	isisserver "github.com/bio-routing/bio-rd/protocols/isis/server"
-	"github.com/bio-routing/bio-rd/routingtable"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 	"github.com/bio-routing/bio-rd/util/log"
 	"github.com/bio-routing/bio-rd/util/servicewrapper"
@@ -23,11 +22,18 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
+const (
+	DefaultBGPListenAddrIPv4 = "0.0.0.0:179"
+	DefaultBGPListenAddrIPv6 = "[::]:179"
+)
+
 var (
 	configFilePath       = flag.String("config.file", "bio-rd.yml", "bio-rd config file")
 	grpcPort             = flag.Uint("grpc_port", 5566, "GRPC API server port")
 	grpcKeepaliveMinTime = flag.Uint("grpc_keepalive_min_time", 1, "Minimum time (seconds) for a client to wait between GRPC keepalive pings")
 	metricsPort          = flag.Uint("metrics_port", 55667, "Metrics HTTP server port")
+	bgpListenAddrIPv4    = flag.String("bgp.listen-addr-ipv4", DefaultBGPListenAddrIPv4, "BGP listen address for IPv4 AFI")
+	bgpListenAddrIPv6    = flag.String("bgp.listen-addr-ipv6", DefaultBGPListenAddrIPv6, "BGP listen address for IPv6 AFI")
 	sigHUP               = make(chan os.Signal)
 	vrfReg               = vrf.NewVRFRegistry()
 	bgpSrv               bgpserver.BGPServer
@@ -63,8 +69,8 @@ func main() {
 
 	listenAddrsByVRF := map[string][]string{
 		vrf.DefaultVRFName: {
-			"[::]:179",
-			"0.0.0.0:179",
+			fmt.Sprintf(*bgpListenAddrIPv6),
+			fmt.Sprintf(*bgpListenAddrIPv4),
 		},
 	}
 
@@ -157,95 +163,6 @@ func loadConfig(cfg *config.Config) error {
 	}
 
 	return nil
-}
-
-func configureProtocolsBGP(bgp *config.BGP) error {
-	// Tear down peers that are to be removed
-	for _, p := range bgpSrv.GetPeers() {
-		found := false
-		for _, g := range bgp.Groups {
-			for _, n := range g.Neighbors {
-				if n.PeerAddressIP == p.Addr() && p.VRF() == bgpSrv.GetDefaultVRF() {
-					found = true
-					break
-				}
-			}
-		}
-
-		if !found {
-			bgpSrv.DisposePeer(bgpSrv.GetDefaultVRF(), p.Addr())
-		}
-	}
-
-	// Tear down peers that need new sessions as they changed too significantly
-	for _, g := range bgp.Groups {
-		for _, n := range g.Neighbors {
-			newCfg := BGPPeerConfig(n, bgpSrv.GetDefaultVRF())
-			oldCfg := bgpSrv.GetPeerConfig(bgpSrv.GetDefaultVRF(), n.PeerAddressIP)
-			if oldCfg == nil {
-				continue
-			}
-
-			if !oldCfg.NeedsRestart(newCfg) {
-				bgpSrv.ReplaceImportFilterChain(bgpSrv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
-				bgpSrv.ReplaceExportFilterChain(bgpSrv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
-				continue
-			}
-
-			bgpSrv.DisposePeer(bgpSrv.GetDefaultVRF(), oldCfg.PeerAddress)
-		}
-	}
-
-	// Turn up all sessions that are missing
-	for _, g := range bgp.Groups {
-		for _, n := range g.Neighbors {
-			if bgpSrv.GetPeerConfig(bgpSrv.GetDefaultVRF(), n.PeerAddressIP) != nil {
-				continue
-			}
-
-			newCfg := BGPPeerConfig(n, vrfReg.GetVRFByName(vrf.DefaultVRFName))
-			err := bgpSrv.AddPeer(*newCfg)
-			if err != nil {
-				return fmt.Errorf("unable to add BGP peer: %w", err)
-			}
-		}
-	}
-
-	return nil
-}
-
-// BGPPeerConfig converts a BGPNeighbor config into a PeerConfig
-func BGPPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig {
-	r := &bgpserver.PeerConfig{
-		AuthenticationKey: n.AuthenticationKey,
-		LocalAS:           n.LocalAS,
-		PeerAS:            n.PeerAS,
-		PeerAddress:       n.PeerAddressIP,
-		LocalAddress:      n.LocalAddressIP,
-		TTL:               n.TTL,
-		ReconnectInterval: time.Second * 15,
-		HoldTime:          n.HoldTimeDuration,
-		KeepAlive:         n.HoldTimeDuration / 3,
-		RouterID:          bgpSrv.RouterID(),
-		IPv4: &bgpserver.AddressFamilyConfig{
-			ImportFilterChain: n.ImportFilterChain,
-			ExportFilterChain: n.ExportFilterChain,
-			AddPathSend: routingtable.ClientOptions{
-				MaxPaths: 10,
-			},
-		},
-		VRF: vrf,
-	}
-
-	if n.Passive != nil {
-		r.Passive = *n.Passive
-	}
-
-	if n.RouteServerClient != nil {
-		r.RouteServerClient = *n.RouteServerClient
-	}
-
-	return r
 }
 
 func configureRoutingInstance(ri *config.RoutingInstance) error {

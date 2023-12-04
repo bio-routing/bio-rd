@@ -119,6 +119,7 @@ type BGPNeighbor struct {
 	PeerAddressIP     *bnet.IP
 	LocalAddress      string `yaml:"local_address"`
 	LocalAddressIP    *bnet.IP
+	Disabled          bool   `yaml:"disabled"`
 	TTL               uint8  `yaml:"ttl"`
 	AuthenticationKey string `yaml:"authentication_key"`
 	PeerAS            uint32 `yaml:"peer_as"`
@@ -134,7 +135,6 @@ type BGPNeighbor struct {
 	Passive           *bool  `yaml:"passive"`
 	ClusterID         string `yaml:"cluster_id"`
 	ClusterIDIP       *bnet.IP
-	AFIs              []*AFI `yaml:"afi"`
 }
 
 func (bn *BGPNeighbor) load(po *PolicyOptions) error {
