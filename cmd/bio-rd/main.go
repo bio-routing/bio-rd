@@ -148,7 +148,10 @@ func loadConfig(cfg *config.Config) error {
 
 	if cfg.Protocols != nil {
 		if cfg.Protocols.BGP != nil {
-			err := configureProtocolsBGP(cfg.Protocols.BGP)
+			bgpCfgtr := &bgpConfigurator{
+				srv: bgpSrv,
+			}
+			err := bgpCfgtr.configure(cfg.Protocols.BGP)
 			if err != nil {
 				return fmt.Errorf("unable to configure BGP: %w", err)
 			}

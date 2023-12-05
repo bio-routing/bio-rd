@@ -10,13 +10,32 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
-func configureProtocolsBGP(bgp *config.BGP) error {
-	// Tear down peers that are to be removed
-	for _, p := range bgpSrv.GetPeers() {
+type bgpConfigurator struct {
+	srv bgpserver.BGPServer
+}
+
+func (c *bgpConfigurator) configure(cfg *config.BGP) error {
+	c.deconfigureRemovedSessions(cfg)
+
+	err := c.reconfigureModifiedSessions(cfg)
+	if err != nil {
+		return fmt.Errorf("could not reconfigure session: %w", err)
+	}
+
+	err = c.configureNewSessions(cfg)
+	if err != nil {
+		return fmt.Errorf("could not configure session: %w", err)
+	}
+
+	return nil
+}
+
+func (c *bgpConfigurator) deconfigureRemovedSessions(cfg *config.BGP) {
+	for _, p := range c.srv.GetPeers() {
 		found := false
-		for _, g := range bgp.Groups {
+		for _, g := range cfg.Groups {
 			for _, n := range g.Neighbors {
-				if n.PeerAddressIP == p.Addr() && p.VRF() == bgpSrv.GetDefaultVRF() {
+				if n.PeerAddressIP == p.Addr() && p.VRF() == c.srv.GetDefaultVRF() {
 					found = true
 					break
 				}
@@ -24,38 +43,44 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 		}
 
 		if !found {
-			bgpSrv.DisposePeer(bgpSrv.GetDefaultVRF(), p.Addr())
+			c.srv.DisposePeer(c.srv.GetDefaultVRF(), p.Addr())
 		}
 	}
+}
 
-	// Tear down peers that need new sessions as they changed too significantly
-	for _, g := range bgp.Groups {
+func (c *bgpConfigurator) reconfigureModifiedSessions(cfg *config.BGP) error {
+	for _, g := range cfg.Groups {
 		for _, n := range g.Neighbors {
-			newCfg := toBGPPeerConfig(n, bgpSrv.GetDefaultVRF())
-			oldCfg := bgpSrv.GetPeerConfig(bgpSrv.GetDefaultVRF(), n.PeerAddressIP)
+			newCfg := c.toPeerConfig(n, c.srv.GetDefaultVRF())
+			oldCfg := c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), n.PeerAddressIP)
 			if oldCfg == nil {
 				continue
 			}
 
 			if !oldCfg.NeedsRestart(newCfg) {
-				bgpSrv.ReplaceImportFilterChain(bgpSrv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
-				bgpSrv.ReplaceExportFilterChain(bgpSrv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
+				c.srv.ReplaceImportFilterChain(c.srv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
+				c.srv.ReplaceExportFilterChain(c.srv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
 				continue
 			}
 
-			bgpSrv.DisposePeer(bgpSrv.GetDefaultVRF(), oldCfg.PeerAddress)
+			c.srv.DisposePeer(c.srv.GetDefaultVRF(), oldCfg.PeerAddress)
+			return c.srv.AddPeer(*newCfg)
 		}
+
 	}
 
-	// Turn up all sessions that are missing
-	for _, g := range bgp.Groups {
+	return nil
+}
+
+func (c *bgpConfigurator) configureNewSessions(cfg *config.BGP) error {
+	for _, g := range cfg.Groups {
 		for _, n := range g.Neighbors {
-			if bgpSrv.GetPeerConfig(bgpSrv.GetDefaultVRF(), n.PeerAddressIP) != nil {
+			if c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), n.PeerAddressIP) != nil {
 				continue
 			}
 
-			newCfg := toBGPPeerConfig(n, vrfReg.GetVRFByName(vrf.DefaultVRFName))
-			err := bgpSrv.AddPeer(*newCfg)
+			newCfg := c.toPeerConfig(n, vrfReg.GetVRFByName(vrf.DefaultVRFName))
+			err := c.srv.AddPeer(*newCfg)
 			if err != nil {
 				return fmt.Errorf("unable to add BGP peer: %w", err)
 			}
@@ -65,8 +90,7 @@ func configureProtocolsBGP(bgp *config.BGP) error {
 	return nil
 }
 
-// BGPPeerConfig converts a BGPNeighbor config into a PeerConfig
-func toBGPPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig {
+func (c *bgpConfigurator) toPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig {
 	r := &bgpserver.PeerConfig{
 		AdminEnabled:      !n.Disabled,
 		AuthenticationKey: n.AuthenticationKey,
@@ -78,7 +102,7 @@ func toBGPPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig 
 		ReconnectInterval: time.Second * 15,
 		HoldTime:          n.HoldTimeDuration,
 		KeepAlive:         n.HoldTimeDuration / 3,
-		RouterID:          bgpSrv.RouterID(),
+		RouterID:          c.srv.RouterID(),
 		IPv4: &bgpserver.AddressFamilyConfig{
 			ImportFilterChain: n.ImportFilterChain,
 			ExportFilterChain: n.ExportFilterChain,
