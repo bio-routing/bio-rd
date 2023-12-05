@@ -59,8 +59,12 @@ func (c *bgpConfigurator) reconfigureModifiedSessions(cfg *config.BGP) error {
 			}
 
 			if !oldCfg.NeedsRestart(newCfg) {
-				c.srv.ReplaceImportFilterChain(c.srv.GetDefaultVRF(), bn.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
-				c.srv.ReplaceExportFilterChain(c.srv.GetDefaultVRF(), bn.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
+				c.srv.ReplaceImportFilterChain(c.srv.GetDefaultVRF(),
+					bn.PeerAddressIP,
+					c.determineFilterChain(bg.ImportFilterChain, bn.ImportFilterChain))
+				c.srv.ReplaceExportFilterChain(c.srv.GetDefaultVRF(),
+					bn.PeerAddressIP,
+					c.determineFilterChain(bg.ExportFilterChain, bn.ExportFilterChain))
 				continue
 			}
 
