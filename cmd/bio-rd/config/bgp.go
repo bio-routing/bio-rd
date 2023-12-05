@@ -27,18 +27,19 @@ type BGPGroup struct {
 	Name              string `yaml:"name"`
 	LocalAddress      string `yaml:"local_address"`
 	LocalAddressIP    *bnet.IP
-	TTL               uint8          `yaml:"ttl"`
-	AuthenticationKey string         `yaml:"authentication_key"`
-	PeerAS            uint32         `yaml:"peer_as"`
-	LocalAS           uint32         `yaml:"local_as"`
-	HoldTime          uint16         `yaml:"hold_time"`
-	Multipath         *Multipath     `yaml:"multipath"`
-	Import            []string       `yaml:"import"`
-	Export            []string       `yaml:"export"`
+	TTL               uint8      `yaml:"ttl"`
+	AuthenticationKey string     `yaml:"authentication_key"`
+	PeerAS            uint32     `yaml:"peer_as"`
+	LocalAS           uint32     `yaml:"local_as"`
+	HoldTime          uint16     `yaml:"hold_time"`
+	Multipath         *Multipath `yaml:"multipath"`
+	Import            []string   `yaml:"import"`
+	ImportFilterChain filter.Chain
+	Export            []string `yaml:"export"`
+	ExportFilterChain filter.Chain
 	RouteServerClient bool           `yaml:"route_server_client"`
 	Passive           bool           `yaml:"passive"`
 	Neighbors         []*BGPNeighbor `yaml:"neighbors"`
-	AFIs              []*AFI         `yaml:"afi"`
 }
 
 func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
@@ -57,6 +58,24 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 
 	if bg.HoldTime == 0 {
 		bg.HoldTime = 90
+	}
+
+	for i := range bg.Import {
+		f := policyOptions.getPolicyStatementFilter(bg.Import[i])
+		if f == nil {
+			return fmt.Errorf("policy statement %q undefined", bg.Import[i])
+		}
+
+		bg.ImportFilterChain = append(bg.ImportFilterChain, f)
+	}
+
+	for i := range bg.Export {
+		f := policyOptions.getPolicyStatementFilter(bg.Export[i])
+		if f == nil {
+			return fmt.Errorf("policy statement %q undefined", bg.Export[i])
+		}
+
+		bg.ExportFilterChain = append(bg.ExportFilterChain, f)
 	}
 
 	for _, n := range bg.Neighbors {
@@ -135,15 +154,17 @@ type BGPNeighbor struct {
 	Passive           *bool  `yaml:"passive"`
 	ClusterID         string `yaml:"cluster_id"`
 	ClusterIDIP       *bnet.IP
+	IPv4              *AddressFamilyConfig
+	IPv6              *AddressFamilyConfig
 }
 
-func (bn *BGPNeighbor) load(po *PolicyOptions) error {
+func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
 	if bn.PeerAS == 0 {
-		return fmt.Errorf("Peer %q is lacking peer as number", bn.PeerAddress)
+		return fmt.Errorf("peer %q is lacking peer as number", bn.PeerAddress)
 	}
 
 	if bn.PeerAddress == "" {
-		return fmt.Errorf("Mandatory parameter BGP peer address is empty")
+		return fmt.Errorf("mandatory parameter BGP peer address is empty")
 	}
 
 	if bn.LocalAddress != "" {
@@ -164,7 +185,7 @@ func (bn *BGPNeighbor) load(po *PolicyOptions) error {
 	bn.HoldTimeDuration = time.Second * time.Duration(bn.HoldTime)
 
 	for i := range bn.Import {
-		f := po.getPolicyStatementFilter(bn.Import[i])
+		f := policyOptions.getPolicyStatementFilter(bn.Import[i])
 		if f == nil {
 			return fmt.Errorf("policy statement %q undefined", bn.Import[i])
 		}
@@ -173,7 +194,7 @@ func (bn *BGPNeighbor) load(po *PolicyOptions) error {
 	}
 
 	for i := range bn.Export {
-		f := po.getPolicyStatementFilter(bn.Export[i])
+		f := policyOptions.getPolicyStatementFilter(bn.Export[i])
 		if f == nil {
 			return fmt.Errorf("policy statement %q undefined", bn.Export[i])
 		}
@@ -183,22 +204,16 @@ func (bn *BGPNeighbor) load(po *PolicyOptions) error {
 	return nil
 }
 
-type AFI struct {
-	Name string `yaml:"name"`
-	SAFI SAFI   `yaml:"safi"`
+type AddressFamilyConfig struct {
+	AddPath *AddPathConfig
 }
 
-type SAFI struct {
-	Name    string   `yaml:"name"`
-	AddPath *AddPath `yaml:"add_path"`
+type AddPathConfig struct {
+	Receive bool               `yaml:"receive"`
+	Send    *AddPathSendConfig `yaml:"send"`
 }
 
-type AddPath struct {
-	Receive bool         `yaml:"receive"`
-	Send    *AddPathSend `yaml:"send"`
-}
-
-type AddPathSend struct {
+type AddPathSendConfig struct {
 	Multipath bool  `yaml:"multipath"`
 	PathCount uint8 `yaml:"path_count"`
 }

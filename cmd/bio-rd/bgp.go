@@ -7,6 +7,7 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
+	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
@@ -49,37 +50,36 @@ func (c *bgpConfigurator) deconfigureRemovedSessions(cfg *config.BGP) {
 }
 
 func (c *bgpConfigurator) reconfigureModifiedSessions(cfg *config.BGP) error {
-	for _, g := range cfg.Groups {
-		for _, n := range g.Neighbors {
-			newCfg := c.toPeerConfig(n, c.srv.GetDefaultVRF())
-			oldCfg := c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), n.PeerAddressIP)
+	for _, bg := range cfg.Groups {
+		for _, bn := range bg.Neighbors {
+			newCfg := c.newPeerConfig(bn, bg, c.srv.GetDefaultVRF())
+			oldCfg := c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), bn.PeerAddressIP)
 			if oldCfg == nil {
 				continue
 			}
 
 			if !oldCfg.NeedsRestart(newCfg) {
-				c.srv.ReplaceImportFilterChain(c.srv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
-				c.srv.ReplaceExportFilterChain(c.srv.GetDefaultVRF(), n.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
+				c.srv.ReplaceImportFilterChain(c.srv.GetDefaultVRF(), bn.PeerAddressIP, newCfg.IPv4.ImportFilterChain)
+				c.srv.ReplaceExportFilterChain(c.srv.GetDefaultVRF(), bn.PeerAddressIP, newCfg.IPv4.ExportFilterChain)
 				continue
 			}
 
 			c.srv.DisposePeer(c.srv.GetDefaultVRF(), oldCfg.PeerAddress)
 			return c.srv.AddPeer(*newCfg)
 		}
-
 	}
 
 	return nil
 }
 
 func (c *bgpConfigurator) configureNewSessions(cfg *config.BGP) error {
-	for _, g := range cfg.Groups {
-		for _, n := range g.Neighbors {
-			if c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), n.PeerAddressIP) != nil {
+	for _, bg := range cfg.Groups {
+		for _, bn := range bg.Neighbors {
+			if c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), bn.PeerAddressIP) != nil {
 				continue
 			}
 
-			newCfg := c.toPeerConfig(n, vrfReg.GetVRFByName(vrf.DefaultVRFName))
+			newCfg := c.newPeerConfig(bn, bg, vrfReg.GetVRFByName(vrf.DefaultVRFName))
 			err := c.srv.AddPeer(*newCfg)
 			if err != nil {
 				return fmt.Errorf("unable to add BGP peer: %w", err)
@@ -90,38 +90,92 @@ func (c *bgpConfigurator) configureNewSessions(cfg *config.BGP) error {
 	return nil
 }
 
-func (c *bgpConfigurator) toPeerConfig(n *config.BGPNeighbor, vrf *vrf.VRF) *bgpserver.PeerConfig {
-	r := &bgpserver.PeerConfig{
-		AdminEnabled:      !n.Disabled,
-		AuthenticationKey: n.AuthenticationKey,
-		LocalAS:           n.LocalAS,
-		PeerAS:            n.PeerAS,
-		PeerAddress:       n.PeerAddressIP,
-		LocalAddress:      n.LocalAddressIP,
-		TTL:               n.TTL,
+func (c *bgpConfigurator) newPeerConfig(bn *config.BGPNeighbor, bg *config.BGPGroup, vrf *vrf.VRF) *bgpserver.PeerConfig {
+	p := &bgpserver.PeerConfig{
+		AdminEnabled:      !bn.Disabled,
+		AuthenticationKey: bn.AuthenticationKey,
+		LocalAS:           bn.LocalAS,
+		PeerAS:            bn.PeerAS,
+		PeerAddress:       bn.PeerAddressIP,
+		LocalAddress:      bn.LocalAddressIP,
+		TTL:               bn.TTL,
 		ReconnectInterval: time.Second * 15,
-		HoldTime:          n.HoldTimeDuration,
-		KeepAlive:         n.HoldTimeDuration / 3,
+		HoldTime:          bn.HoldTimeDuration,
+		KeepAlive:         bn.HoldTimeDuration / 3,
 		RouterID:          c.srv.RouterID(),
-		IPv4: &bgpserver.AddressFamilyConfig{
-			ImportFilterChain: n.ImportFilterChain,
-			ExportFilterChain: n.ExportFilterChain,
-			AddPathSend: routingtable.ClientOptions{
-				MaxPaths: 10,
-			},
+		VRF:               vrf,
+	}
+
+	c.configureIPv4(bn, bg, p)
+	c.configureIPv6(bn, bg, p)
+
+	if bn.Passive != nil {
+		p.Passive = *bn.Passive
+	}
+
+	if bn.RouteServerClient != nil {
+		p.RouteServerClient = *bn.RouteServerClient
+	}
+
+	return p
+}
+
+func (c *bgpConfigurator) configureIPv4(bn *config.BGPNeighbor, bg *config.BGPGroup, p *bgpserver.PeerConfig) {
+	if !bn.PeerAddressIP.IsIPv4() && bn.IPv4 == nil {
+		return
+	}
+
+	p.IPv4 = c.newAFIConfig(bn, bg)
+
+	if bn.IPv4 != nil {
+		c.configureAddressFamily(bn.IPv4, p.IPv4)
+	}
+}
+
+func (c *bgpConfigurator) configureIPv6(bn *config.BGPNeighbor, bg *config.BGPGroup, p *bgpserver.PeerConfig) {
+	if bn.PeerAddressIP.IsIPv4() && bn.IPv6 == nil {
+		return
+	}
+
+	p.IPv6 = c.newAFIConfig(bn, bg)
+
+	if bn.IPv6 != nil {
+		c.configureAddressFamily(bn.IPv6, p.IPv6)
+	}
+}
+
+func (c *bgpConfigurator) newAFIConfig(bn *config.BGPNeighbor, bg *config.BGPGroup) *bgpserver.AddressFamilyConfig {
+	return &bgpserver.AddressFamilyConfig{
+		ImportFilterChain: c.determineFilterChain(bg.ImportFilterChain, bn.ImportFilterChain),
+		ExportFilterChain: c.determineFilterChain(bg.ExportFilterChain, bn.ExportFilterChain),
+		AddPathSend: routingtable.ClientOptions{
+			BestOnly: true,
 		},
-		VRF: vrf,
+		AddPathRecv: false,
+	}
+}
+
+func (c *bgpConfigurator) determineFilterChain(groupChain filter.Chain, neighChain filter.Chain) filter.Chain {
+	if len(neighChain) > 0 {
+		return neighChain
 	}
 
-	// TODO: configureAFIsForBGPPeer(n, r)
+	return groupChain
+}
 
-	if n.Passive != nil {
-		r.Passive = *n.Passive
+func (c *bgpConfigurator) configureAddressFamily(baf *config.AddressFamilyConfig, af *bgpserver.AddressFamilyConfig) {
+	if baf.AddPath != nil {
+		c.configureAddPath(baf.AddPath, af)
+	}
+}
+
+func (c *bgpConfigurator) configureAddPath(bac *config.AddPathConfig, af *bgpserver.AddressFamilyConfig) {
+	af.AddPathRecv = bac.Receive
+
+	if bac.Send == nil {
+		return
 	}
 
-	if n.RouteServerClient != nil {
-		r.RouteServerClient = *n.RouteServerClient
-	}
-
-	return r
+	af.AddPathSend.BestOnly = !bac.Send.Multipath
+	af.AddPathSend.MaxPaths = uint(bac.Send.PathCount)
 }
