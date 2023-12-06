@@ -78,48 +78,48 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 		bg.ExportFilterChain = append(bg.ExportFilterChain, f)
 	}
 
-	for _, n := range bg.Neighbors {
-		if n.RouteServerClient == nil {
-			n.RouteServerClient = &bg.RouteServerClient
+	for _, bn := range bg.Neighbors {
+		if bn.RouteServerClient == nil {
+			bn.RouteServerClient = &bg.RouteServerClient
 		}
 
-		if n.Passive == nil {
-			n.Passive = &bg.Passive
+		if bn.Passive == nil {
+			bn.Passive = &bg.Passive
 		}
 
-		if n.LocalAddress == "" {
-			n.LocalAddressIP = bg.LocalAddressIP
+		if bn.LocalAddress == "" {
+			bn.LocalAddressIP = bg.LocalAddressIP
 		}
 
-		if n.TTL == 0 {
-			n.TTL = bg.TTL
+		if bn.TTL == 0 {
+			bn.TTL = bg.TTL
 		}
 
-		if n.AuthenticationKey == "" {
-			n.AuthenticationKey = bg.AuthenticationKey
+		if bn.AuthenticationKey == "" {
+			bn.AuthenticationKey = bg.AuthenticationKey
 		}
 
-		if n.LocalAS == 0 {
-			n.LocalAS = localAS
+		if bn.LocalAS == 0 {
+			bn.LocalAS = localAS
 		}
 
-		if n.LocalAS == 0 {
+		if bn.LocalAS == 0 {
 			return fmt.Errorf("local_as 0 is invalid")
 		}
 
-		if n.PeerAS == 0 {
-			n.PeerAS = bg.PeerAS
+		if bn.PeerAS == 0 {
+			bn.PeerAS = bg.PeerAS
 		}
 
-		if n.PeerAS == 0 {
+		if bn.PeerAS == 0 {
 			return fmt.Errorf("peer_as 0 is invalid")
 		}
 
-		if n.HoldTime == 0 {
-			n.HoldTime = bg.HoldTime
+		if bn.HoldTime == 0 {
+			bn.HoldTime = bg.HoldTime
 		}
 
-		err := n.load(policyOptions)
+		err := bn.load(policyOptions)
 		if err != nil {
 			return err
 		}
@@ -134,28 +134,29 @@ type Multipath struct {
 }
 
 type BGPNeighbor struct {
-	PeerAddress       string `yaml:"peer_address"`
-	PeerAddressIP     *bnet.IP
-	LocalAddress      string `yaml:"local_address"`
-	LocalAddressIP    *bnet.IP
-	Disabled          bool   `yaml:"disabled"`
-	TTL               uint8  `yaml:"ttl"`
-	AuthenticationKey string `yaml:"authentication_key"`
-	PeerAS            uint32 `yaml:"peer_as"`
-	LocalAS           uint32 `yaml:"local_as"`
-	HoldTime          uint16 `yaml:"hold_time"`
-	HoldTimeDuration  time.Duration
-	Multipath         *Multipath `yaml:"multipath"`
-	Import            []string   `yaml:"import"`
-	ImportFilterChain filter.Chain
-	Export            []string `yaml:"export"`
-	ExportFilterChain filter.Chain
-	RouteServerClient *bool  `yaml:"route_server_client"`
-	Passive           *bool  `yaml:"passive"`
-	ClusterID         string `yaml:"cluster_id"`
-	ClusterIDIP       *bnet.IP
-	IPv4              *AddressFamilyConfig
-	IPv6              *AddressFamilyConfig
+	PeerAddress                string `yaml:"peer_address"`
+	PeerAddressIP              *bnet.IP
+	LocalAddress               string `yaml:"local_address"`
+	LocalAddressIP             *bnet.IP
+	Disabled                   bool   `yaml:"disabled"`
+	TTL                        uint8  `yaml:"ttl"`
+	AuthenticationKey          string `yaml:"authentication_key"`
+	PeerAS                     uint32 `yaml:"peer_as"`
+	LocalAS                    uint32 `yaml:"local_as"`
+	HoldTime                   uint16 `yaml:"hold_time"`
+	HoldTimeDuration           time.Duration
+	Multipath                  *Multipath `yaml:"multipath"`
+	Import                     []string   `yaml:"import"`
+	ImportFilterChain          filter.Chain
+	Export                     []string `yaml:"export"`
+	ExportFilterChain          filter.Chain
+	RouteServerClient          *bool  `yaml:"route_server_client"`
+	Passive                    *bool  `yaml:"passive"`
+	ClusterID                  string `yaml:"cluster_id"`
+	ClusterIDIP                *bnet.IP
+	IPv4                       *AddressFamilyConfig `yaml:"ipv4"`
+	IPv6                       *AddressFamilyConfig `yaml:"ipv6"`
+	AdvertiseIPv4MultiProtocol bool                 `yaml:"advertise_ipv4_multiprotocol"`
 }
 
 func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {

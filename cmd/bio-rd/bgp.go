@@ -104,18 +104,19 @@ func (c *bgpConfigurator) configureNewSessions(cfg *config.BGP) error {
 
 func (c *bgpConfigurator) newPeerConfig(bn *config.BGPNeighbor, bg *config.BGPGroup, vrf *vrf.VRF) *bgpserver.PeerConfig {
 	p := &bgpserver.PeerConfig{
-		AdminEnabled:      !bn.Disabled,
-		AuthenticationKey: bn.AuthenticationKey,
-		LocalAS:           bn.LocalAS,
-		PeerAS:            bn.PeerAS,
-		PeerAddress:       bn.PeerAddressIP,
-		LocalAddress:      bn.LocalAddressIP,
-		TTL:               bn.TTL,
-		ReconnectInterval: DefaultReconnectInterval,
-		HoldTime:          bn.HoldTimeDuration,
-		KeepAlive:         bn.HoldTimeDuration / 3,
-		RouterID:          c.srv.RouterID(),
-		VRF:               vrf,
+		AdminEnabled:               !bn.Disabled,
+		AuthenticationKey:          bn.AuthenticationKey,
+		LocalAS:                    bn.LocalAS,
+		PeerAS:                     bn.PeerAS,
+		PeerAddress:                bn.PeerAddressIP,
+		LocalAddress:               bn.LocalAddressIP,
+		TTL:                        bn.TTL,
+		ReconnectInterval:          DefaultReconnectInterval,
+		HoldTime:                   bn.HoldTimeDuration,
+		KeepAlive:                  bn.HoldTimeDuration / 3,
+		RouterID:                   c.srv.RouterID(),
+		VRF:                        vrf,
+		AdvertiseIPv4MultiProtocol: bn.AdvertiseIPv4MultiProtocol,
 	}
 
 	c.configureIPv4(bn, bg, p)
