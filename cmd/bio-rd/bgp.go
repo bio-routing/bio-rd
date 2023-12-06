@@ -11,6 +11,10 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
+const (
+	DefaultReconnectInterval = time.Second * 15
+)
+
 type bgpConfigurator struct {
 	srv bgpserver.BGPServer
 }
@@ -107,7 +111,7 @@ func (c *bgpConfigurator) newPeerConfig(bn *config.BGPNeighbor, bg *config.BGPGr
 		PeerAddress:       bn.PeerAddressIP,
 		LocalAddress:      bn.LocalAddressIP,
 		TTL:               bn.TTL,
-		ReconnectInterval: time.Second * 15,
+		ReconnectInterval: DefaultReconnectInterval,
 		HoldTime:          bn.HoldTimeDuration,
 		KeepAlive:         bn.HoldTimeDuration / 3,
 		RouterID:          c.srv.RouterID(),
