@@ -235,6 +235,7 @@ func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
 
 		bn.ExportFilterChain = append(bn.ExportFilterChain, f)
 	}
+
 	return nil
 }
 
