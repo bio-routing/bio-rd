@@ -108,7 +108,7 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 		}
 
 		if bn.LocalAS == 0 {
-			bn.LocalAS = localAS
+			bn.LocalAS = bg.LocalAS
 		}
 
 		if bn.LocalAS == 0 {
