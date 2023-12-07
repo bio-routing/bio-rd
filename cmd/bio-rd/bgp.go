@@ -27,7 +27,7 @@ func (c *bgpConfigurator) configure(cfg *config.BGP) error {
 		for _, bn := range bg.Neighbors {
 			err := c.configureSession(bn, bg)
 			if err != nil {
-				return fmt.Errorf("could not configure session: %w", err)
+				return fmt.Errorf("could not configure session for neighbor %s: %w", bn.PeerAddress, err)
 			}
 		}
 	}
@@ -38,7 +38,7 @@ func (c *bgpConfigurator) configure(cfg *config.BGP) error {
 func (c *bgpConfigurator) configureSession(bn *config.BGPNeighbor, bg *config.BGPGroup) error {
 	v, err := c.determineVRF(bn, bg)
 	if err != nil {
-		return fmt.Errorf("could not determine VRF for neighbor %s: %w", bn.PeerAddress, err)
+		return fmt.Errorf("could not determine VRF: %w", err)
 	}
 
 	newCfg := c.newPeerConfig(bn, bg, v)
@@ -49,7 +49,7 @@ func (c *bgpConfigurator) configureSession(bn *config.BGPNeighbor, bg *config.BG
 
 	err = c.srv.AddPeer(*newCfg)
 	if err != nil {
-		return fmt.Errorf("unable to add BGP peer %s: %w", bn.PeerAddress, err)
+		return fmt.Errorf("unable to add BGP peer: %w", err)
 	}
 
 	return nil
@@ -85,7 +85,7 @@ func (c *bgpConfigurator) reconfigureModifiedSession(bn *config.BGPNeighbor, bg 
 		c.determineFilterChain(bg.ImportFilterChain, bn.ImportFilterChain),
 	)
 	if err != nil {
-		return fmt.Errorf("could not replace import filter for neighbor %s: %w", bn.PeerAddress, err)
+		return fmt.Errorf("could not replace import filter: %w", err)
 	}
 
 	err = c.srv.ReplaceExportFilterChain(
@@ -94,7 +94,7 @@ func (c *bgpConfigurator) reconfigureModifiedSession(bn *config.BGPNeighbor, bg 
 		c.determineFilterChain(bg.ExportFilterChain, bn.ExportFilterChain),
 	)
 	if err != nil {
-		return fmt.Errorf("could not replace export filter for neighbor %s: %w", bn.PeerAddress, err)
+		return fmt.Errorf("could not replace export filter: %w", err)
 	}
 
 	return nil
@@ -104,7 +104,7 @@ func (c *bgpConfigurator) replaceSession(newCfg, oldCfg *bgpserver.PeerConfig) e
 	c.srv.DisposePeer(oldCfg.VRF, oldCfg.PeerAddress)
 	err := c.srv.AddPeer(*newCfg)
 	if err != nil {
-		return fmt.Errorf("unable to reconfigure BGP peer %q: %w", newCfg.PeerAddress, err)
+		return fmt.Errorf("unable to reconfigure BGP peer: %w", err)
 	}
 
 	return nil
@@ -125,7 +125,7 @@ func (c *bgpConfigurator) determineVRF(bn *config.BGPNeighbor, bg *config.BGPGro
 func (c *bgpConfigurator) vrfByName(name string) (*vrf.VRF, error) {
 	v := c.vrfReg.GetVRFByName(name)
 	if v == nil {
-		return nil, fmt.Errorf("could not find routing instance %s", name)
+		return nil, fmt.Errorf("could not find VRF for name %s", name)
 	}
 
 	return v, nil
