@@ -7,7 +7,6 @@ import (
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
 	bgpserver "github.com/bio-routing/bio-rd/protocols/bgp/server"
 	"github.com/bio-routing/bio-rd/routingtable"
-	"github.com/bio-routing/bio-rd/routingtable/filter"
 	"github.com/bio-routing/bio-rd/routingtable/vrf"
 )
 
@@ -82,8 +81,7 @@ func (c *bgpConfigurator) reconfigureModifiedSession(bn *config.BGPNeighbor, bg 
 	err := c.srv.ReplaceImportFilterChain(
 		newCfg.VRF,
 		bn.PeerAddressIP,
-		c.determineFilterChain(bg.ImportFilterChain, bn.ImportFilterChain),
-	)
+		bn.ImportFilterChain)
 	if err != nil {
 		return fmt.Errorf("could not replace import filter: %w", err)
 	}
@@ -91,8 +89,7 @@ func (c *bgpConfigurator) reconfigureModifiedSession(bn *config.BGPNeighbor, bg 
 	err = c.srv.ReplaceExportFilterChain(
 		newCfg.VRF,
 		bn.PeerAddressIP,
-		c.determineFilterChain(bg.ExportFilterChain, bn.ExportFilterChain),
-	)
+		bn.ExportFilterChain)
 	if err != nil {
 		return fmt.Errorf("could not replace export filter: %w", err)
 	}
@@ -188,21 +185,13 @@ func (c *bgpConfigurator) configureIPv6(bn *config.BGPNeighbor, bg *config.BGPGr
 
 func (c *bgpConfigurator) newAFIConfig(bn *config.BGPNeighbor, bg *config.BGPGroup) *bgpserver.AddressFamilyConfig {
 	return &bgpserver.AddressFamilyConfig{
-		ImportFilterChain: c.determineFilterChain(bg.ImportFilterChain, bn.ImportFilterChain),
-		ExportFilterChain: c.determineFilterChain(bg.ExportFilterChain, bn.ExportFilterChain),
+		ImportFilterChain: bn.ImportFilterChain,
+		ExportFilterChain: bn.ExportFilterChain,
 		AddPathSend: routingtable.ClientOptions{
 			BestOnly: true,
 		},
 		AddPathRecv: false,
 	}
-}
-
-func (c *bgpConfigurator) determineFilterChain(groupChain filter.Chain, neighChain filter.Chain) filter.Chain {
-	if len(neighChain) > 0 {
-		return neighChain
-	}
-
-	return groupChain
 }
 
 func (c *bgpConfigurator) configureAddressFamily(baf *config.AddressFamilyConfig, af *bgpserver.AddressFamilyConfig) {

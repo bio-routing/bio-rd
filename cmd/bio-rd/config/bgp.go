@@ -41,10 +41,12 @@ type BGPGroup struct {
 	ImportFilterChain filter.Chain
 	Export            []string `yaml:"export"`
 	ExportFilterChain filter.Chain
-	RouteServerClient bool           `yaml:"route_server_client"`
-	Passive           bool           `yaml:"passive"`
-	Neighbors         []*BGPNeighbor `yaml:"neighbors"`
-	RoutingInstance   string         `yaml:"routing_instance"`
+	RouteServerClient *bool                `yaml:"route_server_client"`
+	Passive           *bool                `yaml:"passive"`
+	Neighbors         []*BGPNeighbor       `yaml:"neighbors"`
+	IPv4              *AddressFamilyConfig `yaml:"ipv4"`
+	IPv6              *AddressFamilyConfig `yaml:"ipv6"`
+	RoutingInstance   string               `yaml:"routing_instance"`
 }
 
 func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
@@ -85,11 +87,11 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 
 	for _, bn := range bg.Neighbors {
 		if bn.RouteServerClient == nil {
-			bn.RouteServerClient = &bg.RouteServerClient
+			bn.RouteServerClient = bg.RouteServerClient
 		}
 
 		if bn.Passive == nil {
-			bn.Passive = &bg.Passive
+			bn.Passive = bg.Passive
 		}
 
 		if bn.LocalAddress == "" {
@@ -131,6 +133,17 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 		if len(bn.RoutingInstance) == 0 {
 			bn.RoutingInstance = bg.RoutingInstance
 		}
+
+		if bn.IPv4 == nil {
+			bn.IPv4 = bg.IPv4
+		}
+
+		if bn.IPv6 == nil {
+			bn.IPv6 = bg.IPv6
+		}
+
+		bn.ImportFilterChain = bg.ImportFilterChain
+		bn.ExportFilterChain = bg.ExportFilterChain
 
 		err := bn.load(policyOptions)
 		if err != nil {
@@ -199,6 +212,9 @@ func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
 	bn.PeerAddressIP = b.Dedup()
 	bn.HoldTimeDuration = time.Second * time.Duration(bn.HoldTime)
 
+	if len(bn.Import) > 0 {
+		bn.ImportFilterChain = filter.Chain{}
+	}
 	for i := range bn.Import {
 		f := policyOptions.getPolicyStatementFilter(bn.Import[i])
 		if f == nil {
@@ -208,6 +224,9 @@ func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
 		bn.ImportFilterChain = append(bn.ImportFilterChain, f)
 	}
 
+	if len(bn.Export) > 0 {
+		bn.ExportFilterChain = filter.Chain{}
+	}
 	for i := range bn.Export {
 		f := policyOptions.getPolicyStatementFilter(bn.Export[i])
 		if f == nil {
