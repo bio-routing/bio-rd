@@ -40,6 +40,7 @@ type BGPGroup struct {
 	RouteServerClient bool           `yaml:"route_server_client"`
 	Passive           bool           `yaml:"passive"`
 	Neighbors         []*BGPNeighbor `yaml:"neighbors"`
+	RoutingInstance   string         `yaml:"routing_instance"`
 }
 
 func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
@@ -157,6 +158,7 @@ type BGPNeighbor struct {
 	IPv4                       *AddressFamilyConfig `yaml:"ipv4"`
 	IPv6                       *AddressFamilyConfig `yaml:"ipv6"`
 	AdvertiseIPv4MultiProtocol bool                 `yaml:"advertise_ipv4_multiprotocol"`
+	RoutingInstance            string               `yaml:"routing_instance"`
 }
 
 func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {

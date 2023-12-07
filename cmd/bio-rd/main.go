@@ -149,7 +149,8 @@ func loadConfig(cfg *config.Config) error {
 	if cfg.Protocols != nil {
 		if cfg.Protocols.BGP != nil {
 			bgpCfgtr := &bgpConfigurator{
-				srv: bgpSrv,
+				srv:    bgpSrv,
+				vrfReg: vrfReg,
 			}
 			err := bgpCfgtr.configure(cfg.Protocols.BGP)
 			if err != nil {

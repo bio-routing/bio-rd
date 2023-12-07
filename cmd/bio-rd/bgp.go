@@ -16,20 +16,40 @@ const (
 )
 
 type bgpConfigurator struct {
-	srv bgpserver.BGPServer
+	srv    bgpserver.BGPServer
+	vrfReg *vrf.VRFRegistry
 }
 
 func (c *bgpConfigurator) configure(cfg *config.BGP) error {
 	c.deconfigureRemovedSessions(cfg)
 
-	err := c.reconfigureModifiedSessions(cfg)
-	if err != nil {
-		return fmt.Errorf("could not reconfigure session: %w", err)
+	for _, bg := range cfg.Groups {
+		for _, bn := range bg.Neighbors {
+			err := c.configureSession(bn, bg)
+			if err != nil {
+				return fmt.Errorf("could not configure session: %w", err)
+			}
+		}
 	}
 
-	err = c.configureNewSessions(cfg)
+	return nil
+}
+
+func (c *bgpConfigurator) configureSession(bn *config.BGPNeighbor, bg *config.BGPGroup) error {
+	v, err := c.determineVRF(bn, bg)
 	if err != nil {
-		return fmt.Errorf("could not configure session: %w", err)
+		return fmt.Errorf("could not determine VRF for neighbor %s: %w", bn.PeerAddress, err)
+	}
+
+	newCfg := c.newPeerConfig(bn, bg, v)
+	oldCfg := c.srv.GetPeerConfig(v, bn.PeerAddressIP)
+	if oldCfg != nil {
+		return c.reconfigureModifiedSession(bn, bg, newCfg, oldCfg)
+	}
+
+	err = c.srv.AddPeer(*newCfg)
+	if err != nil {
+		return fmt.Errorf("unable to add BGP peer %s: %w", bn.PeerAddress, err)
 	}
 
 	return nil
@@ -38,9 +58,10 @@ func (c *bgpConfigurator) configure(cfg *config.BGP) error {
 func (c *bgpConfigurator) deconfigureRemovedSessions(cfg *config.BGP) {
 	for _, p := range c.srv.GetPeers() {
 		found := false
-		for _, g := range cfg.Groups {
-			for _, n := range g.Neighbors {
-				if n.PeerAddressIP == p.Addr() && p.VRF() == c.srv.GetDefaultVRF() {
+		for _, bg := range cfg.Groups {
+			for _, bn := range bg.Neighbors {
+				v, _ := c.determineVRF(bn, bg)
+				if bn.PeerAddressIP == p.Addr() && p.VRF() == v {
 					found = true
 					break
 				}
@@ -48,58 +69,66 @@ func (c *bgpConfigurator) deconfigureRemovedSessions(cfg *config.BGP) {
 		}
 
 		if !found {
-			c.srv.DisposePeer(c.srv.GetDefaultVRF(), p.Addr())
+			c.srv.DisposePeer(p.VRF(), p.Addr())
 		}
 	}
 }
 
-func (c *bgpConfigurator) reconfigureModifiedSessions(cfg *config.BGP) error {
-	for _, bg := range cfg.Groups {
-		for _, bn := range bg.Neighbors {
-			newCfg := c.newPeerConfig(bn, bg, c.srv.GetDefaultVRF())
-			oldCfg := c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), bn.PeerAddressIP)
-			if oldCfg == nil {
-				continue
-			}
+func (c *bgpConfigurator) reconfigureModifiedSession(bn *config.BGPNeighbor, bg *config.BGPGroup, newCfg, oldCfg *bgpserver.PeerConfig) error {
+	if oldCfg.NeedsRestart(newCfg) {
+		return c.replaceSession(newCfg, oldCfg)
+	}
 
-			if !oldCfg.NeedsRestart(newCfg) {
-				c.srv.ReplaceImportFilterChain(
-					c.srv.GetDefaultVRF(),
-					bn.PeerAddressIP,
-					c.determineFilterChain(bg.ImportFilterChain, bn.ImportFilterChain),
-				)
-				c.srv.ReplaceExportFilterChain(
-					c.srv.GetDefaultVRF(),
-					bn.PeerAddressIP,
-					c.determineFilterChain(bg.ExportFilterChain, bn.ExportFilterChain),
-				)
-				continue
-			}
+	err := c.srv.ReplaceImportFilterChain(
+		newCfg.VRF,
+		bn.PeerAddressIP,
+		c.determineFilterChain(bg.ImportFilterChain, bn.ImportFilterChain),
+	)
+	if err != nil {
+		return fmt.Errorf("could not replace import filter for neighbor %s: %w", bn.PeerAddress, err)
+	}
 
-			c.srv.DisposePeer(c.srv.GetDefaultVRF(), oldCfg.PeerAddress)
-			return c.srv.AddPeer(*newCfg)
-		}
+	err = c.srv.ReplaceExportFilterChain(
+		newCfg.VRF,
+		bn.PeerAddressIP,
+		c.determineFilterChain(bg.ExportFilterChain, bn.ExportFilterChain),
+	)
+	if err != nil {
+		return fmt.Errorf("could not replace export filter for neighbor %s: %w", bn.PeerAddress, err)
 	}
 
 	return nil
 }
 
-func (c *bgpConfigurator) configureNewSessions(cfg *config.BGP) error {
-	for _, bg := range cfg.Groups {
-		for _, bn := range bg.Neighbors {
-			if c.srv.GetPeerConfig(c.srv.GetDefaultVRF(), bn.PeerAddressIP) != nil {
-				continue
-			}
-
-			newCfg := c.newPeerConfig(bn, bg, vrfReg.GetVRFByName(vrf.DefaultVRFName))
-			err := c.srv.AddPeer(*newCfg)
-			if err != nil {
-				return fmt.Errorf("unable to add BGP peer: %w", err)
-			}
-		}
+func (c *bgpConfigurator) replaceSession(newCfg, oldCfg *bgpserver.PeerConfig) error {
+	c.srv.DisposePeer(oldCfg.VRF, oldCfg.PeerAddress)
+	err := c.srv.AddPeer(*newCfg)
+	if err != nil {
+		return fmt.Errorf("unable to reconfigure BGP peer %q: %w", newCfg.PeerAddress, err)
 	}
 
 	return nil
+}
+
+func (c *bgpConfigurator) determineVRF(bn *config.BGPNeighbor, bg *config.BGPGroup) (*vrf.VRF, error) {
+	if len(bn.RoutingInstance) > 0 {
+		return c.vrfByName(bn.RoutingInstance)
+	}
+
+	if len(bg.RoutingInstance) > 0 {
+		return c.vrfByName(bg.RoutingInstance)
+	}
+
+	return bgpSrv.GetDefaultVRF(), nil
+}
+
+func (c *bgpConfigurator) vrfByName(name string) (*vrf.VRF, error) {
+	v := c.vrfReg.GetVRFByName(name)
+	if v == nil {
+		return nil, fmt.Errorf("could not find routing instance %s", name)
+	}
+
+	return v, nil
 }
 
 func (c *bgpConfigurator) newPeerConfig(bn *config.BGPNeighbor, bg *config.BGPGroup, vrf *vrf.VRF) *bgpserver.PeerConfig {
