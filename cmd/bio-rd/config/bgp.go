@@ -28,25 +28,26 @@ func (b *BGP) load(localAS uint32, policyOptions *PolicyOptions) error {
 }
 
 type BGPGroup struct {
-	Name              string `yaml:"name"`
-	LocalAddress      string `yaml:"local_address"`
-	LocalAddressIP    *bnet.IP
-	TTL               uint8      `yaml:"ttl"`
-	AuthenticationKey string     `yaml:"authentication_key"`
-	PeerAS            uint32     `yaml:"peer_as"`
-	LocalAS           uint32     `yaml:"local_as"`
-	HoldTime          uint16     `yaml:"hold_time"`
-	Multipath         *Multipath `yaml:"multipath"`
-	Import            []string   `yaml:"import"`
-	ImportFilterChain filter.Chain
-	Export            []string `yaml:"export"`
-	ExportFilterChain filter.Chain
-	RouteServerClient *bool                `yaml:"route_server_client"`
-	Passive           *bool                `yaml:"passive"`
-	Neighbors         []*BGPNeighbor       `yaml:"neighbors"`
-	IPv4              *AddressFamilyConfig `yaml:"ipv4"`
-	IPv6              *AddressFamilyConfig `yaml:"ipv6"`
-	RoutingInstance   string               `yaml:"routing_instance"`
+	Name                 string `yaml:"name"`
+	LocalAddress         string `yaml:"local_address"`
+	LocalAddressIP       *bnet.IP
+	TTL                  uint8      `yaml:"ttl"`
+	AuthenticationKey    string     `yaml:"authentication_key"`
+	PeerAS               uint32     `yaml:"peer_as"`
+	LocalAS              uint32     `yaml:"local_as"`
+	HoldTime             uint16     `yaml:"hold_time"`
+	Multipath            *Multipath `yaml:"multipath"`
+	Import               []string   `yaml:"import"`
+	ImportFilterChain    filter.Chain
+	Export               []string `yaml:"export"`
+	ExportFilterChain    filter.Chain
+	RouteServerClient    *bool                `yaml:"route_server_client"`
+	RouteReflectorClient *bool                `yaml:"route_reflector_client"`
+	Passive              *bool                `yaml:"passive"`
+	Neighbors            []*BGPNeighbor       `yaml:"neighbors"`
+	IPv4                 *AddressFamilyConfig `yaml:"ipv4"`
+	IPv6                 *AddressFamilyConfig `yaml:"ipv6"`
+	RoutingInstance      string               `yaml:"routing_instance"`
 }
 
 func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
@@ -142,6 +143,10 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 			bn.IPv6 = bg.IPv6
 		}
 
+		if bn.RouteReflectorClient == nil {
+			bn.RouteReflectorClient = bg.RouteReflectorClient
+		}
+
 		bn.ImportFilterChain = bg.ImportFilterChain
 		bn.ExportFilterChain = bg.ExportFilterChain
 
@@ -177,6 +182,7 @@ type BGPNeighbor struct {
 	Export                     []string `yaml:"export"`
 	ExportFilterChain          filter.Chain
 	RouteServerClient          *bool  `yaml:"route_server_client"`
+	RouteReflectorClient       *bool  `yaml:"route_reflector_client"`
 	Passive                    *bool  `yaml:"passive"`
 	ClusterID                  string `yaml:"cluster_id"`
 	ClusterIDIP                *bnet.IP
@@ -202,6 +208,15 @@ func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
 		}
 
 		bn.LocalAddressIP = a.Dedup()
+	}
+
+	if bn.ClusterID != "" {
+		a, err := bnet.IPFromString(bn.ClusterID)
+		if err != nil {
+			return fmt.Errorf("unable to parse BGP cluster identifier: %w", err)
+		}
+
+		bn.ClusterIDIP = a.Dedup()
 	}
 
 	b, err := bnet.IPFromString(bn.PeerAddress)

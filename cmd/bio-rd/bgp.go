@@ -156,6 +156,14 @@ func (c *bgpConfigurator) newPeerConfig(bn *config.BGPNeighbor, bg *config.BGPGr
 		p.RouteServerClient = *bn.RouteServerClient
 	}
 
+	if bn.RouteReflectorClient != nil {
+		p.RouteReflectorClient = *bn.RouteReflectorClient
+	}
+
+	if bn.ClusterIDIP != nil {
+		p.RouteReflectorClusterID = bn.ClusterIDIP.ToUint32()
+	}
+
 	return p
 }
 
