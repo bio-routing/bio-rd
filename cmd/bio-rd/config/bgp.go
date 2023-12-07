@@ -8,6 +8,10 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 )
 
+const (
+	DefaultHoldTimeSeconds = 90
+)
+
 type BGP struct {
 	Groups []*BGPGroup `yaml:"groups"`
 }
@@ -58,7 +62,7 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 	}
 
 	if bg.HoldTime == 0 {
-		bg.HoldTime = 90
+		bg.HoldTime = DefaultHoldTimeSeconds
 	}
 
 	for i := range bg.Import {
@@ -118,6 +122,14 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 
 		if bn.HoldTime == 0 {
 			bn.HoldTime = bg.HoldTime
+		}
+
+		if bn.Multipath == nil {
+			bn.Multipath = bg.Multipath
+		}
+
+		if len(bn.RoutingInstance) == 0 {
+			bn.RoutingInstance = bg.RoutingInstance
 		}
 
 		err := bn.load(policyOptions)
