@@ -20,8 +20,6 @@ type bgpConfigurator struct {
 }
 
 func (c *bgpConfigurator) configure(cfg *config.BGP) error {
-	c.deconfigureRemovedSessions(cfg)
-
 	for _, bg := range cfg.Groups {
 		for _, bn := range bg.Neighbors {
 			err := c.configureSession(bn, bg)
@@ -30,6 +28,8 @@ func (c *bgpConfigurator) configure(cfg *config.BGP) error {
 			}
 		}
 	}
+
+	c.deconfigureRemovedSessions(cfg)
 
 	return nil
 }
