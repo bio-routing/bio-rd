@@ -30,6 +30,7 @@ groups:
     neighbors:
       - peer_address: 100.64.0.2
         cluster_id: 100.64.0.0
+        disabled: true
         ipv4:
           add_path:
             receive: true
@@ -106,6 +107,7 @@ func TestBGPLoad(t *testing.T) {
 	assert.False(t, n1.IPv6.AddPath.Receive, "neighbor 1 IPv6 add path receive")
 	assert.Equal(t, uint8(5), n1.IPv4.AddPath.Send.PathCount, "neighbor 1 IPv4 add path send count")
 	assert.Equal(t, uint8(10), n1.IPv6.AddPath.Send.PathCount, "neighbor 1 IPv6 add path send count")
+	assert.True(t, n1.Disabled, "neighbor 1 disabled")
 
 	n2 := group.Neighbors[1]
 	assert.Equal(t, bnet.IPv4FromOctets(100, 64, 1, 1).Dedup(), n2.LocalAddressIP, "neighbor 2 local address")
