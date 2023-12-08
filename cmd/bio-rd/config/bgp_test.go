@@ -13,39 +13,40 @@ import (
 
 const (
 	BGPGroupTestFile = `
-name: Group1
-local_address: 100.64.0.1
-route_server_client: true
-route_reflector_client: true
-passive: true
-ttl: 10
-local_as: 65200
-peer_as: 65300
-authentication_key: secret
-hold_time: 180
-routing_instance: main
-import: ["ACCEPT_ALL"]
-export: ["REJECT_ALL"]
-neighbors:
-  - peer_address: 100.64.0.2
-    cluster_id: 100.64.0.0
-  - peer_address: 100.64.1.2
-    local_address: 100.64.1.1
-    local_as: 65400
-    peer_as: 65401
-    hold_time: 90
-    ttl: 1
-    routing_instance: test
-    export: ["ACCEPT_ALL"]
-    import: ["REJECT_ALL"]
-    authentication_key: top-secret
-    passive: false
-    route_reflector_client: false
-    route_server_client: false
+groups:
+  - name: Group1
+    local_address: 100.64.0.1
+    route_server_client: true
+    route_reflector_client: true
+    passive: true
+    ttl: 10
+    local_as: 65200
+    peer_as: 65300
+    authentication_key: secret
+    hold_time: 180
+    routing_instance: main
+    import: ["ACCEPT_ALL"]
+    export: ["REJECT_ALL"]
+    neighbors:
+      - peer_address: 100.64.0.2
+        cluster_id: 100.64.0.0
+      - peer_address: 100.64.1.2
+        local_address: 100.64.1.1
+        local_as: 65400
+        peer_as: 65401
+        hold_time: 90
+        ttl: 1
+        routing_instance: test
+        export: ["ACCEPT_ALL"]
+        import: ["REJECT_ALL"]
+        authentication_key: top-secret
+        passive: false
+        route_reflector_client: false
+        route_server_client: false
   `
 )
 
-func TestBGPGroupConfigInheritance(t *testing.T) {
+func TestBGPLoad(t *testing.T) {
 	policyOptions := &PolicyOptions{}
 	accept_all := filter.NewFilter("ACCEPT_ALL", nil)
 	reject_all := filter.NewFilter("REJECT_ALL", nil)
@@ -55,15 +56,18 @@ func TestBGPGroupConfigInheritance(t *testing.T) {
 	}
 
 	b := []byte(BGPGroupTestFile)
-	var group *BGPGroup
-	err := yaml.Unmarshal(b, &group)
+	var bgp *BGP
+	err := yaml.Unmarshal(b, &bgp)
 	if err != nil {
 		t.Fatalf("unexpected error while parsing: %s", err)
 	}
 
+	assert.Equal(t, 1, len(bgp.Groups), "group count")
+	group := bgp.Groups[0]
+
 	assert.Equal(t, 2, len(group.Neighbors), "neighbor count")
 
-	err = group.load(64900, policyOptions)
+	err = bgp.load(64900, policyOptions)
 	if err != nil {
 		t.Fatalf("unexpected error while loading group config: %s", err)
 	}
