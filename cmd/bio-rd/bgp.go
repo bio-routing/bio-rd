@@ -56,21 +56,23 @@ func (c *bgpConfigurator) configureSession(bn *config.BGPNeighbor, bg *config.BG
 
 func (c *bgpConfigurator) deconfigureRemovedSessions(cfg *config.BGP) {
 	for _, p := range c.srv.GetPeers() {
-		found := false
-		for _, bg := range cfg.Groups {
-			for _, bn := range bg.Neighbors {
-				v, _ := c.determineVRF(bn, bg)
-				if bn.PeerAddressIP == p.Addr() && p.VRF() == v {
-					found = true
-					break
-				}
-			}
-		}
-
-		if !found {
+		if !c.peerExistsInConfig(cfg, p) {
 			c.srv.DisposePeer(p.VRF(), p.Addr())
 		}
 	}
+}
+
+func (c *bgpConfigurator) peerExistsInConfig(cfg *config.BGP, p bgpserver.PeerKey) bool {
+	for _, bg := range cfg.Groups {
+		for _, bn := range bg.Neighbors {
+			v, _ := c.determineVRF(bn, bg)
+			if bn.PeerAddressIP == p.Addr() && p.VRF() == v {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (c *bgpConfigurator) reconfigureModifiedSession(bn *config.BGPNeighbor, bg *config.BGPGroup, newCfg, oldCfg *bgpserver.PeerConfig) error {
