@@ -30,6 +30,11 @@ groups:
     neighbors:
       - peer_address: 100.64.0.2
         cluster_id: 100.64.0.0
+        ipv4:
+          add_path:
+            receive: true
+            send:
+              path_count: 5
       - peer_address: 100.64.1.2
         local_address: 100.64.1.1
         local_as: 65400
@@ -43,6 +48,16 @@ groups:
         passive: false
         route_reflector_client: false
         route_server_client: false
+        ipv6:
+          add_path:
+            receive: true
+            send:
+              path_count: 2
+    ipv6:
+      add_path:
+        receive: false
+        send:
+          path_count: 10
   `
 )
 
@@ -87,6 +102,10 @@ func TestBGPLoad(t *testing.T) {
 	assert.Equal(t, filter.Chain{accept_all}, n1.ImportFilterChain, "neighbor 1 import")
 	assert.Equal(t, filter.Chain{reject_all}, n1.ExportFilterChain, "neighbor 1 export")
 	assert.Equal(t, bnet.IPv4FromOctets(100, 64, 0, 0).Dedup(), n1.ClusterIDIP, "neighbor 1 cluster ID")
+	assert.True(t, n1.IPv4.AddPath.Receive, "neighbor 1 IPv4 add path receive")
+	assert.False(t, n1.IPv6.AddPath.Receive, "neighbor 1 IPv6 add path receive")
+	assert.Equal(t, uint8(5), n1.IPv4.AddPath.Send.PathCount, "neighbor 1 IPv4 add path send count")
+	assert.Equal(t, uint8(10), n1.IPv6.AddPath.Send.PathCount, "neighbor 1 IPv6 add path send count")
 
 	n2 := group.Neighbors[1]
 	assert.Equal(t, bnet.IPv4FromOctets(100, 64, 1, 1).Dedup(), n2.LocalAddressIP, "neighbor 2 local address")
@@ -103,4 +122,7 @@ func TestBGPLoad(t *testing.T) {
 	assert.Equal(t, filter.Chain{reject_all}, n2.ImportFilterChain, "neighbor 2 import")
 	assert.Equal(t, filter.Chain{accept_all}, n2.ExportFilterChain, "neighbor 2 export")
 	assert.Nil(t, n2.ClusterIDIP, "neighbor 2 cluster ID")
+	assert.Nil(t, n2.IPv4, "neighbor 2 IPv4")
+	assert.True(t, n2.IPv6.AddPath.Receive, "neighbor 2 IPv6 add path receive")
+	assert.Equal(t, uint8(2), n2.IPv6.AddPath.Send.PathCount, "neighbor 2 IPv6 add path send count")
 }
