@@ -27,6 +27,7 @@ groups:
     routing_instance: main
     import: ["ACCEPT_ALL"]
     export: ["REJECT_ALL"]
+    cluster_id: 100.65.1.1
     neighbors:
       - peer_address: 100.64.0.2
         cluster_id: 100.64.0.0
@@ -123,7 +124,7 @@ func TestBGPLoad(t *testing.T) {
 	assert.Equal(t, "test", n2.RoutingInstance, "neighbor 2 VRF")
 	assert.Equal(t, filter.Chain{reject_all}, n2.ImportFilterChain, "neighbor 2 import")
 	assert.Equal(t, filter.Chain{accept_all}, n2.ExportFilterChain, "neighbor 2 export")
-	assert.Nil(t, n2.ClusterIDIP, "neighbor 2 cluster ID")
+	assert.Equal(t, n2.ClusterIDIP, bnet.IPv4FromOctets(100, 65, 1, 1).Dedup(), "neighbor 2 cluster ID")
 	assert.Nil(t, n2.IPv4, "neighbor 2 IPv4")
 	assert.True(t, n2.IPv6.AddPath.Receive, "neighbor 2 IPv6 add path receive")
 	assert.Equal(t, uint8(2), n2.IPv6.AddPath.Send.PathCount, "neighbor 2 IPv6 add path send count")

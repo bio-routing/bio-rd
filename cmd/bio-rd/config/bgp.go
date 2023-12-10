@@ -41,8 +41,10 @@ type BGPGroup struct {
 	ImportFilterChain    filter.Chain
 	Export               []string `yaml:"export"`
 	ExportFilterChain    filter.Chain
-	RouteServerClient    *bool                `yaml:"route_server_client"`
-	RouteReflectorClient *bool                `yaml:"route_reflector_client"`
+	RouteServerClient    *bool  `yaml:"route_server_client"`
+	RouteReflectorClient *bool  `yaml:"route_reflector_client"`
+	ClusterID            string `yaml:"cluster_id"`
+	ClusterIDIP          *bnet.IP
 	Passive              *bool                `yaml:"passive"`
 	Neighbors            []*BGPNeighbor       `yaml:"neighbors"`
 	IPv4                 *AddressFamilyConfig `yaml:"ipv4"`
@@ -62,6 +64,15 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 		}
 
 		bg.LocalAddressIP = a.Dedup()
+	}
+
+	if bg.ClusterID != "" {
+		a, err := bnet.IPFromString(bg.ClusterID)
+		if err != nil {
+			return fmt.Errorf("unable to parse BGP cluster identifier: %w", err)
+		}
+
+		bg.ClusterIDIP = a.Dedup()
 	}
 
 	if bg.HoldTime == 0 {
@@ -97,6 +108,10 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 
 		if bn.LocalAddress == "" {
 			bn.LocalAddressIP = bg.LocalAddressIP
+		}
+
+		if bn.ClusterID == "" {
+			bn.ClusterIDIP = bg.ClusterIDIP
 		}
 
 		if bn.TTL == 0 {
