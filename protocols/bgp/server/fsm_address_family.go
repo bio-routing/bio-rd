@@ -337,6 +337,8 @@ func (f *fsmAddressFamily) processAttributes(attrs *packet.PathAttribute, path *
 			path.BGPPath.BGPPathA.OriginatorID = pa.Value.(uint32)
 		case packet.ClusterListAttr:
 			path.BGPPath.ClusterList = pa.Value.(*types.ClusterList)
+		case packet.ExtendedCommunitiesAttr:
+			path.BGPPath.ExtendedCommunities = pa.Value.(*types.ExtendedCommunities)
 		case packet.MultiProtocolReachNLRIAttr:
 		case packet.MultiProtocolUnreachNLRIAttr:
 		default:

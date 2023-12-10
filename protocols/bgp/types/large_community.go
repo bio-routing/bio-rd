@@ -48,7 +48,7 @@ func LargeCommunityFromProtoCommunity(alc *api.LargeCommunity) LargeCommunity {
 	}
 }
 
-// String transitions a large community to it's human readable representation
+// String transitions a large community to its human-readable representation
 func (c *LargeCommunity) String() string {
 	if c == nil {
 		return ""
