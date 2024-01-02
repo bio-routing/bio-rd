@@ -20,7 +20,7 @@ jobs:
         run: .github/check-gofmt.sh
 
       - name: Test
-        run: go test -v -cover -coverprofile=coverage.txt ./...
+        run: make test-coverage
 
       # Upload Coverage Report
       - name: Upload coverage to Codecov
@@ -31,5 +31,5 @@ jobs:
           name: codecov-${{ matrix.platform }}-${{ matrix.go-version }}
           fail_ci_if_error: true
 
-      - name: Build examples
-        run: scripts/build_examples.sh
+      - name: Build commands and examples
+        run: make build
