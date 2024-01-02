@@ -23,10 +23,8 @@ coverage.txt
 /cmd/bio-rdc/bio-rdc
 /cmd/ris-mirror/ris-mirror
 /cmd/ris/ris
+/cmd/ris-lg/ris-lg
 /cmd/riscli/riscli
 /examples/bgp/bgp
 /examples/bmp/bmp
 /examples/kernel
-
-# bazel directories
-/bazel-*
