@@ -6,19 +6,20 @@ const (
 	BGP4Version    = 4
 	MinOpenLen     = 29
 
-	MarkerLen         = 16
-	HeaderLen         = 19
-	MinLen            = 19
-	MaxLen            = 4096
-	MinUpdateLen      = 4
-	NLRIMaxLen        = 5
-	AFILen            = 2
-	SAFILen           = 1
-	CommunityLen      = 4
-	LargeCommunityLen = 12
-	IPv4Len           = 4
-	IPv6Len           = 16
-	ClusterIDLen      = 4
+	MarkerLen            = 16
+	HeaderLen            = 19
+	MinLen               = 19
+	MaxLen               = 4096
+	MinUpdateLen         = 4
+	NLRIMaxLen           = 5
+	AFILen               = 2
+	SAFILen              = 1
+	CommunityLen         = 4
+	LargeCommunityLen    = 12
+	ExtendedCommunityLen = 8
+	IPv4Len              = 4
+	IPv6Len              = 16
+	ClusterIDLen         = 4
 
 	// BGP message types
 	OpenMsg         = 1
@@ -78,6 +79,7 @@ const (
 	ClusterListAttr              = 10
 	MultiProtocolReachNLRIAttr   = 14
 	MultiProtocolUnreachNLRIAttr = 15
+	ExtendedCommunitiesAttr      = 16
 	AS4PathAttr                  = 17
 	AS4AggregatorAttr            = 18
 	LargeCommunitiesAttr         = 32

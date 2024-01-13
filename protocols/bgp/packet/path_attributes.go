@@ -158,6 +158,10 @@ func decodePathAttr(buf *bytes.Buffer, opt *DecodeOptions) (pa *PathAttribute, c
 		if err := pa.decodeLargeCommunities(buf); err != nil {
 			return nil, consumed, fmt.Errorf("failed to decode large communities: %w", err)
 		}
+	case ExtendedCommunitiesAttr:
+		if err := pa.decodeExtendedCommunities(buf); err != nil {
+			return nil, consumed, fmt.Errorf("failed to decode extended communities: %s", err)
+		}
 	default:
 		if err := pa.decodeUnknown(buf); err != nil {
 			return nil, consumed, fmt.Errorf("failed to decode unknown attribute: %w", err)
@@ -408,6 +412,43 @@ func (pa *PathAttribute) decodeLargeCommunities(buf *bytes.Buffer) error {
 	return nil
 }
 
+func (pa *PathAttribute) decodeExtendedCommunities(buf *bytes.Buffer) error {
+	if pa.Length%ExtendedCommunityLen != 0 {
+		return fmt.Errorf("unable to read extended community path attribute. Length %d is not divisible by %d", pa.Length, ExtendedCommunityLen)
+	}
+
+	count := pa.Length / ExtendedCommunityLen
+	eComs := make(types.ExtendedCommunities, count)
+
+	for i := uint16(0); i < count; i++ {
+		eCom := types.ExtendedCommunity{}
+
+		if err := decode.DecodeUint8(buf, &eCom.Type); err != nil {
+			return err
+		}
+
+		// TODO: Fix me! The sub type is optional and may not be available if the
+		//       ExtComm is transitive. Check if the Type is transitive through a static-defined list
+		//       and set it then. Also, the value length becomes variable if the sub type is not present.
+		//       This fix requires the types to be defined somewhere.
+		if err := decode.DecodeUint8(buf, &eCom.SubType); err != nil {
+			return err
+		}
+
+		// TODO: Fix me! Make value size variable depending on if sub type is present or not
+		value := make([]byte, 6)
+		if err := decode.Decode(buf, []interface{}{&value}); err != nil {
+			return fmt.Errorf("unable to decode: %w", err)
+		}
+		eCom.Value = value
+
+		eComs[i] = eCom
+	}
+
+	pa.Value = &eComs
+	return nil
+}
+
 func (pa *PathAttribute) decodeAS4Aggregator(buf *bytes.Buffer) error {
 	return pa.decodeUint32(buf, "AS4Aggregator")
 }
@@ -528,6 +569,8 @@ func (pa *PathAttribute) Serialize(buf *bytes.Buffer, opt *EncodeOptions) uint16
 		pathAttrLen = uint16(pa.serializeCommunities(buf))
 	case LargeCommunitiesAttr:
 		pathAttrLen = uint16(pa.serializeLargeCommunities(buf))
+	case ExtendedCommunitiesAttr:
+		pathAttrLen = uint16(pa.serializeExtendedCommunities(buf))
 	case MultiProtocolReachNLRIAttr:
 		pathAttrLen = pa.serializeMultiProtocolReachNLRI(buf, opt)
 	case MultiProtocolUnreachNLRIAttr:
@@ -728,6 +771,11 @@ func (pa *PathAttribute) serializeLargeCommunities(buf *bytes.Buffer) uint16 {
 	}
 
 	return length + 3
+}
+
+func (pa *PathAttribute) serializeExtendedCommunities(buf *bytes.Buffer) uint16 {
+	// TODO: implement
+	return 0
 }
 
 func (pa *PathAttribute) serializeOriginatorID(buf *bytes.Buffer) uint8 {
