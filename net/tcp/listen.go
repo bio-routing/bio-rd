@@ -60,6 +60,12 @@ func (lf *ListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8
 		return nil, fmt.Errorf("unable to get SO_REUSEADDR %w", err)
 	}
 
+	err = unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
+	if err != nil {
+		unix.Close(fd)
+		return nil, fmt.Errorf("unable to get SO_REUSEPORT %w", err)
+	}
+
 	if ttl != 0 {
 		err = unix.SetsockoptInt(fd, SOL_IP, unix.IP_TTL, int(ttl))
 		if err != nil {
