@@ -121,7 +121,7 @@ func collectForPeer(ch chan<- prometheus.Metric, peer *metrics.BGPPeerMetrics) {
 
 	var uptime float64
 	if peer.State == metrics.StateEstablished {
-		uptime = float64(time.Since(peer.Since) * time.Second)
+		uptime = time.Since(peer.Since).Seconds()
 	}
 	ch <- prometheus.MustNewConstMetric(uptimeDesc, prometheus.GaugeValue, uptime, l...)
 	ch <- prometheus.MustNewConstMetric(stateDesc, prometheus.GaugeValue, float64(peer.State), l...)
