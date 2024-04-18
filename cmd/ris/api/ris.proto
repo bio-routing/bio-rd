@@ -48,6 +48,13 @@ message GetLongerResponse {
     repeated bio.route.Route routes = 1;
 }
 
+
+message ObserveRIBOptions {
+    uint32 MaxPaths = 1; // maximum number of paths to send per route, only used when both EcmpOnly and BestOnly are both false
+    bool EcmpOnly = 2; // should we only send equal cost paths (ignoring MaxPaths) ? Only applies if BestOnly is false.
+    bool BestOnly = 3; // should we only send the best path for each route ? Take precedence over EcmpOnly.
+}
+
 message ObserveRIBRequest {
     string router = 1;
     uint64 vrf_id = 2;
@@ -58,6 +65,7 @@ message ObserveRIBRequest {
     }
     AFISAFI afisafi = 3;
     bool allow_unready_rib = 5;
+    optional ObserveRIBOptions observe_options = 6; // additional options for the observe request
 }
 
 message RIBFilter {
