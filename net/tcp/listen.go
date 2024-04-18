@@ -9,7 +9,7 @@ import (
 )
 
 type ListenerFactoryI interface {
-	NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8) (ListenerI, error)
+	NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8, reuseport bool) (ListenerI, error)
 }
 
 type ListenerFactory struct{}
@@ -30,7 +30,7 @@ type Listener struct {
 }
 
 // NewListener starts a TCPListener
-func (lf *ListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8) (ListenerI, error) {
+func (lf *ListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8, reuseport bool) (ListenerI, error) {
 	l := &Listener{
 		laddr: laddr,
 	}
@@ -57,13 +57,14 @@ func (lf *ListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8
 	err = unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
 	if err != nil {
 		unix.Close(fd)
-		return nil, fmt.Errorf("unable to get SO_REUSEADDR %w", err)
+		return nil, fmt.Errorf("unable to set SO_REUSEADDR %w", err)
 	}
 
-	err = unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
-	if err != nil {
-		unix.Close(fd)
-		return nil, fmt.Errorf("unable to get SO_REUSEPORT %w", err)
+	if reuseport {
+		if err := unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_REUSEPORT, 1); err != nil {
+			unix.Close(fd)
+			return nil, fmt.Errorf("unable to set SO_REUSEPORT %w", err)
+		}
 	}
 
 	if ttl != 0 {
@@ -153,7 +154,7 @@ type MockListener struct {
 	connCh    chan *MockConn
 }
 
-func (lf *MockListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8) (ListenerI, error) {
+func (lf *MockListenerFactory) NewListener(v *vrf.VRF, laddr *net.TCPAddr, ttl uint8, reusePort bool) (ListenerI, error) {
 	return &MockListener{
 		localAddr: laddr.IP,
 		localPort: uint16(laddr.Port),

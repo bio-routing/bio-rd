@@ -29,6 +29,7 @@ type BGPServerConfig struct {
 
 	// Optional attributes
 	DefaultLocalPreference *uint32
+	ReusePort              bool
 }
 
 type bgpServer struct {
@@ -68,7 +69,7 @@ func newBGPServer(config BGPServerConfig) *bgpServer {
 	server := &bgpServer{
 		config:          config,
 		peers:           newPeerManager(),
-		listenerManager: tcp.NewListenerManager(config.ListenAddrsByVRF),
+		listenerManager: tcp.NewListenerManager(config.ListenAddrsByVRF, config.ReusePort),
 	}
 
 	server.metrics = &metricsService{server}

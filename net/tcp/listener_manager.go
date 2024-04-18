@@ -27,14 +27,16 @@ type ListenerManager struct {
 	listenersByVRFmu sync.RWMutex
 	acceptCh         chan ConnWithVRF
 	listenerFactory  ListenerFactoryI
+	reusePort        bool
 }
 
-func NewListenerManager(listenAddrsByVRF map[string][]string) *ListenerManager {
+func NewListenerManager(listenAddrsByVRF map[string][]string, reusePort bool) *ListenerManager {
 	return &ListenerManager{
 		listenAddrsByVRF: listenAddrsByVRF,
 		listenersByVRF:   make(map[string][]ListenerI),
 		listenerFactory:  NewListenerFactory(),
 		acceptCh:         make(chan ConnWithVRF),
+		reusePort:        reusePort,
 	}
 }
 
@@ -93,7 +95,7 @@ func (lm *ListenerManager) _addListener(vrf *vrf.VRF, addr string, ch chan ConnW
 	}
 
 	log.Infof("Listener manager: Starting TCP listener on %s in VRF %s", addr, vrf.Name())
-	l, err := lm.listenerFactory.NewListener(vrf, tcpaddr, 255)
+	l, err := lm.listenerFactory.NewListener(vrf, tcpaddr, 255, lm.reusePort)
 	if err != nil {
 		return err
 	}
