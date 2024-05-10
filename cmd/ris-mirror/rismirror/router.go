@@ -50,6 +50,12 @@ func (r *Router) GetVRF(rd uint64) *vrf.VRF {
 	r.vrfsMu.RLock()
 	defer r.vrfsMu.RUnlock()
 
+	return r._getVRF(rd)
+}
+
+// _getVRF gets a VRF by its RD.
+// _getVRF may only be called with the mutex r.vrfsMu acquired
+func (r *Router) _getVRF(rd uint64) *vrf.VRF {
 	_vrf := r.vrfs[rd]
 	if _vrf == nil {
 		return nil
@@ -89,9 +95,11 @@ func (r *Router) addVRF(rd uint64, sources []*grpc.ClientConn) {
 func (r *Router) removeVRF(rd uint64) error {
 	r.vrfsMu.Lock()
 	defer r.vrfsMu.Unlock()
-	if r.GetVRF(rd) == nil {
+
+	if r._getVRF(rd) == nil {
 		return fmt.Errorf("VRF %v in Router %sv does not exist, cannot remove cleanly", rd, r.address.String())
 	}
+
 	// for removal, first stop all vrfs
 	r._stopVRF(rd)
 	// then we clean the map entries
