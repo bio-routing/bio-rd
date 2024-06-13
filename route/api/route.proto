@@ -58,6 +58,7 @@ message BGPPath {
     repeated UnknownPathAttribute unknown_attributes = 14;
     bool bmp_post_policy = 15;
     uint32 only_to_customer = 16;
+    repeated ExtendedCommunity extended_communities = 17;
 }
 
 message ASPathSegment {
@@ -77,4 +78,10 @@ message UnknownPathAttribute {
     bool partial = 3;
     uint32 type_code = 4;
     bytes value = 5;
+}
+
+message ExtendedCommunity {
+    uint32 type = 1;
+    uint32 subtype = 2;
+    bytes value = 3;
 }
