@@ -125,6 +125,7 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 
 // BGPPathFromProtoBGPPath converts a proto BGPPath to BGPPath
 func BGPPathFromProtoBGPPath(pb *api.BGPPath, dedup bool) *BGPPath {
+	asPath := types.ASPathFromProtoASPath(pb.AsPath)
 	p := &BGPPath{
 		BGPPathA: &BGPPathA{
 			NextHop:        bnet.IPFromProtoIP(pb.NextHop).Ptr(),
@@ -138,7 +139,8 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath, dedup bool) *BGPPath {
 			OnlyToCustomer: pb.OnlyToCustomer,
 		},
 		PathIdentifier: pb.PathIdentifier,
-		ASPath:         types.ASPathFromProtoASPath(pb.AsPath),
+		ASPath:         asPath,
+		ASPathLen:      asPath.Length(),
 		BMPPostPolicy:  pb.BmpPostPolicy,
 	}
 

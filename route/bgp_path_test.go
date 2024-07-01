@@ -75,6 +75,7 @@ func TestBGPPathFromProtoBGPPath(t *testing.T) {
 				},
 			},
 		},
+		ASPathLen: 2,
 
 		Communities: &types.Communities{100, 200, 300},
 		LargeCommunities: &types.LargeCommunities{
