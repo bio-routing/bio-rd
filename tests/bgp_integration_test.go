@@ -28,7 +28,7 @@ func TestBGP(t *testing.T) {
 		"main": {
 			"0.0.0.0:179",
 		},
-	})
+	}, false)
 
 	lm.SetListenerFactory(tcp.NewMockListenerFactory())
 	b.SetListenerManager(lm)
