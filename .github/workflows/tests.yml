@@ -4,7 +4,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.20.x]
+        go-version: [1.22.x]
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -21,15 +21,6 @@ jobs:
 
       - name: Test
         run: make test-coverage
-
-      # Upload Coverage Report
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          file: ./coverage.txt
-          flags: unittests
-          name: codecov-${{ matrix.platform }}-${{ matrix.go-version }}
-          fail_ci_if_error: true
 
       - name: Build commands and examples
         run: make build
