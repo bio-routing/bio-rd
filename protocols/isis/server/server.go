@@ -64,13 +64,13 @@ func (s *Server) Start() {
 		s.running = true
 	}
 
+	s.lsdbL2.updateL2LSP()
+
 	decrementTicker := clock.Ticker(time.Second)
 	minLSPTransTicker := clock.Ticker(minimumLSPTransmissionInterval)
 	psnpTransTicker := clock.Ticker(time.Second * 5)
 	csnpTransTicker := clock.Ticker(csnpTransmissionInterval)
 	s.lsdbL2.start(decrementTicker, minLSPTransTicker, psnpTransTicker, csnpTransTicker)
-
-	return
 }
 
 type Adjacency struct {
@@ -188,7 +188,7 @@ func (s *Server) GetInterfaceNames() []string {
 }
 
 // updateL2LSP updates the systems L2 LSP. This is triggered when:
-// 1. Router starts up (todo)
+// 1. Router starts up (done)
 // 2. Periodic refresh timer expired (done)
 // 3. A new adjacency is formed (done)
 // 4. An adjacency goes down (done)
