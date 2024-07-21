@@ -232,8 +232,8 @@ var (
 		0, 0x5f, // Length
 		7, 6, // Remaining Lifetime
 		12, 12, 12, 13, 13, 13, 0, 0, // LSP ID
-		0, 0, 0, 2, // Sequence number
-		0x54, 0xc9, // Checksum
+		0, 0, 0, 3, // Sequence number
+		0x52, 0xca, // Checksum
 		0, // Type block
 		// TLVs
 		1, // Area
