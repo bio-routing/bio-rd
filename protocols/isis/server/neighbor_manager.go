@@ -186,7 +186,7 @@ func (nm *neighborManager) validateP2PHello(hello *packet.P2PHello) error {
 func (nifa *netIfa) validateAreasL1(receivedAreas []types.AreaID) bool {
 	localAreas := make([]types.AreaID, 0)
 	for _, net := range nifa.srv.nets {
-		localAreas = append(localAreas, append([]byte{net.AFI}, net.AreaID...))
+		localAreas = append(localAreas, net.AreaID)
 	}
 
 	for _, needle := range receivedAreas {

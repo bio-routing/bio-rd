@@ -9,7 +9,6 @@ const (
 
 // NET represents an ISO network entity title
 type NET struct {
-	AFI      byte
 	AreaID   AreaID
 	SystemID SystemID
 	SEL      byte
@@ -29,8 +28,8 @@ func ParseNET(addr []byte) (*NET, error) {
 
 	areaID := []byte{}
 
-	for i := 0; i < addrLen-systemIDLen-2; i++ { // -2 for SEL and "off by one"
-		areaID = append(areaID, addr[i+1])
+	for i := 0; i < addrLen-systemIDLen-1; i++ {
+		areaID = append(areaID, addr[i])
 	}
 
 	systemID := SystemID{
@@ -43,7 +42,6 @@ func ParseNET(addr []byte) (*NET, error) {
 	}
 
 	return &NET{
-		AFI:      addr[0],
 		AreaID:   areaID,
 		SystemID: systemID,
 		SEL:      addr[addrLen-1],

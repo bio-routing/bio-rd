@@ -229,16 +229,16 @@ var (
 		0,    // Reserved
 		0,    // Max. Area addresses
 		// LSP
-		0, 0x5f, // Length
+		0, 0x60, // Length
 		7, 6, // Remaining Lifetime
 		12, 12, 12, 13, 13, 13, 0, 0, // LSP ID
 		0, 0, 0, 3, // Sequence number
-		0x52, 0xca, // Checksum
+		0x58, 0x79, // Checksum
 		0, // Type block
 		// TLVs
 		1, // Area
-		2, // Length
-		1, 0,
+		3, // Length
+		2, 0x49, 0,
 		129,      // Protocols Supported
 		2,        // Length
 		204, 142, // IPv4 + IPv6
@@ -294,8 +294,7 @@ func TestISISServer(t *testing.T) {
 	du := &device.MockServer{}
 	s, err := server.New([]*types.NET{
 		{
-			AFI:      0x49,
-			AreaID:   types.AreaID{0x00},
+			AreaID:   types.AreaID{0x49, 0x00},
 			SystemID: types.SystemID{12, 12, 12, 13, 13, 13},
 			SEL:      0x00,
 		},

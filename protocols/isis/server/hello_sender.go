@@ -87,7 +87,7 @@ func (nifa *netIfa) p2pHello() *packet.P2PHello {
 
 	areas := make([]types.AreaID, 0)
 	for _, net := range nifa.srv.nets {
-		areas = append(areas, append([]byte{net.AFI}, net.AreaID...))
+		areas = append(areas, net.AreaID)
 	}
 	h.TLVs = append(h.TLVs, packet.NewAreaAddressesTLV(areas))
 
