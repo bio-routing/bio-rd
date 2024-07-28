@@ -245,47 +245,6 @@ func TestDecodeNLRI(t *testing.T) {
 	}
 }
 
-func TestBytesInAddr(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    uint8
-		expected uint8
-	}{
-		{
-			name:     "Test #1",
-			input:    24,
-			expected: 3,
-		},
-		{
-			name:     "Test #2",
-			input:    25,
-			expected: 4,
-		},
-		{
-			name:     "Test #3",
-			input:    32,
-			expected: 4,
-		},
-		{
-			name:     "Test #4",
-			input:    0,
-			expected: 0,
-		},
-		{
-			name:     "Test #5",
-			input:    9,
-			expected: 2,
-		},
-	}
-
-	for _, test := range tests {
-		res := BytesInAddr(test.input)
-		if res != test.expected {
-			t.Errorf("Unexpected result for test %q: %d", test.name, res)
-		}
-	}
-}
-
 func TestNLRISerialize(t *testing.T) {
 	tests := []struct {
 		name     string

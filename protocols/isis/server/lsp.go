@@ -67,7 +67,7 @@ func (s *Server) extendedIPReachabilityTLV() *packet.ExtendedIPReachabilityTLV {
 				packet.NewExtendedIPReachability(
 					ifa.cfg.Level2.Metric,
 					addr.Len(),
-					addr.Addr().ToUint32()),
+					addr.BaseAddr().ToUint32()),
 			)
 		}
 	}

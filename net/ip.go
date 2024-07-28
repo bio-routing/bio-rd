@@ -9,6 +9,11 @@ import (
 	bmath "github.com/bio-routing/bio-rd/util/math"
 )
 
+const (
+	IPv4AddrBytes = 4
+	IPv6AddrBytes = 6
+)
+
 var (
 	v4Loopback = NewPfx(IPv4FromOctets(127, 0, 0, 0), 8).Ptr()
 )
