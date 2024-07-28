@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
 )
@@ -12,8 +13,8 @@ const (
 	// ExtendedIPReachabilityTLVType is the type value of an Extended IP Reachability TLV
 	ExtendedIPReachabilityTLVType = 135
 
-	// ExtendedIPReachabilityLength is the length of an Extended IP Reachability excluding Sub TLVs
-	ExtendedIPReachabilityLength = 9
+	// ExtendedIPReachabilityMinLength is the minimum length of an Extended IP Reachability excluding Sub TLVs
+	ExtendedIPReachabilityMinLength = 5
 )
 
 // ExtendedIPReachabilityTLV is an Extended IP Reachability TLV
@@ -74,12 +75,12 @@ func readExtendedIPReachabilityTLV(buf *bytes.Buffer, tlvType uint8, tlvLength u
 
 	toRead := tlvLength
 	for toRead > 0 {
-		extIPReach, err := readExtendedIPReachability(buf)
+		extIPReach, bytesRead, err := readExtendedIPReachability(buf)
 		if err != nil {
 			return nil, fmt.Errorf("unable to reach extended IP reachability: %w", err)
 		}
 
-		toRead -= ExtendedIPReachabilityLength
+		toRead -= bytesRead
 		for i := range extIPReach.SubTLVs {
 			toRead -= extIPReach.SubTLVs[i].Length()
 		}
@@ -121,7 +122,8 @@ func (e *ExtendedIPReachability) Copy() *ExtendedIPReachability {
 // AddExtendedIPReachability adds an extended IP reachability
 func (e *ExtendedIPReachabilityTLV) AddExtendedIPReachability(eipr *ExtendedIPReachability) {
 	e.ExtendedIPReachabilities = append(e.ExtendedIPReachabilities, eipr)
-	e.TLVLength += ExtendedIPReachabilityLength
+	e.TLVLength += ExtendedIPReachabilityMinLength + net.BytesInAddr(eipr.PfxLen())
+
 	// TODO: Add length of sub TLVs. They will be added as soon as we support for TE
 }
 
@@ -129,7 +131,10 @@ func (e *ExtendedIPReachabilityTLV) AddExtendedIPReachability(eipr *ExtendedIPRe
 func (e *ExtendedIPReachability) Serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint32Byte(e.Metric))
 	buf.WriteByte(e.UDSubBitPfxLen)
-	buf.Write(convert.Uint32Byte(e.Address))
+
+	n := net.BytesInAddr(e.PfxLen())
+	addrBytes := convert.Uint32Byte(e.Address)
+	buf.Write(addrBytes[:n])
 
 	for i := range e.SubTLVs {
 		e.SubTLVs[i].Serialize(buf)
@@ -145,28 +150,47 @@ func (e *ExtendedIPReachability) PfxLen() uint8 {
 	return (e.UDSubBitPfxLen << 2) >> 2
 }
 
-func readExtendedIPReachability(buf *bytes.Buffer) (*ExtendedIPReachability, error) {
+func readExtendedIPReachability(buf *bytes.Buffer) (*ExtendedIPReachability, uint8, error) {
 	e := &ExtendedIPReachability{}
 
 	fields := []interface{}{
 		&e.Metric,
 		&e.UDSubBitPfxLen,
-		&e.Address,
 	}
 
 	err := decode.Decode(buf, fields)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode fields: %v", err)
+		return nil, 0, fmt.Errorf("unable to decode fields: %v", err)
+	}
+
+	nBytes := net.BytesInAddr(e.PfxLen())
+	bytesRead := ExtendedIPReachabilityMinLength + nBytes
+	addr := make([]byte, nBytes)
+	for i := 0; i < int(nBytes); i++ {
+		buf.Read(addr)
+	}
+
+	for i := len(addr); i < net.IPv4AddrBytes; i++ {
+		addr = append(addr, 0)
+	}
+
+	fields = []interface{}{
+		&e.Address,
+	}
+
+	err = decode.Decode(bytes.NewBuffer(addr), fields)
+	if err != nil {
+		return nil, bytesRead, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	if !e.hasSubTLVs() {
-		return e, nil
+		return e, bytesRead, nil
 	}
 
 	subTLVsLen := uint8(0)
 	err = decode.Decode(buf, []interface{}{&subTLVsLen})
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode fields: %v", err)
+		return nil, bytesRead, fmt.Errorf("unable to decode fields: %v", err)
 	}
 
 	toRead := subTLVsLen
@@ -174,5 +198,5 @@ func readExtendedIPReachability(buf *bytes.Buffer) (*ExtendedIPReachability, err
 		// TODO: Read Sub TLVs
 	}
 
-	return e, nil
+	return e, bytesRead, nil
 }

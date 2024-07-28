@@ -7,7 +7,7 @@ import (
 )
 
 func deserializePrefix(b []byte, pfxLen uint8, afi uint16) (*bnet.Prefix, error) {
-	numBytes := BytesInAddr(pfxLen)
+	numBytes := bnet.BytesInAddr(pfxLen)
 
 	if numBytes != uint8(len(b)) {
 		return nil, fmt.Errorf("could not parse prefix of length %d. Expected %d bytes, got %d", pfxLen, numBytes, len(b))

@@ -3,8 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
-	"math"
 
+	"github.com/bio-routing/bio-rd/net"
 	bnet "github.com/bio-routing/bio-rd/net"
 	"github.com/bio-routing/bio-rd/util/decode"
 	"github.com/bio-routing/tflow2/convert"
@@ -92,7 +92,7 @@ func decodeNLRI(buf *bytes.Buffer, afi uint16, safi uint8, addPath bool) (*NLRI,
 		}
 	}
 
-	numBytes := uint8(BytesInAddr(pfxLen))
+	numBytes := uint8(net.BytesInAddr(pfxLen))
 	bytes := make([]byte, numBytes)
 
 	r, err := buf.Read(bytes)
@@ -137,14 +137,9 @@ func (n *NLRI) serialize(buf *bytes.Buffer, addPath bool, safi uint8) uint8 {
 		}
 	}
 
-	pfxNumBytes := BytesInAddr(n.Prefix.Len())
+	pfxNumBytes := n.Prefix.BytesInPrefix()
 	buf.Write(n.Prefix.Addr().Bytes()[:pfxNumBytes])
 	numBytes += pfxNumBytes
 
 	return numBytes
-}
-
-// BytesInAddr gets the amount of bytes needed to encode an NLRI of prefix length pfxlen
-func BytesInAddr(pfxlen uint8) uint8 {
-	return uint8(math.Ceil(float64(pfxlen) / 8))
 }

@@ -89,17 +89,17 @@ func TestReadExtendedIPReachabilityTLV(t *testing.T) {
 			input: []byte{
 				// First Extended IP Reach.
 				0, 0, 0, 100, // Metric
-				24,             // UDSubBitPfxLen (no sub TLVs)
-				10, 20, 30, 40, // Address
+				24,         // UDSubBitPfxLen (no sub TLVs)
+				10, 20, 30, // Address
 			},
 			expected: &ExtendedIPReachabilityTLV{
 				TLVType:   135,
-				TLVLength: 9,
+				TLVLength: 8,
 				ExtendedIPReachabilities: []*ExtendedIPReachability{
 					{
 						Metric:         100,
 						UDSubBitPfxLen: 24,
-						Address:        169090600,
+						Address:        169090560,
 					},
 				},
 			},

@@ -297,3 +297,13 @@ func (p *Prefix) baseAddr6() IP {
 
 	return addr
 }
+
+// BytesInAddr gets the amount of bytes needed to encode an NLRI (BGP, ISIS) of prefix length pfxlen
+func BytesInAddr(pfxlen uint8) uint8 {
+	return uint8(math.Ceil(float64(pfxlen) / 8))
+}
+
+// BytesInPrefix gets the amount of bytes needed to encode an NLRI (BGP, ISIS)
+func (p *Prefix) BytesInPrefix() uint8 {
+	return BytesInAddr(p.len)
+}
