@@ -22,8 +22,7 @@ func TestValidateAreasL1(t *testing.T) {
 				srv: &Server{
 					nets: []*types.NET{
 						{
-							AFI:    0x49,
-							AreaID: []byte{1},
+							AreaID: []byte{0x49, 1},
 						},
 					},
 				},
@@ -41,12 +40,10 @@ func TestValidateAreasL1(t *testing.T) {
 				srv: &Server{
 					nets: []*types.NET{
 						{
-							AFI:    0x49,
-							AreaID: []byte{1},
+							AreaID: []byte{0x49},
 						},
 						{
-							AFI:    0x49,
-							AreaID: []byte{0xff},
+							AreaID: []byte{0x49, 0xff},
 						},
 					},
 				},
@@ -64,12 +61,10 @@ func TestValidateAreasL1(t *testing.T) {
 				srv: &Server{
 					nets: []*types.NET{
 						{
-							AFI:    0x49,
-							AreaID: []byte{1},
+							AreaID: []byte{0x49, 1},
 						},
 						{
-							AFI:    0x49,
-							AreaID: []byte{0xff},
+							AreaID: []byte{0x49, 0xff},
 						},
 					},
 				},
