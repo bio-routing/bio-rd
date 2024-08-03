@@ -838,6 +838,110 @@ func TestDecodeCommunity(t *testing.T) {
 	}
 }
 
+func TestDecodeExtendedCommunity(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          []byte
+		wantFail       bool
+		explicitLength uint16
+		expected       *PathAttribute
+	}{
+		{
+			name:     "Empty list",
+			input:    []byte{},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 0,
+				Value:  &types.ExtendedCommunities{},
+			},
+		},
+		{
+			name: "One extended community",
+			input: []byte{
+				0x80, 0x06, // Type 128 Sub-Type 6 (Flow-spec)
+				0x00, 0x00, // 2-Octet AS = 0
+				0x00, 0x00, 0x00, 0x00, // Rate shaper = 0
+			},
+			wantFail: false,
+			expected: &PathAttribute{
+				Length: 8,
+				Value: &types.ExtendedCommunities{
+					{
+						Type:    128,
+						SubType: 6,
+						Value: []byte{
+							0x00, 0x00,
+							0x00, 0x00, 0x00, 0x00,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:     "Two extended communities",
+			wantFail: false,
+			input: []byte{
+				0x00, 0x02, // Type 0 Sub-Type 2 (Route Target)
+				0x00, 0x64, // 2-Octet AS = 100
+				0x00,             // Local Admin Type = VID
+				0x00, 0x00, 0x64, // Service ID = 100
+
+				0x06, 0x01, // Type 6 Sub-Type 1 (EVPN ESI MPLS Lbl)
+				0x00,                         // All-Active redundancy
+				0x00, 0x00, 0x04, 0x93, 0xd0, // MPLS label 299984
+			},
+			expected: &PathAttribute{
+				Length: 16,
+				Value: &types.ExtendedCommunities{
+					{
+						Type:    0,
+						SubType: 2,
+						Value: []byte{
+							0x00, 0x64,
+							0x00,
+							0x00, 0x00, 0x64,
+						},
+					},
+					{
+						Type:    6,
+						SubType: 1,
+						Value: []byte{
+							0x00,
+							0x00, 0x00, 0x04, 0x93, 0xd0,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		l := uint16(len(test.input))
+		if test.explicitLength != 0 {
+			l = test.explicitLength
+		}
+		pa := &PathAttribute{
+			Length: l,
+		}
+		err := pa.decodeExtendedCommunities(bytes.NewBuffer(test.input))
+
+		if test.wantFail {
+			if err != nil {
+				continue
+			}
+			t.Errorf("Expected error did not happen for test %q", test.name)
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Unexpected failure for test %q: %v", test.name, err)
+			continue
+		}
+
+		assert.Equal(t, test.expected, pa)
+	}
+}
+
 func TestDecodeClusterList(t *testing.T) {
 	tests := []struct {
 		name           string

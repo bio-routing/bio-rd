@@ -14,15 +14,16 @@ import (
 
 // BGPPath represents a set of BGP path attributes
 type BGPPath struct {
-	BGPPathA          *BGPPathA
-	ASPath            *types.ASPath
-	ClusterList       *types.ClusterList
-	Communities       *types.Communities
-	LargeCommunities  *types.LargeCommunities
-	UnknownAttributes []types.UnknownPathAttribute
-	PathIdentifier    uint32
-	ASPathLen         uint16
-	BMPPostPolicy     bool // BMPPostPolicy fields is a hack used in BMP to differentiate between pre/post policy routes (L flag of the per peer header)
+	BGPPathA            *BGPPathA
+	ASPath              *types.ASPath
+	ClusterList         *types.ClusterList
+	Communities         *types.Communities
+	LargeCommunities    *types.LargeCommunities
+	ExtendedCommunities *types.ExtendedCommunities
+	UnknownAttributes   []types.UnknownPathAttribute
+	PathIdentifier      uint32
+	ASPathLen           uint16
+	BMPPostPolicy       bool // BMPPostPolicy fields is a hack used in BMP to differentiate between pre/post policy routes (L flag of the per peer header)
 }
 
 // BGPPathA represents cachable BGP path attributes
@@ -116,6 +117,13 @@ func (b *BGPPath) ToProto() *api.BGPPath {
 		}
 	}
 
+	if b.ExtendedCommunities != nil {
+		a.ExtendedCommunities = make([]*api.ExtendedCommunity, len(*b.ExtendedCommunities))
+		for i := range *b.ExtendedCommunities {
+			a.ExtendedCommunities[i] = (*b.ExtendedCommunities)[i].ToProto()
+		}
+	}
+
 	for i := range b.UnknownAttributes {
 		a.UnknownAttributes[i] = b.UnknownAttributes[i].ToProto()
 	}
@@ -163,6 +171,15 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath, dedup bool) *BGPPath {
 		}
 	}
 
+	if len(pb.ExtendedCommunities) > 0 {
+		extendedCommunities := make(types.ExtendedCommunities, len(pb.ExtendedCommunities))
+		p.ExtendedCommunities = &extendedCommunities
+
+		for i := range pb.ExtendedCommunities {
+			(*p.ExtendedCommunities)[i] = types.ExtendedCommunityFromProtoExtendedCommunity(pb.ExtendedCommunities[i])
+		}
+	}
+
 	if len(pb.UnknownAttributes) > 0 {
 		unknownAttr := make([]types.UnknownPathAttribute, len(pb.UnknownAttributes))
 		p.UnknownAttributes = unknownAttr
@@ -181,7 +198,7 @@ func BGPPathFromProtoBGPPath(pb *api.BGPPath, dedup bool) *BGPPath {
 	return p
 }
 
-// Length get's the length of serialized path
+// Length gets the length of serialized path
 func (b *BGPPath) Length() uint16 {
 	asPathLen := uint16(3)
 	for _, segment := range *b.ASPath {
@@ -197,6 +214,13 @@ func (b *BGPPath) Length() uint16 {
 	largeCommunitiesLen := uint16(0)
 	if b.LargeCommunities != nil && len(*b.LargeCommunities) != 0 {
 		largeCommunitiesLen += 3 + uint16(len(*b.LargeCommunities)*12)
+	}
+
+	extendedCommunitiesLen := uint16(0)
+	if b.ExtendedCommunities != nil && len(*b.ExtendedCommunities) != 0 {
+		// length of extended communities in BGPPath multiplied by the size of an EC
+		// defined in [packet.ExtendedCommunityLen] (cannot be imported because of a possible cycle dependency)
+		extendedCommunitiesLen += 3 + uint16(len(*b.ExtendedCommunities)*8)
 	}
 
 	clusterListLen := uint16(0)
@@ -221,10 +245,12 @@ func (b *BGPPath) Length() uint16 {
 		}
 	}
 
-	return 4*7 + 4 + asPathLen + communitiesLen + largeCommunitiesLen + clusterListLen + originatorID + onlyToCustomer + unknownAttributesLen
+	return 4*7 + 4 + asPathLen +
+		communitiesLen + largeCommunitiesLen + extendedCommunitiesLen +
+		clusterListLen + originatorID + onlyToCustomer + unknownAttributesLen
 }
 
-// ECMP determines if routes b and c are euqal in terms of ECMP
+// ECMP determines if routes b and c are equal in terms of ECMP defined in RFC 2992
 func (b *BGPPath) ECMP(c *BGPPath) bool {
 	return b.BGPPathA.LocalPref == c.BGPPathA.LocalPref &&
 		b.ASPathLen == c.ASPathLen &&
@@ -586,6 +612,9 @@ func (b *BGPPath) String() string {
 	if b.LargeCommunities != nil {
 		fmt.Fprintf(buf, "LargeCommunities: %v", *b.LargeCommunities)
 	}
+	if b.ExtendedCommunities != nil {
+		fmt.Fprintf(buf, "ExtendedCommunities: %s", b.ExtendedCommunities)
+	}
 
 	if b.BGPPathA.OriginatorID != 0 {
 		oid := convert.Uint32Byte(b.BGPPathA.OriginatorID)
@@ -633,6 +662,9 @@ func (b *BGPPath) Print() string {
 	}
 	if b.LargeCommunities != nil {
 		fmt.Fprintf(buf, "\t\tLargeCommunities: %v\n", *b.LargeCommunities)
+	}
+	if b.ExtendedCommunities != nil {
+		fmt.Fprintf(buf, "\t\tExtendedCommunities: %s\n", b.ExtendedCommunitiesString())
 	}
 
 	if b.BGPPathA.OriginatorID != 0 {
@@ -811,6 +843,22 @@ func (b *BGPPath) LargeCommunitiesString() string {
 			str.WriteByte(' ')
 		}
 		str.WriteString(com.String())
+	}
+
+	return str.String()
+}
+
+// ExtendedCommunitiesString returns human-readable, formatted extended communities
+func (b *BGPPath) ExtendedCommunitiesString() string {
+	str := &strings.Builder{}
+
+	for i, ec := range *b.ExtendedCommunities {
+		if i > 0 {
+			str.WriteByte(' ')
+		}
+		// TODO: Make EC human-readable
+
+		fmt.Fprintf(str, "type: %d transitive: %d value: %s", ec.Type, ec.SubType, ec.Value)
 	}
 
 	return str.String()
