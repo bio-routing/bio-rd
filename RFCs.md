@@ -7,6 +7,7 @@ Please keep this list ordered.
  * 4271 A Border Gateway Protocol 4 (BGP-4)
  * 4456 BGP Route Reflection
  * 4760 Multiprotocol Extensions for BGP-4
+ * 6286 Autonomous-System-Wide Unique BGP Identifier for BGP-4
  * 6793 32bit ASNs
  * 7854 BGP Monitoring Protocol (BMP)
  * 7911 BGP AddPath

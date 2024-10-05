@@ -124,6 +124,14 @@ func (s *openSentState) openMsgReceived(openMsg *packet.BGPOpen) (state, string)
 		return s.handleOpenMessage(openMsg)
 	}
 
+	// RFC6286, Sect 2.2: If the BGP Identifier field of the OPEN message is zero,
+	// or if it is the same as the BGP Identifier of the local BGP speaker and the
+	// message is from an internal peer, then the Error Subcode is set to "Bad BGP Identifier".
+	if openMsg.BGPIdentifier == 0 || (s.fsm.peer.localASN == s.fsm.peer.peerASN && s.fsm.peer.routerID == openMsg.BGPIdentifier) {
+		s.fsm.sendNotification(packet.OpenMessageError, packet.BadBGPIdentifier)
+		return newIdleState(s.fsm), fmt.Sprintf("Bad BGP Identifier %d", openMsg.BGPIdentifier)
+	}
+
 	stopTimer(s.fsm.connectRetryTimer)
 	if s.fsm.peer.collisionHandling(s.fsm) {
 		return s.cease()
