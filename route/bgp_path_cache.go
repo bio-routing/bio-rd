@@ -31,7 +31,8 @@ func (bgpc *bgpPathACache) get(p *BGPPathA) *BGPPathA {
 		return x
 	}
 
-	bgpc.cache[*p] = p
+        bgpc.cache[p] = p
+
 	bgpc.cacheMu.Unlock()
 	return p
 }
