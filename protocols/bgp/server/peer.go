@@ -234,7 +234,7 @@ func (p *peer) collisionHandling(callingFSM *FSM) bool {
 			continue
 		}
 
-		if p.routerID < callingFSM.neighborID {
+		if p.shouldCeaseOnCollision(callingFSM) {
 			fsm.cease()
 		} else {
 			return true
