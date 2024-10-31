@@ -58,6 +58,7 @@ message BGPPath {
     repeated UnknownPathAttribute unknown_attributes = 14;
     bool bmp_post_policy = 15;
     uint32 only_to_customer = 16;
+    repeated LargeCommunityRegex large_community_regex = 17;
 }
 
 message ASPathSegment {
@@ -69,6 +70,12 @@ message LargeCommunity {
     uint32 global_administrator = 1;
     uint32 data_part1 = 2;
     uint32 data_part2 = 3;
+}
+
+message LargeCommunityRegex {
+    uint32 global_administrator = 1;
+    string data_part1 = 2;
+    string data_part2 = 3;
 }
 
 message UnknownPathAttribute {
