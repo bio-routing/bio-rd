@@ -11,6 +11,7 @@ import (
 
 const (
 	addPathTupleSize = 4
+	extendedNextHopTupleSize = 6
 )
 
 // Decode decodes a BGP message
@@ -262,6 +263,12 @@ func decodeCapability(buf *bytes.Buffer) (Capability, error) {
 			return cap, fmt.Errorf("unable to decode peer role capability: %w", err)
 		}
 		cap.Value = peerRoleCap
+	case ExtendedNextHopEncodingCapabilityCode:
+		extendedNextHopCap, err := decodeExtendedNextHopCapability(buf, cap.Length)
+		if err != nil {
+			return cap, fmt.Errorf("unable to decode Extended Next Hop capability: %w", err)
+		}
+		cap.Value = extendedNextHopCap
 	default:
 		for i := uint8(0); i < cap.Length; i++ {
 			_, err := buf.ReadByte()
@@ -359,6 +366,31 @@ func validateOpen(msg *BGPOpen) error {
 	}
 
 	return nil
+}
+
+func decodeExtendedNextHopCapability(buf *bytes.Buffer, capLength uint8) (ExtendedNextHopCapability, error) {
+	extendedNextHopCap := make(ExtendedNextHopCapability, 0)
+
+	if capLength%extendedNextHopTupleSize != 0 {
+		return nil, fmt.Errorf("invalid capalength %d, must be multiple of %d", capLength, extendedNextHopTupleSize)
+	}
+
+	for ; capLength >= extendedNextHopTupleSize; capLength -= extendedNextHopTupleSize {
+		extendedNextHop := ExtendedNextHopCapabilityTuple{}
+		fields := []interface{}{
+			&extendedNextHop.AFI,
+			&extendedNextHop.SAFI,
+			&extendedNextHop.NextHopAFI,
+		}
+		err := decode.Decode(buf, fields)
+		if err != nil {
+			return nil, err
+		}
+
+		extendedNextHopCap = append(extendedNextHopCap, extendedNextHop)
+	}
+
+	return extendedNextHopCap, nil
 }
 
 func isValidIdentifier(id uint32) bool {

@@ -89,3 +89,23 @@ type PeerRoleCapability struct {
 func (a PeerRoleCapability) serialize(buf *bytes.Buffer) {
 	buf.Write(convert.Uint8Byte(a.PeerRole))
 }
+
+type ExtendedNextHopCapabilityTuple struct {
+	AFI        uint16
+	SAFI       uint16
+	NextHopAFI uint16
+}
+
+func (e ExtendedNextHopCapabilityTuple) serialize(buf *bytes.Buffer) {
+	buf.Write(convert.Uint16Byte(e.AFI))
+	buf.Write(convert.Uint16Byte(e.SAFI))
+	buf.Write(convert.Uint16Byte(e.NextHopAFI))
+}
+
+func (e ExtendedNextHopCapability) serialize(buf *bytes.Buffer) {
+	for _, cap := range e {
+		cap.serialize(buf)
+	}
+}
+
+type ExtendedNextHopCapability []ExtendedNextHopCapabilityTuple

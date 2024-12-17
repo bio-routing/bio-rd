@@ -270,7 +270,8 @@ func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
 }
 
 type AddressFamilyConfig struct {
-	AddPath *AddPathConfig `yaml:"add_path"`
+	AddPath         *AddPathConfig `yaml:"add_path"`
+	NextHopExtended bool           `yaml:"next_hop_extended"`
 }
 
 type AddPathConfig struct {

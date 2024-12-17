@@ -5,6 +5,7 @@ type DecodeOptions struct {
 	AddPathIPv4Unicast bool
 	AddPathIPv6Unicast bool
 	Use32BitASN        bool
+	ExtendedNextHop    bool
 }
 
 func (d *DecodeOptions) addPath(afi uint16, safi uint8) bool {
