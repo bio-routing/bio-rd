@@ -70,3 +70,7 @@ $ sudo ./bio-rd -config.file bio-rd.yml
 
 The benchmarks can be found in the [bio-routing/bio-rd-benchmarks](https://github.com/bio-routing/bio-rd-benchmarks)
 repository.
+
+[User documentation](Documentation/user)
+
+[Developer documentation](Documentation/dev)

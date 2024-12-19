@@ -8,7 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
