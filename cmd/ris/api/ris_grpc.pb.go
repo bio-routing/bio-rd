@@ -24,6 +24,7 @@ type RoutingInformationServiceClient interface {
 	GetLonger(ctx context.Context, in *GetLongerRequest, opts ...grpc.CallOption) (*GetLongerResponse, error)
 	ObserveRIB(ctx context.Context, in *ObserveRIBRequest, opts ...grpc.CallOption) (RoutingInformationService_ObserveRIBClient, error)
 	DumpRIB(ctx context.Context, in *DumpRIBRequest, opts ...grpc.CallOption) (RoutingInformationService_DumpRIBClient, error)
+	ObserveRouters(ctx context.Context, in *ObserveRoutersRequest, opts ...grpc.CallOption) (RoutingInformationService_ObserveRoutersClient, error)
 }
 
 type routingInformationServiceClient struct {
@@ -134,6 +135,38 @@ func (x *routingInformationServiceDumpRIBClient) Recv() (*DumpRIBReply, error) {
 	return m, nil
 }
 
+func (c *routingInformationServiceClient) ObserveRouters(ctx context.Context, in *ObserveRoutersRequest, opts ...grpc.CallOption) (RoutingInformationService_ObserveRoutersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &RoutingInformationService_ServiceDesc.Streams[2], "/bio.ris.RoutingInformationService/ObserveRouters", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &routingInformationServiceObserveRoutersClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type RoutingInformationService_ObserveRoutersClient interface {
+	Recv() (*RouterUpdate, error)
+	grpc.ClientStream
+}
+
+type routingInformationServiceObserveRoutersClient struct {
+	grpc.ClientStream
+}
+
+func (x *routingInformationServiceObserveRoutersClient) Recv() (*RouterUpdate, error) {
+	m := new(RouterUpdate)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // RoutingInformationServiceServer is the server API for RoutingInformationService service.
 // All implementations must embed UnimplementedRoutingInformationServiceServer
 // for forward compatibility
@@ -144,6 +177,7 @@ type RoutingInformationServiceServer interface {
 	GetLonger(context.Context, *GetLongerRequest) (*GetLongerResponse, error)
 	ObserveRIB(*ObserveRIBRequest, RoutingInformationService_ObserveRIBServer) error
 	DumpRIB(*DumpRIBRequest, RoutingInformationService_DumpRIBServer) error
+	ObserveRouters(*ObserveRoutersRequest, RoutingInformationService_ObserveRoutersServer) error
 	mustEmbedUnimplementedRoutingInformationServiceServer()
 }
 
@@ -168,6 +202,9 @@ func (UnimplementedRoutingInformationServiceServer) ObserveRIB(*ObserveRIBReques
 }
 func (UnimplementedRoutingInformationServiceServer) DumpRIB(*DumpRIBRequest, RoutingInformationService_DumpRIBServer) error {
 	return status.Errorf(codes.Unimplemented, "method DumpRIB not implemented")
+}
+func (UnimplementedRoutingInformationServiceServer) ObserveRouters(*ObserveRoutersRequest, RoutingInformationService_ObserveRoutersServer) error {
+	return status.Errorf(codes.Unimplemented, "method ObserveRouters not implemented")
 }
 func (UnimplementedRoutingInformationServiceServer) mustEmbedUnimplementedRoutingInformationServiceServer() {
 }
@@ -297,6 +334,27 @@ func (x *routingInformationServiceDumpRIBServer) Send(m *DumpRIBReply) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _RoutingInformationService_ObserveRouters_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ObserveRoutersRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(RoutingInformationServiceServer).ObserveRouters(m, &routingInformationServiceObserveRoutersServer{stream})
+}
+
+type RoutingInformationService_ObserveRoutersServer interface {
+	Send(*RouterUpdate) error
+	grpc.ServerStream
+}
+
+type routingInformationServiceObserveRoutersServer struct {
+	grpc.ServerStream
+}
+
+func (x *routingInformationServiceObserveRoutersServer) Send(m *RouterUpdate) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // RoutingInformationService_ServiceDesc is the grpc.ServiceDesc for RoutingInformationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -330,6 +388,11 @@ var RoutingInformationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "DumpRIB",
 			Handler:       _RoutingInformationService_DumpRIB_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ObserveRouters",
+			Handler:       _RoutingInformationService_ObserveRouters_Handler,
 			ServerStreams: true,
 		},
 	},
