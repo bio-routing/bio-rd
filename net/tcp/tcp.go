@@ -61,9 +61,16 @@ func Dial(laddr, raddr *net.TCPAddr, ttl uint8, md5Secret string, noRoute bool, 
 			return nil, fmt.Errorf("getsockname() failed: %w", err)
 		}
 
-		sa4 := sa.(*unix.SockaddrInet4)
-		c.laddr.IP = sa4.Addr[:]
-		c.laddr.Port = sa4.Port
+		switch sa.(type) {
+		case *unix.SockaddrInet4:
+			sa4 := sa.(*unix.SockaddrInet4)
+			c.laddr.IP = sa4.Addr[:]
+			c.laddr.Port = sa4.Port
+		case *unix.SockaddrInet6:
+			sa6 := sa.(*unix.SockaddrInet6)
+			c.laddr.IP = sa6.Addr[:]
+			c.laddr.Port = sa6.Port
+		}
 	}
 	c.raddr = raddr
 	return c, nil

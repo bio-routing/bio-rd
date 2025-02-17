@@ -107,11 +107,12 @@ const (
 	SAFILabeledUnicast = 4
 
 	// Capabilities
-	CapabilitiesParamType       = 2
-	MultiProtocolCapabilityCode = 1
-	PeerRoleCapabilityCode      = 9
-	ASN4CapabilityCode          = 65
-	AddPathCapabilityCode       = 69
+	MultiProtocolCapabilityCode           = 1
+	CapabilitiesParamType                 = 2
+	ExtendedNextHopEncodingCapabilityCode = 5
+	PeerRoleCapabilityCode                = 9
+	ASN4CapabilityCode                    = 65
+	AddPathCapabilityCode                 = 69
 
 	// AddPath capability
 	AddPathReceive     = 1

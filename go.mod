@@ -6,16 +6,18 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+	github.com/projectdiscovery/yamldoc-go v1.0.4
 	github.com/prometheus/client_golang v1.11.1
 	github.com/sirupsen/logrus v1.6.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.2
 	github.com/urfave/cli v1.21.0
 	github.com/vishvananda/netlink v1.0.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/sys v0.18.0
 	google.golang.org/grpc v1.56.3
 	google.golang.org/protobuf v1.33.0
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -35,7 +37,6 @@ require (
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 go 1.18

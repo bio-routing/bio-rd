@@ -208,6 +208,10 @@ func (c *bgpConfigurator) configureAddressFamily(baf *config.AddressFamilyConfig
 	if baf.AddPath != nil {
 		c.configureAddPath(baf.AddPath, af)
 	}
+
+	if baf.NextHopExtended {
+		af.NextHopExtended = true
+	}
 }
 
 func (c *bgpConfigurator) configureAddPath(bac *config.AddPathConfig, af *bgpserver.AddressFamilyConfig) {

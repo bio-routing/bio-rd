@@ -48,6 +48,8 @@ type peer struct {
 	ipv6 *peerAddressFamily
 
 	adjRIBInFactory adjRIBInFactoryI
+
+	nextHopExtendedAdvertised bool
 }
 
 // PeerConfig defines the configuration for a BGP session
@@ -82,6 +84,7 @@ type AddressFamilyConfig struct {
 	ExportFilterChain filter.Chain
 	AddPathSend       routingtable.ClientOptions
 	AddPathRecv       bool
+	NextHopExtended   bool
 }
 
 // NeedsRestart determines if the peer needs a restart on cfg change
@@ -314,9 +317,20 @@ func newPeer(c PeerConfig, server *bgpServer) (*peer, error) {
 
 	caps = append(caps, asn4Capability(c))
 
-	if c.IPv4 != nil && c.AdvertiseIPv4MultiProtocol {
-		caps = append(caps, multiProtocolCapability(packet.AFIIPv4))
-		p.ipv4MultiProtocolAdvertised = true
+	if c.IPv4 != nil {
+		if c.IPv4.NextHopExtended {
+			caps = append(caps, nextHopExtendedCapability(c)...)
+			p.nextHopExtendedAdvertised = true
+			// If no IPv4 session with the peer is established, we must signalize that we
+			// can also speak IPv4 to send or accept IPv4 addresses with IPv6 NextHop.
+			caps = append(caps, multiProtocolCapability(packet.AFIIPv4))
+			p.ipv4MultiProtocolAdvertised = true
+		}
+
+		if c.AdvertiseIPv4MultiProtocol {
+			caps = append(caps, multiProtocolCapability(packet.AFIIPv4))
+			p.ipv4MultiProtocolAdvertised = true
+		}
 	}
 
 	if c.IPv6 != nil {
@@ -422,6 +436,25 @@ func peerRoleCapability(c PeerConfig) packet.Capability {
 			PeerRole: c.PeerRole,
 		},
 	}
+}
+
+func nextHopExtendedCapability(c PeerConfig) []packet.Capability {
+	caps := make([]packet.Capability, 0)
+	cap := packet.Capability{}
+	if c.IPv4.NextHopExtended {
+		cap = packet.Capability{
+			Code: packet.ExtendedNextHopEncodingCapabilityCode,
+			Value: packet.ExtendedNextHopCapability{
+				packet.ExtendedNextHopCapabilityTuple{
+					AFI:        packet.AFIIPv4,
+					SAFI:       packet.SAFIUnicast,
+					NextHopAFI: packet.AFIIPv6,
+				},
+			},
+		}
+	}
+	caps = append(caps, cap)
+	return caps
 }
 
 func filterOrDefault(c filter.Chain) filter.Chain {

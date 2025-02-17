@@ -13,6 +13,9 @@ const (
 )
 
 type BGP struct {
+	// description: |
+	//   List of BGP Peer groups. All peers *must* belong to a group
+	//   If a parameter is configured in the group and in the neighbor level, the neighbor is used
 	Groups []*BGPGroup `yaml:"groups"`
 }
 
@@ -28,28 +31,71 @@ func (b *BGP) load(localAS uint32, policyOptions *PolicyOptions) error {
 }
 
 type BGPGroup struct {
-	Name                 string `yaml:"name"`
-	LocalAddress         string `yaml:"local_address"`
-	LocalAddressIP       *bnet.IP
-	TTL                  uint8      `yaml:"ttl"`
-	AuthenticationKey    string     `yaml:"authentication_key"`
-	PeerAS               uint32     `yaml:"peer_as"`
-	LocalAS              uint32     `yaml:"local_as"`
-	HoldTime             uint16     `yaml:"hold_time"`
-	Multipath            *Multipath `yaml:"multipath"`
-	Import               []string   `yaml:"import"`
-	ImportFilterChain    filter.Chain
-	Export               []string `yaml:"export"`
-	ExportFilterChain    filter.Chain
-	RouteServerClient    *bool  `yaml:"route_server_client"`
-	RouteReflectorClient *bool  `yaml:"route_reflector_client"`
-	ClusterID            string `yaml:"cluster_id"`
-	ClusterIDIP          *bnet.IP
-	Passive              *bool                `yaml:"passive"`
-	Neighbors            []*BGPNeighbor       `yaml:"neighbors"`
-	IPv4                 *AddressFamilyConfig `yaml:"ipv4"`
-	IPv6                 *AddressFamilyConfig `yaml:"ipv6"`
-	RoutingInstance      string               `yaml:"routing_instance"`
+	// description: |
+	//   Name for the group
+	Name string `yaml:"name"`
+	// description: |
+	//   Local address for the peering
+	LocalAddress string `yaml:"local_address"`
+	// docgen:nodoc
+	LocalAddressIP *bnet.IP
+	// description: |
+	//   Maximum allowed TTL for routes from peers belonging to this group
+	TTL uint8 `yaml:"ttl"`
+	// description: |
+	//   MD5 secret for the session
+	AuthenticationKey string `yaml:"authentication_key"`
+	// description: |
+	//   Peer AS number
+	PeerAS uint32 `yaml:"peer_as"`
+	// description: |
+	//   Local AS number
+	LocalAS uint32 `yaml:"local_as"`
+	// description: |
+	//   Hold timer
+	HoldTime uint16 `yaml:"hold_time"`
+	// description: |
+	//   Enables multipath routes
+	Multipath *Multipath `yaml:"multipath"`
+	// description: |
+	//   List of import filters.
+	//   Example:
+	//   import: ["ACCEPT_ALL"]
+	//   # this example assumes that the a policy named ACCEPT_ALL exists in the configuration
+	Import []string `yaml:"import"`
+	// docgen:nodoc
+	ImportFilterChain filter.Chain
+	// description: |
+	//   List of export filters. Syntax is the same as with import
+	Export []string `yaml:"export"`
+	// docgen:nodoc
+	ExportFilterChain filter.Chain
+	// description: |
+	//   Configures the daemon as a route server client
+	RouteServerClient *bool `yaml:"route_server_client"`
+	// description: |
+	//   Configures the daemon as a route reflector client
+	RouteReflectorClient *bool `yaml:"route_reflector_client"`
+	// description: |
+	//   Cluster ID for route reflection
+	ClusterID string `yaml:"cluster_id"`
+	// docgen:nodoc
+	ClusterIDIP *bnet.IP
+	// description: |
+	//   Configures the client in passive mode
+	Passive *bool `yaml:"passive"`
+	// description: |
+	//   Neighbors that belong to this group. See bgpneighbors.md for details.
+	Neighbors []*BGPNeighbor `yaml:"neighbors"`
+	// description: |
+	//   Configuration values for the IPv4 AFI family
+	IPv4 *AddressFamilyConfig `yaml:"ipv4"`
+	// description: |
+	//   Configuration values for the IPv6 AFI family
+	IPv6 *AddressFamilyConfig `yaml:"ipv6"`
+	// description: |
+	//   Name of the routing instance this groups belongs to
+	RoutingInstance string `yaml:"routing_instance"`
 }
 
 func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
@@ -175,36 +221,90 @@ func (bg *BGPGroup) load(localAS uint32, policyOptions *PolicyOptions) error {
 }
 
 type Multipath struct {
-	Enable    bool `yaml:"enable"`
+	// description: |
+	//   Enable multipath
+	Enable bool `yaml:"enable"`
+	// description: |
+	//   Enable learning multiple paths for routes coming from different AS
 	MulipleAS bool `yaml:"multiple_as"`
 }
 
 type BGPNeighbor struct {
-	PeerAddress                string `yaml:"peer_address"`
-	PeerAddressIP              *bnet.IP
-	LocalAddress               string `yaml:"local_address"`
-	LocalAddressIP             *bnet.IP
-	Disabled                   bool   `yaml:"disabled"`
-	TTL                        uint8  `yaml:"ttl"`
-	AuthenticationKey          string `yaml:"authentication_key"`
-	PeerAS                     uint32 `yaml:"peer_as"`
-	LocalAS                    uint32 `yaml:"local_as"`
-	HoldTime                   uint16 `yaml:"hold_time"`
-	HoldTimeDuration           time.Duration
-	Multipath                  *Multipath `yaml:"multipath"`
-	Import                     []string   `yaml:"import"`
-	ImportFilterChain          filter.Chain
-	Export                     []string `yaml:"export"`
-	ExportFilterChain          filter.Chain
-	RouteServerClient          *bool  `yaml:"route_server_client"`
-	RouteReflectorClient       *bool  `yaml:"route_reflector_client"`
-	Passive                    *bool  `yaml:"passive"`
-	ClusterID                  string `yaml:"cluster_id"`
-	ClusterIDIP                *bnet.IP
-	IPv4                       *AddressFamilyConfig `yaml:"ipv4"`
+	// description: |
+	//   Address for the peer
+	PeerAddress string `yaml:"peer_address"`
+	// docgen:nodoc
+	PeerAddressIP *bnet.IP
+	// description: |
+	//   Local address for the session
+	LocalAddress string `yaml:"local_address"`
+	// docgen:nodoc
+	LocalAddressIP *bnet.IP
+	// description: |
+	//   Disable the session with this peer
+	Disabled bool `yaml:"disabled"`
+	// description: |
+	//   Maximum allowed TTL for routes from peers belonging to this group
+	TTL uint8 `yaml:"ttl"`
+	// description: |
+	//   MD5 secret for the session
+	AuthenticationKey string `yaml:"authentication_key"`
+	// description: |
+	//   Peer AS number
+	PeerAS uint32 `yaml:"peer_as"`
+	// description: |
+	//   Local AS number
+	LocalAS uint32 `yaml:"local_as"`
+	// description: |
+	//   Hold timer
+	HoldTime uint16 `yaml:"hold_time"`
+	// docgen:nodoc
+	HoldTimeDuration time.Duration
+	// description: |
+	//   Enables multipath routes
+	//   Allowed values:
+	//   - enable: enables the feature
+	//   - multiple_as: enables learning multiple paths for routes coming from different AS
+	Multipath *Multipath `yaml:"multipath"`
+	// description: |
+	//   List of import filters.
+	//   Example:
+	//   import: ["ACCEPT_ALL"]
+	//   # this example assumes that the a policy named ACCEPT_ALL exists in the configuration
+	Import []string `yaml:"import"`
+	// docgen:nodoc
+	ImportFilterChain filter.Chain
+	// description: |
+	//   List of export filters. Syntax is the same as with import
+	Export []string `yaml:"export"`
+	// docgen:nodoc
+	ExportFilterChain filter.Chain
+	// description: |
+	//   Configures the daemon as a route server client
+	RouteServerClient *bool `yaml:"route_server_client"`
+	// description: |
+	//   Configures the daemon as a route reflector client
+	RouteReflectorClient *bool `yaml:"route_reflector_client"`
+	// description: |
+	//   Configures the client in passive mode
+	Passive *bool `yaml:"passive"`
+	// description: |
+	//   Cluster ID for route reflection
+	ClusterID string `yaml:"cluster_id"`
+	// docgen:nodoc
+	ClusterIDIP *bnet.IP
+	// description: |
+	//   Configuration values for the IPv4 AFI family
+	IPv4 *AddressFamilyConfig `yaml:"ipv4"`
+	// description: |
+	//   Configuration values for the IPv6 AFI family
 	IPv6                       *AddressFamilyConfig `yaml:"ipv6"`
+	// description: |
+	//   Advertise the multiprotocol capability for the IPv4 AFI
 	AdvertiseIPv4MultiProtocol bool                 `yaml:"advertise_ipv4_multiprotocol"`
-	RoutingInstance            string               `yaml:"routing_instance"`
+	// description: |
+	//   Name of the routing instance this groups belongs to
+	RoutingInstance string `yaml:"routing_instance"`
 }
 
 func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
@@ -270,15 +370,28 @@ func (bn *BGPNeighbor) load(policyOptions *PolicyOptions) error {
 }
 
 type AddressFamilyConfig struct {
+	// description: |
+	//   Enable add_path for send and receive
 	AddPath *AddPathConfig `yaml:"add_path"`
+	// description: |
+	//   Enable extended next hop for the address family
+	NextHopExtended bool `yaml:"next_hop_extended"`
 }
 
 type AddPathConfig struct {
-	Receive bool               `yaml:"receive"`
-	Send    *AddPathSendConfig `yaml:"send"`
+	// description: |
+	//   Enable receive add_path
+	Receive bool `yaml:"receive"`
+	// description: |
+	//   Enable send add_path
+	Send *AddPathSendConfig `yaml:"send"`
 }
 
 type AddPathSendConfig struct {
-	Multipath bool  `yaml:"multipath"`
+	// description: |
+	//   Enable multipath by add_path
+	Multipath bool `yaml:"multipath"`
+	// description: |
+	//   Maximum allowed path count for add_path
 	PathCount uint8 `yaml:"path_count"`
 }

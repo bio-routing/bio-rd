@@ -1669,6 +1669,26 @@ func TestDecodeCapability(t *testing.T) {
 			input:    []byte{69, 4, 0, 1},
 			wantFail: true,
 		},
+		{
+			name: "Extended Next Hop",
+			input: []byte{
+				5, 6, // Type, Length
+				0, 1, // AFI
+				0, 1, // SAFI
+				0, 2, // NextHopAFI
+			},
+			expected: Capability{
+				Code: ExtendedNextHopEncodingCapabilityCode,
+				Length: 6,
+				Value: ExtendedNextHopCapability{
+					ExtendedNextHopCapabilityTuple{
+						AFI: AFIIPv4,
+						SAFI: SAFIUnicast,
+						NextHopAFI: AFIIPv6,
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

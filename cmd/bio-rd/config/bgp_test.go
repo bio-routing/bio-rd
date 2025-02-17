@@ -8,7 +8,7 @@ import (
 	"github.com/bio-routing/bio-rd/routingtable/filter"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -37,6 +37,7 @@ groups:
             receive: true
             send:
               path_count: 5
+          next_hop_extended: true
       - peer_address: 100.64.1.2
         local_address: 100.64.1.1
         local_as: 65400
@@ -109,6 +110,7 @@ func TestBGPLoad(t *testing.T) {
 	assert.Equal(t, uint8(5), n1.IPv4.AddPath.Send.PathCount, "neighbor 1 IPv4 add path send count")
 	assert.Equal(t, uint8(10), n1.IPv6.AddPath.Send.PathCount, "neighbor 1 IPv6 add path send count")
 	assert.True(t, n1.Disabled, "neighbor 1 disabled")
+	assert.True(t, n1.IPv4.NextHopExtended, "neighbor 1 IPv4 extended next hop")
 
 	n2 := group.Neighbors[1]
 	assert.Equal(t, bnet.IPv4FromOctets(100, 64, 1, 1).Dedup(), n2.LocalAddressIP, "neighbor 2 local address")
