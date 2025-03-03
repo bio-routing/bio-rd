@@ -8,6 +8,7 @@ Please keep this list ordered.
  * 4456 BGP Route Reflection
  * 4760 Multiprotocol Extensions for BGP-4
  * 5549 Advertising IPv4 Network Layer Reachability Information with an IPv6 Next Hop
+ * 6286 Autonomous-System-Wide Unique BGP Identifier for BGP-4
  * 6793 32bit ASNs
  * 7854 BGP Monitoring Protocol (BMP)
  * 7911 BGP AddPath

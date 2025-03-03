@@ -237,7 +237,7 @@ func (p *peer) collisionHandling(callingFSM *FSM) bool {
 			continue
 		}
 
-		if p.routerID < callingFSM.neighborID {
+		if p.shouldCeaseOnCollision(callingFSM) {
 			fsm.cease()
 		} else {
 			return true
@@ -245,6 +245,24 @@ func (p *peer) collisionHandling(callingFSM *FSM) bool {
 	}
 
 	return false
+}
+
+func (p *peer) shouldCeaseOnCollision(callingFSM *FSM) bool {
+	// RFC6286: For a BGP speaker that supports the AS-wide Unique BGP Identifier,
+	// the procedures for connection collision resolution are extended as
+	// follows to deal with the case in which the two BGP speakers share the
+	// same BGP Identifier (thus, it is only applicable to an external
+	// peer):
+	//
+	//    If the BGP Identifiers of the peers involved in the connection
+	//    collision are identical, then the connection initiated by the BGP
+	//    speaker with the larger AS number is preserved.
+	if p.routerID == callingFSM.neighborID {
+		return p.localASN < callingFSM.peer.peerASN
+	}
+
+	// RFC4271 collision handling
+	return p.routerID < callingFSM.neighborID
 }
 
 func isOpenConfirmState(s state) bool {
