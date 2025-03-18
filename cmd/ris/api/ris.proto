@@ -13,7 +13,6 @@ service RoutingInformationService {
     rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {};
     rpc ObserveRIB(ObserveRIBRequest) returns (stream RIBUpdate);
     rpc DumpRIB(DumpRIBRequest) returns (stream DumpRIBReply);
-    rpc GetPrefixFromAllRouters(GetPrefixFromAllRoutersRequest) returns (GetResponse);
 
 }
 
@@ -32,12 +31,6 @@ message GetRequest {
     string router = 1;
     uint64 vrf_id = 2;
     string vrf = 4;
-    bio.net.Prefix pfx = 3;
-}
-
-message GetPrefixFromAllRoutersRequest {
-    uint64 vrf_id = 1;
-    string vrf = 2;
     bio.net.Prefix pfx = 3;
 }
 
