@@ -13,7 +13,6 @@ service RoutingInformationService {
     rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {};
     rpc ObserveRIB(ObserveRIBRequest) returns (stream RIBUpdate);
     rpc DumpRIB(DumpRIBRequest) returns (stream DumpRIBReply);
-
 }
 
 message LPMRequest {
