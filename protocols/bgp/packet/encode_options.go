@@ -1,6 +1,7 @@
 package packet
 
 type EncodeOptions struct {
-	Use32BitASN bool
-	UseAddPath  bool
+	Use32BitASN         bool
+	UseAddPath          bool
+	UseNextHopExtension bool
 }
