@@ -124,7 +124,6 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 
 // Get gets a prefix (exact match)
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-
 	if req.Router == "" {
 		ret, err := s.getPrefixFromAllRouters(req)
 		if err != nil {
@@ -137,6 +136,10 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 	route, err := s.getRoutesFromRouter(req.Router, req)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get prefix %s for router %s: %w", req.Pfx, req.Router, err)
+	}
+
+	if route == nil {
+		return nil, nil
 	}
 
 	return &pb.GetResponse{
@@ -169,12 +172,12 @@ func (s *Server) getRoutesFromRouter(router string, req *pb.GetRequest) (*route.
 	if err != nil {
 		return nil, err
 	}
-	rib, err := s.getRIB(router, vrfID, req.GetPfx().Address.GetVersion())
+	rib, err := s.getRIB(router, vrfID, req.Pfx.Address.GetVersion())
 	if err != nil {
-		return nil, wrapGetRIBErr(err, router, vrfID, req.GetPfx().Address.GetVersion())
+		return nil, wrapGetRIBErr(err, router, vrfID, req.Pfx.Address.GetVersion())
 	}
 
-	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.GetPfx()))
+	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
 	return route, nil
 }
 
