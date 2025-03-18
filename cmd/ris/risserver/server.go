@@ -124,6 +124,16 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 
 // Get gets a prefix (exact match)
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+
+	if req.Router == "" {
+		ret, err := s.getPrefixFromAllRouters(req)
+		if err != nil {
+			return nil, fmt.Errorf("error getting prefix from all routers: %w", err)
+		}
+
+		return ret, nil
+	}
+
 	route, err := s.getRoutesFromRouter(req.Router, req)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get prefix %s for router %s: %w", req.Pfx, req.Router, err)
@@ -137,7 +147,7 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 }
 
 // GetPrefixFromAllRouters gets a prefix from all configured routers (exact match)
-func (s *Server) GetPrefixFromAllRouters(ctx context.Context, req *pb.GetPrefixFromAllRoutersRequest) (*pb.GetResponse, error) {
+func (s *Server) getPrefixFromAllRouters(req *pb.GetRequest) (*pb.GetResponse, error) {
 	routesFromAllRouters := make([]*routeapi.Route, 0)
 	routers := s.bmp.GetRouters()
 	for _, router := range routers {
@@ -154,7 +164,7 @@ func (s *Server) GetPrefixFromAllRouters(ctx context.Context, req *pb.GetPrefixF
 	}, nil
 }
 
-func (s *Server) getRoutesFromRouter(router string, req GetRouteRequestI) (*route.Route, error) {
+func (s *Server) getRoutesFromRouter(router string, req *pb.GetRequest) (*route.Route, error) {
 	vrfID, err := getVRFID(req)
 	if err != nil {
 		return nil, err
@@ -166,44 +176,6 @@ func (s *Server) getRoutesFromRouter(router string, req GetRouteRequestI) (*rout
 
 	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.GetPfx()))
 	return route, nil
-}
-
-type GetRouteRequestI interface {
-	GetVrfId() uint64
-	GetVrf() string
-	GetPfx() *netapi.Prefix
-}
-
-type GetPrefixFromAllRoutersRequestWrapper struct {
-	req *pb.GetPrefixFromAllRoutersRequest
-}
-
-func (r *GetPrefixFromAllRoutersRequestWrapper) GetPfx() *netapi.Prefix {
-	return r.req.Pfx
-}
-
-func (r *GetPrefixFromAllRoutersRequestWrapper) GetVrfId() uint64 {
-	return r.req.VrfId
-}
-
-func (r *GetPrefixFromAllRoutersRequestWrapper) GetVrf() string {
-	return r.req.Vrf
-}
-
-type GetRequestWrapper struct {
-	req *pb.GetRequest
-}
-
-func (r *GetRequestWrapper) GetPfx() *netapi.Prefix {
-	return r.req.Pfx
-}
-
-func (r *GetRequestWrapper) GetVrf() string {
-	return r.req.Vrf
-}
-
-func (r *GetRequestWrapper) GetVrfId() uint64 {
-	return r.req.VrfId
 }
 
 // GetLonger gets all more specifics of a prefix
