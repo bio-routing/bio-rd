@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/projectdiscovery/yamldoc-go/encoder"
 	"github.com/bio-routing/bio-rd/cmd/bio-rd/config"
+	"github.com/projectdiscovery/yamldoc-go/encoder"
 )
 
 func main() {

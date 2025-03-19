@@ -1678,12 +1678,12 @@ func TestDecodeCapability(t *testing.T) {
 				0, 2, // NextHopAFI
 			},
 			expected: Capability{
-				Code: ExtendedNextHopEncodingCapabilityCode,
+				Code:   ExtendedNextHopEncodingCapabilityCode,
 				Length: 6,
 				Value: ExtendedNextHopCapability{
 					ExtendedNextHopCapabilityTuple{
-						AFI: AFIIPv4,
-						SAFI: SAFIUnicast,
+						AFI:        AFIIPv4,
+						SAFI:       SAFIUnicast,
 						NextHopAFI: AFIIPv6,
 					},
 				},

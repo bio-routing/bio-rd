@@ -5,7 +5,7 @@ import "fmt"
 type Protocols struct {
 	// description: |
 	//   parameters for the bgp. See bgp.md file for details
-	BGP  *BGP  `yaml:"bgp"`
+	BGP *BGP `yaml:"bgp"`
 	// description: |
 	//   parameters for the is-is protocol. See is-is.md for details
 	ISIS *ISIS `yaml:"isis"`
