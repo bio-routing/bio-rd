@@ -9,19 +9,19 @@ import (
 type RoutingInstance struct {
 	// description: |
 	//   Name of the routing instance
-	Name                       string `yaml:"name"`
+	Name string `yaml:"name"`
 	// description: |
 	//   String to be used as a route distinguisher.
 	//   The format has to be <uint32>:<uint32>. Using IP addresses is *not* allowed
-	RouteDistinguisher         string `yaml:"route_distinguisher"`
+	RouteDistinguisher string `yaml:"route_distinguisher"`
 	// docgen:nodoc
 	InternalRouteDistinguisher uint64
 	// description: |
 	//   Routing options for this routing instance. See main config documentation for details
-	RoutingOptions             *RoutingOptions `yaml:"routing_options"`
+	RoutingOptions *RoutingOptions `yaml:"routing_options"`
 	// description: |
 	//   Protocols for this routing instance. See the main protocols documentation for details
-	Protocols                  *Protocols `yaml:"protocols"`
+	Protocols *Protocols `yaml:"protocols"`
 }
 
 func (ri *RoutingInstance) load() error {

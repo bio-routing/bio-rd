@@ -32,7 +32,7 @@ type PolicyOptions struct {
 	//     prefix-lists:
 	//       prefixes:
 	//         - 2001:db8:0:1::/64
-	PrefixLists            []PrefixList `yaml:"prefix_lists"`
+	PrefixLists []PrefixList `yaml:"prefix_lists"`
 }
 
 type PrefixList struct {
@@ -44,7 +44,7 @@ type PrefixList struct {
 type PolicyStatement struct {
 	// description: |
 	//   Name of the policy statement
-	Name  string                 `yaml:"name"`
+	Name string `yaml:"name"`
 	// description: |
 	//   List of terms defining the policy (see example above)
 	Terms []*PolicyStatementTerm `yaml:"terms"`
@@ -53,7 +53,7 @@ type PolicyStatement struct {
 type PolicyStatementTerm struct {
 	// description: |
 	//   Name of the term
-	Name string                  `yaml:"name"`
+	Name string `yaml:"name"`
 	// description: |
 	//   Filter to match the term
 	From PolicyStatementTermFrom `yaml:"from"`
@@ -82,7 +82,7 @@ type PolicyStatementTermFrom struct {
 type RouteFilter struct {
 	// description: |
 	//   Prefix to match. Defined in CIDR notation
-	Prefix  string `yaml:"prefix"`
+	Prefix string `yaml:"prefix"`
 	// description: |
 	//   Qualifier for the filter.
 	//   Available options:
@@ -93,25 +93,25 @@ type RouteFilter struct {
 	Matcher string `yaml:"matcher"`
 	// description: |
 	//   minimum length of the range
-	LenMin  uint8  `yaml:"len_min"`
+	LenMin uint8 `yaml:"len_min"`
 	// description: |
 	//   maximum lange of the range
-	LenMax  uint8  `yaml:"len_max"`
+	LenMax uint8 `yaml:"len_max"`
 }
 
 type PolicyStatementTermThen struct {
 	// description: |
 	//   accept the route
-	Accept        bool           `yaml:"accept"`
+	Accept bool `yaml:"accept"`
 	// description: |
 	//   reject the route
-	Reject        bool           `yaml:"reject"`
+	Reject bool `yaml:"reject"`
 	// description: |
 	//   Multi-exit discriminator
-	MED           *uint32        `yaml:"med"`
+	MED *uint32 `yaml:"med"`
 	// description: |
 	//   Local preference
-	LocalPref     *uint32        `yaml:"local_pref"`
+	LocalPref *uint32 `yaml:"local_pref"`
 	// description: |
 	//   ASN to prepend.
 	//     Values:
@@ -120,13 +120,13 @@ type PolicyStatementTermThen struct {
 	ASPathPrepend *ASPathPrepend `yaml:"as_path_prepend"`
 	// description: |
 	//   IP address to be used as a next-hop for the route
-	NextHop       *NextHop       `yaml:"next_hop"`
+	NextHop *NextHop `yaml:"next_hop"`
 }
 
 type ASPathPrepend struct {
 	// description: |
 	//   AS number
-	ASN   uint32 `yaml:"asn"`
+	ASN uint32 `yaml:"asn"`
 	// description: |
 	//   times to prepend
 	Count uint16 `yaml:"count"`

@@ -3,7 +3,7 @@ package config
 type StaticRoute struct {
 	// description: |
 	//   Prefix for the route
-	Prefix  string `yaml:"prefix"`
+	Prefix string `yaml:"prefix"`
 	// description: |
 	//   Makes this route a blackhole
 	Discard bool `yaml:"discard"`
