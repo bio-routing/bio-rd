@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	addPathTupleSize = 4
+	addPathTupleSize         = 4
 	extendedNextHopTupleSize = 6
 )
 
