@@ -3,14 +3,12 @@ package packet
 import (
 	"bytes"
 	"fmt"
-	"net"
 
 	"github.com/bio-routing/bio-rd/util/decode"
-	"github.com/bio-routing/tflow2/convert"
 )
 
 const (
-	addPathTupleSize = 4
+	addPathTupleSize         = 4
 	extendedNextHopTupleSize = 6
 )
 
@@ -357,13 +355,6 @@ func validateOpen(msg *BGPOpen) error {
 			ErrorStr:     "unsupported version number",
 		}
 	}
-	if !isValidIdentifier(msg.BGPIdentifier) {
-		return BGPError{
-			ErrorCode:    OpenMessageError,
-			ErrorSubCode: BadBGPIdentifier,
-			ErrorStr:     "invalid BGP identifier",
-		}
-	}
 
 	return nil
 }
@@ -391,27 +382,6 @@ func decodeExtendedNextHopCapability(buf *bytes.Buffer, capLength uint8) (Extend
 	}
 
 	return extendedNextHopCap, nil
-}
-
-func isValidIdentifier(id uint32) bool {
-	addr := net.IP(convert.Uint32Byte(id))
-	if addr.IsLoopback() {
-		return false
-	}
-
-	if addr.IsMulticast() {
-		return false
-	}
-
-	if addr[0] == 0 {
-		return false
-	}
-
-	if addr[0] == 255 && addr[1] == 255 && addr[2] == 255 && addr[3] == 255 {
-		return false
-	}
-
-	return true
 }
 
 func decodeHeader(buf *bytes.Buffer) (*BGPHeader, error) {

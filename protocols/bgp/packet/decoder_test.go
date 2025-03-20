@@ -1413,45 +1413,6 @@ func genericTest(f decodeFunc, tests []test, t *testing.T) {
 	}
 }
 
-func TestIsValidIdentifier(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    uint32
-		expected bool
-	}{
-		{
-			name:     "Valid #1",
-			input:    convert.Uint32b([]byte{8, 8, 8, 8}),
-			expected: true,
-		},
-		{
-			name:     "Multicast",
-			input:    convert.Uint32b([]byte{239, 8, 8, 8}),
-			expected: false,
-		},
-		{
-			name:     "Loopback",
-			input:    convert.Uint32b([]byte{127, 8, 8, 8}),
-			expected: false,
-		},
-		{
-			name:     "First byte 0",
-			input:    convert.Uint32b([]byte{0, 8, 8, 8}),
-			expected: false,
-		},
-		{
-			name:     "All bytes 255",
-			input:    convert.Uint32b([]byte{255, 255, 255, 255}),
-			expected: false,
-		},
-	}
-
-	for _, test := range tests {
-		res := isValidIdentifier(test.input)
-		assert.Equal(t, test.expected, res)
-	}
-}
-
 func TestValidateOpenMessage(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1678,12 +1639,12 @@ func TestDecodeCapability(t *testing.T) {
 				0, 2, // NextHopAFI
 			},
 			expected: Capability{
-				Code: ExtendedNextHopEncodingCapabilityCode,
+				Code:   ExtendedNextHopEncodingCapabilityCode,
 				Length: 6,
 				Value: ExtendedNextHopCapability{
 					ExtendedNextHopCapabilityTuple{
-						AFI: AFIIPv4,
-						SAFI: SAFIUnicast,
+						AFI:        AFIIPv4,
+						SAFI:       SAFIUnicast,
 						NextHopAFI: AFIIPv6,
 					},
 				},
