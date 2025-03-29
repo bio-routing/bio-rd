@@ -356,6 +356,14 @@ func validateOpen(msg *BGPOpen) error {
 		}
 	}
 
+	if msg.BGPIdentifier == 0 {
+		return BGPError{
+			ErrorCode:    OpenMessageError,
+			ErrorSubCode: BadBGPIdentifier,
+			ErrorStr:     "BGP Identifier must not be zero",
+		}
+	}
+
 	return nil
 }
 
