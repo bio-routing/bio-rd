@@ -338,7 +338,7 @@ func (u *UpdateSender) withdrawPrefix(out io.Writer, pfx *bnet.Prefix, p *route.
 	}
 
 	if !u.addressFamily.multiProtocol {
-		return fmt.Errorf(packet.AFIName(u.addressFamily.afi) + " was not negotiated")
+		return fmt.Errorf("%s was not negotiated", packet.AFIName(u.addressFamily.afi))
 	}
 
 	return u.withdrawPrefixMultiProtocol(out, pfx, p)
