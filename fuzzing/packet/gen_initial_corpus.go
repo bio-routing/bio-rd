@@ -99,11 +99,13 @@ func main() {
 			wantFail: true,
 		},
 	}
+
 	for i, t := range tests {
 		f, err := os.Create(fmt.Sprintf("corpus/%v.bytes", i))
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("%s", err.Error())
 		}
+
 		f.Write(t.input)
 		f.Close()
 	}
