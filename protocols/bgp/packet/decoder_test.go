@@ -1428,10 +1428,18 @@ func TestValidateOpenMessage(t *testing.T) {
 			wantFail: false,
 		},
 		{
-			name: "Invalid Identifier",
+			name: "Invalid version",
+			input: &BGPOpen{
+				Version:       3,
+				BGPIdentifier: convert.Uint32b([]byte{8, 8, 8, 8}),
+			},
+			wantFail: true,
+		},
+		{
+			name: "Invalid identifier",
 			input: &BGPOpen{
 				Version:       4,
-				BGPIdentifier: convert.Uint32b([]byte{0, 8, 8, 8}),
+				BGPIdentifier: 0,
 			},
 			wantFail: true,
 		},
@@ -1440,16 +1448,10 @@ func TestValidateOpenMessage(t *testing.T) {
 	for _, test := range tests {
 		res := validateOpen(test.input)
 
-		if res != nil {
-			if test.wantFail {
-				continue
-			}
-			t.Errorf("Unexpected failure for test %q: %v", test.name, res)
-			continue
-		}
-
 		if test.wantFail {
-			t.Errorf("Unexpected success for test %q", test.name)
+			assert.Error(t, res)
+		} else {
+			assert.NoError(t, res)
 		}
 	}
 }
