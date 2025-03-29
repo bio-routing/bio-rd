@@ -11,68 +11,68 @@ const (
 type ISIS struct {
 	// description: |
 	//   Network entity title for this instance
-	NETs        []string         `yaml:"NETs"`
+	NETs []string `yaml:"NETs"`
 	// description: |
 	//   Configuration for the Level 1 adjacency
-	Level1      *ISISLevel       `yaml:"level1"`
+	Level1 *ISISLevel `yaml:"level1"`
 	// description: |
 	//   Configuration for the level 2 adjacency
-	Level2      *ISISLevel       `yaml:"level2"`
+	Level2 *ISISLevel `yaml:"level2"`
 	// description: |
 	//   Interface related configuration
-	Interfaces  []*ISISInterface `yaml:"interfaces"`
+	Interfaces []*ISISInterface `yaml:"interfaces"`
 	// description: |
 	//   Amount of time a link-state PDU should persist in the network
 	//   Expressed in seconds
-	LSPLifetime uint16           `yaml:"lsp_lifetime"`
+	LSPLifetime uint16 `yaml:"lsp_lifetime"`
 }
 
 // ISISLevel level config
 type ISISLevel struct {
 	// description: |
 	//   Disables this level for the instance
-	Disable               bool   `yaml:"disable"`
+	Disable bool `yaml:"disable"`
 	// description: |
 	//   Password for authentication
-	AuthenticationKey     string `yaml:"authentication_key"`
+	AuthenticationKey string `yaml:"authentication_key"`
 	// description: |
 	//   Disable authentication for the Complete Sequence Number PDUs
-	NoCSNPAuthentication  bool   `yaml:"no_csnp_authentication"`
+	NoCSNPAuthentication bool `yaml:"no_csnp_authentication"`
 	// description: |
 	//   DIsable authentication for hello messages
-	NoHelloAuthentication bool   `yaml:"no_hello_authentication"`
+	NoHelloAuthentication bool `yaml:"no_hello_authentication"`
 	// description: |
 	//   Disable authentication for the Partial Sequence Number PDUs
-	NoPSNPAuthentication  bool   `yaml:"no_psnp_authentication"`
+	NoPSNPAuthentication bool `yaml:"no_psnp_authentication"`
 	// description: |
 	//   Enable sending and receiving wide metrics only for this level
-	WideMetricsOnly       bool   `yaml:"wide_metrics_only"`
+	WideMetricsOnly bool `yaml:"wide_metrics_only"`
 }
 
 // ISISInterface interface config
 type ISISInterface struct {
 	// description: |
 	//   Name of the interface to configure
-	Name         string              `yaml:"name"`
+	Name string `yaml:"name"`
 	// description: |
 	//   Configure interface as passive
-	Passive      bool                `yaml:"passive"`
+	Passive bool `yaml:"passive"`
 	// description: |
 	//   Configure interface as point-to-point
-	PointToPoint bool                `yaml:"point_to_point"`
+	PointToPoint bool `yaml:"point_to_point"`
 	// description: |
 	//   Level 1 configuration parameters for the interface
-	Level1       *ISISInterfaceLevel `yaml:"level1"`
+	Level1 *ISISInterfaceLevel `yaml:"level1"`
 	// description: |
 	//   Level 2 configuration parameters for the interface
-	Level2       *ISISInterfaceLevel `yaml:"level2"`
+	Level2 *ISISInterfaceLevel `yaml:"level2"`
 }
 
 // ISISInterfaceLevel interface level config
 type ISISInterfaceLevel struct {
 	// description: |
 	//   Disable this level for the interface
-	Disable       bool   `yaml:"disable"`
+	Disable bool `yaml:"disable"`
 	// description: |
 	//   Hello interval
 	//   Expressed in seconds
@@ -80,17 +80,17 @@ type ISISInterfaceLevel struct {
 	// description: |
 	//   Hold time
 	//   Expressed in seconds
-	HoldTime      uint16 `yaml:"hold_time"`
+	HoldTime uint16 `yaml:"hold_time"`
 	// description: |
 	//   Metric for the interface in this level
-	Metric        uint32 `yaml:"metric"`
+	Metric uint32 `yaml:"metric"`
 	// description: |
 	//   Configures interface as passive
-	Passive       bool   `yaml:"passive"`
+	Passive bool `yaml:"passive"`
 	// description: |
 	//   Configures the device priority to become a designated router for this level
 	//   Value range: 0-127
-	Priority      uint8  `yaml:"priority"`
+	Priority uint8 `yaml:"priority"`
 }
 
 func (i *ISIS) loadDefaults() {

@@ -14,17 +14,17 @@ type Config struct {
 	//   Example:
 	//   policy_statements:
 	//     - name: "PeerA-In"
-        //         terms:
-        //           - name: "Reject_certain_stuff"
-        //             from:
-        //               route_filters:
+	//         terms:
+	//           - name: "Reject_certain_stuff"
+	//             from:
+	//               route_filters:
 	//                  - prefix: "198.51.100.0/24"
 	//                    matcher: "orlonger"
 	//                  - prefix: "203.0.113.0/25"
 	//                    matcher: "exact"
 	//                  - prefix: "203.0.113.128/25"
 	//                    matcher: "exact"
-	PolicyOptions    *PolicyOptions     `yaml:"policy_options"`
+	PolicyOptions *PolicyOptions `yaml:"policy_options"`
 	// description: |
 	//    List of routing instances
 	//    <a href="routing_instance.md">Configuration parameters</a>
@@ -36,14 +36,14 @@ type Config struct {
 	//   - <a href="static_route.md">static_routes</a>
 	//   - router_id
 	//   - autonomous_system
-	RoutingOptions   *RoutingOptions    `yaml:"routing_options"`
+	RoutingOptions *RoutingOptions `yaml:"routing_options"`
 	// description: |
 	//   Here you define the specific configuration parameters for each protocol.
 	//   <a href="protocols.md">documentation</a>
 	//   Available protocols:
 	//     - <a href="bgp.md">bgp</a>
 	//     - <a href="isis.md">is-is</a>
-	Protocols        *Protocols         `yaml:"protocols"`
+	Protocols *Protocols `yaml:"protocols"`
 }
 
 func (c *Config) load() error {
