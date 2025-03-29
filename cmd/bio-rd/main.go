@@ -69,8 +69,8 @@ func main() {
 
 	listenAddrsByVRF := map[string][]string{
 		vrf.DefaultVRFName: {
-			fmt.Sprintf(*bgpListenAddrIPv6),
-			fmt.Sprintf(*bgpListenAddrIPv4),
+			*bgpListenAddrIPv6,
+			*bgpListenAddrIPv4,
 		},
 	}
 
