@@ -13,6 +13,7 @@ service RoutingInformationService {
     rpc GetLonger(GetLongerRequest) returns (GetLongerResponse) {};
     rpc ObserveRIB(ObserveRIBRequest) returns (stream RIBUpdate);
     rpc DumpRIB(DumpRIBRequest) returns (stream DumpRIBReply);
+    rpc ObserveRouters(ObserveRoutersRequest) returns (stream RouterUpdate);
 }
 
 message LPMRequest {
@@ -104,3 +105,13 @@ message GetRoutersResponse {
     repeated Router routers = 1;
 }
 
+message ObserveRoutersRequest {
+
+}
+
+message RouterUpdate {
+    bool advertisement = 1;
+    Router router = 2;
+    bool is_gone = 3;
+    bool is_initial_dump = 4;
+}
