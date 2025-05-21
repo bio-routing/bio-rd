@@ -166,13 +166,13 @@ func (l *LookingGlass) Routes(w http.ResponseWriter, r *http.Request) {
 
 	originASN, err := getOriginASN(r)
 	if err != nil {
-		writeAndLogError(w, http.StatusInternalServerError, fmt.Sprintf("unable to get origin_asn: %v", err))
+		writeAndLogError(w, http.StatusBadRequest, fmt.Sprintf("unable to get origin_asn: %v", err))
 		return
 	}
 
 	afi, err := getAFI(r)
 	if err != nil {
-		writeAndLogError(w, http.StatusInternalServerError, fmt.Sprintf("unable to get afi: %v", err))
+		writeAndLogError(w, http.StatusBadRequest, fmt.Sprintf("unable to get afi: %v", err))
 		return
 	}
 
