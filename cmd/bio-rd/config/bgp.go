@@ -298,10 +298,10 @@ type BGPNeighbor struct {
 	IPv4 *AddressFamilyConfig `yaml:"ipv4"`
 	// description: |
 	//   Configuration values for the IPv6 AFI family
-	IPv6                       *AddressFamilyConfig `yaml:"ipv6"`
+	IPv6 *AddressFamilyConfig `yaml:"ipv6"`
 	// description: |
 	//   Advertise the multiprotocol capability for the IPv4 AFI
-	AdvertiseIPv4MultiProtocol bool                 `yaml:"advertise_ipv4_multiprotocol"`
+	AdvertiseIPv4MultiProtocol bool `yaml:"advertise_ipv4_multiprotocol"`
 	// description: |
 	//   Name of the routing instance this groups belongs to
 	RoutingInstance string `yaml:"routing_instance"`
