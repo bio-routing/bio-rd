@@ -124,21 +124,22 @@ func (s *Server) LPM(ctx context.Context, req *pb.LPMRequest) (*pb.LPMResponse, 
 
 // Get gets a prefix (exact match)
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	vrfID, err := getVRFID(req)
-	if err != nil {
-		return nil, err
+	if req.Router == "" {
+		ret, err := s.getPrefixFromAllRouters(req)
+		if err != nil {
+			return nil, fmt.Errorf("error getting prefix from all routers: %w", err)
+		}
+
+		return ret, nil
 	}
 
-	rib, err := s.getRIB(req.Router, vrfID, req.Pfx.Address.Version)
+	route, err := s.getRoutesFromRouter(req.Router, req)
 	if err != nil {
-		return nil, wrapGetRIBErr(err, req.Router, vrfID, req.Pfx.Address.Version)
+		return nil, fmt.Errorf("unable to get prefix %s for router %s: %w", req.Pfx, req.Router, err)
 	}
 
-	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
 	if route == nil {
-		return &pb.GetResponse{
-			Routes: make([]*routeapi.Route, 0),
-		}, nil
+		return nil, nil
 	}
 
 	return &pb.GetResponse{
@@ -146,6 +147,38 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 			route.ToProto(),
 		},
 	}, nil
+}
+
+// GetPrefixFromAllRouters gets a prefix from all configured routers (exact match)
+func (s *Server) getPrefixFromAllRouters(req *pb.GetRequest) (*pb.GetResponse, error) {
+	routesFromAllRouters := make([]*routeapi.Route, 0)
+	routers := s.bmp.GetRouters()
+	for _, router := range routers {
+		route, err := s.getRoutesFromRouter(router.Address().String(), req)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get prefix from router %s: %w", router.Name(), err)
+		}
+		if route != nil {
+			routesFromAllRouters = append(routesFromAllRouters, route.ToProto())
+		}
+	}
+	return &pb.GetResponse{
+		Routes: routesFromAllRouters,
+	}, nil
+}
+
+func (s *Server) getRoutesFromRouter(router string, req *pb.GetRequest) (*route.Route, error) {
+	vrfID, err := getVRFID(req)
+	if err != nil {
+		return nil, err
+	}
+	rib, err := s.getRIB(router, vrfID, req.Pfx.Address.GetVersion())
+	if err != nil {
+		return nil, wrapGetRIBErr(err, router, vrfID, req.Pfx.Address.GetVersion())
+	}
+
+	route := rib.Get(bnet.NewPrefixFromProtoPrefix(req.Pfx))
+	return route, nil
 }
 
 // GetLonger gets all more specifics of a prefix
