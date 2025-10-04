@@ -77,6 +77,8 @@ func readTLV(buf *bytes.Buffer) (TLV, error) {
 		tlv, err = readISNeighborsTLV(buf, tlvType, tlvLength)
 	case LSPEntriesTLVType:
 		tlv, err = readLSPEntriesTLV(buf, tlvType, tlvLength)
+	case RouterCapabilityTLVType:
+		tlv, err = readRouterCapabilityTLV(buf, tlvType, tlvLength)
 	default:
 		tlv, err = readUnknownTLV(buf, tlvType, tlvLength)
 	}
@@ -86,4 +88,13 @@ func readTLV(buf *bytes.Buffer) (TLV, error) {
 	}
 
 	return tlv, nil
+}
+
+func copyTLVs(tlvs []TLV) []TLV {
+	ret := make([]TLV, 0, len(tlvs))
+	for _, tlv := range tlvs {
+		ret = append(ret, tlv.Copy())
+	}
+
+	return ret
 }
