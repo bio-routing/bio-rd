@@ -220,9 +220,17 @@ func (s *Server) ObserveRIB(req *pb.ObserveRIBRequest, stream pb.RoutingInformat
 		}
 	}(fifo)
 
-	rib.RegisterWithOptions(rc, routingtable.ClientOptions{
+	opts := routingtable.ClientOptions{
 		MaxPaths: 100,
-	})
+	}
+	if req.ObserveOptions != nil {
+		if req.ObserveOptions.MaxPaths > 0 {
+			opts.MaxPaths = uint(req.ObserveOptions.MaxPaths)
+		}
+		opts.BestOnly = req.ObserveOptions.BestOnly
+		opts.EcmpOnly = req.ObserveOptions.EcmpOnly
+	}
+	rib.RegisterWithOptions(rc, opts)
 	defer rib.Unregister(rc)
 
 	select {
