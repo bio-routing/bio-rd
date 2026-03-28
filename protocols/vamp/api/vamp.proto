@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package bio.vamp;
+
+import "net/api/net.proto";
+import "route/api/route.proto";
+
+option go_package = "github.com/bio-routing/bio-rd/protocols/vamp/api";
+
+message VAMPSessionRequest {}
+
+message VAMPMessage {
+    enum MessageType{
+        VRF_INFO = 0;
+        ROUTE_INFO = 1;
+        END_OF_RIB = 2;
+    }
+    MessageType message_type = 1;
+    uint32 vrf_id = 2;
+    VRFInfo vrf_info = 3;
+    RouteInfo route_info = 4;
+}
+
+message VRFInfo {
+    string name = 1;
+    bool announement = 2;
+}
+
+message RouteInfo{
+    bio.route.Route route = 1;
+    bool announcement = 2;
+}
+
+service VAMPService {
+    rpc RunSession(VAMPSessionRequest) returns (stream VAMPMessage) {}
+}
