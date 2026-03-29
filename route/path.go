@@ -65,6 +65,10 @@ func (p *Path) Select(q *Path) int8 {
 
 // ECMP checks if path p and q are equal enough to be considered for ECMP usage
 func (p *Path) ECMP(q *Path) bool {
+	if p.Type != q.Type {
+		return false
+	}
+
 	switch p.Type {
 	case BGPPathType:
 		return p.BGPPath.ECMP(q.BGPPath)

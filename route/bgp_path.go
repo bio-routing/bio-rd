@@ -652,6 +652,10 @@ func (b *BGPPath) Prepend(asn uint32, times uint16) {
 		return
 	}
 
+	if b.ASPath == nil {
+		b.ASPath = types.NewASPath(nil)
+	}
+
 	if len(*b.ASPath) == 0 {
 		b.insertNewASSequence()
 	}
